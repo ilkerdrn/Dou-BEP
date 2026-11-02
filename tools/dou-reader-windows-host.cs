@@ -440,6 +440,91 @@ namespace DouBepReader
             return element != null && element.Current.ControlType == ControlType.Text;
         }
 
+        // Explicit one-shot reading of a nearby bounded sequence of UIA static text.
+        // This is not full document access: no TextPattern, ValuePattern, Edit contents,
+        // browser scripting, focus movement, keyboard injection, or background tracking.
+        private void ReadStaticTextSection(bool fromReaderButton)
+        {
+            try
+            {
+                if (_cursor == null || _scopeProcessId <= 0)
+                {
+                    StopSpeech();
+                    SetStatus("Önce izinli uygulamada Ctrl+Alt+R ile okuma noktası seçin.");
+                    return;
+                }
+                if (_cursor.Current.ProcessId != _scopeProcessId)
+                    throw new InvalidOperationException("UIA cursor belongs to a different process.");
+
+                if (fromReaderButton)
+                {
+                    // The UI button is an explicit user command, but the original
+                    // application must still exist and remain allowlisted.
+                    var source = Process.GetProcessById(_scopeProcessId);
+                    if (source.HasExited || !_allowed.Contains(source.ProcessName))
+                        throw new InvalidOperationException("The source is no longer permitted.");
+                }
+                else
+                {
+                    // Global keyboard commands require target-app focus.
+                    var focused = AutomationElement.FocusedElement;
+                    if (focused == null || focused.Current.ProcessId != _scopeProcessId ||
+                        !Allowed(focused))
+                        throw new InvalidOperationException("Document focus changed.");
+                }
+
+                var segments = new List<string>();
+                AutomationElement item = _cursor;
+                AutomationElement lastIncluded = null;
+                for (int step = 0; step < ReaderDocumentContract.MaxTraversalSteps && item != null; step++)
+                {
+                    if (item.Current.ProcessId != _scopeProcessId) break;
+                    if (IsDocumentText(item) && GetReadableName(item) != null)
+                    {
+                        // The only extracted value is the accessible Name of a static
+                        // Text control. GetReadableName guards hidden/Edit ancestors.
+                        string name = item.Current.Name;
+                        if (ReaderDocumentContract.TryAdd(segments, name))
+                        {
+                            lastIncluded = item;
+                            if (segments.Count >= ReaderDocumentContract.MaxTextNodes) break;
+                        }
+                    }
+                    item = Step(item, 1);
+                }
+                string sentence = ReaderDocumentContract.Combine(segments);
+                if (sentence == null)
+                {
+                    StopSpeech();
+                    SetStatus("Bu bölgede desteklenen erişilebilir statik metin bulunamadı.");
+                    return;
+                }
+                _cursor = lastIncluded;
+                if (_ownVoice)
+                {
+                    SpeakOwnVoice(sentence, _scopeProcessId);
+                }
+                else if (_turkishVoice != null)
+                {
+                    StopSpeech();
+                    _speaker.Rate = _rateControl.Value;
+                    _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(sentence));
+                    SetStatus("İzinli alanda statik metinler okunuyor; bölüm sınırlandırıldı.");
+                }
+                else
+                {
+                    StopSpeech();
+                    SetStatus("Türkçe ses bulunamadı; okumaya başlanmadı.");
+                }
+            }
+            catch (Exception)
+            {
+                StopSpeech();
+                _cursor = null;
+                SetStatus("Bölüm okuma güvenle durduruldu; hedef uygulama tekrar seçilmeli.");
+            }
+        }
+
         // On-demand structural navigation; same verified process, maximum 350 UIA steps.
         // Does not inject keystrokes, activate controls, or move keyboard focus.
         private void TraverseStructure(int direction, bool headingOnly)
