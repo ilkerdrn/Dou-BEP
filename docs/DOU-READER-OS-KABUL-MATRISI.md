@@ -75,5 +75,6 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 27 | ARIA rolü UIA kontrol türüyle çelişiyor | Çelişkili rol güvenli biçimde atlanır | Bekliyor |
 | 28 | İzin dışı uygulama veya parola/edit alt öğeleri | Okuma ve ses kuyruğu iptal edilir; gizli içerik okunmaz | Bekliyor |
 | 29 | Ctrl+Alt+Shift+L/T/C kısayol çakışması | Temel Ctrl+Alt+R/X vb. kısayollar çalışır, arayüz düğmeleri kullanılabilir | Bekliyor |
+| 30 | UIA heading level 1–9 veya UIA ID 80051–80059 | Yalnız gerçek metadata varsa Türkçe başlık seviyesi okunur; metadata yoksa uydurulmaz | Bekliyor |
 
 **Bilinçli sınırlama:** Yalnız görünür erişilebilir öğe etiketleri okunur; hücre veri modeli, satır-sütun koordinatları ve Word/PDF yapı aktarımı henüz yoktur. Tüm senaryolar gerçek Windows kabulü bekler.
