@@ -285,6 +285,15 @@ namespace DouBepReader
         {
             if (element == null) return null;
             if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
+            // Some UIA providers expose text children nested inside an Edit control.
+            // Do not treat their accessible Name as safe just because the child is Text.
+            var ancestor = TreeWalker.ControlViewWalker.GetParent(element);
+            for (int depth = 0; depth < 8 && ancestor != null; depth++)
+            {
+                if (ancestor.Current.IsPassword || ancestor.Current.ControlType == ControlType.Edit) return null;
+                if (ancestor.Current.ProcessId != element.Current.ProcessId) break;
+                ancestor = TreeWalker.ControlViewWalker.GetParent(ancestor);
+            }
             var name = element.Current.Name;
             if (String.IsNullOrWhiteSpace(name)) return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
@@ -354,7 +363,7 @@ namespace DouBepReader
             {
                 if (_cursor == null) { SetStatus("Önce Ctrl+Alt+R ile hedef uygulamanın bir öğesini seçin."); return; }
                 var focusedNow = AutomationElement.FocusedElement;
-                if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId)
+                if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId || !Allowed(focusedNow))
                 {
                     StopSpeech();
                     _cursor = null;
