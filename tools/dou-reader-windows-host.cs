@@ -622,6 +622,95 @@ namespace DouBepReader
             catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Belge gezinmesi durduruldu. Ctrl+Alt+R ile yeniden başlayın."); }
         }
 
+        // Structural navigation uses explicit ARIA/UIA metadata, never text styling.
+        // A stale or unauthorized process aborts navigation and pending speech.
+        private static ReaderStructureKind DetectStructure(AutomationElement element)
+        {
+            if (element == null) return ReaderStructureKind.Unknown;
+            string role = null;
+            if (AriaRoleProperty != null)
+            {
+                try { role = element.GetCurrentPropertyValue(AriaRoleProperty, true) as string; }
+                catch (ElementNotAvailableException) { return ReaderStructureKind.Unknown; }
+                catch (InvalidOperationException) { /* Provider does not expose ARIA. */ }
+            }
+            string control = null;
+            var type = element.Current.ControlType;
+            if (type == ControlType.List) control = "List";
+            else if (type == ControlType.ListItem) control = "ListItem";
+            else if (type == ControlType.Table) control = "Table";
+            else if (type == ControlType.DataGrid) control = "DataGrid";
+            else if (type == ControlType.HeaderItem) control = "HeaderItem";
+            return ReaderStructureContract.Classify(role, control, IsHeading(element));
+        }
+
+        private void TraverseStructureKind(ReaderStructureKind target, int direction, bool fromReaderButton)
+        {
+            try
+            {
+                if (_cursor == null || _scopeProcessId <= 0)
+                {
+                    StopSpeech();
+                    SetStatus("Önce izinli uygulamada Ctrl+Alt+R ile okuma noktası seçin.");
+                    return;
+                }
+                if (_cursor.Current.ProcessId != _scopeProcessId)
+                    throw new InvalidOperationException("Cursor is outside the selected application.");
+
+                if (fromReaderButton)
+                {
+                    // User-initiated Reader button: source may be in background but
+                    // its original process still must be explicitly allowlisted.
+                    var source = Process.GetProcessById(_scopeProcessId);
+                    if (source.HasExited || !_allowed.Contains(source.ProcessName))
+                        throw new InvalidOperationException("Source process no longer allowed.");
+                }
+                else
+                {
+                    var focused = AutomationElement.FocusedElement;
+                    if (focused == null || focused.Current.ProcessId != _scopeProcessId || !Allowed(focused))
+                        throw new InvalidOperationException("Target process has lost focus.");
+                }
+
+                var candidate = _cursor;
+                var scan = Stopwatch.StartNew();
+                for (int i = 0; i < MAX_TRAVERSAL &&
+                    scan.ElapsedMilliseconds < ReaderDocumentContract.MaxScanMilliseconds; ++i)
+                {
+                    candidate = Step(candidate, direction);
+                    if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
+                    // Validate privacy *before* reading ARIA roles or the UIA Name.
+                    string name = GetReadableName(candidate);
+                    if (name == null) continue;
+                    if (!ReaderStructureContract.Matches(DetectStructure(candidate), target)) continue;
+                    string roleLabel = ReaderStructureContract.TurkishRole(target);
+                    int separator = name.IndexOf(": ", StringComparison.Ordinal);
+                    string speech = roleLabel + ": " + (separator < 0 ? name : name.Substring(separator + 2));
+                    if (speech.Length > MAX_SPEECH_CHARACTERS) continue;
+                    StopSpeech();
+                    _cursor = candidate;
+                    _advanceAfterSection = false;
+                    if (_ownVoice) SpeakOwnVoice(speech, _scopeProcessId);
+                    else if (_turkishVoice != null)
+                    {
+                        _speaker.Rate = _rateControl.Value;
+                        _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(speech));
+                        SetStatus("Sonraki " + roleLabel + " okunuyor.");
+                    }
+                    else SetStatus("İzinli " + roleLabel + " bulundu; yerel ses yok.");
+                    return;
+                }
+                SetStatus("Bu bölümde başka " + ReaderStructureContract.TurkishRole(target) + " bulunamadı.");
+            }
+            catch (Exception)
+            {
+                StopSpeech();
+                _cursor = null;
+                _advanceAfterSection = false;
+                SetStatus("Yapısal gezinme güvenle durduruldu; Ctrl+Alt+R ile yeniden seçin.");
+            }
+        }
+
         // Opt-in, bounded role navigation. Does NOT set UI focus or inject input.
         // HTML heading roles are not consistently exposed as ControlType by all UIA providers;
         // only explicit Hyperlink and Button controls are supported in this release.
