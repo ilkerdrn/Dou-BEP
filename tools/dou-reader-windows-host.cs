@@ -43,6 +43,8 @@ namespace DouBepReader
         private const int HOTKEY_NEXT_LIST_ITEM = 115;
         private const int HOTKEY_NEXT_ROW = 116;
         private const int HOTKEY_NEXT_PARAGRAPH = 117;
+        private const int HOTKEY_SENTENCE_NEXT = 118;
+        private const int HOTKEY_SENTENCE_PREVIOUS = 119;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -50,7 +52,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL, HOTKEY_NEXT_LIST_ITEM, HOTKEY_NEXT_ROW, HOTKEY_NEXT_PARAGRAPH };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL, HOTKEY_NEXT_LIST_ITEM, HOTKEY_NEXT_ROW, HOTKEY_NEXT_PARAGRAPH, HOTKEY_SENTENCE_NEXT, HOTKEY_SENTENCE_PREVIOUS };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -73,6 +75,9 @@ namespace DouBepReader
         private AutomationElement _cursor;
         private int _scopeProcessId;
         private bool _advanceAfterSection; // next explicit section request starts after last delivered text
+        private AutomationElement _sentenceAnchor;
+        private int _sentenceIndex = -1;
+        private int _sentencePid;
         // Only a short, bounded utterance is kept in RAM during playback or pause.
         // Stop, new reading, and window close clear the pending session.
         private sealed class OwnVoiceSession
@@ -98,8 +103,8 @@ namespace DouBepReader
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 800;
-            Height = 780;
-            MinimumSize = new Size(800, 780);
+            Height = 905;
+            MinimumSize = new Size(800, 905);
             AutoScroll = true;
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
@@ -146,7 +151,7 @@ namespace DouBepReader
             sectionButton.FlatAppearance.BorderColor = accent;
             sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/I  Liste / liste öğesi\r\nCtrl+Alt+Shift+T/R/C  Tablo / satır / hücre\r\nCtrl+Alt+Shift+P  Sonraki paragraf\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/I  Liste / liste öğesi\r\nCtrl+Alt+Shift+T/R/C  Tablo / satır / hücre\r\nCtrl+Alt+Shift+P  Sonraki paragraf\r\nCtrl+Alt+Shift+←/→  Önceki / sonraki cümle\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 720, Height = 200, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -165,7 +170,7 @@ namespace DouBepReader
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var voiceTest = new Button {
-                Text = "DOU sesini dene", Left = 26, Top = 645, Width = 152, Height = 48,
+                Text = "DOU sesini dene", Left = 26, Top = 767, Width = 152, Height = 48,
                 AccessibleName = "DOU yerel ses motorunu sentetik örnekle dene",
                 TabIndex = 0, FlatStyle = FlatStyle.Flat,
                 ForeColor = highContrast ? SystemColors.HighlightText : page, BackColor = accent,
@@ -177,7 +182,7 @@ namespace DouBepReader
                 else SetStatus("DOU sesini denemek için OwnVoice modunu başlatın.");
             };
             var pause = new Button {
-                Text = "Duraklat / devam", Left = 186, Top = 645, Width = 153, Height = 48,
+                Text = "Duraklat / devam", Left = 186, Top = 767, Width = 153, Height = 48,
                 AccessibleName = "DOU yerel ses okumasını duraklat veya devam ettir",
                 AccessibleDescription = "Devam edildiğinde yarım kalan konuşma parçası baştan okunur.",
                 TabIndex = 1, FlatStyle = FlatStyle.Flat,
@@ -188,7 +193,7 @@ namespace DouBepReader
             pause.FlatAppearance.BorderColor = accent;
             pause.Click += delegate { TogglePause(); };
             var stop = new Button {
-                Text = "Sesi durdur", Left = 347, Top = 645, Width = 147, Height = 48,
+                Text = "Sesi durdur", Left = 347, Top = 767, Width = 147, Height = 48,
                 AccessibleName = "Konuşmayı hemen durdur",
                 TabIndex = 2, FlatStyle = FlatStyle.Flat,
                 ForeColor = ink, BackColor = surface,
@@ -198,12 +203,12 @@ namespace DouBepReader
             stop.FlatAppearance.BorderColor = accent;
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
             var rateLabel = new Label {
-                Text = "KONUŞMA HIZI", Left = 524, Top = 610, Width = 196, Height = 22,
+                Text = "KONUŞMA HIZI", Left = 524, Top = 732, Width = 196, Height = 22,
                 ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             _rateControl = new TrackBar {
-                Left = 517, Top = 646, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
+                Left = 517, Top = 768, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, TabIndex = 3,
                 BackColor = page, ForeColor = ink,
                 AccessibleName = "Türkçe konuşma hızı",
@@ -255,6 +260,30 @@ namespace DouBepReader
                 };
                 Controls.Add(nav);
             }
+            var sentenceLabel = new Label {
+                Text = "CÜMLE GEZİNME  /  SEÇİLİ STATİK METİN",
+                Left = 26, Top = 625, Width = 690, Height = 22,
+                ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
+            };
+            var previousSentence = new Button {
+                Text = "Önceki cümle", Left = 26, Top = 654, Width = 219, Height = 48,
+                TabIndex = 12, FlatStyle = FlatStyle.Flat,
+                AccessibleName = "Seçili statik metinde önceki cümleyi oku",
+                ForeColor = ink, BackColor = surface
+            };
+            previousSentence.FlatAppearance.BorderColor = accent;
+            previousSentence.Click += delegate { ReadSentence(-1, true); };
+            var nextSentence = new Button {
+                Text = "Sonraki cümle", Left = 261, Top = 654, Width = 219, Height = 48,
+                TabIndex = 13, FlatStyle = FlatStyle.Flat,
+                AccessibleName = "Seçili statik metinde sonraki cümleyi oku",
+                ForeColor = ink, BackColor = surface
+            };
+            nextSentence.FlatAppearance.BorderColor = accent;
+            nextSentence.Click += delegate { ReadSentence(1, true); };
+            Controls.Add(sentenceLabel);
+            Controls.Add(previousSentence);
+            Controls.Add(nextSentence);
             Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle); Controls.Add(sectionButton);
             Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
             Controls.Add(voiceTest); Controls.Add(pause); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
@@ -330,6 +359,14 @@ namespace DouBepReader
                     _registeredHotkeys.Add(hotkey.Item1);
                 // Optional structural hotkeys never disable core navigation.
             }
+            var sentenceHotkeys = new[] {
+                Tuple.Create(HOTKEY_SENTENCE_PREVIOUS, (uint)Keys.Left),
+                Tuple.Create(HOTKEY_SENTENCE_NEXT, (uint)Keys.Right)
+            };
+            foreach (var key in sentenceHotkeys)
+                if (RegisterHotKey(Handle, key.Item1, MOD_CONTROL | MOD_ALT | MOD_SHIFT, key.Item2))
+                    _registeredHotkeys.Add(key.Item1);
+            // Ctrl+Alt+Shift+arrows are optional; accessible buttons remain usable.
         }
 
         protected override void WndProc(ref Message m)
@@ -350,6 +387,8 @@ namespace DouBepReader
                     case HOTKEY_NEXT_LIST_ITEM: TraverseStructureKind(ReaderStructureKind.ListItem, 1, false); break;
                     case HOTKEY_NEXT_ROW: TraverseStructureKind(ReaderStructureKind.Row, 1, false); break;
                     case HOTKEY_NEXT_PARAGRAPH: TraverseStructureKind(ReaderStructureKind.Paragraph, 1, false); break;
+                    case HOTKEY_SENTENCE_NEXT: ReadSentence(1, false); break;
+                    case HOTKEY_SENTENCE_PREVIOUS: ReadSentence(-1, false); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
