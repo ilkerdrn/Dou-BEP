@@ -43,3 +43,20 @@ MVP-1 ancak **ses duyulurluğu, durdurma, izinli uygulama sınırları, klavye e
 ## Sınırlar
 
 Bu sürüm Not Defteri'ne yazılan metnin içeriğini, parolaları veya düzenlenebilir kontrol değerlerini **okumaz**. UIA öğe isimlerini, rol başlıklarını ve salt-okunur metin düğümlerini deneysel olarak okur. Sürekli belge metin akışı, tam ekran okuyucu, Word/PDF içeriği, Braille ve doğal Türkçe konuşma üretimi sonraki gelişme aşamalarıdır.
+
+## Sprint 03 — bölüm okuma kabul senaryoları (Windows'ta henüz uygulanmadı)
+
+Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni okumaz; yalnız kullanıcı tarafından seçilmiş başlangıç öğesinden itibaren, aynı izinli uygulama içindeki statik UIA `Text` düğümlerini okur. Ağ üzerinden konuşma servisi ve arka plan taraması yoktur.
+
+| No | Sentetik test senaryosu | Beklenen davranış | Durum |
+|---|---|---|---|
+| 13 | İzinli tarayıcıda Ctrl+Alt+R ardından Ctrl+Alt+Shift+D | Yakındaki erişilebilir, görünür statik metinler kullanıcı komutuyla sırasıyla seslendirilir | Bekliyor |
+| 14 | Reader panelindeki **Kısa bölümü oku** düğmesi | Önceden seçilmiş ve süreç izni hâlâ geçerli okuma noktasından devam eder | Bekliyor |
+| 15 | Kontrol ağacında 16'dan fazla statik metin | Tek çağrıda en fazla 16 metin düğümü ve 850 karakter; metin sessizce kesilmez | Bekliyor |
+| 16 | Düzenlenebilir alan içindeki veya parola alanının altındaki Text düğümleri | Gizli/edit üst öğeleri kontrol edilerek seslendirme reddedilir | Bekliyor |
+| 17 | İzin dışı süreç veya değişmiş odak | Komut reddedilir, eski ses durur, geçersiz okuma noktası atılır | Bekliyor |
+| 18 | Ctrl+Alt+Shift+D başka bir uygulama tarafından kullanılıyor | Ana kısayollar çalışır; Reader panelindeki düğme kullanılabilir | Bekliyor |
+| 19 | Statik metin çok uzun, tekrarlı veya destek dışı karakter içeriyor | Geçersiz öğeler atlanır; desteklenen toplam 850 karakter sınırını aşmaz | Bekliyor |
+| 20 | Ağır UIA sağlayıcısı | En fazla 350 adım ve adımlar arasında 1,5 sn tarama bütçesi; **tek tek UIA çağrıları için kesin zaman aşımı garantisi yoktur** | Bekliyor |
+
+**Önemli:** Statik metin düğümleri her tarayıcıda aynı biçimde sunulmaz; boş sonuç normaldir. Gerçek Word/PDF, uzun metinlerde sayfa devamı, tablo hücresi anlamsallaştırma ve ekran okuyucunun sesli keşif deneyimi henüz yoktur. Bu on-demand pilotu, doğrulanmış ürün gibi sunmayacağız.
