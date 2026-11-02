@@ -137,3 +137,20 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 60 | Bir konuşma parçası üretilemediğinde | Kuyruk aktifse bırakılır, kullanıcının özellikle duraklattığı oturum ise korunur | Bekliyor |
 
 **Sınırlar:** Bunlar manuel Windows kabul koşullarıdır; belge metninin tamamı, Word/PDF importu, gerçek sınav uyarlamaları ve doğal Türkçe TTS kalitesi henüz doğrulanmadı. Sağlayıcı kilitlenirse tek UIA çağrısında kesin zaman aşımı garanti edilmez.
+
+## Sprint 09 — cümle, odak ve çevrimdışı UIA testleri
+
+| No | Senaryo | Başarı ölçütü | Durum |
+|---|---|---|---|
+| 61 | İzinli uygulamada statik Text seçili; üç cümle | Sonraki cümle düğmesi sırayla üç güvenli cümleyi okur, dördüncüde durur | Bekliyor |
+| 62 | Önceki cümle düğmesi | İlk cümleden geriye gitmez, sonraki cümleden önceki cümleye döner | Bekliyor |
+| 63 | Ctrl+Alt+Shift+←/→ kısayol çakışması | Temel Ctrl+Alt+R/X vb. kısayollar çalışır; düğmelerle gezinme sürer | Bekliyor |
+| 64 | Arka plandaki Reader düğmesi / hedef uygulamada kısayol | Her çağrıda izinli süreç veya kaynak odağı yeniden doğrulanır | Bekliyor |
+| 65 | Aynı UIA Text içeriğinin değişmesi | Eski cümle indeksi yeni metne uygulanmaz; baştan başlar | Bekliyor |
+| 66 | Uzun, özel karakterli, salt noktalama veya 16'dan fazla cümle | Güvenli sınırı aşan metin reddedilir; gerçek içerik kaydedilmez | Bekliyor |
+| 67 | Edit/parola alanı ve alt UIA Text düğümleri | İçerik cümle gezinmesinden okunamaz | Bekliyor |
+| 68 | 1366×768 ve %200 DPI Windows masaüstü | Kaydırma ve Tab ile tüm cümle, yapı ve ses kontrollerine erişilebilir | Bekliyor |
+| 69 | `tools/dou-reader-uia-fixture.html` dosyasını yerel tarayıcıda açma | Harici ağ olmadan başlık, paragraf, liste, tablo ve sentetik gizlilik alanları görülür | Bekliyor |
+| 70 | Ses durdurma / konuşma sırasında cümle değiştirme | Eski ses iptal edilir, sıradaki cümleye geçerken kuyruk karışmaz | Bekliyor |
+
+**Not:** Bu senaryoların tümü Windows kullanıcı kabulünü bekliyor. Sentetik sayfadaki sahte parola kontrolü gerçek hesap bilgisi içermez. Metin okuma yalnız açıkça seçilmiş statik erişilebilir düğümle sınırlıdır; PDF/Word belgesinin gövde metnini veya düzenlenebilir Not Defteri içeriğini okumaz.
