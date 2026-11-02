@@ -103,6 +103,10 @@ test('opt-in static text section is bounded and excludes edited or password desc
  assert.match(cs, /ReaderDocumentContract\.MaxTraversalSteps/);
  assert.match(cs, /ReaderDocumentContract\.MaxTextNodes/);
  assert.match(cs, /ReaderDocumentContract\.TryAdd\(segments, name\)/);
+ assert.match(cs, /continueAfterPrevious \? Step\(_cursor, 1\) : _cursor/);
+ assert.match(cs, /_advanceAfterSection = true/);
+ assert.match(cs, /_advanceAfterSection = false/);
+ assert.match(cs, /_advanceAfterSection = continueAfterPrevious/);
  assert.match(cs, /if \(IsDocumentText\(item\) && GetReadableName\(item\) != null\)/);
  assert.match(cs, /if \(item\.Current\.ProcessId != _scopeProcessId\) break/);
  assert.match(cs, /focused\.Current\.ProcessId != _scopeProcessId/);
