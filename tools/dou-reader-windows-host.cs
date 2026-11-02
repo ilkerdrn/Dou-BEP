@@ -702,11 +702,9 @@ namespace DouBepReader
                     return null;
                 var grid = rawPattern as GridItemPattern;
                 if (grid == null) return null;
-                string position = ReaderTableContextContract.DescribeCell(grid.Current.Row, grid.Current.Column);
-                if (position == null) return null;
-                string span = ReaderTableContextContract.DescribeSpan(grid.Current.RowSpan, grid.Current.ColumnSpan);
-                if (span == null) return null;
-                return span.Length == 0 ? position : position + ", " + span;
+                return ReaderTableContextContract.DescribeGridItem(
+                    grid.Current.Row, grid.Current.Column,
+                    grid.Current.RowSpan, grid.Current.ColumnSpan);
             }
             catch (ElementNotAvailableException) { return null; }
             catch (InvalidOperationException) { return null; }
