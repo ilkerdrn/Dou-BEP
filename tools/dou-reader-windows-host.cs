@@ -93,13 +93,20 @@ namespace DouBepReader
             _rateControl = new TrackBar { Left = 185, Top = 342, Width = 265, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
             Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(voiceTest); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            if (_ownVoice)
+            {
+                // OwnVoice neither creates nor selects a Windows SAPI synthesizer.
+                _speaker = null;
+                _turkishVoice = null;
+                SetStatus("DOU yerel ses modu (deneysel). Yalnız izinli uygulamalar okunur.");
+                return;
+            }
             _speaker = new SpeechSynthesizer();
             _speaker.Rate = 0;
             _turkishVoice = _speaker.GetInstalledVoices().Where(v => v.Enabled && v.VoiceInfo != null && v.VoiceInfo.Culture != null &&
                 v.VoiceInfo.Culture.Name.StartsWith("tr-", StringComparison.OrdinalIgnoreCase))
                 .Select(v => v.VoiceInfo.Name).FirstOrDefault();
             if (_turkishVoice != null) _speaker.SelectVoice(_turkishVoice);
-            if (_ownVoice) { SetStatus("DOU yerel ses modu (deneysel). Yalnız güvenli karakterli kısa UIA adları okunur."); return; }
             SetStatus(_turkishVoice == null ? "Yerel Türkçe SAPI sesi yok. Ekran içeriği okunmaz; klavye ve ekran okuyucunuz çalışmaya devam eder." :
                 "Yerel Türkçe ses hazır. Hedef uygulamaya geçip Ctrl+Alt+R kullanın.");
         }
@@ -530,7 +537,7 @@ namespace DouBepReader
 
         private void StopSpeech()
         {
-            try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { }
+            if (_speaker != null) { try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { } }
             lock (_audioLock)
             {
                 ++_audioGeneration;
@@ -543,7 +550,7 @@ namespace DouBepReader
             foreach (int id in _registeredHotkeys) UnregisterHotKey(Handle, id);
             _registeredHotkeys.Clear();
             StopSpeech();
-            _speaker.Dispose();
+            if (_speaker != null) _speaker.Dispose();
             base.OnFormClosed(e);
         }
     }
