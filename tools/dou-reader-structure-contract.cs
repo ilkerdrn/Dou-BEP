@@ -32,6 +32,9 @@ namespace DouBepReader
                 case "row": return ReaderStructureKind.Row;
                 case "cell": case "gridcell": case "rowheader": case "columnheader": return ReaderStructureKind.Cell;
             }
+            // An explicit, contradictory ARIA role must not be overridden by UIA
+            // fallback metadata. Provider disagreement is treated as unknown.
+            if (aria.Length > 0) return ReaderStructureKind.Unknown;
             string control = (controlKind ?? "").Trim();
             switch (control)
             {
@@ -84,6 +87,7 @@ namespace DouBepReader
             if (Classify("unknown", "Text", false) != ReaderStructureKind.Unknown ||
                 Classify("button", "Button", false) != ReaderStructureKind.Unknown ||
                 Classify("not-a-list", null, false) != ReaderStructureKind.Unknown ||
+                Classify("button", "Table", false) != ReaderStructureKind.Unknown ||
                 Classify(null, "Edit", false) != ReaderStructureKind.Unknown ||
                 Matches(ReaderStructureKind.Unknown, ReaderStructureKind.Unknown))
                 throw new InvalidOperationException("Unsafe inferred role accepted.");
