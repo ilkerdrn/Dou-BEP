@@ -690,6 +690,25 @@ namespace DouBepReader
             return 0;
         }
 
+        // Read-only UIA GridItemPattern; no ValuePattern, TextPattern, text editing,
+        // cell selection, input injection or table-content scanning.
+        private static string ExplicitCellPosition(AutomationElement element)
+        {
+            if (!SafeReadableScope(element)) return null;
+            try
+            {
+                object rawPattern;
+                if (!element.TryGetCurrentPattern(GridItemPattern.Pattern, out rawPattern))
+                    return null;
+                var grid = rawPattern as GridItemPattern;
+                if (grid == null) return null;
+                return ReaderTableContextContract.DescribeCell(grid.Current.Row, grid.Current.Column);
+            }
+            catch (ElementNotAvailableException) { return null; }
+            catch (InvalidOperationException) { return null; }
+            catch (System.Runtime.InteropServices.COMException) { return null; }
+        }
+
         // The accessible Name has already passed hidden/edit/password checks.
         private void SayStructuredElement(AutomationElement element, ReaderStructureKind kind, string readableName)
         {
@@ -699,6 +718,13 @@ namespace DouBepReader
             {
                 int level = ExplicitHeadingLevel(element);
                 if (level > 0) role += " seviye " + level;
+            }
+            if (kind == ReaderStructureKind.Cell)
+            {
+                // Coordinates are added only if the actual UIA provider supplies a
+                // valid GridItemPattern (zero-based); never guess row/column.
+                string position = ExplicitCellPosition(element);
+                if (position != null) role += ", " + position;
             }
             // Explicitly named structures may be read by name. Unnamed structures
             // are announced by role only; Edit/password ancestry was checked before
