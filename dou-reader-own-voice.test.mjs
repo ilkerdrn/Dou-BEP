@@ -320,3 +320,11 @@ test('table headers come only from actual bounded UIA TableItemPattern associate
  assert.match(ps, /ReaderTableHeaderContract\]::SelfTest\(\)/);
  assert.doesNotMatch(cs, /GetCurrentPattern\(\s*ValuePattern/);
 });
+
+test('failed own-voice chunk clears only the active session, deliberate pause survives', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /if \(!PlayOwnVoice\(chunk, generation, session\.Rate\)\)/);
+ assert.match(cs, /if \(_audioGeneration == generation && !session\.Paused &&/);
+ assert.match(cs, /ReferenceEquals\(_speechSession, session\)\)/);
+ assert.match(cs, /_speechSession = null/);
+});
