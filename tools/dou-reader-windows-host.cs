@@ -139,7 +139,7 @@ namespace DouBepReader
             _status = new Label {
                 Text = "Ses başlatılıyor.", Left = 26, Top = 362, Width = 680, Height = 58,
                 ForeColor = ink, BackColor = surface, Padding = new Padding(12, 9, 10, 8),
-                AccessibleName = "Okuyucu durumu",
+                AccessibleName = "Okuyucu durumu", AccessibleRole = AccessibleRole.StatusBar,
                 AccessibleDescription = "En son ses işleminin durumu; öğrenci verisi içermez.",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -273,9 +273,10 @@ namespace DouBepReader
             if (element == null) return false;
             int pid = element.Current.ProcessId;
             if (pid <= 0 || pid == Process.GetCurrentProcess().Id) return false;
-            _scopeProcessId = pid;
             var name = Process.GetProcessById(pid).ProcessName;
-            return _allowed.Contains(name);
+            if (!_allowed.Contains(name)) return false;
+            _scopeProcessId = pid;
+            return true;
         }
 
         // Always obey UIA IsPassword, never request ValuePattern/TextPattern, and
@@ -316,7 +317,7 @@ namespace DouBepReader
                 _cursor = element;
                 Say(element);
             }
-            catch (Exception) { _cursor = null; SetStatus("Erişilebilirlik öğesi alınamadı. Hedef pencereyi kontrol edin."); }
+            catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Erişilebilirlik öğesi alınamadı. Hedef pencereyi kontrol edin."); }
         }
 
         private static AutomationElement Step(AutomationElement from, int direction)
@@ -355,6 +356,7 @@ namespace DouBepReader
                 var focusedNow = AutomationElement.FocusedElement;
                 if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId)
                 {
+                    StopSpeech();
                     _cursor = null;
                     SetStatus("Hedef uygulama odağı değişti. Okumaya devam etmek için Ctrl+Alt+R kullanın.");
                     return;
@@ -371,7 +373,7 @@ namespace DouBepReader
                 }
                 SetStatus("Bu uygulamanın erişilebilir öğelerinde daha fazla içerik bulunamadı.");
             }
-            catch (Exception) { _cursor = null; SetStatus("Gezinme durduruldu. Hedef uygulamada Ctrl+Alt+R ile yeniden başlayın."); }
+            catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Gezinme durduruldu. Hedef uygulamada Ctrl+Alt+R ile yeniden başlayın."); }
         }
 
         // Read-only ARIA/UIA metadata. Never inspect ValuePattern/TextPattern or edit values.
@@ -420,6 +422,7 @@ namespace DouBepReader
                 var focusedNow = AutomationElement.FocusedElement;
                 if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId || !Allowed(focusedNow))
                 {
+                    StopSpeech();
                     _cursor = null;
                     SetStatus("Hedef uygulama odağı değişti. Ctrl+Alt+R ile yeniden başlayın.");
                     return;
@@ -438,7 +441,7 @@ namespace DouBepReader
                 SetStatus(headingOnly ? "Bu uygulama başlık bilgisi sunmuyor veya başka başlık yok." :
                     "Başka erişilebilir belge metni bulunamadı.");
             }
-            catch (Exception) { _cursor = null; SetStatus("Belge gezinmesi durduruldu. Ctrl+Alt+R ile yeniden başlayın."); }
+            catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Belge gezinmesi durduruldu. Ctrl+Alt+R ile yeniden başlayın."); }
         }
 
         // Opt-in, bounded role navigation. Does NOT set UI focus or inject input.
@@ -452,6 +455,7 @@ namespace DouBepReader
                 var focusedNow = AutomationElement.FocusedElement;
                 if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId || !Allowed(focusedNow))
                 {
+                    StopSpeech();
                     _cursor = null;
                     SetStatus("Hedef uygulama odağı değişti. Ctrl+Alt+R ile yeniden başlayın.");
                     return;
@@ -470,6 +474,7 @@ namespace DouBepReader
             }
             catch (Exception)
             {
+                StopSpeech();
                 _cursor = null;
                 SetStatus("Rol gezinmesi durduruldu. Ctrl+Alt+R ile yeniden başlayın.");
             }
