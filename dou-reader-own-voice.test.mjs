@@ -132,3 +132,38 @@ test('optional document shortcut preserves the essential Reader hotkeys', () => 
  assert.match(cs, /sectionButton\.Click \+= delegate \{ ReadStaticTextSection\(true\); \}/);
  assert.match(cs, /Ctrl\+Alt\+Shift\+D/);
 });
+
+test('explicit heading/list/table/cell navigation uses declared roles only', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-structure-contract.cs', import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(contract, /enum ReaderStructureKind/);
+ assert.match(contract, /case "heading"/);
+ assert.match(contract, /case "listitem"/);
+ assert.match(contract, /case "gridcell"/);
+ assert.match(contract, /case "DataGrid"/);
+ assert.match(contract, /case "Edit":|Classify\(null, "Edit", false\)/);
+ assert.match(contract, /Classify\(null, "Text", true\)/);
+ assert.match(cs, /private static ReaderStructureKind DetectStructure/);
+ assert.match(cs, /ReaderStructureContract\.Classify\(role, control, IsHeading\(element\)\)/);
+ assert.match(cs, /ReaderStructureContract\.Matches\(DetectStructure\(candidate\), target\)/);
+ assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
+ assert.match(cs, /string name = GetReadableName\(candidate\)/);
+ assert.match(cs, /if \(candidate == null \|\| candidate\.Current\.ProcessId != _scopeProcessId\) break/);
+ assert.match(ps, /ReaderStructureContract\]::SelfTest\(\)/);
+ assert.match(ps, /ReadAllText\(\$structureContract\)/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(/);
+});
+
+test('structural shortcut conflicts do not disable core hotkeys', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ for (const k of ['HOTKEY_NEXT_LIST', 'HOTKEY_NEXT_TABLE', 'HOTKEY_NEXT_CELL']) {
+   assert.match(cs, new RegExp(k + ' = 11[234]'));
+ }
+ assert.match(cs, /if \(RegisterHotKey\(Handle, hotkey\.Item1, MOD_CONTROL \| MOD_ALT \| MOD_SHIFT, hotkey\.Item2\)\)/);
+ assert.match(cs, /ReaderStructureKind\.List, 1, false/);
+ assert.match(cs, /ReaderStructureKind\.Table, 1, false/);
+ assert.match(cs, /ReaderStructureKind\.Cell, 1, false/);
+ assert.match(cs, /nav\.Click \+= delegate \{ TraverseStructureKind\(target, 1, true\); \}/);
+ assert.match(cs, /AccessibleName = "Sonraki " \+ ReaderStructureContract\.TurkishRole\(target\)/);
+});
