@@ -89,6 +89,7 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - `Ctrl+Alt+Shift+D` isteğe bağlı kısayol ve **Kısa bölümü oku** kontrolü, seçilmiş izinli UIA noktası çevresindeki `ControlType.Text` öğelerinin `Name` alanını toplar.
 - Alt süreç/uygulama odağı ve izinler tekrar doğrulanır. Parola ve düzenlenebilir alanların *alt öğeleri* de reddedilir; 20'den derin aynı-süreç atalarında okunabilirlik kanıtlanamazsa güvenli şekilde atlanır.
 - Uygun olmayan metinler, desteklenmeyen karakterler, aşırı uzun tek düğümler ve art arda yinelenen öğeler ses kuyruğuna alınmaz. Çıktı yalnız yerel ses köprüsüne gider.
+- Art arda gönderilen kısa bölüm komutları, son okunan statik metnin **sonrasından** ilerler; Ctrl+Alt+R veya rol/yapı gezinmesi yeni okuma noktası oluşturur.
 - Saf C# sözleşme öz testleri `-Check` adımına eklendi; Node regresyon kaynak testlerine gezinme sınırı ve izin/şifre kontrolleri eklendi.
 - `docs/DOU-READER-OS-KABUL-MATRISI.md` belge okuma için sekiz ek manuel senaryo içerir.
 
