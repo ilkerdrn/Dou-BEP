@@ -576,9 +576,24 @@ namespace DouBepReader
                     _audioPlayer = player;
                 }
                 player.Load();
-                lock (_audioLock) if (_audioGeneration != generation) return false;
+                // Start asynchronous playback while holding the same lock as StopSpeech().
+                // This closes the race where Stop() ran immediately BEFORE PlaySync().
+                lock (_audioLock)
+                {
+                    if (_audioGeneration != generation || IsDisposed) return false;
+                    player.Play();
+                }
                 AudioStatus(generation, "DOU Türkçe sesi oynatılıyor...");
-                player.PlaySync();
+                // PCM is always 22050 Hz / mono / 16-bit (44100 bytes per second).
+                // Wait for playback duration without blocking UI or holding the audio lock.
+                long durationMs = (long)Math.Ceiling((pcmWav.Length - 44) * 1000.0 / 44100.0) + 200;
+                var clock = Stopwatch.StartNew();
+                while (clock.ElapsedMilliseconds < durationMs)
+                {
+                    lock (_audioLock)
+                        if (_audioGeneration != generation || IsDisposed) return false;
+                    Thread.Sleep(25);
+                }
                 lock (_audioLock) return _audioGeneration == generation && !IsDisposed;
             }
             catch (Exception)
