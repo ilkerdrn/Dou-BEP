@@ -3,7 +3,7 @@
  */
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {dirname,resolve,join} from 'node:path';
+import {dirname,resolve,join,sep} from 'node:path';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const remote=/^(?:https?:)?\/\//i;
 const patterns=[
@@ -27,7 +27,7 @@ export function auditLocalAssets(){
  const files=[...new Set(matches.map(x=>x[1]).filter(x=>/\.(?:html|mjs|js|css)$/.test(x)))];
  const problems=[];
  for(const name of files){const absolute=resolve(root,name);
-  if(!absolute.startsWith(root+'/')||name.includes('..')){problems.push({file:name,kind:'unsafe_path'});continue;}
+  if(!absolute.startsWith(root+sep)||name.includes('..')){problems.push({file:name,kind:'unsafe_path'});continue;}
   const content=readFileSync(absolute,'utf8');problems.push(...inspectPublishedSource(content,name));
  }
  return {checked:files.length,problems};
