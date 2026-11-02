@@ -36,6 +36,7 @@ namespace DouBepReader
         private const int HOTKEY_HEADING_PREVIOUS = 108;
         private const int HOTKEY_DOCUMENT_TEXT = 109;
         private const int HOTKEY_PAUSE_RESUME = 110;
+        private const int HOTKEY_SECTION_TEXT = 111;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -43,7 +44,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -120,12 +121,23 @@ namespace DouBepReader
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var subtitle = new Label {
-                Text = "İzinli uygulamadaki erişilebilir öğeleri kısayollarla oku. Veri buluta gönderilmez.",
-                Left = 27, Top = 99, Width = 680, Height = 34,
+                Text = "İzinli uygulamalarda isteğe bağlı okuma. Ağ bağlantısı yok.",
+                Left = 27, Top = 99, Width = 510, Height = 34,
                 ForeColor = muted, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
+            var sectionButton = new Button {
+                Text = "Kısa bölümü oku", Left = 551, Top = 93, Width = 169, Height = 43,
+                AccessibleName = "İzinli uygulamada en fazla on altı statik metin öğesini oku",
+                AccessibleDescription = "Önce hedef uygulamada Ctrl Alt R ile bir okuma noktası seçin.",
+                TabIndex = 4, FlatStyle = FlatStyle.Flat,
+                ForeColor = ink, BackColor = surface,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+            sectionButton.FlatAppearance.BorderSize = 1;
+            sectionButton.FlatAppearance.BorderColor = accent;
+            sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Belge metni\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 680, Height = 175, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -189,7 +201,7 @@ namespace DouBepReader
                 AccessibleDescription = "Sol yavaş, sağ hızlı, ortada normal.",
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
-            Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle);
+            Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle); Controls.Add(sectionButton);
             Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
             Controls.Add(voiceTest); Controls.Add(pause); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
             if (_ownVoice)
@@ -244,6 +256,12 @@ namespace DouBepReader
                 _registeredHotkeys.Add(HOTKEY_PAUSE_RESUME);
             else
                 SetStatus("Ctrl+Alt+P başka bir uygulamada; duraklatma düğmesini kullanın.");
+            // Optional on-demand document scanner; never disable the core hotkeys.
+            if (RegisterHotKey(Handle, HOTKEY_SECTION_TEXT,
+                MOD_CONTROL | MOD_ALT | MOD_SHIFT, (uint)Keys.D))
+                _registeredHotkeys.Add(HOTKEY_SECTION_TEXT);
+            else
+                SetStatus("Ctrl+Alt+Shift+D kullanılıyor; kısa bölüm düğmesi kullanılabilir.");
         }
 
         protected override void WndProc(ref Message m)
@@ -257,6 +275,7 @@ namespace DouBepReader
                     case HOTKEY_PREVIOUS: Traverse(-1); break;
                     case HOTKEY_STOP: StopSpeech(); SetStatus("Seslendirme durduruldu."); break;
                     case HOTKEY_PAUSE_RESUME: TogglePause(); break;
+                    case HOTKEY_SECTION_TEXT: ReadStaticTextSection(false); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
