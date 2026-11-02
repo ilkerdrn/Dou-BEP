@@ -109,8 +109,11 @@ test('opt-in static text section is bounded and excludes edited or password desc
  assert.match(cs, /if \(source\.HasExited \|\| !_allowed\.Contains\(source\.ProcessName\)\)/);
  assert.match(cs, /ReadStaticTextSection\(false\)/);
  assert.match(cs, /ReadStaticTextSection\(true\)/);
+ assert.match(cs, /ancestor != null && ancestor\.Current\.ProcessId == sourcePid/);
  assert.match(source, /MaxTextNodes = 16/);
  assert.match(source, /MaxTraversalSteps = 350/);
+ assert.match(source, /MaxScanMilliseconds = 1500/);
+ assert.match(cs, /scanWatch\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
  assert.match(source, /MaxCharacters = 850/);
  assert.match(source, /new string\('Z', 39\)/);
  assert.match(ps, /ReaderDocumentContract\]::SelfTest\(\)/);
