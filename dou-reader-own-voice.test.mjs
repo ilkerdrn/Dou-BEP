@@ -389,3 +389,20 @@ test('own-voice bridge handles bounded Turkish sentence announcements as WAV', (
    'Paragrafın ikinci cümlesi okunuyor.'
  ]) assertPcm(start({text, rate: 1, acousticModel: 'legacy'}));
 });
+
+test('UIA acceptance fixture is offline, anonymous and exposes semantic headings/list/table', () => {
+ const html = readFileSync(new URL('./tools/dou-reader-uia-fixture.html', import.meta.url), 'utf8');
+ assert.match(html, /<html lang="tr">/);
+ assert.match(html, /default-src 'none'/);
+ assert.match(html, /<h1>/);
+ assert.match(html, /<h2>/);
+ assert.match(html, /<p>Merhaba dünya\. Bugün sınav var! Hazır mısınız\?<\/p>/);
+ assert.match(html, /<th scope="col">/);
+ assert.match(html, /<th scope="row">/);
+ assert.match(html, /<ul aria-label=/);
+ assert.match(html, /type="password"/);
+ assert.match(html, /type="text"/);
+ assert.match(html, /DUMMY_CANARY_DO_NOT_READ/);
+ assert.doesNotMatch(html, /<script\b/i);
+ assert.doesNotMatch(html, /https?:\/\//i);
+});
