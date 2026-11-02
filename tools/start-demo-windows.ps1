@@ -8,7 +8,8 @@ $demoDir = Join-Path $root 'data'
 New-Item -ItemType Directory -Force -Path $demoDir | Out-Null
 $dbFile = Join-Path $demoDir ('demo-' + [guid]::NewGuid().ToString('N') + '.sqlite')
 $bytes = New-Object byte[] 24
-[System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
 $password = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+','-').Replace('/','_')
 $env:BEP_DB_PATH = $dbFile
 $env:BEP_DEMO_PASSWORD = $password
