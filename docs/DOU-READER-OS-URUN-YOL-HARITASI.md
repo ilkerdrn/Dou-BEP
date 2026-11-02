@@ -68,3 +68,5 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Bağımsız platform denemesinde aynı ses köprüsü kaynağının Node WAV testi 8/8 ve hız/karakter varyasyonları için 3/3 geçti; bunlar son C# derlemesinin geçtiği anlamına gelmez.
 
 **Açık kapılar:** gerçek Windows PowerShell C# derleme, cihazdan duyulur ses, 8 parçalı okuma, Ctrl+Alt+X ile anlık durdurma, büyük yazı/Windows yüksek kontrast, UIA izin sınırlarının gerçek kullanıcı testleri. Bu kontroller tamamlanmadan kullanıma hazır etiketi verilmez.
+
+- Son revizyon: asenkron ses başlatma ve durdurma yarışına karşı kilitli kontrol; Windows kabulü bekliyor.
