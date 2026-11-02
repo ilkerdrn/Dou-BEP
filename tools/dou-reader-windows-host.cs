@@ -986,7 +986,18 @@ namespace DouBepReader
                         chunk = session.Chunks[index];
                     }
                     AudioStatus(generation, "Okunuyor: parça " + (index + 1) + " / " + session.Chunks.Count);
-                    if (!PlayOwnVoice(chunk, generation, session.Rate)) return;
+                    if (!PlayOwnVoice(chunk, generation, session.Rate))
+                    {
+                        lock (_audioLock)
+                        {
+                            // A paused session must remain resumable. Failed active
+                            // sessions must not retain an unusable text queue.
+                            if (_audioGeneration == generation && !session.Paused &&
+                                ReferenceEquals(_speechSession, session))
+                                _speechSession = null;
+                        }
+                        return;
+                    }
                     lock (_audioLock)
                     {
                         if (_audioGeneration != generation || session.Paused ||
