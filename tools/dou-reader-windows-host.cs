@@ -105,9 +105,12 @@ namespace DouBepReader
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 800;
-            Height = 905;
-            MinimumSize = new Size(800, 905);
+            Height = 740;
+            MinimumSize = new Size(760, 540);
+            // Small laptops should scroll instead of moving bottom-anchored
+            // playback controls over sentence or structure buttons.
             AutoScroll = true;
+            AutoScrollMinSize = new Size(760, 855);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             Font = new Font("Segoe UI", 10.0f);
@@ -176,7 +179,7 @@ namespace DouBepReader
                 AccessibleName = "DOU yerel ses motorunu sentetik örnekle dene",
                 TabIndex = 0, FlatStyle = FlatStyle.Flat,
                 ForeColor = highContrast ? SystemColors.HighlightText : page, BackColor = accent,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             voiceTest.FlatAppearance.BorderSize = highContrast ? 1 : 0;
             voiceTest.Click += delegate {
@@ -189,7 +192,7 @@ namespace DouBepReader
                 AccessibleDescription = "Devam edildiğinde yarım kalan konuşma parçası baştan okunur.",
                 TabIndex = 1, FlatStyle = FlatStyle.Flat,
                 ForeColor = ink, BackColor = surface,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             pause.FlatAppearance.BorderSize = 1;
             pause.FlatAppearance.BorderColor = accent;
@@ -199,7 +202,7 @@ namespace DouBepReader
                 AccessibleName = "Konuşmayı hemen durdur",
                 TabIndex = 2, FlatStyle = FlatStyle.Flat,
                 ForeColor = ink, BackColor = surface,
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
             stop.FlatAppearance.BorderSize = 1;
             stop.FlatAppearance.BorderColor = accent;
@@ -207,7 +210,7 @@ namespace DouBepReader
             var rateLabel = new Label {
                 Text = "KONUŞMA HIZI", Left = 524, Top = 732, Width = 196, Height = 22,
                 ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             _rateControl = new TrackBar {
                 Left = 517, Top = 768, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
@@ -215,7 +218,7 @@ namespace DouBepReader
                 BackColor = page, ForeColor = ink,
                 AccessibleName = "Türkçe konuşma hızı",
                 AccessibleDescription = "Sol yavaş, sağ hızlı, ortada normal.",
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             var structureLabel = new Label {
                 Text = "YAPISAL GEZİNME", Left = 26, Top = 463, Width = 250, Height = 22,
