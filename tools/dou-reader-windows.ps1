@@ -58,18 +58,23 @@ try {
     }
     Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
-    $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
-    try {
-        $localTr = @($speaker.GetInstalledVoices() | Where-Object {
-            $_.Enabled -and $_.VoiceInfo.Culture.Name -like 'tr-*'
-        }).Count
-    } finally { $speaker.Dispose() }
+    $localTr = 0
+    if ($Check -or -not $OwnVoice) {
+        # SAPI is inspected only for legacy SAPI mode or diagnostics.
+        # -OwnVoice must never instantiate a Windows speech synthesizer.
+        $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
+        try {
+            $localTr = @($speaker.GetInstalledVoices() | Where-Object {
+                $_.Enabled -and $_.VoiceInfo.Culture.Name -like 'tr-*'
+            }).Count
+        } finally { $speaker.Dispose() }
+    }
     if ($Check) {
         Write-Host ('DOU Reader teknik on denetim: UIA, ses sozlesmesi ve Windows Forms yuklendi; yerel Turkce SAPI sesi: ' + $localTr)
         if ($localTr -eq 0) { Write-Warning 'Yerel Turkce ses yok. Okuyucu otomatik uzaktaki sese gecmez.' }
         return
     }
-    Write-Host 'DOU Reader v2.44: uygulama icinde metin tutulmaz ve hicbir sunucuya gonderilmez.'
+    Write-Host 'DOU Reader OS pilot: metin ag servisine gonderilmez; WAV RAM icinde tutulur.'
     Write-Host ('Izin verilen uygulamalar: ' + ($AllowedProcesses -join ', '))
     $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
     if ($OwnVoice) {
