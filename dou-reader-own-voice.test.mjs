@@ -157,7 +157,9 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
  assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
  assert.match(cs, /string name = GetReadableName\(candidate\)/);
- assert.match(cs, /if \(name == null && !String\.IsNullOrWhiteSpace\(candidate\.Current\.Name\)\) continue/);
+ assert.match(cs, /bool gridRecord = candidate\.Current\.ControlType == ControlType\.DataItem/);
+ assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
+ assert.match(cs, /!gridRecord && name == null/);
  assert.match(cs, /if \(candidate == null \|\| candidate\.Current\.ProcessId != _scopeProcessId\) break/);
  assert.match(ps, /ReaderStructureContract\]::SelfTest\(\)/);
  assert.match(ps, /ReadAllText\(\$structureContract\)/);
@@ -204,7 +206,9 @@ test('known ARIA versus UIA conflicts must be rejected, unnamed roles may be spo
  assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
  assert.match(cs, /string speech = role/);
  assert.match(cs, /if \(!String\.IsNullOrWhiteSpace\(readableName\)\)/);
- assert.match(cs, /if \(name == null && !String\.IsNullOrWhiteSpace\(candidate\.Current\.Name\)\) continue/);
+ assert.match(cs, /bool gridRecord = candidate\.Current\.ControlType == ControlType\.DataItem/);
+ assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
+ assert.match(cs, /!gridRecord && name == null/);
 });
 
 test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
@@ -264,4 +268,11 @@ test('safe Turkish table, list and heading announcements synthesize as local PCM
  for (const phrase of phrases) {
   assertPcm(start({text: phrase, rate: 1, acousticModel: 'legacy'}));
  }
+});
+
+test('DataItem records never expose potentially editable accessible Name', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /bool gridRecord = candidate\.Current\.ControlType == ControlType\.DataItem/);
+ assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
+ assert.match(cs, /SayStructuredElement\(candidate, actual, name\)/);
 });
