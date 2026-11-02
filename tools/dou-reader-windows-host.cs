@@ -165,7 +165,7 @@ namespace DouBepReader
 
         // Always obey UIA IsPassword, never request ValuePattern/TextPattern, and
         // never read contents of edit controls. Even unmarked form fields are skipped.
-        private static string AccessibleName(AutomationElement element)
+        private static string GetReadableName(AutomationElement element)
         {
             if (element == null) return null;
             if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
@@ -181,7 +181,7 @@ namespace DouBepReader
 
         private void Say(AutomationElement element)
         {
-            string text = AccessibleName(element);
+            string text = GetReadableName(element);
             if (text == null) { SetStatus("Bu öğe okunamıyor veya gizlilik nedeniyle atlandı."); return; }
             if (_ownVoice) { SpeakOwnVoice(text); return; }
             if (_turkishVoice == null) { SetStatus("Yerel Türkçe SAPI sesi bulunamadı. Sesli okuma başlatılmadı."); return; }
@@ -248,7 +248,7 @@ namespace DouBepReader
                 {
                     candidate = Step(candidate, direction);
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
-                    if (AccessibleName(candidate) == null) continue;
+                    if (GetReadableName(candidate) == null) continue;
                     _cursor = candidate;
                     Say(candidate);
                     return;
@@ -313,7 +313,7 @@ namespace DouBepReader
                 {
                     candidate = Step(candidate, direction);
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
-                    if (AccessibleName(candidate) == null) continue;
+                    if (GetReadableName(candidate) == null) continue;
                     if (headingOnly ? !IsHeading(candidate) : !IsDocumentText(candidate)) continue;
                     _cursor = candidate;
                     Say(candidate);
@@ -345,7 +345,7 @@ namespace DouBepReader
                 {
                     candidate = Step(candidate, 1);
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
-                    if (candidate.Current.ControlType != role || AccessibleName(candidate) == null) continue;
+                    if (candidate.Current.ControlType != role || GetReadableName(candidate) == null) continue;
                     _cursor = candidate;
                     Say(candidate);
                     return;
