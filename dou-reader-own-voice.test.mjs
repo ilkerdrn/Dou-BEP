@@ -51,6 +51,8 @@ test('reader uses bounded nonpersisted WAV pipeline with opt-in activation', () 
  const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url), 'utf8');
  assert.match(cs, /_ownVoice\) \{ SpeakOwnVoice/);
  assert.match(cs, /new MemoryStream\(pcmWav, false\)/);
+ assert.match(cs, /player\.Play\(\)/);
+ assert.doesNotMatch(cs, /player\.PlaySync\(\)/);
  assert.match(cs, /ReaderSpeechContract\.IsPcmWav/);
  assert.match(cs, /_audioGeneration != generation/);
  assert.match(cs, /process|proc\.Kill/);
