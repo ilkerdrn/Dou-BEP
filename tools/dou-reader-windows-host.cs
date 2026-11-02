@@ -98,7 +98,7 @@ namespace DouBepReader
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 800;
             Height = 780;
-            MinimumSize = new Size(800, 760);
+            MinimumSize = new Size(800, 780);
             AutoScroll = true;
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
