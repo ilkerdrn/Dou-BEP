@@ -1,12 +1,11 @@
 // DOU Reader OS | bounded, deterministic text and WAV contracts.
 // No UIA, IO, network, or external synthesizer dependencies.
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
-
 namespace DouBepReader
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.RegularExpressions;
     public static class ReaderSpeechContract
     {
         public const int MaxInputCharacters = 850;
