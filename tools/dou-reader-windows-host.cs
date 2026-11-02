@@ -87,10 +87,12 @@ namespace DouBepReader
             _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 252, Width = 466, Height = 49, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
             var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 349, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
+            var voiceTest = new Button { Text = "DOU sesi dene", Left = 22, Top = 312, Width = 146, Height = 30, AccessibleName = "DOU yerel ses denemesi" };
+            voiceTest.Click += delegate { if (_ownVoice) SpeakOwnVoice("Merhaba dünya"); else SetStatus("DOU sesi için OwnVoice modunu başlatın."); };
             var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 190, Top = 322, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
             _rateControl = new TrackBar { Left = 185, Top = 342, Width = 265, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
-            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(voiceTest); Controls.Add(rateLabel); Controls.Add(_rateControl);
             _speaker = new SpeechSynthesizer();
             _speaker.Rate = 0;
             _turkishVoice = _speaker.GetInstalledVoices().Where(v => v.Enabled && v.VoiceInfo != null && v.VoiceInfo.Culture != null &&
