@@ -509,7 +509,8 @@ namespace DouBepReader
                 if (sentence == null)
                 {
                     StopSpeech();
-                    SetStatus("Bu bölgede desteklenen erişilebilir statik metin bulunamadı.");
+                    _advanceAfterSection = continueAfterPrevious;
+                    SetStatus("Bu bölgede daha fazla erişilebilir statik metin bulunamadı.");
                     return;
                 }
                 _cursor = lastIncluded;
