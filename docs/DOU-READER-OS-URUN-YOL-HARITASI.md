@@ -70,3 +70,15 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 **Açık kapılar:** gerçek Windows PowerShell C# derleme, cihazdan duyulur ses, 8 parçalı okuma, Ctrl+Alt+X ile anlık durdurma, büyük yazı/Windows yüksek kontrast, UIA izin sınırlarının gerçek kullanıcı testleri. Bu kontroller tamamlanmadan kullanıma hazır etiketi verilmez.
 
 - Son revizyon: asenkron ses başlatma ve durdurma yarışına karşı kilitli kontrol; Windows kabulü bekliyor.
+
+## Sprint 02 — duraklatma, kısayol ve güvenli erişim (kodlandı, Windows kabulü bekliyor)
+
+- Kullanıcı isteğiyle **Ctrl+Alt+P** ve erişilebilir **Duraklat / devam** düğmesi eklendi.
+- Ses oturumu yalnız bellekte ve sınırlı süre/uzunlukta tutulur; durdurma, yeni okuma ve kapatmada temizlenir. Devam edilirse son yarım kalan ses parçası baştan başlar; örneklem hassasiyetinde devam henüz yoktur.
+- Duraklatma kısayolu başka uygulamayla çakışırsa **mevcut okuma kısayolları korunur**; buton kullanılabilir.
+- Devam ettirmede önce izinli süreç yeniden doğrulanır; global kısayolla devamda hedef uygulamanın odağı da doğrulanır.
+- İzin dışı odak veya okunamayan öğe geldiğinde eski konuşma kesilir; parola / düzenlenebilir alanın alt UIA metin düğümleri de atlanır.
+- Ses sözleşmesi bozuk RIFF/WAVE alanları için 12 ek olumsuz sınır denemesi içerir.
+- **`tools/dou-reader-acceptance.ps1`** adında üretim verisine dokunmayan otomatik test başlatıcısı ve **`docs/DOU-READER-OS-KABUL-MATRISI.md`** kabul senaryoları eklendi.
+
+**Kalan kritik kapı:** Son C# kaynaklarının gerçek Windows PowerShell 5.1 ortamında derlenmesi ve kullanıcı tarafından ses, iptal, klavye, kontrast ve ses aygıtı davranışlarının doğrulanması. PR ana dala aktarılmamalıdır.
