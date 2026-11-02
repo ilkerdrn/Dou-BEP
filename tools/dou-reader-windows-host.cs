@@ -174,11 +174,12 @@ namespace DouBepReader
             var name = element.Current.Name;
             if (String.IsNullOrWhiteSpace(name)) return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
-            if (name.Length > MAX_SPEECH_CHARACTERS) name = name.Substring(0, MAX_SPEECH_CHARACTERS);
+            if (name.Length > MAX_SPEECH_CHARACTERS) return null; // Refuse; do not silently truncate an accessible name.
             if (name.Length == 0) return null;
             var type = element.Current.ControlType.LocalizedControlType;
             if (String.IsNullOrEmpty(type)) type = "öğe";
-            return type + ": " + name;
+            var result = type + ": " + name;
+            return result.Length <= MAX_SPEECH_CHARACTERS ? result : null;
         }
 
         private void Say(AutomationElement element)
@@ -378,6 +379,9 @@ namespace DouBepReader
             }
             int generation;
             lock (_audioLock) generation = _audioGeneration;
+            // Own voice uses the same visible speed slider, bounded within the bridge's
+            // 0.75..1.5 contract. Read the WinForms control on the UI thread only.
+            double rate = 1.0 + (_rateControl.Value * 0.08);
             SetStatus("DOU yerel ses hazırlanıyor...");
             Task.Run(() =>
             {
@@ -385,7 +389,7 @@ namespace DouBepReader
                 {
                     lock (_audioLock) if (_audioGeneration != generation) return;
                     AudioStatus(generation, "Okunuyor: parça " + (i + 1) + " / " + chunks.Count);
-                    if (!PlayOwnVoice(chunks[i], generation)) return;
+                    if (!PlayOwnVoice(chunks[i], generation, rate)) return;
                 }
                 AudioStatus(generation, "Tüm ses parçalarının oynatımı tamamlandı.");
             });
@@ -411,7 +415,7 @@ namespace DouBepReader
 
         // No WAV files are written to disk: bounded stdout -> memory -> SoundPlayer.
         // One generation represents a single user request including every chunk.
-        private bool PlayOwnVoice(string text, int generation)
+        private bool PlayOwnVoice(string text, int generation, double rate)
         {
             Process proc = null;
             SoundPlayer player = null;
@@ -435,7 +439,7 @@ namespace DouBepReader
                 }
                 var escaped = text.Replace("\\", "\\\\").Replace("\"", "\\\"")
                                   .Replace("\n", " ").Replace("\r", " ");
-                byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\"}");
+                byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\",\"rate\":" + rate.ToString("0.00", CultureInfo.InvariantCulture) + "}");
                 proc.StandardInput.BaseStream.Write(input, 0, input.Length);
                 proc.StandardInput.Close();
 
