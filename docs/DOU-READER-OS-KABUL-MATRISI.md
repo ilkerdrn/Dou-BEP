@@ -107,3 +107,16 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 44 | RowSpan/ColumnSpan negatif, sıfır veya aşırı büyük | Koordinat ve birleşme bağlamı uydurulmaz | Bekliyor |
 
 **Not:** Hücre koordinatları yalnız UIA GridItemPattern tarafından açıkça sağlanıyorsa kullanılır. Kullanıcı testleri ve son C# Windows derlemesi henüz yapılmadı.
+
+## Sprint 07 — tarafsız DataItem ve bütünleşik hücre sınırı
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 45 | Açık `DataItem`, ancak `GridItemPattern` yok | Yalnız kontrol türünden hücre sonucu çıkarılmaz | Bekliyor |
+| 46 | `DataItem + GridItemPattern` var | `Hücre` gezinmesinde nötr **ızgara öğesi** ve güvenilir satır/sütun bilgisi okunur | Bekliyor |
+| 47 | `DataItem` adı düzenlenebilir alandaki metni yansıtıyor | `Name` okunmaz; yalnız güvenli yapısal bağlam duyurulur | Bekliyor |
+| 48 | Açık ARIA `cell` + GridItemPattern | Önceki açık hücre rolü korunur, gerçek koordinat açıklanır | Bekliyor |
+| 49 | Satır=9999 ve RowSpan=2 veya Sütun=9999 ve ColumnSpan=2 | Hücrenin son sınırı 10000'i geçiyorsa birleşim bağlamı reddedilir | Bekliyor |
+| 50 | Geçersiz birleşik hücre ve geçersiz ARIA rolü | Koordinat/semantik çıkarımı uydurulmaz, hata metni sızdırılmaz | Bekliyor |
+
+**Not:** Bu senaryolar kod düzeyi güvenlik amaçlarını anlatır; Microsoft UIA sağlayıcıları arasında davranışlar değişebilir. Windows PowerShell C# derlemesi, ses cihazı ve görme engelli kullanıcı kabulü henüz gerçekleştirilmedi.
