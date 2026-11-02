@@ -150,8 +150,10 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(cs, /if \(value >= 80051 && value <= 80059\) return value - 80050/);
  assert.match(cs, /role \+= " seviye " \+ level/);
  assert.match(cs, /SayStructuredElement\(candidate, ReaderStructureKind\.Heading, GetReadableName\(candidate\)\)/);
- assert.match(cs, /ReaderStructureContract\.Classify\(role, control, IsHeading\(element\)\)/);
- assert.match(cs, /ReaderStructureContract\.Matches\(DetectStructure\(candidate\), target\)/);
+ assert.match(cs, /ReaderStructureContract\.Classify\(role, control,/);
+ assert.match(cs, /IsHeading\(element\), hasGridItemPattern\)/);
+ assert.match(cs, /ReaderStructureKind actual = DetectStructure\(candidate\)/);
+ assert.match(cs, /ReaderStructureContract\.Matches\(actual, target\)/);
  assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
  assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
  assert.match(cs, /string name = GetReadableName\(candidate\)/);
@@ -230,4 +232,20 @@ test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
  assert.match(ps, /ReaderTableContextContract\]::SelfTest\(\)/);
  assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
  assert.doesNotMatch(cs, /GetCurrentPattern\(\s*ValuePattern/);
+});
+
+test('DataItem with GridItem is called neutral grid item, not guessed cell', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-structure-contract.cs', import.meta.url), 'utf8');
+ assert.match(cs, /else if \(type == ControlType\.DataItem\) control = "DataItem"/);
+ assert.match(cs, /hasGridItemPattern = element\.TryGetCurrentPattern\(/);
+ assert.match(cs, /GridItemPattern\.Pattern, out pattern\) && pattern is GridItemPattern/);
+ assert.match(contract, /GridItem = 7/);
+ assert.match(contract, /"ızgara öğesi"/);
+ assert.match(contract, /Classify\(null, "DataItem", false, false\) != ReaderStructureKind\.Unknown/);
+ assert.match(contract, /Classify\(null, "DataItem", false, true\) != ReaderStructureKind\.GridItem/);
+ assert.match(contract, /Classify\("button", "DataItem", false, true\) != ReaderStructureKind\.Unknown/);
+ assert.match(contract, /requested == ReaderStructureKind\.Cell && actual == ReaderStructureKind\.GridItem/);
+ assert.match(cs, /SayStructuredElement\(candidate, actual, name\)/);
+ assert.match(cs, /kind == ReaderStructureKind\.Cell \|\| kind == ReaderStructureKind\.GridItem/);
 });
