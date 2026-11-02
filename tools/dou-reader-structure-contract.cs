@@ -19,31 +19,53 @@ namespace DouBepReader
     {
         // Only well-defined UIA control kinds and exact ARIA role tokens count.
         // A provider's localized label is never used to infer semantics.
-        public static ReaderStructureKind Classify(string ariaRole, string controlKind, bool headingMetadata)
+        private static ReaderStructureKind ExplicitAria(string ariaRole)
         {
-            if (headingMetadata) return ReaderStructureKind.Heading;
-            string aria = (ariaRole ?? "").Trim().ToLowerInvariant();
-            switch (aria)
+            switch ((ariaRole ?? "").Trim().ToLowerInvariant())
             {
                 case "heading": return ReaderStructureKind.Heading;
                 case "list": case "directory": return ReaderStructureKind.List;
                 case "listitem": return ReaderStructureKind.ListItem;
                 case "table": case "grid": case "treegrid": return ReaderStructureKind.Table;
                 case "row": return ReaderStructureKind.Row;
-                case "cell": case "gridcell": case "rowheader": case "columnheader": return ReaderStructureKind.Cell;
+                case "cell": case "gridcell": case "rowheader": case "columnheader":
+                    return ReaderStructureKind.Cell;
+                default: return ReaderStructureKind.Unknown;
             }
-            // An explicit, contradictory ARIA role must not be overridden by UIA
-            // fallback metadata. Provider disagreement is treated as unknown.
-            if (aria.Length > 0) return ReaderStructureKind.Unknown;
-            string control = (controlKind ?? "").Trim();
-            switch (control)
+        }
+
+        private static ReaderStructureKind ExplicitControl(string controlKind)
+        {
+            switch ((controlKind ?? "").Trim())
             {
                 case "List": return ReaderStructureKind.List;
                 case "ListItem": return ReaderStructureKind.ListItem;
                 case "Table": case "DataGrid": return ReaderStructureKind.Table;
                 case "HeaderItem": return ReaderStructureKind.Cell;
+                default: return ReaderStructureKind.Unknown;
             }
-            return ReaderStructureKind.Unknown;
+        }
+
+        // Known ARIA/UIA disagreements fail closed. A visual style or a localized
+        // label cannot establish role; only explicit provider metadata can.
+        public static ReaderStructureKind Classify(string ariaRole, string controlKind, bool headingMetadata)
+        {
+            string token = (ariaRole ?? "").Trim();
+            ReaderStructureKind aria = ExplicitAria(token);
+            ReaderStructureKind uia = ExplicitControl(controlKind);
+            if (headingMetadata)
+            {
+                if (token.Length > 0 && aria != ReaderStructureKind.Heading)
+                    return ReaderStructureKind.Unknown;
+                if (uia != ReaderStructureKind.Unknown && uia != ReaderStructureKind.Heading)
+                    return ReaderStructureKind.Unknown;
+                return ReaderStructureKind.Heading;
+            }
+            if (token.Length > 0 && aria == ReaderStructureKind.Unknown)
+                return ReaderStructureKind.Unknown;
+            if (aria != ReaderStructureKind.Unknown && uia != ReaderStructureKind.Unknown && aria != uia)
+                return ReaderStructureKind.Unknown;
+            return aria != ReaderStructureKind.Unknown ? aria : uia;
         }
 
         public static bool Matches(ReaderStructureKind actual, ReaderStructureKind requested)
@@ -88,6 +110,10 @@ namespace DouBepReader
                 Classify("button", "Button", false) != ReaderStructureKind.Unknown ||
                 Classify("not-a-list", null, false) != ReaderStructureKind.Unknown ||
                 Classify("button", "Table", false) != ReaderStructureKind.Unknown ||
+                Classify("list", "Table", false) != ReaderStructureKind.Unknown ||
+                Classify("row", "ListItem", false) != ReaderStructureKind.Unknown ||
+                Classify("button", "Table", true) != ReaderStructureKind.Unknown ||
+                Classify(null, "Table", true) != ReaderStructureKind.Unknown ||
                 Classify(null, "Edit", false) != ReaderStructureKind.Unknown ||
                 Matches(ReaderStructureKind.Unknown, ReaderStructureKind.Unknown))
                 throw new InvalidOperationException("Unsafe inferred role accepted.");
