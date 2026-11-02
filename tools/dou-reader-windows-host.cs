@@ -42,6 +42,7 @@ namespace DouBepReader
         private const int HOTKEY_NEXT_CELL = 114;
         private const int HOTKEY_NEXT_LIST_ITEM = 115;
         private const int HOTKEY_NEXT_ROW = 116;
+        private const int HOTKEY_NEXT_PARAGRAPH = 117;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -49,7 +50,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL, HOTKEY_NEXT_LIST_ITEM, HOTKEY_NEXT_ROW };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL, HOTKEY_NEXT_LIST_ITEM, HOTKEY_NEXT_ROW, HOTKEY_NEXT_PARAGRAPH };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -145,7 +146,7 @@ namespace DouBepReader
             sectionButton.FlatAppearance.BorderColor = accent;
             sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/I  Liste / liste öğesi\r\nCtrl+Alt+Shift+T/R/C  Tablo / satır / hücre\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/I  Liste / liste öğesi\r\nCtrl+Alt+Shift+T/R/C  Tablo / satır / hücre\r\nCtrl+Alt+Shift+P  Sonraki paragraf\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 720, Height = 200, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -223,6 +224,7 @@ namespace DouBepReader
             Controls.Add(_reverseStructure);
             var structureActions = new[] {
                 Tuple.Create("Başlık", ReaderStructureKind.Heading),
+                Tuple.Create("Paragraf", ReaderStructureKind.Paragraph),
                 Tuple.Create("Liste", ReaderStructureKind.List),
                 Tuple.Create("Liste öğesi", ReaderStructureKind.ListItem),
                 Tuple.Create("Tablo", ReaderStructureKind.Table),
@@ -233,11 +235,11 @@ namespace DouBepReader
             {
                 var action = structureActions[index];
                 ReaderStructureKind target = action.Item2;
-                int row = index / 3;
-                int column = index % 3;
+                int row = index / 4;
+                int column = index % 4;
                 var nav = new Button {
-                    Text = action.Item1, Left = 26 + (column * 235), Top = 494 + (row * 60),
-                    Width = 219, Height = 48,
+                    Text = action.Item1, Left = 26 + (column * 177), Top = 494 + (row * 60),
+                    Width = 166, Height = 48,
                     AccessibleName = target == ReaderStructureKind.Cell ?
                         "Hücre veya ızgara öğeleri arasında gezin" :
                         ReaderStructureContract.TurkishRole(target) + " arasında gezin",
@@ -319,7 +321,8 @@ namespace DouBepReader
                 Tuple.Create(HOTKEY_NEXT_TABLE, (uint)Keys.T),
                 Tuple.Create(HOTKEY_NEXT_CELL, (uint)Keys.C),
                 Tuple.Create(HOTKEY_NEXT_LIST_ITEM, (uint)Keys.I),
-                Tuple.Create(HOTKEY_NEXT_ROW, (uint)Keys.R)
+                Tuple.Create(HOTKEY_NEXT_ROW, (uint)Keys.R),
+                Tuple.Create(HOTKEY_NEXT_PARAGRAPH, (uint)Keys.P)
             };
             foreach (var hotkey in structureHotkeys)
             {
@@ -346,6 +349,7 @@ namespace DouBepReader
                     case HOTKEY_NEXT_CELL: TraverseStructureKind(ReaderStructureKind.Cell, 1, false); break;
                     case HOTKEY_NEXT_LIST_ITEM: TraverseStructureKind(ReaderStructureKind.ListItem, 1, false); break;
                     case HOTKEY_NEXT_ROW: TraverseStructureKind(ReaderStructureKind.Row, 1, false); break;
+                    case HOTKEY_NEXT_PARAGRAPH: TraverseStructureKind(ReaderStructureKind.Paragraph, 1, false); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
