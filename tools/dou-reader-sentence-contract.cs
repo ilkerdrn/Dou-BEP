@@ -18,7 +18,8 @@ namespace DouBepReader
                 return null;
             // The same validator is used by the actual own-voice bridge.
             string safe = Regex.Replace(text.Trim(), @"\s+", " ");
-            if (ReaderSpeechContract.Split(safe) == null) return null;
+            if (ReaderSpeechContract.Split(safe) == null ||
+                !Regex.IsMatch(safe, @"[a-zA-ZçğıöşüÇĞİÖŞÜ0-9]")) return null;
             var sentences = new List<string>();
             int start = 0;
             for (int i = 0; i < safe.Length; ++i)
@@ -73,8 +74,12 @@ namespace DouBepReader
             if (Plan(null) != null || Plan(" ") != null ||
                 Plan("öğrenci@example.com") != null ||
                 Plan(new string('x', 851)) != null ||
-                Plan(new string('a', 46)) != null)
+                Plan(new string('a', 46)) != null ||
+                Plan("...?!") != null)
                 throw new InvalidOperationException("Unsafe text accepted.");
+            if (Plan("Bir.    İki!") == null ||
+                Plan("Bir.    İki!").Count != 2)
+                throw new InvalidOperationException("Whitespace normalization failed.");
             var many = new List<string>();
             for (int i = 0; i < MaxSentences + 1; ++i) many.Add("Bir.");
             if (Plan(String.Join(" ", many.ToArray())) != null)
