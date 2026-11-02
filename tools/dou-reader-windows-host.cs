@@ -818,10 +818,15 @@ namespace DouBepReader
                     if (!SafeReadableScope(candidate)) continue;
                     ReaderStructureKind actual = DetectStructure(candidate);
                     if (!ReaderStructureContract.Matches(actual, target)) continue;
-                    string name = GetReadableName(candidate);
-                    // A declared structural role may have no Name. Speak the role,
-                    // but never a missing, hidden, oversized, or sensitive Name.
-                    if (name == null && !String.IsNullOrWhiteSpace(candidate.Current.Name)) continue;
+                    // A DataItem name can mirror a nested editable field. For
+                    // grid records we disclose only the neutral role and provider
+                    // verified coordinates, never the item's accessible Name.
+                    bool gridRecord = candidate.Current.ControlType == ControlType.DataItem;
+                    string name = gridRecord ? null : GetReadableName(candidate);
+                    // Other declared structures can be unnamed. However, if a
+                    // nonempty Name failed the safety/length filter, skip it.
+                    if (!gridRecord && name == null &&
+                        !String.IsNullOrWhiteSpace(candidate.Current.Name)) continue;
                     _cursor = candidate;
                     _advanceAfterSection = false;
                     SayStructuredElement(candidate, actual, name);
