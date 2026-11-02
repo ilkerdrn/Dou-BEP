@@ -120,3 +120,20 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 50 | Geçersiz birleşik hücre ve geçersiz ARIA rolü | Koordinat/semantik çıkarımı uydurulmaz, hata metni sızdırılmaz | Bekliyor |
 
 **Not:** Bu senaryolar kod düzeyi güvenlik amaçlarını anlatır; Microsoft UIA sağlayıcıları arasında davranışlar değişebilir. Windows PowerShell C# derlemesi, ses cihazı ve görme engelli kullanıcı kabulü henüz gerçekleştirilmedi.
+
+## Sprint 08 — açık paragraf rolü ve gerçek tablo başlığı ilişkileri
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 51 | Açık ARIA `paragraph` bulunan izinli sayfa | Paragraf düğmesi veya Ctrl+Alt+Shift+P yalnız bildirilen paragrafları bulur | Bekliyor |
+| 52 | Genel UIA `Text` öğesi, `paragraph` rolü yok | Metin kendiliğinden paragraf diye adlandırılmaz | Bekliyor |
+| 53 | Paragraf düğmesiyle ters gezinme | Önceki öğeyi bul seçeneği ile gerçek önceki paragraf seçilir | Bekliyor |
+| 54 | `TableItemPattern` satır/sütun başlıkları veriyor | Gerçek ilişkili başlık, örn. `satır başlığı: Birinci satır, sütun başlığı: Not`, hücre bağlamına eklenir | Bekliyor |
+| 55 | `TableItemPattern` yok veya başlık erişilemiyor | Hücre konumu korunur; başka satır/sütun üzerinden başlık tahmini yapılmaz | Bekliyor |
+| 56 | Farklı süreç/kapalı/Edit-parola atalı header | Başlık içeriği atlanır, öğrenci verisi başka süreçten aktarılmaz | Bekliyor |
+| 57 | 2'den fazla ilişkili başlık / aşırı uzun veya noktalama-only ad | Okunması desteklenmeyen başlık reddedilir | Bekliyor |
+| 58 | `DataItem` üzerindeki TableItemPattern ve Name | Nötr ızgara öğesinin başlık/Name metni ifşa edilmez | Bekliyor |
+| 59 | %200 DPI ile yedi yapısal gezinme düğmesi | Dört sütun/iki satır yerleşiminde Tab sırası ve ses kontrolü örtüşmez | Bekliyor |
+| 60 | Bir konuşma parçası üretilemediğinde | Kuyruk aktifse bırakılır, kullanıcının özellikle duraklattığı oturum ise korunur | Bekliyor |
+
+**Sınırlar:** Bunlar manuel Windows kabul koşullarıdır; belge metninin tamamı, Word/PDF importu, gerçek sınav uyarlamaları ve doğal Türkçe TTS kalitesi henüz doğrulanmadı. Sağlayıcı kilitlenirse tek UIA çağrısında kesin zaman aşımı garanti edilmez.
