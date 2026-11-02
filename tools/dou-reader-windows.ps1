@@ -37,9 +37,11 @@ $source = Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'
 $contract = Join-Path $PSScriptRoot 'dou-reader-speech-contract.cs'
 $documentContract = Join-Path $PSScriptRoot 'dou-reader-document-contract.cs'
 $structureContract = Join-Path $PSScriptRoot 'dou-reader-structure-contract.cs'
+$tableContextContract = Join-Path $PSScriptRoot 'dou-reader-table-context-contract.cs'
 if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $documentContract -PathType Leaf)) { throw 'Okuyucu belge sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $structureContract -PathType Leaf)) { throw 'Okuyucu yapi sozlesmesi bulunamadi.' }
+if (-not (Test-Path -LiteralPath $tableContextContract -PathType Leaf)) { throw 'Okuyucu tablo baglami sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
@@ -60,10 +62,11 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract))) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
     [DouBepReader.ReaderDocumentContract]::SelfTest()
     [DouBepReader.ReaderStructureContract]::SelfTest()
+    [DouBepReader.ReaderTableContextContract]::SelfTest()
     $localTr = 0
     if ($Check -or -not $OwnVoice) {
         # SAPI is inspected only for legacy SAPI mode or diagnostics.
