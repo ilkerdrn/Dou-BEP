@@ -328,3 +328,64 @@ test('failed own-voice chunk clears only the active session, deliberate pause su
  assert.match(cs, /ReferenceEquals\(_speechSession, session\)\)/);
  assert.match(cs, /_speechSession = null/);
 });
+
+test('sentence planner preserves safe Turkish text and bounds punctuation-aware splitting', () => {
+ const contract = readFileSync(new URL('./tools/dou-reader-sentence-contract.cs', import.meta.url), 'utf8');
+ const launcher = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(contract, /public static class ReaderSentenceContract/);
+ assert.match(contract, /MaxSentences = 16/);
+ assert.match(contract, /MaxCharacters = ReaderSpeechContract\.MaxInputCharacters/);
+ assert.match(contract, /ReaderSpeechContract\.Split\(safe\) == null/);
+ assert.match(contract, /if \(after < safe\.Length && safe\[after\] != ' '\) continue/);
+ assert.match(contract, /new string\('x', 851\)/);
+ assert.match(contract, /Plan\("öğrenci@example\.com"\) != null/);
+ assert.match(contract, /Plan\("\.\.\.\?!\"\) != null/);
+ assert.match(contract, /Sentence count bound failed/);
+ assert.match(launcher, /ReadAllText\(\$sentenceContract\)/);
+ assert.match(launcher, /ReaderSentenceContract\]::SelfTest\(\)/);
+});
+
+test('sentence reading requires a selected safe static UIA node and renewed process authorization', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /private void ReadSentence\(int direction, bool fromReaderButton\)/);
+ assert.match(cs, /!SafeReadableScope\(_cursor\)/);
+ assert.match(cs, /_cursor\.Current\.ControlType != ControlType\.Text/);
+ assert.match(cs, /DetectStructure\(_cursor\) != ReaderStructureKind\.Paragraph/);
+ assert.match(cs, /!_allowed\.Contains\(source\.ProcessName\)/);
+ assert.match(cs, /focused\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs, /ReaderSentenceContract\.Plan\(raw\)/);
+ assert.match(cs, /_sentenceTextHash != raw\.GetHashCode\(\)/);
+ assert.match(cs, /direction > 0 \? 0 : sentences\.Count - 1/);
+ assert.match(cs, /_sentenceIndex \+ direction/);
+ assert.match(cs, /_sentenceIndex = index/);
+ assert.match(cs, /SpeakOwnVoice\(sentence, _scopeProcessId\)/);
+ assert.match(cs, /_sentenceAnchor = null; _sentenceIndex = -1;/);
+ assert.doesNotMatch(cs, /\.GetCurrentPattern\(\s*ValuePattern/);
+ assert.doesNotMatch(cs, /\.GetCurrentPattern\(\s*TextPattern/);
+});
+
+test('sentence controls and hotkeys are optional, accessible, and do not cover playback', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /HOTKEY_SENTENCE_NEXT = 118/);
+ assert.match(cs, /HOTKEY_SENTENCE_PREVIOUS = 119/);
+ assert.match(cs, /Tuple\.Create\(HOTKEY_SENTENCE_PREVIOUS, \(uint\)Keys\.Left\)/);
+ assert.match(cs, /Tuple\.Create\(HOTKEY_SENTENCE_NEXT, \(uint\)Keys\.Right\)/);
+ assert.match(cs, /if \(RegisterHotKey\(Handle, key\.Item1, MOD_CONTROL \| MOD_ALT \| MOD_SHIFT, key\.Item2\)\)/);
+ assert.match(cs, /previousSentence\.Click \+= delegate \{ ReadSentence\(-1, true\); \}/);
+ assert.match(cs, /nextSentence\.Click \+= delegate \{ ReadSentence\(1, true\); \}/);
+ assert.match(cs, /AccessibleName = "Seçili statik metinde sonraki cümleyi oku"/);
+ assert.match(cs, /Height = 905/);
+ assert.match(cs, /MinimumSize = new Size\(800, 905\)/);
+ assert.match(cs, /Top = 654, Width = 219, Height = 48/);
+ assert.match(cs, /Top = 767, Width = 152, Height = 48/);
+ assert.ok(654 + 48 < 767);
+});
+
+test('own-voice bridge handles bounded Turkish sentence announcements as WAV', () => {
+ for (const text of [
+   'Merhaba dünya.',
+   'Bugün sınav var!',
+   'Hazır mısınız?',
+   'Paragrafın ikinci cümlesi okunuyor.'
+ ]) assertPcm(start({text, rate: 1, acousticModel: 'legacy'}));
+});
