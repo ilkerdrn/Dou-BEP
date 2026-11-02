@@ -189,7 +189,8 @@ test('structural shortcut conflicts do not disable core hotkeys', () => {
 
 test('structured controls do not overlap playback controls at design size', () => {
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- assert.match(cs, /Width = 800;\s*Height = 905/);
+ assert.match(cs, /Width = 800;\s*Height = 740/);
+ assert.match(cs, /AutoScrollMinSize = new Size\(760, 855\)/);
  assert.match(cs, /_reverseStructure = new CheckBox/);
  assert.match(cs, /Top = 494 \+ \(row \* 60\)/);
  assert.match(cs, /Width = 166, Height = 48/);
@@ -374,8 +375,10 @@ test('sentence controls and hotkeys are optional, accessible, and do not cover p
  assert.match(cs, /previousSentence\.Click \+= delegate \{ ReadSentence\(-1, true\); \}/);
  assert.match(cs, /nextSentence\.Click \+= delegate \{ ReadSentence\(1, true\); \}/);
  assert.match(cs, /AccessibleName = "Seçili statik metinde sonraki cümleyi oku"/);
- assert.match(cs, /Height = 905/);
- assert.match(cs, /MinimumSize = new Size\(800, 905\)/);
+ assert.match(cs, /Height = 740/);
+ assert.match(cs, /MinimumSize = new Size\(760, 540\)/);
+ assert.match(cs, /Anchor = AnchorStyles.Top \| AnchorStyles.Left/);
+ assert.doesNotMatch(cs, /Anchor = AnchorStyles.Bottom/);
  assert.match(cs, /Top = 654, Width = 219, Height = 48/);
  assert.match(cs, /Top = 767, Width = 152, Height = 48/);
  assert.ok(654 + 48 < 767);
