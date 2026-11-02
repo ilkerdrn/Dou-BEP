@@ -12,7 +12,8 @@ namespace DouBepReader
         ListItem = 3,
         Table = 4,
         Row = 5,
-        Cell = 6
+        Cell = 6,
+        GridItem = 7
     }
 
     public static class ReaderStructureContract
@@ -68,9 +69,25 @@ namespace DouBepReader
             return aria != ReaderStructureKind.Unknown ? aria : uia;
         }
 
+        // DataItem can represent a whole row OR a cell; the GridItem pattern
+        // alone does not prove 'cell'. Announce it as 'grid item' with verified
+        // coordinates instead of inventing cell semantics.
+        public static ReaderStructureKind Classify(string ariaRole, string controlKind,
+            bool headingMetadata, bool hasGridItemPattern)
+        {
+            ReaderStructureKind declared = Classify(ariaRole, controlKind, headingMetadata);
+            if (declared != ReaderStructureKind.Unknown) return declared;
+            if (hasGridItemPattern && !headingMetadata &&
+                String.IsNullOrWhiteSpace(ariaRole) &&
+                String.Equals(controlKind, "DataItem", StringComparison.Ordinal))
+                return ReaderStructureKind.GridItem;
+            return ReaderStructureKind.Unknown;
+        }
+
         public static bool Matches(ReaderStructureKind actual, ReaderStructureKind requested)
         {
-            return requested != ReaderStructureKind.Unknown && actual == requested;
+            return requested != ReaderStructureKind.Unknown &&
+                (actual == requested || (requested == ReaderStructureKind.Cell && actual == ReaderStructureKind.GridItem));
         }
 
         public static string TurkishRole(ReaderStructureKind kind)
@@ -83,6 +100,7 @@ namespace DouBepReader
                 case ReaderStructureKind.Table: return "tablo";
                 case ReaderStructureKind.Row: return "satır";
                 case ReaderStructureKind.Cell: return "hücre";
+                case ReaderStructureKind.GridItem: return "ızgara öğesi";
                 default: return null;
             }
         }
@@ -117,6 +135,15 @@ namespace DouBepReader
                 Classify(null, "Edit", false) != ReaderStructureKind.Unknown ||
                 Matches(ReaderStructureKind.Unknown, ReaderStructureKind.Unknown))
                 throw new InvalidOperationException("Unsafe inferred role accepted.");
+            if (Classify(null, "DataItem", false, false) != ReaderStructureKind.Unknown ||
+                Classify(null, "DataItem", false, true) != ReaderStructureKind.GridItem ||
+                Classify("cell", "DataItem", false, true) != ReaderStructureKind.Cell ||
+                Classify("button", "DataItem", false, true) != ReaderStructureKind.Unknown ||
+                Classify(null, "DataItem", true, true) != ReaderStructureKind.Heading ||
+                !Matches(ReaderStructureKind.GridItem, ReaderStructureKind.Cell) ||
+                Matches(ReaderStructureKind.GridItem, ReaderStructureKind.Row) ||
+                TurkishRole(ReaderStructureKind.GridItem) != "ızgara öğesi")
+                throw new InvalidOperationException("GridItem fallback semantics failed.");
             if (Classify(null, "Text", true) != ReaderStructureKind.Heading ||
                 Classify(" LiSt ", null, false) != ReaderStructureKind.List ||
                 TurkishRole(ReaderStructureKind.Unknown) != null)
