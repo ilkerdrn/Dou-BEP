@@ -253,3 +253,33 @@ body.dou-admin-standalone :is(h1,h2,h3){color:#18283f!important;letter-spacing:-
 @media(max-width:370px){body.institution-page .dashboard-shortcuts{grid-template-columns:1fr!important}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto!important}body.institution-page *,body.dou-admin-standalone *{animation-duration:0s!important;transition-duration:0s!important}}
 @media print{body.institution-page .portal-hero{background:white!important;color:#000!important;box-shadow:none!important}body.institution-page .portal-hero h1{color:black!important}body.institution-page .portal-shell{display:block!important}body.dou-admin-standalone{padding-left:0!important}.dou-nav,.dou-nav-find{display:none!important}}
+
+
+/* Compact exam authoring: keep all functions and accessible controls present. */
+@media (min-width: 761px) {
+ body.institution-page:has(#exam-workspace) .portal-content {padding-top:14px!important}
+ body.institution-page:has(#exam-workspace) .exam-hero {display:none!important}
+ body.institution-page:has(#exam-workspace) .workflow-nav {padding:10px 14px!important;margin:0 0 10px!important;min-height:0!important}
+ body.institution-page:has(#exam-workspace) .workflow-caption {font-size:11px!important}
+ body.institution-page:has(#exam-workspace) .workflow-step {padding:8px 10px!important;min-height:34px!important}
+ body.institution-page:has(#exam-workspace) .portal-user {padding:11px 17px!important;margin:0 0 10px!important;min-height:0!important}
+ body.institution-page:has(#exam-workspace) .portal-user h2 {font-size:17px!important;margin:2px 0!important}
+ body.institution-page:has(#exam-workspace) .portal-user p {margin:0!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis {gap:9px!important;margin:0 0 12px!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis>div {padding:11px 14px!important;min-height:0!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis strong {font-size:23px!important;line-height:1.15!important;margin:4px 0!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis small {display:none!important}
+ body.institution-page:has(#exam-workspace) .exam-grid {gap:12px!important}
+ body.institution-page:has(#exam-workspace) .exam-grid>.portal-card {padding:15px!important}
+ body.institution-page:has(#exam-workspace) .portal-card-head {margin-bottom:9px!important}
+ body.institution-page:has(#exam-workspace) .editor-ribbon,
+ body.institution-page:has(#exam-workspace) .exam-autosave-panel {padding:9px 12px!important;margin:7px 0!important}
+ body.institution-page:has(#exam-workspace) .editor-command {padding:10px 13px!important;margin:10px 0!important}
+}
+@media (max-width:760px) {
+ body.institution-page:has(#exam-workspace) .exam-hero {display:none!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis {grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis>div {min-height:0!important;padding:10px!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis strong {font-size:19px!important}
+ body.institution-page:has(#exam-workspace) .portal-kpis small {display:none!important}
+}
