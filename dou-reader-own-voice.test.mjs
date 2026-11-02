@@ -213,6 +213,10 @@ test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
  assert.match(cs, /if \(!SafeReadableScope\(element\)\) return null/);
  assert.match(cs, /element\.TryGetCurrentPattern\(GridItemPattern\.Pattern, out rawPattern\)/);
  assert.match(cs, /ReaderTableContextContract\.DescribeCell\(grid\.Current\.Row, grid\.Current\.Column\)/);
+ assert.match(cs, /ReaderTableContextContract\.DescribeSpan\(grid\.Current\.RowSpan, grid\.Current\.ColumnSpan\)/);
+ assert.match(cs, /return span\.Length == 0 \? position : position \+ ", " \+ span/);
+ assert.match(contract, /DescribeSpan\(2, 3\) != "2 satır ve 3 sütun boyunca"/);
+ assert.match(contract, /DescribeSpan\(1, Int32\.MaxValue\) != null/);
  assert.match(cs, /if \(position != null\) role \+= ", " \+ position/);
  assert.match(cs, /if \(kind == ReaderStructureKind\.Cell\)/);
  assert.match(contract, /MaxCoordinate = 10000/);
