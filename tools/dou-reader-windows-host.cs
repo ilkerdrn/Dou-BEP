@@ -40,6 +40,8 @@ namespace DouBepReader
         private const int HOTKEY_NEXT_LIST = 112;
         private const int HOTKEY_NEXT_TABLE = 113;
         private const int HOTKEY_NEXT_CELL = 114;
+        private const int HOTKEY_NEXT_LIST_ITEM = 115;
+        private const int HOTKEY_NEXT_ROW = 116;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -47,7 +49,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL, HOTKEY_NEXT_LIST_ITEM, HOTKEY_NEXT_ROW };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -143,7 +145,7 @@ namespace DouBepReader
             sectionButton.FlatAppearance.BorderColor = accent;
             sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/T/C  Sonraki liste / tablo / hücre\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/I  Liste / liste öğesi\r\nCtrl+Alt+Shift+T/R/C  Tablo / satır / hücre\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 720, Height = 200, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -313,7 +315,9 @@ namespace DouBepReader
             var structureHotkeys = new[] {
                 Tuple.Create(HOTKEY_NEXT_LIST, (uint)Keys.L),
                 Tuple.Create(HOTKEY_NEXT_TABLE, (uint)Keys.T),
-                Tuple.Create(HOTKEY_NEXT_CELL, (uint)Keys.C)
+                Tuple.Create(HOTKEY_NEXT_CELL, (uint)Keys.C),
+                Tuple.Create(HOTKEY_NEXT_LIST_ITEM, (uint)Keys.I),
+                Tuple.Create(HOTKEY_NEXT_ROW, (uint)Keys.R)
             };
             foreach (var hotkey in structureHotkeys)
             {
@@ -338,6 +342,8 @@ namespace DouBepReader
                     case HOTKEY_NEXT_LIST: TraverseStructureKind(ReaderStructureKind.List, 1, false); break;
                     case HOTKEY_NEXT_TABLE: TraverseStructureKind(ReaderStructureKind.Table, 1, false); break;
                     case HOTKEY_NEXT_CELL: TraverseStructureKind(ReaderStructureKind.Cell, 1, false); break;
+                    case HOTKEY_NEXT_LIST_ITEM: TraverseStructureKind(ReaderStructureKind.ListItem, 1, false); break;
+                    case HOTKEY_NEXT_ROW: TraverseStructureKind(ReaderStructureKind.Row, 1, false); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
