@@ -1,0 +1,59 @@
+# DOU Reader OS — bağımsız, çevrimdışı Windows ekran okuyucu
+
+## Ürün hedefi
+NVDA kurulumu, bulut servisi ve üçüncü taraf zorunlu TTS olmadan çalışan, Windows UI Automation üzerinden erişilebilir öğeleri kullanıcı izniyle seslendiren, Türkçe odaklı erişilebilir masaüstü ürün. İleri aşamada Braille, web belgesi, Office/PDF ve DOU BEP entegrasyonları; bunların tamamı şu anda tamamlanmış değildir.
+
+## Tasarım ilkeleri
+- **Erişilebilirlik önce:** ekran okuyucunun kendisi de klavye ile tamamen kullanılabilir; görsel renk tek iletişim kanalı olamaz.
+- **İki arayüz:** kolay "Başlat/Durdur" modu ve gelişmiş gezinme/ayarlar.
+- **Gizlilik:** yalnız izinli uygulamalar; parola ve hassas alanların içeriğini okumama; metni ağ üzerinden göndermeme; mümkünse ses dosyasını bellekte tutma.
+- **Geri dönüş:** kurulum/başlatma hiçbir zaman var olan Windows ses veya erişilebilirlik yapılandırmasını bozmaz.
+- **Görsel sistem:** koyu grafit (#141A24), kırık beyaz (#F6F7F9), turkuaz (#26C6B4) durum/odak, sıcak mercan (#F58072) uyarı, yüksek kontrast modu; minimum 44px etkileşim alanları; odak halkası görünür.
+- **Bilimsel kabul:** anlaşılabilirlik, görev tamamlama, klavye kullanım, ses kesme gecikmesi ve kullanıcı testleri ayrı ölçülmeli; otomatik testler erişilebilirlik kanıtı yerine geçmez.
+
+## Geliştirme sırası ve kabul kapıları
+### 0. Kararlı temel — mevcut durum
+- [x] Node ses köprüsü 8/8 Windows test.
+- [x] Python NVDA taklit/lifecycle 14/14 test (bağımsız Reader değil).
+- [x] Windows UIA C# prototipinin PowerShell derlemesi ve başlangıç logu.
+- [ ] Gerçek Windows'ta DOU kendi TTS modunun ses çıktısı / iptalinin manuel doğrulaması.
+- [ ] Arayüzün erişilebilir uygulama dışına çıkmaması ve tüm hotkey kombinasyonlarının gerçek testi.
+
+### 1. Ses çekirdeği / dayanıklılık
+- [ ] C# -> yerel Node konuşma entegrasyonu uçtan uca manuel kabul; geçerli Türkçe sentetik metin.
+- [ ] Ses sürecinin iptal yarışları, oynatma tamponu, ses aygıtı kaybı testleri.
+- [ ] UTF-8 metin, uzun metin parçalama, bellek/süre/boyut sınırlarının C#/Node uçlarında karşılıklı korunması.
+- [ ] Önizleme için güvenli ses hızı, sessiz mod ve okunabilir hatalar.
+- [ ] Ses kalitesi: harf/kelime/sayı/matematik; anlaşılabilirlik ölçümü (gerçek katılımcılarla etik/onay dahilinde).
+
+### 2. Windows erişilebilirlik motoru
+- [ ] Odak takibi ve olay dinleyicileri (kullanıcı tarafından açıkça etkinleştirilir).
+- [ ] Düğme, başlık, bağlantı, tablo, form rolü/durumu; gizli ve parola alanlarını atlama.
+- [ ] Gezinti modeli: önce/sonra, başlık, link, form, liste, okuma imleci, pencere değiştirme.
+- [ ] Kısayol çakışması, hız ayarı, sıraya alma, sonlandırma ve güvenli geri dönüş.
+- [ ] Not Defteri, Chrome/Edge, yerel Windows uygulamaları için senaryo testleri.
+
+### 3. Masaüstü ürün ve arayüz
+- [ ] Ana panel: Başlat / Duraklat / Durdur, ses testi, durum, son izinli uygulama.
+- [ ] Okuma paneli: yapı gezinmesi, odak kartı, konuşma kuyruğu, rol açıklamaları.
+- [ ] Ayarlar: ses hızı, ses rengi, kısayollar, uygulama izinleri, gizlilik; yüksek kontrast.
+- [ ] Klavyeyle eksiksiz kullanım ve erişilebilir isimler, açıklamalar, durum duyuruları.
+- [ ] Kurulabilir, imzalı sürüm ve kolay kaldırma (pilot sonrası).
+
+### 4. DOU BEP ve akademik içerikler
+- [ ] BEP Sınav Atölyesi onaylı, sentetik sınav içeriğiyle yerel entegrasyon.
+- [ ] PDF/Word/HTML erişilebilir metin aktarımında kaynak ve sıra doğrulaması.
+- [ ] Matematik ve tabloların Türkçe seslendirilmesi, denklem okuma tercihleri.
+- [ ] Asgari veri erişimi, öğrenci uyarlamalarında insan onayı.
+
+### 5. Kabul ve yaygınlaştırma
+- [ ] Otomatik birim/entegrasyon/regresyon testleri ve erişilebilirlik kontrol listesi.
+- [ ] Görme engelli kullanıcılarla gerçek görev testleri ve etik onay prosedürü.
+- [ ] Kurum içi pilot, güvenlik incelemesi, paketleme, kullanıcı dokümanı.
+- [ ] MVP tamamlandı kararı ancak ses + gezinti + geri dönüş + insan testi başarılı ise.
+
+## Tanımlı ilk teslim
+**MVP-1:** Not Defteri/izinli tarayıcıda odaklanan kontrolü veya tanımlı salt-okunur metin düğümünü kendi Türkçe motoruyla okumak, durdurmak, kullanıcıya mevcut durumu duyurmak; hiçbir harici hesap/NVDA gerekmez. Mevcut C# UIA test uygulamasını koruyarak geliştirilir.
+
+## Şu anki riskler
+Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oynatımının gerçekten duyulması henüz kullanıcı tarafından doğrulanmadı. UIA isimleri yerel fonem motorunun desteklemediği karakterler içerebilir; boş edit alanları güvenlik nedeniyle atlanıyor. C# pilot henüz üretim güvenilirliğinde değildir.
