@@ -4,6 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
+using System.Media;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -50,11 +55,19 @@ namespace DouBepReader
         private readonly SpeechSynthesizer _speaker;
         private readonly TrackBar _rateControl;
         private readonly string _turkishVoice;
+        private readonly bool _ownVoice;
+        private readonly string _bridgePath;
+        private readonly object _audioLock = new object();
+        private int _audioGeneration;
+        private Process _audioProcess;
+        private SoundPlayer _audioPlayer;
         private AutomationElement _cursor;
         private int _scopeProcessId;
 
-        public ReaderWindow(string[] allowedProcesses)
+        public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath)
         {
+            _ownVoice = ownVoice;
+            _bridgePath = bridgePath;
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader — Windows erişilebilirlik pilotu";
             Width = 530;
@@ -84,6 +97,7 @@ namespace DouBepReader
                 v.VoiceInfo.Culture.Name.StartsWith("tr-", StringComparison.OrdinalIgnoreCase))
                 .Select(v => v.VoiceInfo.Name).FirstOrDefault();
             if (_turkishVoice != null) _speaker.SelectVoice(_turkishVoice);
+            if (_ownVoice) { SetStatus("DOU yerel ses modu (deneysel). Yalnız güvenli karakterli kısa UIA adları okunur."); return; }
             SetStatus(_turkishVoice == null ? "Yerel Türkçe SAPI sesi yok. Ekran içeriği okunmaz; klavye ve ekran okuyucunuz çalışmaya devam eder." :
                 "Yerel Türkçe ses hazır. Hedef uygulamaya geçip Ctrl+Alt+R kullanın.");
         }
@@ -167,9 +181,10 @@ namespace DouBepReader
 
         private void Say(AutomationElement element)
         {
-            if (_turkishVoice == null) { SetStatus("Yerel Türkçe SAPI sesi bulunamadı. Sesli okuma başlatılmadı."); return; }
             string text = AccessibleName(element);
             if (text == null) { SetStatus("Bu öğe okunamıyor veya gizlilik nedeniyle atlandı."); return; }
+            if (_ownVoice) { SpeakOwnVoice(text); return; }
+            if (_turkishVoice == null) { SetStatus("Yerel Türkçe SAPI sesi bulunamadı. Sesli okuma başlatılmadı."); return; }
             _speaker.SpeakAsyncCancelAll();
             _speaker.Rate = _rateControl.Value;
             _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(text));
@@ -344,7 +359,100 @@ namespace DouBepReader
             }
         }
 
-        private void StopSpeech() { try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { /* no content */ } }
+        // Explicit opt-in own-engine playback. No cloud, speech cache, or student content logging.
+        // Generation and process cancellation prevent stale audio after stop or new navigation.
+        private void SpeakOwnVoice(string text)
+        {
+            StopSpeech();
+            var safe = TurkishMathPronunciation.Prepare(text);
+            if (safe.Length == 0 || safe.Length > 220 ||
+                !Regex.IsMatch(safe, @"\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\s,.!?;:–\-’']+\z"))
+            {
+                SetStatus("Bu metin deneysel yerel motorun desteklediği karakterleri aşıyor.");
+                return;
+            }
+            int generation;
+            lock (_audioLock) generation = _audioGeneration;
+            SetStatus("DOU yerel ses hazırlanıyor...");
+            Task.Run(() => PlayOwnVoice(safe, generation));
+        }
+
+        private void PlayOwnVoice(string text, int generation)
+        {
+            string path = Path.Combine(Path.GetTempPath(), "dou-reader-" + Guid.NewGuid().ToString("N") + ".wav");
+            Process proc = null;
+            SoundPlayer player = null;
+            try
+            {
+                var start = new ProcessStartInfo("node", "\"" + _bridgePath + "\"")
+                {
+                    UseShellExecute = false, CreateNoWindow = true,
+                    RedirectStandardInput = true, RedirectStandardOutput = true,
+                    RedirectStandardError = false
+                };
+                proc = new Process { StartInfo = start };
+                lock (_audioLock)
+                {
+                    if (_audioGeneration != generation || IsDisposed) return;
+                    _audioProcess = proc;
+                    proc.Start();
+                }
+                // Bridge input is bounded and never passed as a shell argument.
+                var escaped = text.Replace("\\", "\\\\").Replace("\"", "\\\"")
+                                  .Replace("\n", " ").Replace("\r", " ");
+                byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\"}");
+                proc.StandardInput.BaseStream.Write(input, 0, input.Length);
+                proc.StandardInput.Close();
+                using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    proc.StandardOutput.BaseStream.CopyTo(output);
+                if (!proc.WaitForExit(15000)) { try { proc.Kill(); } catch { } return; }
+                if (proc.ExitCode != 0) return;
+                byte[] header = new byte[44];
+                using (var f = File.OpenRead(path))
+                    if (f.Length < 44 || f.Read(header, 0, header.Length) != 44 ||
+                        Encoding.ASCII.GetString(header, 0, 4) != "RIFF" ||
+                        BitConverter.ToInt32(header, 24) != 22050 ||
+                        BitConverter.ToInt16(header, 22) != 1 ||
+                        BitConverter.ToInt16(header, 34) != 16 ||
+                        f.Length > 3000000) return;
+                player = new SoundPlayer(path);
+                lock (_audioLock)
+                {
+                    if (_audioGeneration != generation || IsDisposed) return;
+                    _audioPlayer = player;
+                }
+                player.Load();
+                lock (_audioLock) { if (_audioGeneration != generation) return; }
+                player.PlaySync();
+            }
+            catch (Exception) { /* No sensitive text or exception details are logged. */ }
+            finally
+            {
+                lock (_audioLock)
+                {
+                    if (ReferenceEquals(_audioProcess, proc)) _audioProcess = null;
+                    if (ReferenceEquals(_audioPlayer, player)) _audioPlayer = null;
+                }
+                if (player != null) { try { player.Stop(); } catch { } player.Dispose(); }
+                if (proc != null)
+                {
+                    try { if (!proc.HasExited) proc.Kill(); } catch { }
+                    proc.Dispose();
+                }
+                try { if (File.Exists(path)) File.Delete(path); } catch { }
+            }
+        }
+
+        private void StopSpeech()
+        {
+            try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { }
+            lock (_audioLock)
+            {
+                ++_audioGeneration;
+                if (_audioPlayer != null) { try { _audioPlayer.Stop(); } catch { } }
+                if (_audioProcess != null) { try { if (!_audioProcess.HasExited) _audioProcess.Kill(); } catch { } }
+            }
+        }
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             foreach (int id in _registeredHotkeys) UnregisterHotKey(Handle, id);
@@ -384,11 +492,11 @@ namespace DouBepReader
     public static class Program
     {
         [STAThread]
-        public static void Run(string[] allowedProcesses)
+        public static void Run(string[] allowedProcesses, bool ownVoice, string bridgePath)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new ReaderWindow(allowedProcesses)) Application.Run(form);
+            using (var form = new ReaderWindow(allowedProcesses, ownVoice, bridgePath)) Application.Run(form);
         }
     }
 }
