@@ -212,9 +212,11 @@ test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
  assert.match(cs, /private static string ExplicitCellPosition\(AutomationElement element\)/);
  assert.match(cs, /if \(!SafeReadableScope\(element\)\) return null/);
  assert.match(cs, /element\.TryGetCurrentPattern\(GridItemPattern\.Pattern, out rawPattern\)/);
- assert.match(cs, /ReaderTableContextContract\.DescribeCell\(grid\.Current\.Row, grid\.Current\.Column\)/);
- assert.match(cs, /ReaderTableContextContract\.DescribeSpan\(grid\.Current\.RowSpan, grid\.Current\.ColumnSpan\)/);
- assert.match(cs, /return span\.Length == 0 \? position : position \+ ", " \+ span/);
+ assert.match(cs, /ReaderTableContextContract\.DescribeGridItem\(/);
+ assert.match(cs, /grid\.Current\.RowSpan, grid\.Current\.ColumnSpan/);
+ assert.match(contract, /DescribeGridItem\(9999, 0, 2, 1\) != null/);
+ assert.match(contract, /DescribeGridItem\(0, 9999, 1, 2\) != null/);
+ assert.match(contract, /\(long\)rowZeroBased \+ rowSpan > MaxCoordinate/);
  assert.match(contract, /DescribeSpan\(2, 3\) != "2 satır ve 3 sütun boyunca"/);
  assert.match(contract, /DescribeSpan\(1, Int32\.MaxValue\) != null/);
  assert.match(cs, /if \(position != null\) role \+= ", " \+ position/);
