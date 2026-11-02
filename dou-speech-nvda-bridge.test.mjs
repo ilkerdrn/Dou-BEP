@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';import {readFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';import {fileURLToPath} from 'node:url';import {readFileSync} from 'node:fs';
 import {validateBridgeRequest} from './tools/dou-speech-nvda-stdio.mjs';
-const bridge=new URL('./tools/dou-speech-nvda-stdio.mjs',import.meta.url).pathname;
+const bridge=fileURLToPath(new URL('./tools/dou-speech-nvda-stdio.mjs',import.meta.url));
 const call=payload=>spawnSync(process.execPath,[bridge],{input:JSON.stringify(payload),timeout:12000,maxBuffer:3_500_000});
 test('Opt-in local bridge accepts only validated bounded requests',()=>{
  assert.deepEqual(validateBridgeRequest({text:'Merhaba'}),{text:'Merhaba',rate:1,pitchHz:125,acousticModel:'legacy'});

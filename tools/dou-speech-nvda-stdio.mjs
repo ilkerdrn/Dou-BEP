@@ -14,6 +14,7 @@ export function validateBridgeRequest(value){
  return {text,rate,pitchHz,acousticModel};
 }
 async function main(){
+ let stage='input';
  try{
   const chunks=[];let length=0;
   for await(const chunk of process.stdin){
@@ -23,11 +24,14 @@ async function main(){
   }
   // Decode once with fatal UTF-8: Turkish characters may cross stdin chunks.
   const raw=new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks,length));
+  stage='validation';
   const args=validateBridgeRequest(JSON.parse(raw));
+  stage='synthesis';
   const result=synthesizeLocalFreeText(args.text,args);
+  stage='output';
   if(result.wav.length>3_000_000)throw new RangeError('WAV too large');
   process.stdout.write(Buffer.from(result.wav));
- }catch{process.stderr.write('DOU experimental bridge rejected request. No text logged.\n');process.exitCode=1;}
+ }catch{process.stderr.write('DOU experimental bridge rejected request ['+stage+']. No text logged.\n');process.exitCode=1;}
 }
 // fileURLToPath also handles Windows drive letters, spaces and non-ASCII paths.
 if(process.argv[1]&&resolve(process.argv[1])===resolve(fileURLToPath(import.meta.url)))await main();
