@@ -144,7 +144,7 @@ namespace DouBepReader
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var voiceTest = new Button {
-                Text = "DOU sesini dene", Left = 26, Top = 447, Width = 170, Height = 48,
+                Text = "DOU sesini dene", Left = 26, Top = 447, Width = 152, Height = 48,
                 AccessibleName = "DOU yerel ses motorunu sentetik örnekle dene",
                 TabIndex = 0, FlatStyle = FlatStyle.Flat,
                 ForeColor = highContrast ? SystemColors.HighlightText : page, BackColor = accent,
@@ -155,10 +155,21 @@ namespace DouBepReader
                 if (_ownVoice) SpeakOwnVoice("Merhaba dünya", 0);
                 else SetStatus("DOU sesini denemek için OwnVoice modunu başlatın.");
             };
-            var stop = new Button {
-                Text = "Sesi durdur", Left = 208, Top = 447, Width = 152, Height = 48,
-                AccessibleName = "Konuşmayı hemen durdur",
+            var pause = new Button {
+                Text = "Duraklat / devam", Left = 186, Top = 447, Width = 153, Height = 48,
+                AccessibleName = "DOU yerel ses okumasını duraklat veya devam ettir",
+                AccessibleDescription = "Devam edildiğinde yarım kalan konuşma parçası baştan okunur.",
                 TabIndex = 1, FlatStyle = FlatStyle.Flat,
+                ForeColor = ink, BackColor = surface,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            pause.FlatAppearance.BorderSize = 1;
+            pause.FlatAppearance.BorderColor = accent;
+            pause.Click += delegate { TogglePause(); };
+            var stop = new Button {
+                Text = "Sesi durdur", Left = 347, Top = 447, Width = 147, Height = 48,
+                AccessibleName = "Konuşmayı hemen durdur",
+                TabIndex = 2, FlatStyle = FlatStyle.Flat,
                 ForeColor = ink, BackColor = surface,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -166,13 +177,13 @@ namespace DouBepReader
             stop.FlatAppearance.BorderColor = accent;
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
             var rateLabel = new Label {
-                Text = "KONUŞMA HIZI", Left = 392, Top = 425, Width = 282, Height = 22,
+                Text = "KONUŞMA HIZI", Left = 524, Top = 425, Width = 196, Height = 22,
                 ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             _rateControl = new TrackBar {
-                Left = 385, Top = 448, Width = 300, Minimum = -3, Maximum = 3, Value = 0,
-                TickFrequency = 1, SmallChange = 1, LargeChange = 1, TabIndex = 2,
+                Left = 517, Top = 448, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
+                TickFrequency = 1, SmallChange = 1, LargeChange = 1, TabIndex = 3,
                 BackColor = page, ForeColor = ink,
                 AccessibleName = "Türkçe konuşma hızı",
                 AccessibleDescription = "Sol yavaş, sağ hızlı, ortada normal.",
@@ -180,7 +191,7 @@ namespace DouBepReader
             };
             Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle);
             Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
-            Controls.Add(voiceTest); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            Controls.Add(voiceTest); Controls.Add(pause); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
             if (_ownVoice)
             {
                 // OwnVoice neither creates nor selects a Windows SAPI synthesizer.
@@ -214,8 +225,7 @@ namespace DouBepReader
                 Tuple.Create(HOTKEY_BUTTON, MOD_CONTROL | MOD_ALT, (uint)Keys.B),
                 Tuple.Create(HOTKEY_HEADING_NEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.H),
                 Tuple.Create(HOTKEY_HEADING_PREVIOUS, MOD_CONTROL | MOD_ALT | MOD_SHIFT, (uint)Keys.H),
-                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D),
-                Tuple.Create(HOTKEY_PAUSE_RESUME, MOD_CONTROL | MOD_ALT, (uint)Keys.P)
+                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D)
             };
             foreach (var key in combinations)
             {
@@ -228,6 +238,12 @@ namespace DouBepReader
                 }
                 _registeredHotkeys.Add(key.Item1);
             }
+            // Pause is optional: other Windows tools might already own Ctrl+Alt+P.
+            // A collision must never disable the existing Reader hotkeys.
+            if (RegisterHotKey(Handle, HOTKEY_PAUSE_RESUME, MOD_CONTROL | MOD_ALT, (uint)Keys.P))
+                _registeredHotkeys.Add(HOTKEY_PAUSE_RESUME);
+            else
+                SetStatus("Ctrl+Alt+P başka bir uygulamada; duraklatma düğmesini kullanın.");
         }
 
         protected override void WndProc(ref Message m)
@@ -282,7 +298,7 @@ namespace DouBepReader
         private void Say(AutomationElement element)
         {
             string text = GetReadableName(element);
-            if (text == null) { SetStatus("Bu öğe okunamıyor veya gizlilik nedeniyle atlandı."); return; }
+            if (text == null) { StopSpeech(); SetStatus("Bu öğe okunamıyor veya gizlilik nedeniyle atlandı."); return; }
             if (_ownVoice) { SpeakOwnVoice(text, element.Current.ProcessId); return; }
             if (_turkishVoice == null) { SetStatus("Yerel Türkçe SAPI sesi bulunamadı. Sesli okuma başlatılmadı."); return; }
             _speaker.SpeakAsyncCancelAll();
@@ -296,7 +312,7 @@ namespace DouBepReader
             try
             {
                 var element = AutomationElement.FocusedElement;
-                if (!Allowed(element)) { _cursor = null; SetStatus("Bu uygulamaya okuma izni verilmedi veya odak bulunamadı."); return; }
+                if (!Allowed(element)) { StopSpeech(); _cursor = null; SetStatus("Bu uygulamaya okuma izni verilmedi veya odak bulunamadı."); return; }
                 _cursor = element;
                 Say(element);
             }
@@ -540,19 +556,23 @@ namespace DouBepReader
                 {
                     try
                     {
-                        var focused = AutomationElement.FocusedElement;
-                        if (focused == null || focused.Current.ProcessId != session.SourceProcessId ||
-                            !Allowed(focused))
+                        var process = Process.GetProcessById(session.SourceProcessId);
+                        if (process.HasExited || !_allowed.Contains(process.ProcessName))
+                            throw new InvalidOperationException("Application no longer allowed");
+                        // Pressing the window button explicitly authorizes resuming the
+                        // already vetted, bounded label. A global hotkey requires target focus.
+                        if (!ContainsFocus)
                         {
-                            StopSpeech();
-                            SetStatus("Hedef uygulama değişti; bekleyen metin silindi.");
-                            return;
+                            var focused = AutomationElement.FocusedElement;
+                            if (focused == null || focused.Current.ProcessId != session.SourceProcessId ||
+                                !Allowed(focused))
+                                throw new InvalidOperationException("Target focus changed");
                         }
                     }
                     catch (Exception)
                     {
                         StopSpeech();
-                        SetStatus("İzinli uygulama doğrulanamadı; bekleyen metin silindi.");
+                        SetStatus("İzinli uygulama veya odak doğrulanamadı; bekleyen metin silindi.");
                         return;
                     }
                 }
