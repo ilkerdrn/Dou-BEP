@@ -227,7 +227,7 @@ namespace DouBepReader
                 Tuple.Create("Liste öğesi", ReaderStructureKind.ListItem),
                 Tuple.Create("Tablo", ReaderStructureKind.Table),
                 Tuple.Create("Satır", ReaderStructureKind.Row),
-                Tuple.Create("Hücre", ReaderStructureKind.Cell)
+                Tuple.Create("Hücre / ızgara", ReaderStructureKind.Cell)
             };
             for (int index = 0; index < structureActions.Length; index++)
             {
@@ -238,7 +238,9 @@ namespace DouBepReader
                 var nav = new Button {
                     Text = action.Item1, Left = 26 + (column * 235), Top = 494 + (row * 60),
                     Width = 219, Height = 48,
-                    AccessibleName = ReaderStructureContract.TurkishRole(target) + " arasında gezin",
+                    AccessibleName = target == ReaderStructureKind.Cell ?
+                        "Hücre veya ızgara öğeleri arasında gezin" :
+                        ReaderStructureContract.TurkishRole(target) + " arasında gezin",
                     AccessibleDescription = "Önceki öğeyi bul seçilirse geri, aksi halde ileri gider.",
                     TabIndex = 5 + index, FlatStyle = FlatStyle.Flat,
                     ForeColor = ink, BackColor = surface,
