@@ -423,9 +423,43 @@ namespace DouBepReader
                 byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\"}");
                 proc.StandardInput.BaseStream.Write(input, 0, input.Length);
                 proc.StandardInput.Close();
+                // Bound both elapsed time and WAV bytes while streaming: CopyTo could
+                // otherwise hang before WaitForExit or fill an unbounded temporary file.
+                bool timedOut = false;
+                var watchdog = Task.Run(() =>
+                {
+                    try
+                    {
+                        if (!proc.WaitForExit(15000))
+                        {
+                            timedOut = true;
+                            proc.Kill();
+                        }
+                    }
+                    catch (InvalidOperationException) { }
+                    catch (System.ComponentModel.Win32Exception) { }
+                });
+                bool oversized = false;
                 using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                    proc.StandardOutput.BaseStream.CopyTo(output);
-                if (!proc.WaitForExit(15000)) { try { proc.Kill(); } catch { } AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return; }
+                {
+                    var buffer = new byte[16384];
+                    int read;
+                    while ((read = proc.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        lock (_audioLock)
+                            if (_audioGeneration != generation) return;
+                        if (output.Length + read > 3000000)
+                        {
+                            oversized = true;
+                            try { proc.Kill(); } catch { }
+                            break;
+                        }
+                        output.Write(buffer, 0, read);
+                    }
+                }
+                if (oversized) { AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı."); return; }
+                watchdog.Wait(16000);
+                if (timedOut) { AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return; }
                 if (proc.ExitCode != 0) { AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi."); return; }
                 byte[] header = new byte[44];
                 using (var f = File.OpenRead(path))
