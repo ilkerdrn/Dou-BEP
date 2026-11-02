@@ -153,7 +153,9 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(cs, /ReaderStructureContract\.Classify\(role, control, IsHeading\(element\)\)/);
  assert.match(cs, /ReaderStructureContract\.Matches\(DetectStructure\(candidate\), target\)/);
  assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
+ assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
  assert.match(cs, /string name = GetReadableName\(candidate\)/);
+ assert.match(cs, /if \(name == null && !String\.IsNullOrWhiteSpace\(candidate\.Current\.Name\)\) continue/);
  assert.match(cs, /if \(candidate == null \|\| candidate\.Current\.ProcessId != _scopeProcessId\) break/);
  assert.match(ps, /ReaderStructureContract\]::SelfTest\(\)/);
  assert.match(ps, /ReadAllText\(\$structureContract\)/);
@@ -162,13 +164,43 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
 
 test('structural shortcut conflicts do not disable core hotkeys', () => {
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- for (const k of ['HOTKEY_NEXT_LIST', 'HOTKEY_NEXT_TABLE', 'HOTKEY_NEXT_CELL']) {
-   assert.match(cs, new RegExp(k + ' = 11[234]'));
+ for (const [k, id] of [['HOTKEY_NEXT_LIST',112],['HOTKEY_NEXT_TABLE',113],['HOTKEY_NEXT_CELL',114],
+   ['HOTKEY_NEXT_LIST_ITEM',115],['HOTKEY_NEXT_ROW',116]]) {
+   assert.match(cs, new RegExp(k + ' = ' + id + ';'));
  }
  assert.match(cs, /if \(RegisterHotKey\(Handle, hotkey\.Item1, MOD_CONTROL \| MOD_ALT \| MOD_SHIFT, hotkey\.Item2\)\)/);
  assert.match(cs, /ReaderStructureKind\.List, 1, false/);
  assert.match(cs, /ReaderStructureKind\.Table, 1, false/);
  assert.match(cs, /ReaderStructureKind\.Cell, 1, false/);
- assert.match(cs, /nav\.Click \+= delegate \{ TraverseStructureKind\(target, 1, true\); \}/);
- assert.match(cs, /AccessibleName = "Sonraki " \+ ReaderStructureContract\.TurkishRole\(target\)/);
+ assert.match(cs, /nav\.Click \+= delegate \{/);
+ assert.match(cs, /TraverseStructureKind\(target, _reverseStructure\.Checked \? -1 : 1, true\)/);
+ assert.match(cs, /AccessibleName = ReaderStructureContract\.TurkishRole\(target\) \+ " arasında gezin"/);
+ assert.match(cs, /Tuple\.Create\("Liste öğesi", ReaderStructureKind\.ListItem\)/);
+ assert.match(cs, /Tuple\.Create\("Satır", ReaderStructureKind\.Row\)/);
+});
+
+test('structured controls do not overlap playback controls at design size', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /Width = 800;\s*Height = 780/);
+ assert.match(cs, /_reverseStructure = new CheckBox/);
+ assert.match(cs, /Top = 494 \+ \(row \* 60\)/);
+ assert.match(cs, /Width = 219, Height = 48/);
+ assert.match(cs, /Top = 645, Width = 152, Height = 48/);
+ const helpEnd = 147 + 200;
+ const statusStart = 390, statusEnd = 390 + 58;
+ const structureStart = 494, structureEnd = 554 + 48;
+ const playbackStart = 645;
+ assert.ok(helpEnd < statusStart && statusEnd < structureStart && structureEnd < playbackStart);
+});
+
+test('known ARIA versus UIA conflicts must be rejected, unnamed roles may be spoken safely', () => {
+ const contract = readFileSync(new URL('./tools/dou-reader-structure-contract.cs', import.meta.url), 'utf8');
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(contract, /if \(aria != ReaderStructureKind\.Unknown && uia != ReaderStructureKind\.Unknown && aria != uia\)/);
+ assert.match(contract, /Classify\("list", "Table", false\) != ReaderStructureKind\.Unknown/);
+ assert.match(contract, /Classify\("button", "Table", true\) != ReaderStructureKind\.Unknown/);
+ assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
+ assert.match(cs, /string speech = role/);
+ assert.match(cs, /if \(!String\.IsNullOrWhiteSpace\(readableName\)\)/);
+ assert.match(cs, /if \(name == null && !String\.IsNullOrWhiteSpace\(candidate\.Current\.Name\)\) continue/);
 });
