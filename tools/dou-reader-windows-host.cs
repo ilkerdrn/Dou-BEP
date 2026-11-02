@@ -69,30 +69,100 @@ namespace DouBepReader
             _ownVoice = ownVoice;
             _bridgePath = bridgePath;
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
-            Text = "DOU Reader — Windows erişilebilirlik pilotu";
-            Width = 530;
-            Height = 432;
-            MinimumSize = new Size(480, 415);
+            Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
+            Width = 760;
+            Height = 570;
+            MinimumSize = new Size(760, 570);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
-            BackColor = Color.White;
             Font = new Font("Segoe UI", 10.0f);
             ShowInTaskbar = true;
+            DoubleBuffered = true;
 
-            var heading = new Label { Text = "DOU Reader | Sadece isteğe bağlı okuma", Left = 22, Top = 18, Width = 470, Height = 32, Font = new Font("Segoe UI", 13.0f, FontStyle.Bold) };
-            var help = new Label {
-                Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
-                Left = 22, Top = 55, Width = 480, Height = 192, AutoSize = false
+            // Respect Windows High Contrast. Color never communicates state by itself.
+            bool highContrast = SystemInformation.HighContrast;
+            Color page = highContrast ? SystemColors.Window : Color.FromArgb(18, 24, 34);
+            Color surface = highContrast ? SystemColors.Control : Color.FromArgb(32, 41, 54);
+            Color ink = highContrast ? SystemColors.WindowText : Color.FromArgb(243, 247, 251);
+            Color muted = highContrast ? SystemColors.WindowText : Color.FromArgb(179, 196, 209);
+            Color accent = highContrast ? SystemColors.Highlight : Color.FromArgb(38, 198, 180);
+            BackColor = page;
+            ForeColor = ink;
+
+            var overline = new Label {
+                Text = "DOU READER OS  /  ERİŞİLEBİLİRLİK",
+                Left = 26, Top = 19, Width = 670, Height = 22,
+                ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
-            _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 252, Width = 466, Height = 49, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
-            var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 349, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
+            var heading = new Label {
+                Text = "Kontrol sende. Okuma yerel.",
+                Left = 24, Top = 47, Width = 680, Height = 44,
+                ForeColor = ink, Font = new Font("Segoe UI", 19.0f, FontStyle.Bold),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            var subtitle = new Label {
+                Text = "İzinli uygulamadaki erişilebilir öğeleri kısayollarla oku. Veri buluta gönderilmez.",
+                Left = 27, Top = 99, Width = 680, Height = 34,
+                ForeColor = muted, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            var help = new Label {
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Belge metni\r\nCtrl+Alt+X  Sesi durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Left = 26, Top = 147, Width = 680, Height = 175, AutoSize = false,
+                ForeColor = ink, BackColor = surface,
+                Padding = new Padding(15, 10, 10, 8),
+                AccessibleName = "DOU Reader klavye kısayolları",
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            var statusLabel = new Label {
+                Text = "OKUMA DURUMU", Left = 26, Top = 338, Width = 240, Height = 22,
+                ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
+            };
+            _status = new Label {
+                Text = "Ses başlatılıyor.", Left = 26, Top = 362, Width = 680, Height = 58,
+                ForeColor = ink, BackColor = surface, Padding = new Padding(12, 9, 10, 8),
+                AccessibleName = "Okuyucu durumu",
+                AccessibleDescription = "En son ses işleminin durumu; öğrenci verisi içermez.",
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
+            };
+            var voiceTest = new Button {
+                Text = "DOU sesini dene", Left = 26, Top = 447, Width = 170, Height = 48,
+                AccessibleName = "DOU yerel ses motorunu sentetik örnekle dene",
+                TabIndex = 0, FlatStyle = FlatStyle.Flat,
+                ForeColor = highContrast ? SystemColors.HighlightText : page, BackColor = accent,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            voiceTest.FlatAppearance.BorderSize = highContrast ? 1 : 0;
+            voiceTest.Click += delegate {
+                if (_ownVoice) SpeakOwnVoice("Merhaba dünya");
+                else SetStatus("DOU sesini denemek için OwnVoice modunu başlatın.");
+            };
+            var stop = new Button {
+                Text = "Sesi durdur", Left = 208, Top = 447, Width = 152, Height = 48,
+                AccessibleName = "Konuşmayı hemen durdur",
+                TabIndex = 1, FlatStyle = FlatStyle.Flat,
+                ForeColor = ink, BackColor = surface,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            stop.FlatAppearance.BorderSize = 1;
+            stop.FlatAppearance.BorderColor = accent;
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
-            var voiceTest = new Button { Text = "DOU sesi dene", Left = 22, Top = 312, Width = 146, Height = 30, AccessibleName = "DOU yerel ses denemesi" };
-            voiceTest.Click += delegate { if (_ownVoice) SpeakOwnVoice("Merhaba dünya"); else SetStatus("DOU sesi için OwnVoice modunu başlatın."); };
-            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 190, Top = 322, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
-            _rateControl = new TrackBar { Left = 185, Top = 342, Width = 265, Minimum = -3, Maximum = 3, Value = 0,
-                TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
-            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(voiceTest); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            var rateLabel = new Label {
+                Text = "KONUŞMA HIZI", Left = 392, Top = 425, Width = 282, Height = 22,
+                ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+            };
+            _rateControl = new TrackBar {
+                Left = 385, Top = 448, Width = 300, Minimum = -3, Maximum = 3, Value = 0,
+                TickFrequency = 1, SmallChange = 1, LargeChange = 1, TabIndex = 2,
+                BackColor = page, ForeColor = ink,
+                AccessibleName = "Türkçe konuşma hızı",
+                AccessibleDescription = "Sol yavaş, sağ hızlı, ortada normal.",
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right
+            };
+            Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle);
+            Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
+            Controls.Add(voiceTest); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
             if (_ownVoice)
             {
                 // OwnVoice neither creates nor selects a Windows SAPI synthesizer.
