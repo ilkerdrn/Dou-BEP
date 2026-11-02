@@ -103,4 +103,7 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 41 | Edit/parola alanına bağlı hücre | Hücre metni veya koordinatı seslendirilmez | Bekliyor |
 | 42 | UIA GridItemPattern sağlayıcısı hata veriyor | Metin veya hata ayrıntısı ifşa edilmeden güvenli biçimde atlanır | Bekliyor |
 
+| 43 | GridItem RowSpan=2, ColumnSpan=3 | Yalnız gerçek UIA bilgisiyle **2 satır ve 3 sütun boyunca** duyurulur | Bekliyor |
+| 44 | RowSpan/ColumnSpan negatif, sıfır veya aşırı büyük | Koordinat ve birleşme bağlamı uydurulmaz | Bekliyor |
+
 **Not:** Hücre koordinatları yalnız UIA GridItemPattern tarafından açıkça sağlanıyorsa kullanılır. Kullanıcı testleri ve son C# Windows derlemesi henüz yapılmadı.
