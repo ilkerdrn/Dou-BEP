@@ -62,3 +62,18 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 21 | Kısa bölüm komutunu arka arkaya kullanma | Son okunmuş statik metin ikinci defa okunmaz; seçim/gezinti yapıldığında okuma noktası sıfırlanır | Bekliyor |
 
 **Önemli:** Statik metin düğümleri her tarayıcıda aynı biçimde sunulmaz; boş sonuç normaldir. Gerçek Word/PDF, uzun metinlerde sayfa devamı, tablo hücresi anlamsallaştırma ve ekran okuyucunun sesli keşif deneyimi henüz yoktur. Bu on-demand pilotu, doğrulanmış ürün gibi sunmayacağız.
+
+## Sprint 04 — yapısal gezinme kabul senaryoları
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 22 | Erişilebilir başlıkları bulunan izinli sayfa | **Başlık** düğmesi ilk sonraki başlığa gider; normal odak değişmez | Bekliyor |
+| 23 | Açık UIA `List` veya ARIA `list` | **Liste** düğmesi ve Ctrl+Alt+Shift+L aynı izinli süreçte listeyi bulur | Bekliyor |
+| 24 | Açık UIA `Table`/`DataGrid` veya ARIA `table`/`grid` | **Tablo** düğmesi ve Ctrl+Alt+Shift+T sonraki tabloyu bulur | Bekliyor |
+| 25 | Açık `gridcell`/`cell` ARIA veya UIA `HeaderItem` | **Hücre** düğmesi ve Ctrl+Alt+Shift+C erişilebilir hücre etiketini okur | Bekliyor |
+| 26 | Tablo/liste rolü yok veya erişilebilir ad boş | Rol tahmin edilmez; anlaşılır boş sonuç gösterilir | Bekliyor |
+| 27 | ARIA rolü UIA kontrol türüyle çelişiyor | Çelişkili rol güvenli biçimde atlanır | Bekliyor |
+| 28 | İzin dışı uygulama veya parola/edit alt öğeleri | Okuma ve ses kuyruğu iptal edilir; gizli içerik okunmaz | Bekliyor |
+| 29 | Ctrl+Alt+Shift+L/T/C kısayol çakışması | Temel Ctrl+Alt+R/X vb. kısayollar çalışır, arayüz düğmeleri kullanılabilir | Bekliyor |
+
+**Bilinçli sınırlama:** Yalnız görünür erişilebilir öğe etiketleri okunur; hücre veri modeli, satır-sütun koordinatları ve Word/PDF yapı aktarımı henüz yoktur. Tüm senaryolar gerçek Windows kabulü bekler.
