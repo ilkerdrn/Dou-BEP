@@ -57,3 +57,14 @@ NVDA kurulumu, bulut servisi ve üçüncü taraf zorunlu TTS olmadan çalışan,
 
 ## Şu anki riskler
 Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oynatımının gerçekten duyulması henüz kullanıcı tarafından doğrulanmadı. UIA isimleri yerel fonem motorunun desteklemediği karakterler içerebilir; boş edit alanları güvenlik nedeniyle atlanıyor. C# pilot henüz üretim güvenilirliğinde değildir.
+## Sprint 01 — uygulanmış fakat Windows kabulü bekleyen değişiklikler
+- Yerel ses oynatma veri yolu **stdout → sınırlandırılmış RAM tamponu → WAV sözleşmesi → SoundPlayer(Stream)** olarak değiştirildi. WAV artık geçici diske yazılmıyor.
+- C# ses sözleşmesi `tools/dou-reader-speech-contract.cs` dosyasına ayrıldı: en çok 850 karakter, en çok 8 parça, parça başına 180 karakter, WAV için 3 MB / 22.050 Hz / tek kanal / 16-bit PCM.
+- `-Check` C# kaynaklarını derleyip sözleşme öz testlerini çalıştıracak şekilde genişletildi. **Yeni sürümün Windows -Check testi henüz yapılmadı.**
+- OwnVoice modunda `SpeechSynthesizer` oluşturulmaz, otomatik SAPI veya bulut geri dönüşü yoktur. Var olan SAPI modu ayrı kalır.
+- Ses hızı ayarı OwnVoice için 0,76–1,24 aralığında yerel köprüye aktarılır. 15 saniyelik alt süreç bekleme ve ses boyut sınırı korunur.
+- Windows Forms paneli büyük butonlar, açık durum metinleri, klavye sekme sırası, koyu grafik yüzeyler ve Windows yüksek kontrast tercihine saygı ile yenilendi.
+- `dou-reader-own-voice.test.mjs` kendi motorunun geçerli/bozuk isteklerini ve güvenlik özelliklerini kontrol eder; **Windows C# arayüzünün veya kullanıcı deneyiminin kabulü değildir**.
+- Bağımsız platform denemesinde aynı ses köprüsü kaynağının Node WAV testi 8/8 ve hız/karakter varyasyonları için 3/3 geçti; bunlar son C# derlemesinin geçtiği anlamına gelmez.
+
+**Açık kapılar:** gerçek Windows PowerShell C# derleme, cihazdan duyulur ses, 8 parçalı okuma, Ctrl+Alt+X ile anlık durdurma, büyük yazı/Windows yüksek kontrast, UIA izin sınırlarının gerçek kullanıcı testleri. Bu kontroller tamamlanmadan kullanıma hazır etiketi verilmez.
