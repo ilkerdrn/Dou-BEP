@@ -69,7 +69,7 @@ namespace DouBepReader
                 if (!TryAdd(oversized, line))
                     throw new InvalidOperationException("Unexpected text bound.");
             }
-            if (TryAdd(oversized, "Merhaba dünya. Okunmaya devam edilmemeli."))
+            if (TryAdd(oversized, new string('Z', 39) + " " + new string('Y', 39)))
                 throw new InvalidOperationException("Overlong document admitted.");
         }
     }
