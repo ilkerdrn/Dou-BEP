@@ -86,8 +86,39 @@ namespace DouBepReader
             Encoding.ASCII.GetBytes("data").CopyTo(wav, 36);
             BitConverter.GetBytes((uint)4).CopyTo(wav, 40);
             if (!IsPcmWav(wav)) throw new InvalidOperationException("WAV contract failed.");
-            wav[24] = 0;
-            if (IsPcmWav(wav)) throw new InvalidOperationException("Invalid WAV accepted.");
+            // Test a family of malformed WAVs independently. Every invalid header
+            // must be rejected before the audio device sees its contents.
+            var mutations = new[] {
+                new Tuple<int, byte>(0, (byte)'X'),   // Missing RIFF
+                new Tuple<int, byte>(8, (byte)'X'),   // Missing WAVE
+                new Tuple<int, byte>(12, (byte)'X'),  // Missing fmt chunk
+                new Tuple<int, byte>(20, (byte)3),    // Non-PCM format
+                new Tuple<int, byte>(22, (byte)2),    // Stereo
+                new Tuple<int, byte>(24, (byte)0),    // Wrong sample rate
+                new Tuple<int, byte>(28, (byte)0),    // Wrong byte rate
+                new Tuple<int, byte>(32, (byte)4),    // Wrong block alignment
+                new Tuple<int, byte>(34, (byte)8),    // Wrong bit depth
+                new Tuple<int, byte>(36, (byte)'X'),  // Missing data chunk
+                new Tuple<int, byte>(40, (byte)5),    // Incorrect data length
+                new Tuple<int, byte>(4, (byte)0)     // Incorrect RIFF length
+            };
+            foreach (var mutation in mutations)
+            {
+                var broken = (byte[])wav.Clone();
+                broken[mutation.Item1] = mutation.Item2;
+                if (IsPcmWav(broken))
+                    throw new InvalidOperationException("Invalid WAV header accepted.");
+            }
+            if (IsPcmWav(new byte[44]) || IsPcmWav(null))
+                throw new InvalidOperationException("Empty WAV accepted.");
+            if (Split(null) != null || Split("  ") != null ||
+                Split("Merhaba \\b dünya") != null || Split("foo/bar") != null)
+                throw new InvalidOperationException("Unsafe utterance accepted.");
+            var boundary = new List<string>();
+            for (int i = 0; i < 140; i++) boundary.Add("beş");
+            var manyChunks = Split(String.Join(" ", boundary.ToArray()));
+            if (manyChunks == null || String.Join(" ", manyChunks) != String.Join(" ", boundary.ToArray()))
+                throw new InvalidOperationException("Long Turkish split failed.");
         }
     }
 }
