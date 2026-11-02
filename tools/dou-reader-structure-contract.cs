@@ -13,7 +13,8 @@ namespace DouBepReader
         Table = 4,
         Row = 5,
         Cell = 6,
-        GridItem = 7
+        GridItem = 7,
+        Paragraph = 8
     }
 
     public static class ReaderStructureContract
@@ -25,6 +26,7 @@ namespace DouBepReader
             switch ((ariaRole ?? "").Trim().ToLowerInvariant())
             {
                 case "heading": return ReaderStructureKind.Heading;
+                case "paragraph": return ReaderStructureKind.Paragraph;
                 case "list": case "directory": return ReaderStructureKind.List;
                 case "listitem": return ReaderStructureKind.ListItem;
                 case "table": case "grid": case "treegrid": return ReaderStructureKind.Table;
@@ -95,6 +97,7 @@ namespace DouBepReader
             switch (kind)
             {
                 case ReaderStructureKind.Heading: return "başlık";
+                case ReaderStructureKind.Paragraph: return "paragraf";
                 case ReaderStructureKind.List: return "liste";
                 case ReaderStructureKind.ListItem: return "liste öğesi";
                 case ReaderStructureKind.Table: return "tablo";
@@ -107,10 +110,11 @@ namespace DouBepReader
 
         public static void SelfTest()
         {
-            string[] aria = { "heading", "list", "listitem", "table", "row", "gridcell" };
+            string[] aria = { "heading", "list", "listitem", "table", "row", "gridcell", "paragraph" };
             ReaderStructureKind[] expected = {
                 ReaderStructureKind.Heading, ReaderStructureKind.List, ReaderStructureKind.ListItem,
-                ReaderStructureKind.Table, ReaderStructureKind.Row, ReaderStructureKind.Cell
+                ReaderStructureKind.Table, ReaderStructureKind.Row, ReaderStructureKind.Cell,
+                ReaderStructureKind.Paragraph
             };
             for (int i = 0; i < aria.Length; ++i)
             {
@@ -133,6 +137,9 @@ namespace DouBepReader
                 Classify("button", "Table", true) != ReaderStructureKind.Unknown ||
                 Classify(null, "Table", true) != ReaderStructureKind.Unknown ||
                 Classify(null, "Edit", false) != ReaderStructureKind.Unknown ||
+                Classify(null, "Text", false) != ReaderStructureKind.Unknown ||
+                Classify("paragraph", "Text", false) != ReaderStructureKind.Paragraph ||
+                Classify("paragraph", "Table", false) != ReaderStructureKind.Unknown ||
                 Matches(ReaderStructureKind.Unknown, ReaderStructureKind.Unknown))
                 throw new InvalidOperationException("Unsafe inferred role accepted.");
             if (Classify(null, "DataItem", false, false) != ReaderStructureKind.Unknown ||
