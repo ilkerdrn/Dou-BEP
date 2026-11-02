@@ -35,6 +35,7 @@ namespace DouBepReader
         private const int HOTKEY_HEADING_NEXT = 107;
         private const int HOTKEY_HEADING_PREVIOUS = 108;
         private const int HOTKEY_DOCUMENT_TEXT = 109;
+        private const int HOTKEY_PAUSE_RESUME = 110;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -42,7 +43,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -63,6 +64,23 @@ namespace DouBepReader
         private SoundPlayer _audioPlayer;
         private AutomationElement _cursor;
         private int _scopeProcessId;
+        // Only a short, bounded utterance is kept in RAM during playback or pause.
+        // Stop, new reading, and window close clear the pending session.
+        private sealed class OwnVoiceSession
+        {
+            internal readonly List<string> Chunks;
+            internal readonly double Rate;
+            internal readonly int SourceProcessId;
+            internal int NextIndex;
+            internal bool Paused;
+            internal OwnVoiceSession(List<string> chunks, double rate, int sourceProcessId)
+            {
+                Chunks = chunks;
+                Rate = rate;
+                SourceProcessId = sourceProcessId;
+            }
+        }
+        private OwnVoiceSession _speechSession;
 
         public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath)
         {
@@ -107,7 +125,7 @@ namespace DouBepReader
                 ForeColor = muted, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Belge metni\r\nCtrl+Alt+X  Sesi durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Belge metni\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 680, Height = 175, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -134,7 +152,7 @@ namespace DouBepReader
             };
             voiceTest.FlatAppearance.BorderSize = highContrast ? 1 : 0;
             voiceTest.Click += delegate {
-                if (_ownVoice) SpeakOwnVoice("Merhaba dünya");
+                if (_ownVoice) SpeakOwnVoice("Merhaba dünya", 0);
                 else SetStatus("DOU sesini denemek için OwnVoice modunu başlatın.");
             };
             var stop = new Button {
@@ -196,7 +214,8 @@ namespace DouBepReader
                 Tuple.Create(HOTKEY_BUTTON, MOD_CONTROL | MOD_ALT, (uint)Keys.B),
                 Tuple.Create(HOTKEY_HEADING_NEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.H),
                 Tuple.Create(HOTKEY_HEADING_PREVIOUS, MOD_CONTROL | MOD_ALT | MOD_SHIFT, (uint)Keys.H),
-                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D)
+                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D),
+                Tuple.Create(HOTKEY_PAUSE_RESUME, MOD_CONTROL | MOD_ALT, (uint)Keys.P)
             };
             foreach (var key in combinations)
             {
@@ -221,6 +240,7 @@ namespace DouBepReader
                     case HOTKEY_NEXT: Traverse(1); break;
                     case HOTKEY_PREVIOUS: Traverse(-1); break;
                     case HOTKEY_STOP: StopSpeech(); SetStatus("Seslendirme durduruldu."); break;
+                    case HOTKEY_PAUSE_RESUME: TogglePause(); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
@@ -263,7 +283,7 @@ namespace DouBepReader
         {
             string text = GetReadableName(element);
             if (text == null) { SetStatus("Bu öğe okunamıyor veya gizlilik nedeniyle atlandı."); return; }
-            if (_ownVoice) { SpeakOwnVoice(text); return; }
+            if (_ownVoice) { SpeakOwnVoice(text, element.Current.ProcessId); return; }
             if (_turkishVoice == null) { SetStatus("Yerel Türkçe SAPI sesi bulunamadı. Sesli okuma başlatılmadı."); return; }
             _speaker.SpeakAsyncCancelAll();
             _speaker.Rate = _rateControl.Value;
@@ -442,7 +462,7 @@ namespace DouBepReader
         // Explicit opt-in own-engine playback. No cloud, speech cache, or student content logging.
         // Generation and process cancellation prevent stale audio after stop or new navigation.
         // Text planning and WAV validation share the testable ReaderSpeechContract.
-        private void SpeakOwnVoice(string text)
+        private void SpeakOwnVoice(string text, int sourceProcessId)
         {
             StopSpeech();
             string safe;
@@ -454,22 +474,109 @@ namespace DouBepReader
                 SetStatus("Metin çok uzun veya deneysel Türkçe motor tarafından desteklenmiyor.");
                 return;
             }
-            int generation;
-            lock (_audioLock) generation = _audioGeneration;
-            // Own voice uses the same visible speed slider, bounded within the bridge's
-            // 0.75..1.5 contract. Read the WinForms control on the UI thread only.
+            // Always snapshot the speed on the UI thread.
             double rate = 1.0 + (_rateControl.Value * 0.08);
+            var session = new OwnVoiceSession(chunks, rate, sourceProcessId);
+            int generation;
+            lock (_audioLock)
+            {
+                _speechSession = session;
+                generation = _audioGeneration;
+            }
             SetStatus("DOU yerel ses hazırlanıyor...");
+            RunSession(session, generation);
+        }
+
+        private void RunSession(OwnVoiceSession session, int generation)
+        {
             Task.Run(() =>
             {
-                for (int i = 0; i < chunks.Count; i++)
+                for (;;)
                 {
-                    lock (_audioLock) if (_audioGeneration != generation) return;
-                    AudioStatus(generation, "Okunuyor: parça " + (i + 1) + " / " + chunks.Count);
-                    if (!PlayOwnVoice(chunks[i], generation, rate)) return;
+                    string chunk;
+                    int index;
+                    lock (_audioLock)
+                    {
+                        if (_audioGeneration != generation || session.Paused ||
+                            !ReferenceEquals(_speechSession, session) || IsDisposed) return;
+                        index = session.NextIndex;
+                        if (index >= session.Chunks.Count)
+                        {
+                            _speechSession = null;
+                            break;
+                        }
+                        chunk = session.Chunks[index];
+                    }
+                    AudioStatus(generation, "Okunuyor: parça " + (index + 1) + " / " + session.Chunks.Count);
+                    if (!PlayOwnVoice(chunk, generation, session.Rate)) return;
+                    lock (_audioLock)
+                    {
+                        if (_audioGeneration != generation || session.Paused ||
+                            !ReferenceEquals(_speechSession, session)) return;
+                        session.NextIndex = index + 1;
+                    }
                 }
                 AudioStatus(generation, "Tüm ses parçalarının oynatımı tamamlandı.");
             });
+        }
+
+        private void TogglePause()
+        {
+            if (!_ownVoice)
+            {
+                SetStatus("Duraklat/devam et şu anda yalnız DOU yerel ses modunda kullanılabilir.");
+                return;
+            }
+            OwnVoiceSession session;
+            lock (_audioLock) session = _speechSession;
+            if (session == null)
+            {
+                SetStatus("Duraklatılacak veya sürdürülecek bir seslendirme yok.");
+                return;
+            }
+            if (session.Paused)
+            {
+                if (session.SourceProcessId > 0)
+                {
+                    try
+                    {
+                        var focused = AutomationElement.FocusedElement;
+                        if (focused == null || focused.Current.ProcessId != session.SourceProcessId ||
+                            !Allowed(focused))
+                        {
+                            StopSpeech();
+                            SetStatus("Hedef uygulama değişti; bekleyen metin silindi.");
+                            return;
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        StopSpeech();
+                        SetStatus("İzinli uygulama doğrulanamadı; bekleyen metin silindi.");
+                        return;
+                    }
+                }
+                int generation;
+                lock (_audioLock)
+                {
+                    if (!ReferenceEquals(_speechSession, session)) return;
+                    session.Paused = false;
+                    generation = _audioGeneration;
+                }
+                SetStatus("Kaldığı parçadan yeniden okunuyor.");
+                RunSession(session, generation);
+            }
+            else
+            {
+                lock (_audioLock)
+                {
+                    if (!ReferenceEquals(_speechSession, session)) return;
+                    session.Paused = true;
+                    ++_audioGeneration;
+                    CancelAudioLocked();
+                }
+                SetStatus("Duraklatıldı. Ctrl+Alt+P ile kaldığı parçadan devam edin.");
+            }
         }
 
         private void AudioStatus(int generation, string message)
@@ -620,14 +727,21 @@ namespace DouBepReader
             }
         }
 
+        // Called under _audioLock; interruption is serialized with player.Play().
+        private void CancelAudioLocked()
+        {
+            if (_audioPlayer != null) { try { _audioPlayer.Stop(); } catch (Exception) { } }
+            if (_audioProcess != null) { try { if (!_audioProcess.HasExited) _audioProcess.Kill(); } catch (Exception) { } }
+        }
+
         private void StopSpeech()
         {
             if (_speaker != null) { try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { } }
             lock (_audioLock)
             {
                 ++_audioGeneration;
-                if (_audioPlayer != null) { try { _audioPlayer.Stop(); } catch { } }
-                if (_audioProcess != null) { try { if (!_audioProcess.HasExited) _audioProcess.Kill(); } catch { } }
+                _speechSession = null;
+                CancelAudioLocked();
             }
         }
         protected override void OnFormClosed(FormClosedEventArgs e)
