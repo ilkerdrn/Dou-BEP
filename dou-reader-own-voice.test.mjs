@@ -61,3 +61,33 @@ test('reader uses bounded nonpersisted WAV pipeline with opt-in activation', () 
  assert.match(ps, /ReaderSpeechContract\]::SelfTest\(\)/);
  assert.match(ps, /\[switch\]\$OwnVoice/);
 });
+
+test('pause/resume retains only bounded utterances and invalidates old requests', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /new OwnVoiceSession\(chunks, rate, sourceProcessId\)/);
+ assert.match(cs, /session\.NextIndex = index \+ 1/);
+ assert.match(cs, /session\.Paused = true/);
+ assert.match(cs, /session\.Paused = false/);
+ assert.match(cs, /\+\+_audioGeneration/);
+ assert.match(cs, /_speechSession = null/);
+ assert.match(cs, /CancelAudioLocked\(\)/);
+ assert.match(cs, /if \(!ContainsFocus\)/);
+ assert.match(cs, /session\.SourceProcessId/);
+});
+
+test('optional pause hotkey does not invalidate all original key bindings', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /HOTKEY_PAUSE_RESUME = 110/);
+ assert.match(cs, /if \(RegisterHotKey\(Handle, HOTKEY_PAUSE_RESUME/);
+ assert.match(cs, /pause\.Click \+= delegate \{ TogglePause\(\)/);
+ assert.match(cs, /AccessibleName = "DOU yerel ses okumasını duraklat/);
+});
+
+test('access rejection and focus loss interrupt speech and clear scoped content', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /if \(!_allowed\.Contains\(name\)\) return false/);
+ assert.match(cs, /if \(!Allowed\(element\)\) \{ StopSpeech\(\)/);
+ assert.match(cs, /if \(text == null\) \{ StopSpeech\(\)/);
+ assert.match(cs, /if \(focusedNow == null[\s\S]*?StopSpeech\(\)/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
+});
