@@ -59,6 +59,7 @@ namespace DouBepReader
         private readonly Label _status;
         private readonly SpeechSynthesizer _speaker;
         private readonly TrackBar _rateControl;
+        private readonly CheckBox _reverseStructure;
         private readonly string _turkishVoice;
         private readonly bool _ownVoice;
         private readonly string _bridgePath;
@@ -93,9 +94,10 @@ namespace DouBepReader
             _bridgePath = bridgePath;
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
-            Width = 760;
-            Height = 650;
-            MinimumSize = new Size(760, 650);
+            Width = 800;
+            Height = 780;
+            MinimumSize = new Size(800, 760);
+            AutoScroll = true;
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             Font = new Font("Segoe UI", 10.0f);
@@ -142,25 +144,25 @@ namespace DouBepReader
             sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
                 Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/T/C  Sonraki liste / tablo / hücre\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
-                Left = 26, Top = 147, Width = 680, Height = 175, AutoSize = false,
+                Left = 26, Top = 147, Width = 720, Height = 200, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
                 AccessibleName = "DOU Reader klavye kısayolları",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var statusLabel = new Label {
-                Text = "OKUMA DURUMU", Left = 26, Top = 338, Width = 240, Height = 22,
+                Text = "OKUMA DURUMU", Left = 26, Top = 362, Width = 240, Height = 22,
                 ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
             };
             _status = new Label {
-                Text = "Ses başlatılıyor.", Left = 26, Top = 362, Width = 680, Height = 58,
+                Text = "Ses başlatılıyor.", Left = 26, Top = 390, Width = 720, Height = 58,
                 ForeColor = ink, BackColor = surface, Padding = new Padding(12, 9, 10, 8),
                 AccessibleName = "Okuyucu durumu", AccessibleRole = AccessibleRole.StatusBar,
                 AccessibleDescription = "En son ses işleminin durumu; öğrenci verisi içermez.",
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
             var voiceTest = new Button {
-                Text = "DOU sesini dene", Left = 26, Top = 447, Width = 152, Height = 48,
+                Text = "DOU sesini dene", Left = 26, Top = 645, Width = 152, Height = 48,
                 AccessibleName = "DOU yerel ses motorunu sentetik örnekle dene",
                 TabIndex = 0, FlatStyle = FlatStyle.Flat,
                 ForeColor = highContrast ? SystemColors.HighlightText : page, BackColor = accent,
@@ -172,7 +174,7 @@ namespace DouBepReader
                 else SetStatus("DOU sesini denemek için OwnVoice modunu başlatın.");
             };
             var pause = new Button {
-                Text = "Duraklat / devam", Left = 186, Top = 447, Width = 153, Height = 48,
+                Text = "Duraklat / devam", Left = 186, Top = 645, Width = 153, Height = 48,
                 AccessibleName = "DOU yerel ses okumasını duraklat veya devam ettir",
                 AccessibleDescription = "Devam edildiğinde yarım kalan konuşma parçası baştan okunur.",
                 TabIndex = 1, FlatStyle = FlatStyle.Flat,
@@ -183,7 +185,7 @@ namespace DouBepReader
             pause.FlatAppearance.BorderColor = accent;
             pause.Click += delegate { TogglePause(); };
             var stop = new Button {
-                Text = "Sesi durdur", Left = 347, Top = 447, Width = 147, Height = 48,
+                Text = "Sesi durdur", Left = 347, Top = 645, Width = 147, Height = 48,
                 AccessibleName = "Konuşmayı hemen durdur",
                 TabIndex = 2, FlatStyle = FlatStyle.Flat,
                 ForeColor = ink, BackColor = surface,
@@ -193,12 +195,12 @@ namespace DouBepReader
             stop.FlatAppearance.BorderColor = accent;
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
             var rateLabel = new Label {
-                Text = "KONUŞMA HIZI", Left = 524, Top = 425, Width = 196, Height = 22,
+                Text = "KONUŞMA HIZI", Left = 524, Top = 610, Width = 196, Height = 22,
                 ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             _rateControl = new TrackBar {
-                Left = 517, Top = 448, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
+                Left = 517, Top = 646, Width = 205, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, TabIndex = 3,
                 BackColor = page, ForeColor = ink,
                 AccessibleName = "Türkçe konuşma hızı",
@@ -206,32 +208,45 @@ namespace DouBepReader
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
             var structureLabel = new Label {
-                Text = "YAPISAL GEZİNME", Left = 26, Top = 430, Width = 250, Height = 22,
+                Text = "YAPISAL GEZİNME", Left = 26, Top = 463, Width = 250, Height = 22,
                 ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
             };
+            _reverseStructure = new CheckBox {
+                Text = "Önceki öğeyi bul", Left = 528, Top = 459, Width = 216, Height = 27,
+                TabIndex = 4, ForeColor = ink, BackColor = page,
+                AccessibleName = "Yapısal gezinme yönü",
+                AccessibleDescription = "İşaretliyse gezinme düğmeleri önceki başlık, liste, tablo veya hücreyi bulur."
+            };
             Controls.Add(structureLabel);
+            Controls.Add(_reverseStructure);
             var structureActions = new[] {
                 Tuple.Create("Başlık", ReaderStructureKind.Heading),
                 Tuple.Create("Liste", ReaderStructureKind.List),
+                Tuple.Create("Liste öğesi", ReaderStructureKind.ListItem),
                 Tuple.Create("Tablo", ReaderStructureKind.Table),
+                Tuple.Create("Satır", ReaderStructureKind.Row),
                 Tuple.Create("Hücre", ReaderStructureKind.Cell)
             };
             for (int index = 0; index < structureActions.Length; index++)
             {
                 var action = structureActions[index];
                 ReaderStructureKind target = action.Item2;
+                int row = index / 3;
+                int column = index % 3;
                 var nav = new Button {
-                    Text = action.Item1, Left = 26 + (index * 169), Top = 456,
-                    Width = 156, Height = 46,
-                    AccessibleName = "Sonraki " + ReaderStructureContract.TurkishRole(target) + " öğesini bul",
-                    AccessibleDescription = "İzinli uygulamada seçili okuma noktasından sonra ara.",
+                    Text = action.Item1, Left = 26 + (column * 235), Top = 494 + (row * 60),
+                    Width = 219, Height = 48,
+                    AccessibleName = ReaderStructureContract.TurkishRole(target) + " arasında gezin",
+                    AccessibleDescription = "Önceki öğeyi bul seçilirse geri, aksi halde ileri gider.",
                     TabIndex = 5 + index, FlatStyle = FlatStyle.Flat,
                     ForeColor = ink, BackColor = surface,
                     Anchor = AnchorStyles.Top | AnchorStyles.Left
                 };
                 nav.FlatAppearance.BorderSize = 1;
                 nav.FlatAppearance.BorderColor = accent;
-                nav.Click += delegate { TraverseStructureKind(target, 1, true); };
+                nav.Click += delegate {
+                    TraverseStructureKind(target, _reverseStructure.Checked ? -1 : 1, true);
+                };
                 Controls.Add(nav);
             }
             Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle); Controls.Add(sectionButton);
