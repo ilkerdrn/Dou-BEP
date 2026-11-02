@@ -104,7 +104,7 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Gizli/parola/edit denetimleri, uzun erişilebilir etiket sınırı, durdurma/izin kontrolü ve manuel gezinme ile bölüm noktasının sıfırlanması korunur.
 - `tools/dou-reader-windows.ps1 -Check` saf yapı sözleşmesinin derlenmesini ve `SelfTest()` testlerini çalıştıracak şekilde genişletildi. Node kaynak regresyonlarında sınıflandırma ve kısayol sınırları denetlenir.
 
-**Açık sorunlar:** Bazı UIA sağlayıcıları listelere, tablolara veya hücrelere açık rol/erişilebilir isim sağlamaz; böyle öğeler seslendirilmez. Gerçek tablo içeriği, hücre koordinatları, Word/PDF ve akademik belge hiyerarşisi henüz tamamlanmadı. Sprint 04 için Windows gerçek derleme, ses ve klavye kabulü henüz yapılmadı.
+**Açık sorunlar:** Bazı UIA sağlayıcıları listelere, tablolara veya hücrelere açık rol/erişilebilir isim sağlamaz; böyle öğeler seslendirilmez. Gerçek tablo içeriği, tablo başlıkları ile hücrelerin ilişkisi, Word/PDF ve akademik belge hiyerarşisi henüz tamamlanmadı. Sınırlı UIA GridItemPattern koordinat okuma Sprint 06'da kodlandı ancak Windows kabulü bekliyor. Sprint 04 için Windows gerçek derleme, ses ve klavye kabulü henüz yapılmadı.
 
 ## Sprint 05 — liste öğeleri / tablo satırları / ters gezinme / arayüz yerleşimi (kodlandı, Windows kabulü bekliyor)
 
