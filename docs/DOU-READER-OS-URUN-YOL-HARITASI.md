@@ -136,3 +136,14 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Sınıflandırma/konum/mahremiyet regresyon testleri ve sekiz Türkçe seslendirilebilir sentetik cümle test kapsamına alındı. İzole eski arşivde **GitHub sürümüyle SHA'sı eşleşen** `dou-speech-free-text.mjs` motoruyla 8/8 sentetik WAV üretimi yerel olarak doğrulandı; güncel Windows C# sürümünün derlemesi veya hoparlör sesi henüz doğrulanmadı.
 
 **Sınır:** UIA GridItemPattern koordinatı tablonun anlamını, sütun başlıklarını veya öğrenci verisinin okunabilirliğini tek başına kanıtlamaz. DataItem altındaki tam metin ya da Word/PDF belge içeriği hâlâ desteklenmiyor. PR #8 Windows kabulü olmadan birleştirilmez.
+
+## Sprint 08 — paragraf gezinmesi ve tablo başlığı ilişkileri (kodlandı, Windows kabulü bekliyor)
+
+- `ReaderStructureContract` açık ARIA `paragraph` rolünü ayrı `Paragraph` türüne ayırır. Tek başına UIA `Text` kontrolü paragraf sayılmaz. `Ctrl+Alt+Shift+P` ve arayüzde **Paragraf** düğmesi ile ileri gezinilir; arayüzdeki `Önceki öğeyi bul` seçeneği paragrafta da kullanılabilir.
+- Yedi yapısal gezinme düğmesi masaüstünde **dört sütun / iki satır** düzenine geçti; kontrol alanı ve ses düğmeleri birbirinden ayrıldı.
+- Yeni saf `ReaderTableHeaderContract` satır/sütun başlıklarını sınırlı karakter kümesi, uzunluk ve içerik sözleşmesiyle denetler; `-Check` içinde öz test çalıştırılması için derlemeye bağlandı.
+- Gerçek UIA `TableItemPattern.Current.GetRowHeaderItems()` ve `GetColumnHeaderItems()` çağrılarıyla hücreyle **açıkça ilişkilendirilmiş** başlıklar bulunursa okunur. En fazla iki başlık öğesi / eksen; UIA `HeaderItem`, aynı süreç, görünürlük ve Edit/parola ata kontrolleri zorunludur. Çok uzun/özel karakterli etiketler atlanır.
+- `DataItem` kayıtlarının kendisi gizlilik nedeniyle hiçbir ad veya tablo başlığı açıklamaz; yalnız doğrulanmış ızgara konumu ve nötr rolü kullanır.
+- Başlık ilişkisi sağlayıcı tarafından sunulmuyorsa hücreye sahte başlık üretilmez. Paragrafın metin içeriği `ValuePattern/TextPattern` ile çıkarılmaz; yalnız güvenli erişilebilir `Name` üzerinden sınırlı okuma sürer.
+
+**Açık kabul:** Yeni sürümün gerçek Windows PowerShell 5.1 C# derlemesi, UI Automation sağlayıcı davranışı, anlamlı Türkçe ses, %200 DPI ve ekran okuyucu kullanıcı testi bekliyor. Microsoft UIA sağlayıcı çağrıları kendi içlerinde yavaş veya kilitli olabilir; tarama bütçemiz tek çağrıya kesin zaman aşımı garanti etmez. Bu sprint Word/PDF belge ayrıştırma veya tam metin ekran okuyucu desteği değildir.
