@@ -363,20 +363,54 @@ namespace DouBepReader
 
         // Explicit opt-in own-engine playback. No cloud, speech cache, or student content logging.
         // Generation and process cancellation prevent stale audio after stop or new navigation.
+        // Chunk only after validating the entire utterance. No truncation of exam content.
+        private static List<string> SpeechChunks(string text)
+        {
+            if (String.IsNullOrWhiteSpace(text) || text.Length > 850 ||
+                !Regex.IsMatch(text, @"\\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\\s,.!?;:–\\-’']+\\z"))
+                return null;
+            var result = new List<string>();
+            var words = Regex.Split(text.Trim(), @"\\s+");
+            var part = "";
+            foreach (var word in words)
+            {
+                if (word.Length > 45) return null;
+                if (part.Length > 0 && part.Length + word.Length + 1 > 180)
+                {
+                    result.Add(part);
+                    part = "";
+                }
+                part = part.Length == 0 ? word : part + " " + word;
+            }
+            if (part.Length > 0) result.Add(part);
+            return result.Count > 0 && result.Count <= 8 ? result : null;
+        }
+
         private void SpeakOwnVoice(string text)
         {
             StopSpeech();
-            var safe = TurkishMathPronunciation.Prepare(text);
-            if (safe.Length == 0 || safe.Length > 220 ||
-                !Regex.IsMatch(safe, @"\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\s,.!?;:–\-’']+\z"))
+            string safe;
+            try { safe = TurkishMathPronunciation.Prepare(text); }
+            catch (Exception) { SetStatus("Metin yerel ses için uygun değil."); return; }
+            var chunks = SpeechChunks(safe);
+            if (chunks == null)
             {
-                SetStatus("Bu metin deneysel yerel motorun desteklediği karakterleri aşıyor.");
+                SetStatus("Metin çok uzun veya deneysel Türkçe motor tarafından desteklenmiyor.");
                 return;
             }
             int generation;
             lock (_audioLock) generation = _audioGeneration;
             SetStatus("DOU yerel ses hazırlanıyor...");
-            Task.Run(() => PlayOwnVoice(safe, generation));
+            Task.Run(() =>
+            {
+                for (int i = 0; i < chunks.Count; i++)
+                {
+                    lock (_audioLock) if (_audioGeneration != generation) return;
+                    AudioStatus(generation, "Okunuyor: parça " + (i + 1) + " / " + chunks.Count);
+                    if (!PlayOwnVoice(chunks[i], generation)) return;
+                }
+                AudioStatus(generation, "Tüm ses parçalarının oynatımı tamamlandı.");
+            });
         }
 
         private void AudioStatus(int generation, string message)
@@ -397,7 +431,7 @@ namespace DouBepReader
             catch (ObjectDisposedException) { }
         }
 
-        private void PlayOwnVoice(string text, int generation)
+        private bool PlayOwnVoice(string text, int generation)
         {
             string path = Path.Combine(Path.GetTempPath(), "dou-reader-" + Guid.NewGuid().ToString("N") + ".wav");
             Process proc = null;
@@ -413,7 +447,7 @@ namespace DouBepReader
                 proc = new Process { StartInfo = start };
                 lock (_audioLock)
                 {
-                    if (_audioGeneration != generation || IsDisposed) return;
+                    if (_audioGeneration != generation || IsDisposed) return false;
                     _audioProcess = proc;
                     proc.Start();
                 }
@@ -448,7 +482,7 @@ namespace DouBepReader
                     while ((read = proc.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
                     {
                         lock (_audioLock)
-                            if (_audioGeneration != generation) return;
+                            if (_audioGeneration != generation) return false;
                         if (output.Length + read > 3000000)
                         {
                             oversized = true;
@@ -458,10 +492,10 @@ namespace DouBepReader
                         output.Write(buffer, 0, read);
                     }
                 }
-                if (oversized) { AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı."); return; }
+                if (oversized) { AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı."); return false; }
                 watchdog.Wait(16000);
-                if (timedOut) { AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return; }
-                if (proc.ExitCode != 0) { AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi."); return; }
+                if (timedOut) { AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return false; }
+                if (proc.ExitCode != 0) { AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi."); return false; }
                 byte[] header = new byte[44];
                 using (var f = File.OpenRead(path))
                     if (f.Length < 44 || f.Read(header, 0, header.Length) != 44 ||
@@ -475,20 +509,20 @@ namespace DouBepReader
                         BitConverter.ToInt16(header, 22) != 1 ||
                         BitConverter.ToInt16(header, 34) != 16 ||
                         BitConverter.ToInt32(header, 40) != f.Length - 44 ||
-                        f.Length > 3000000) { AudioStatus(generation, "Ses dosyası doğrulaması başarısız."); return; }
+                        f.Length > 3000000) { AudioStatus(generation, "Ses dosyası doğrulaması başarısız."); return false; }
                 player = new SoundPlayer(path);
                 lock (_audioLock)
                 {
-                    if (_audioGeneration != generation || IsDisposed) return;
+                    if (_audioGeneration != generation || IsDisposed) return false;
                     _audioPlayer = player;
                 }
                 player.Load();
-                lock (_audioLock) { if (_audioGeneration != generation) return; }
+                lock (_audioLock) { if (_audioGeneration != generation) return false; }
                 AudioStatus(generation, "DOU Türkçe sesi oynatılıyor...");
                 player.PlaySync();
-                AudioStatus(generation, "Ses oynatımı tamamlandı.");
+                return true;
             }
-            catch (Exception) { AudioStatus(generation, "Yerel ses oynatma hatası. Metin kaydedilmedi."); }
+            catch (Exception) { AudioStatus(generation, "Yerel ses oynatma hatası. Metin kaydedilmedi."); return false; }
             finally
             {
                 lock (_audioLock)
