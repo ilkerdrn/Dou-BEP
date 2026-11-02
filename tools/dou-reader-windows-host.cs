@@ -613,7 +613,9 @@ namespace DouBepReader
                     if (headingOnly ? !IsHeading(candidate) : !IsDocumentText(candidate)) continue;
                     _cursor = candidate;
                     _advanceAfterSection = false;
-                    Say(candidate);
+                    if (headingOnly)
+                        SayStructuredElement(candidate, ReaderStructureKind.Heading, GetReadableName(candidate));
+                    else Say(candidate);
                     return;
                 }
                 SetStatus(headingOnly ? "Bu uygulama başlık bilgisi sunmuyor veya başka başlık yok." :
@@ -642,6 +644,57 @@ namespace DouBepReader
             else if (type == ControlType.DataGrid) control = "DataGrid";
             else if (type == ControlType.HeaderItem) control = "HeaderItem";
             return ReaderStructureContract.Classify(role, control, IsHeading(element));
+        }
+
+        // Report only a genuine UIA heading level, never one inferred from font size.
+        private static int ExplicitHeadingLevel(AutomationElement element)
+        {
+            if (HeadingLevelProperty == null) return 0;
+            try
+            {
+                object level = element.GetCurrentPropertyValue(HeadingLevelProperty, true);
+                if (!(level is int)) return 0;
+                int value = (int)level;
+                if (value >= 1 && value <= 9) return value;
+                if (value >= 80051 && value <= 80059) return value - 80050;
+            }
+            catch (ElementNotAvailableException) { }
+            catch (InvalidOperationException) { }
+            return 0;
+        }
+
+        // The accessible Name has already passed hidden/edit/password checks.
+        private void SayStructuredElement(AutomationElement element, ReaderStructureKind kind, string readableName)
+        {
+            string role = ReaderStructureContract.TurkishRole(kind);
+            if (role == null || String.IsNullOrEmpty(readableName)) return;
+            if (kind == ReaderStructureKind.Heading)
+            {
+                int level = ExplicitHeadingLevel(element);
+                if (level > 0) role += " seviye " + level;
+            }
+            int separator = readableName.IndexOf(": ", StringComparison.Ordinal);
+            string speech = role + ": " + (separator < 0 ? readableName : readableName.Substring(separator + 2));
+            if (speech.Length > MAX_SPEECH_CHARACTERS)
+            {
+                StopSpeech();
+                SetStatus("Erişilebilir etiket güvenli sınırın dışında.");
+                return;
+            }
+            if (_ownVoice)
+            {
+                SpeakOwnVoice(speech, element.Current.ProcessId);
+                return;
+            }
+            StopSpeech();
+            if (_turkishVoice == null)
+            {
+                SetStatus("İzinli öğe bulundu, ancak yerel Türkçe SAPI sesi yok.");
+                return;
+            }
+            _speaker.Rate = _rateControl.Value;
+            _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(speech));
+            SetStatus("Yapısal öğe okunuyor: " + role);
         }
 
         private void TraverseStructureKind(ReaderStructureKind target, int direction, bool fromReaderButton)
@@ -683,21 +736,9 @@ namespace DouBepReader
                     string name = GetReadableName(candidate);
                     if (name == null) continue;
                     if (!ReaderStructureContract.Matches(DetectStructure(candidate), target)) continue;
-                    string roleLabel = ReaderStructureContract.TurkishRole(target);
-                    int separator = name.IndexOf(": ", StringComparison.Ordinal);
-                    string speech = roleLabel + ": " + (separator < 0 ? name : name.Substring(separator + 2));
-                    if (speech.Length > MAX_SPEECH_CHARACTERS) continue;
-                    StopSpeech();
                     _cursor = candidate;
                     _advanceAfterSection = false;
-                    if (_ownVoice) SpeakOwnVoice(speech, _scopeProcessId);
-                    else if (_turkishVoice != null)
-                    {
-                        _speaker.Rate = _rateControl.Value;
-                        _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(speech));
-                        SetStatus("Sonraki " + roleLabel + " okunuyor.");
-                    }
-                    else SetStatus("İzinli " + roleLabel + " bulundu; yerel ses yok.");
+                    SayStructuredElement(candidate, target, name);
                     return;
                 }
                 SetStatus("Bu bölümde başka " + ReaderStructureContract.TurkishRole(target) + " bulunamadı.");
