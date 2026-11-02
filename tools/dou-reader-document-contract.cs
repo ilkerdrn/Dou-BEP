@@ -63,9 +63,13 @@ namespace DouBepReader
                 throw new InvalidOperationException("Document bounds failed.");
             var oversized = new List<string>();
             for (int i = 0; i < 4; i++)
-                if (!TryAdd(oversized, new string((char)('A' + i), 200)))
+            {
+                string word = new string((char)('A' + i), 39);
+                var line = String.Join(" ", new[] { word, word, word, word, word });
+                if (!TryAdd(oversized, line))
                     throw new InvalidOperationException("Unexpected text bound.");
-            if (TryAdd(oversized, new string('Z', 100)))
+            }
+            if (TryAdd(oversized, "Merhaba dünya. Okunmaya devam edilmemeli."))
                 throw new InvalidOperationException("Overlong document admitted.");
         }
     }
