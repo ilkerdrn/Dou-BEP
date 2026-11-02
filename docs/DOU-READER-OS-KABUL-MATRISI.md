@@ -78,3 +78,17 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 30 | UIA heading level 1–9 veya UIA ID 80051–80059 | Yalnız gerçek metadata varsa Türkçe başlık seviyesi okunur; metadata yoksa uydurulmaz | Bekliyor |
 
 **Bilinçli sınırlama:** Yalnız görünür erişilebilir öğe etiketleri okunur; hücre veri modeli, satır-sütun koordinatları ve Word/PDF yapı aktarımı henüz yoktur. Tüm senaryolar gerçek Windows kabulü bekler.
+
+## Sprint 05 — tablo satırları, liste öğeleri, yön ve arayüz kabulü
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 31 | Açık ARIA `listitem` veya UIA `ListItem` | Liste öğesi düğmesi ve Ctrl+Alt+Shift+I ile erişilebilir rol seslendirilir | Bekliyor |
+| 32 | Açık ARIA `row` | Satır düğmesi ve Ctrl+Alt+Shift+R erişilebilir satıra gider; DataItem'dan otomatik satır tahmini yapılmaz | Bekliyor |
+| 33 | Önceki öğeyi bul seçeneği | Altı gezinme düğmesi önceki uygun öğeye gider; klavye kısayolları ileri yönü korur | Bekliyor |
+| 34 | Açık ARIA `list` + UIA `Table` gibi rol çelişkisi | Öğe yanlış bir rol ile seslendirilmez; ikisi de desteklense de çelişki güvenli reddedilir | Bekliyor |
+| 35 | Açık yapısal rol ancak erişilebilir ad boş | Gizlilik kontrolleri sağlanıyorsa yalnızca `liste`, `tablo` vb. rol duyurulur | Bekliyor |
+| 36 | 100% ve 200% ekran ölçeği | Başlık/yardım/durum/yapısal kontroller/ses kontrolleri örtüşmez, Tab erişimi korunur | Bekliyor |
+| 37 | Windows yüksek kontrast ve ekran okuyucu ile arayüz | Düğmelerin erişilebilir adları, yön seçeneği ve durum bilgisi anlaşılır | Bekliyor |
+
+**Bu sprintin kod düzeyi incelemeleri gerçek Windows DPI/klavye/işitilebilirlik testi değildir.** Word/PDF ayrıştırma, hücre koordinatları, paragrafların tam semantik algılanması ve serbest metin okuma henüz geliştirilmedi.
