@@ -10,6 +10,7 @@ namespace DouBepReader
     {
         public const int MaxTextNodes = 16;
         public const int MaxTraversalSteps = 350;
+        public const int MaxScanMilliseconds = 1500;
         public const int MaxCharacters = 850;
         public const int MaxSingleNodeCharacters = 240;
 
