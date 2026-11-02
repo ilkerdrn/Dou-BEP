@@ -99,6 +99,7 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 
 - Ayrı saf C# `ReaderStructureContract` sınıfında **başlık, liste, liste öğesi, tablo, satır, hücre** rolleri yalnız açık **ARIA rolü / UIA kontrol türü / heading-level** bilgisiyle belirlenir. Stil veya yazı biçimi üzerinden anlam tahmin edilmez; çelişen ARIA/UIA tanımları güvenli biçimde reddedilir.
 - DOU Reader arayüzüne **Başlık, Liste, Tablo, Hücre** için ayrı, erişilebilir gezinme düğmeleri eklendi. `Ctrl+Alt+Shift+L/T/C` isteğe bağlı kısayolları tanımlandı; başka uygulamayla çakışmaları ana okuma kısayollarını kapatmaz.
+- Erişilebilirlik sağlayıcısı açıkça bildiriyorsa gerçek başlık seviyesi **başlık seviye 1…9** olarak Türkçe duyurulur. Başlık seviyesi görsel stillerden tahmin edilmez.
 - Her gezinme yalnız önceden seçilen izinli uygulama içinde, en fazla 350 UIA adımı ve adımlar arasında en fazla 1,5 saniyelik *best-effort* tarama bütçesiyle çalışır. Tek tek UIA sağlayıcısı çağrılarının bu süreye tabi olduğu garanti edilemez.
 - Gizli/parola/edit denetimleri, uzun erişilebilir etiket sınırı, durdurma/izin kontrolü ve manuel gezinme ile bölüm noktasının sıfırlanması korunur.
 - `tools/dou-reader-windows.ps1 -Check` saf yapı sözleşmesinin derlenmesini ve `SelfTest()` testlerini çalıştıracak şekilde genişletildi. Node kaynak regresyonlarında sınıflandırma ve kısayol sınırları denetlenir.
