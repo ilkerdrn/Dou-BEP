@@ -734,6 +734,50 @@ namespace DouBepReader
             catch (System.Runtime.InteropServices.COMException) { return null; }
         }
 
+        // TableItemPattern directly reports associated header elements, not a
+        // guessed table lookup. Only up to two actual UIA HeaderItem labels are
+        // considered; providers which omit this pattern produce no header context.
+        private static string SafeTableHeaders(AutomationElement cell, AutomationElement[] headers)
+        {
+            if (headers == null || headers.Length == 0 ||
+                headers.Length > ReaderTableHeaderContract.MaxHeadersPerAxis)
+                return null;
+            var names = new List<string>();
+            int processId = cell.Current.ProcessId;
+            foreach (AutomationElement header in headers)
+            {
+                if (header == null || header.Current.ProcessId != processId ||
+                    header.Current.ControlType != ControlType.HeaderItem ||
+                    !SafeReadableScope(header)) return null;
+                string name = ReaderTableHeaderContract.CleanHeader(header.Current.Name);
+                if (name == null) return null;
+                names.Add(name);
+            }
+            return ReaderTableHeaderContract.CleanHeader(String.Join(", ", names.ToArray()));
+        }
+
+        private static string ExplicitTableHeaders(AutomationElement cell)
+        {
+            if (!SafeReadableScope(cell) || cell.Current.ControlType == ControlType.DataItem)
+                return null;
+            try
+            {
+                object raw;
+                if (!cell.TryGetCurrentPattern(TableItemPattern.Pattern, out raw))
+                    return null;
+                var table = raw as TableItemPattern;
+                if (table == null) return null;
+                // These are read-only .NET UIA TableItemPatternInformation methods.
+                // A slow or broken provider is handled by the caller's error guard.
+                string row = SafeTableHeaders(cell, table.Current.GetRowHeaderItems());
+                string column = SafeTableHeaders(cell, table.Current.GetColumnHeaderItems());
+                return ReaderTableHeaderContract.Compose(row, column);
+            }
+            catch (ElementNotAvailableException) { return null; }
+            catch (InvalidOperationException) { return null; }
+            catch (System.Runtime.InteropServices.COMException) { return null; }
+        }
+
         // The accessible Name has already passed hidden/edit/password checks.
         private void SayStructuredElement(AutomationElement element, ReaderStructureKind kind, string readableName)
         {
@@ -750,6 +794,13 @@ namespace DouBepReader
                 // valid GridItemPattern (zero-based); never guess row/column.
                 string position = ExplicitCellPosition(element);
                 if (position != null) role += ", " + position;
+                if (kind == ReaderStructureKind.Cell)
+                {
+                    // Context comes exclusively from TableItemPattern's actual
+                    // associated header items; unrelated table labels are never used.
+                    string headers = ExplicitTableHeaders(element);
+                    if (headers != null) role += ", " + headers;
+                }
             }
             // Explicitly named structures may be read by name. Unnamed structures
             // are announced by role only; Edit/password ancestry was checked before
