@@ -92,3 +92,15 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 37 | Windows yüksek kontrast ve ekran okuyucu ile arayüz | Düğmelerin erişilebilir adları, yön seçeneği ve durum bilgisi anlaşılır | Bekliyor |
 
 **Bu sprintin kod düzeyi incelemeleri gerçek Windows DPI/klavye/işitilebilirlik testi değildir.** Word/PDF ayrıştırma, hücre koordinatları, paragrafların tam semantik algılanması ve serbest metin okuma henüz geliştirilmedi.
+
+## Sprint 06 — UIA GridItem hücre koordinatları
+
+| No | Senaryo | Başarı ölçütü | Durum |
+|---|---|---|---|
+| 38 | GridItemPattern sunan hücre (row=0, column=1) | Yalnız gerçek UIA metadata üzerinden **hücre, satır 1 sütun 2** duyurulur | Bekliyor |
+| 39 | GridItemPattern sunmayan hücre | Hücre rolü mevcutsa duyurulur; satır/sütun konumu **uydurulmaz** | Bekliyor |
+| 40 | Negatif ya da 10.000 ve üzeri koordinat | Geçersiz koordinat kullanılmaz | Bekliyor |
+| 41 | Edit/parola alanına bağlı hücre | Hücre metni veya koordinatı seslendirilmez | Bekliyor |
+| 42 | UIA GridItemPattern sağlayıcısı hata veriyor | Metin veya hata ayrıntısı ifşa edilmeden güvenli biçimde atlanır | Bekliyor |
+
+**Not:** Hücre koordinatları yalnız UIA GridItemPattern tarafından açıkça sağlanıyorsa kullanılır. Kullanıcı testleri ve son C# Windows derlemesi henüz yapılmadı.
