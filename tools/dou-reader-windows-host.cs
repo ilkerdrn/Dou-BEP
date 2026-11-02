@@ -65,6 +65,7 @@ namespace DouBepReader
         private SoundPlayer _audioPlayer;
         private AutomationElement _cursor;
         private int _scopeProcessId;
+        private bool _advanceAfterSection; // next explicit section request starts after last delivered text
         // Only a short, bounded utterance is kept in RAM during playback or pause.
         // Stop, new reading, and window close clear the pending session.
         private sealed class OwnVoiceSession
@@ -346,6 +347,7 @@ namespace DouBepReader
                 var element = AutomationElement.FocusedElement;
                 if (!Allowed(element)) { StopSpeech(); _cursor = null; SetStatus("Bu uygulamaya okuma izni verilmedi veya odak bulunamadı."); return; }
                 _cursor = element;
+                _advanceAfterSection = false;
                 Say(element);
             }
             catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Erişilebilirlik öğesi alınamadı. Hedef pencereyi kontrol edin."); }
@@ -399,6 +401,7 @@ namespace DouBepReader
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
                     if (GetReadableName(candidate) == null) continue;
                     _cursor = candidate;
+                    _advanceAfterSection = false;
                     Say(candidate);
                     return;
                 }
@@ -477,7 +480,9 @@ namespace DouBepReader
                 }
 
                 var segments = new List<string>();
-                AutomationElement item = _cursor;
+                bool continueAfterPrevious = _advanceAfterSection;
+                _advanceAfterSection = false;
+                AutomationElement item = continueAfterPrevious ? Step(_cursor, 1) : _cursor;
                 AutomationElement lastIncluded = null;
                 var scanWatch = Stopwatch.StartNew();
                 // Best-effort time budget between UIA provider calls. Individual
@@ -508,6 +513,9 @@ namespace DouBepReader
                     return;
                 }
                 _cursor = lastIncluded;
+                // Every subsequent explicit section request starts after the last
+                // read node, but a separate navigation command resets this marker.
+                _advanceAfterSection = true;
                 if (_ownVoice)
                 {
                     SpeakOwnVoice(sentence, _scopeProcessId);
@@ -529,6 +537,7 @@ namespace DouBepReader
             {
                 StopSpeech();
                 _cursor = null;
+                _advanceAfterSection = false;
                 SetStatus("Bölüm okuma güvenle durduruldu; hedef uygulama tekrar seçilmeli.");
             }
         }
@@ -556,6 +565,7 @@ namespace DouBepReader
                     if (GetReadableName(candidate) == null) continue;
                     if (headingOnly ? !IsHeading(candidate) : !IsDocumentText(candidate)) continue;
                     _cursor = candidate;
+                    _advanceAfterSection = false;
                     Say(candidate);
                     return;
                 }
@@ -588,6 +598,7 @@ namespace DouBepReader
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
                     if (candidate.Current.ControlType != role || GetReadableName(candidate) == null) continue;
                     _cursor = candidate;
+                    _advanceAfterSection = false;
                     Say(candidate);
                     return;
                 }
