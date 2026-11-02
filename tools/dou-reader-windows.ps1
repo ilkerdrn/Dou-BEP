@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Help) {
     Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-OwnVoice] [-AllowedProcesses chrome,msedge,notepad]'
-    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: sonraki metin | Ctrl+Alt+Shift+D: bolum | Ctrl+Alt+Shift+L/T/C: liste/tablo/hucre | Ctrl+Alt+P: duraklat/devam | Ctrl+Alt+X: durdur.'
+    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: sonraki metin | Ctrl+Alt+Shift+D: bolum | Ctrl+Alt+Shift+L/T/C: liste/tablo/hucre | Ctrl+Alt+Shift+P: paragraf | Ctrl+Alt+P: duraklat/devam | Ctrl+Alt+X: durdur.'
     return
 }
 if ($env:OS -eq 'Linux' -or [Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
@@ -38,10 +38,12 @@ $contract = Join-Path $PSScriptRoot 'dou-reader-speech-contract.cs'
 $documentContract = Join-Path $PSScriptRoot 'dou-reader-document-contract.cs'
 $structureContract = Join-Path $PSScriptRoot 'dou-reader-structure-contract.cs'
 $tableContextContract = Join-Path $PSScriptRoot 'dou-reader-table-context-contract.cs'
+$tableHeaderContract = Join-Path $PSScriptRoot 'dou-reader-table-header-contract.cs'
 if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $documentContract -PathType Leaf)) { throw 'Okuyucu belge sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $structureContract -PathType Leaf)) { throw 'Okuyucu yapi sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $tableContextContract -PathType Leaf)) { throw 'Okuyucu tablo baglami sozlesmesi bulunamadi.' }
+if (-not (Test-Path -LiteralPath $tableHeaderContract -PathType Leaf)) { throw 'Okuyucu tablo baslik sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
@@ -62,11 +64,12 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract))) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
     [DouBepReader.ReaderDocumentContract]::SelfTest()
     [DouBepReader.ReaderStructureContract]::SelfTest()
     [DouBepReader.ReaderTableContextContract]::SelfTest()
+    [DouBepReader.ReaderTableHeaderContract]::SelfTest()
     $localTr = 0
     if ($Check -or -not $OwnVoice) {
         # SAPI is inspected only for legacy SAPI mode or diagnostics.
