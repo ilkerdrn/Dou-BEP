@@ -363,36 +363,14 @@ namespace DouBepReader
 
         // Explicit opt-in own-engine playback. No cloud, speech cache, or student content logging.
         // Generation and process cancellation prevent stale audio after stop or new navigation.
-        // Chunk only after validating the entire utterance. No truncation of exam content.
-        private static List<string> SpeechChunks(string text)
-        {
-            if (String.IsNullOrWhiteSpace(text) || text.Length > 850 ||
-                !Regex.IsMatch(text, @"\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\s,.!?;:–\-’']+\z"))
-                return null;
-            var result = new List<string>();
-            var words = Regex.Split(text.Trim(), @"\s+");
-            var part = "";
-            foreach (var word in words)
-            {
-                if (word.Length > 45) return null;
-                if (part.Length > 0 && part.Length + word.Length + 1 > 180)
-                {
-                    result.Add(part);
-                    part = "";
-                }
-                part = part.Length == 0 ? word : part + " " + word;
-            }
-            if (part.Length > 0) result.Add(part);
-            return result.Count > 0 && result.Count <= 8 ? result : null;
-        }
-
+        // Text planning and WAV validation share the testable ReaderSpeechContract.
         private void SpeakOwnVoice(string text)
         {
             StopSpeech();
             string safe;
             try { safe = TurkishMathPronunciation.Prepare(text); }
             catch (Exception) { SetStatus("Metin yerel ses için uygun değil."); return; }
-            var chunks = SpeechChunks(safe);
+            var chunks = ReaderSpeechContract.Split(safe);
             if (chunks == null)
             {
                 SetStatus("Metin çok uzun veya deneysel Türkçe motor tarafından desteklenmiyor.");
@@ -431,11 +409,15 @@ namespace DouBepReader
             catch (ObjectDisposedException) { }
         }
 
+        // No WAV files are written to disk: bounded stdout -> memory -> SoundPlayer.
+        // One generation represents a single user request including every chunk.
         private bool PlayOwnVoice(string text, int generation)
         {
-            string path = Path.Combine(Path.GetTempPath(), "dou-reader-" + Guid.NewGuid().ToString("N") + ".wav");
             Process proc = null;
             SoundPlayer player = null;
+            MemoryStream stream = null;
+            MemoryStream audioStream = null;
+            byte[] pcmWav = null;
             try
             {
                 var start = new ProcessStartInfo("node", "\"" + _bridgePath + "\"")
@@ -451,78 +433,78 @@ namespace DouBepReader
                     _audioProcess = proc;
                     proc.Start();
                 }
-                // Bridge input is bounded and never passed as a shell argument.
                 var escaped = text.Replace("\\", "\\\\").Replace("\"", "\\\"")
                                   .Replace("\n", " ").Replace("\r", " ");
                 byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\"}");
                 proc.StandardInput.BaseStream.Write(input, 0, input.Length);
                 proc.StandardInput.Close();
-                // Bound both elapsed time and WAV bytes while streaming: CopyTo could
-                // otherwise hang before WaitForExit or fill an unbounded temporary file.
+
+                // The watchdog also covers blocked stdout reads. Cancellation kills the
+                // subprocess; no unbounded output file or blocking UI-thread wait.
                 bool timedOut = false;
+                var child = proc;
                 var watchdog = Task.Run(() =>
                 {
                     try
                     {
-                        if (!proc.WaitForExit(15000))
+                        if (!child.WaitForExit(15000))
                         {
                             timedOut = true;
-                            proc.Kill();
+                            child.Kill();
                         }
                     }
                     catch (InvalidOperationException) { }
                     catch (ObjectDisposedException) { }
                     catch (System.ComponentModel.Win32Exception) { }
                 });
-                bool oversized = false;
-                using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                stream = new MemoryStream();
+                var buffer = new byte[16384];
+                int read;
+                while ((read = proc.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
                 {
-                    var buffer = new byte[16384];
-                    int read;
-                    while ((read = proc.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
+                    lock (_audioLock) if (_audioGeneration != generation) return false;
+                    if (stream.Length + read > ReaderSpeechContract.MaxAudioBytes)
                     {
-                        lock (_audioLock)
-                            if (_audioGeneration != generation) return false;
-                        if (output.Length + read > 3000000)
-                        {
-                            oversized = true;
-                            try { proc.Kill(); } catch { }
-                            break;
-                        }
-                        output.Write(buffer, 0, read);
+                        try { proc.Kill(); } catch (Exception) { }
+                        AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı.");
+                        return false;
                     }
+                    stream.Write(buffer, 0, read);
                 }
-                if (oversized) { AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı."); return false; }
-                watchdog.Wait(16000);
-                if (timedOut) { AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return false; }
-                if (proc.ExitCode != 0) { AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi."); return false; }
-                byte[] header = new byte[44];
-                using (var f = File.OpenRead(path))
-                    if (f.Length < 44 || f.Read(header, 0, header.Length) != 44 ||
-                        Encoding.ASCII.GetString(header, 0, 4) != "RIFF" ||
-                        Encoding.ASCII.GetString(header, 8, 4) != "WAVE" ||
-                        Encoding.ASCII.GetString(header, 12, 4) != "fmt " ||
-                        Encoding.ASCII.GetString(header, 36, 4) != "data" ||
-                        BitConverter.ToInt32(header, 4) != f.Length - 8 ||
-                        BitConverter.ToInt16(header, 20) != 1 ||
-                        BitConverter.ToInt32(header, 24) != 22050 ||
-                        BitConverter.ToInt16(header, 22) != 1 ||
-                        BitConverter.ToInt16(header, 34) != 16 ||
-                        BitConverter.ToInt32(header, 40) != f.Length - 44 ||
-                        f.Length > 3000000) { AudioStatus(generation, "Ses dosyası doğrulaması başarısız."); return false; }
-                player = new SoundPlayer(path);
+                if (!watchdog.Wait(16000) || timedOut || !proc.HasExited)
+                {
+                    AudioStatus(generation, "Ses motoru zaman aşımına uğradı.");
+                    return false;
+                }
+                if (proc.ExitCode != 0)
+                {
+                    AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi.");
+                    return false;
+                }
+                pcmWav = stream.ToArray();
+                if (!ReaderSpeechContract.IsPcmWav(pcmWav))
+                {
+                    AudioStatus(generation, "Ses biçimi doğrulanamadı.");
+                    return false;
+                }
+                audioStream = new MemoryStream(pcmWav, false);
+                player = new SoundPlayer(audioStream);
                 lock (_audioLock)
                 {
                     if (_audioGeneration != generation || IsDisposed) return false;
                     _audioPlayer = player;
                 }
                 player.Load();
-                lock (_audioLock) { if (_audioGeneration != generation) return false; }
+                lock (_audioLock) if (_audioGeneration != generation) return false;
                 AudioStatus(generation, "DOU Türkçe sesi oynatılıyor...");
                 player.PlaySync();
-                return true;
+                lock (_audioLock) return _audioGeneration == generation && !IsDisposed;
             }
-            catch (Exception) { AudioStatus(generation, "Yerel ses oynatma hatası. Metin kaydedilmedi."); return false; }
+            catch (Exception)
+            {
+                AudioStatus(generation, "Yerel ses oynatma hatası; metin kaydedilmedi.");
+                return false;
+            }
             finally
             {
                 lock (_audioLock)
@@ -530,13 +512,15 @@ namespace DouBepReader
                     if (ReferenceEquals(_audioProcess, proc)) _audioProcess = null;
                     if (ReferenceEquals(_audioPlayer, player)) _audioPlayer = null;
                 }
-                if (player != null) { try { player.Stop(); } catch { } player.Dispose(); }
+                if (player != null) { try { player.Stop(); } catch (Exception) { } player.Dispose(); }
+                if (audioStream != null) audioStream.Dispose();
+                if (pcmWav != null) Array.Clear(pcmWav, 0, pcmWav.Length);
+                if (stream != null) stream.Dispose();
                 if (proc != null)
                 {
-                    try { if (!proc.HasExited) proc.Kill(); } catch { }
+                    try { if (!proc.HasExited) proc.Kill(); } catch (Exception) { }
                     proc.Dispose();
                 }
-                try { if (File.Exists(path)) File.Delete(path); } catch { }
             }
         }
 
