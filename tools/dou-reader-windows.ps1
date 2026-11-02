@@ -34,6 +34,8 @@ foreach ($name in $AllowedProcesses) {
     }
 }
 $source = Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'
+$contract = Join-Path $PSScriptRoot 'dou-reader-speech-contract.cs'
+if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
@@ -54,7 +56,8 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition ([IO.File]::ReadAllText($source)) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($source))) -ReferencedAssemblies $refs -ErrorAction Stop
+    [DouBepReader.ReaderSpeechContract]::SelfTest()
     $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
     try {
         $localTr = @($speaker.GetInstalledVoices() | Where-Object {
@@ -62,7 +65,7 @@ try {
         }).Count
     } finally { $speaker.Dispose() }
     if ($Check) {
-        Write-Host ('DOU Reader teknik on denetim: UIA ve Windows Forms yuklendi; yerel Turkce SAPI sesi: ' + $localTr)
+        Write-Host ('DOU Reader teknik on denetim: UIA, ses sozlesmesi ve Windows Forms yuklendi; yerel Turkce SAPI sesi: ' + $localTr)
         if ($localTr -eq 0) { Write-Warning 'Yerel Turkce ses yok. Okuyucu otomatik uzaktaki sese gecmez.' }
         return
     }
