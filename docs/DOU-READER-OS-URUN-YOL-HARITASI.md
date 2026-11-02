@@ -147,3 +147,15 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Başlık ilişkisi sağlayıcı tarafından sunulmuyorsa hücreye sahte başlık üretilmez. Paragrafın metin içeriği `ValuePattern/TextPattern` ile çıkarılmaz; yalnız güvenli erişilebilir `Name` üzerinden sınırlı okuma sürer.
 
 **Açık kabul:** Yeni sürümün gerçek Windows PowerShell 5.1 C# derlemesi, UI Automation sağlayıcı davranışı, anlamlı Türkçe ses, %200 DPI ve ekran okuyucu kullanıcı testi bekliyor. Microsoft UIA sağlayıcı çağrıları kendi içlerinde yavaş veya kilitli olabilir; tarama bütçemiz tek çağrıya kesin zaman aşımı garanti etmez. Bu sprint Word/PDF belge ayrıştırma veya tam metin ekran okuyucu desteği değildir.
+
+## Sprint 09 — seçili statik metinde cümle gezinmesi (kodlandı, Windows kabulü bekliyor)
+
+- Saf `ReaderSentenceContract` C# bileşeni, `ReaderSpeechContract` ile aynı güvenli karakter/kelime sınırlarını kullanarak en fazla **850 karakteri ve 16 cümleyi** planlar. `.`, `!`, `?` noktalama sınırları yaklaşık olarak tanınır; `2.5` gibi bitişik sayılar bölünmez. Kısaltmaların tam Türkçe dilbilgisel çözümlemesi **henüz yoktur**.
+- Yalnız kullanıcı tarafından seçilen, izinli süreçteki `ControlType.Text` veya açık `paragraph` rolüne sahip öğelerin erişilebilir `Name` alanı üzerinden okunur. Gizli, parola/Edit atalı, uygunsuz karakterli, çok uzun veya sadece noktalama olan metinler reddedilir. `TextPattern`/`ValuePattern`, clipboard, klavye girişi veya arka plan taraması kullanılmaz.
+- **Önceki cümle** ve **Sonraki cümle** düğmeleri, isteğe bağlı **Ctrl+Alt+Shift+← / →** kısayollarıyla aynı güvenli gezintiyi kullanır. Kısayol çakışırsa mevcut temel kısayollar korunur.
+- Uygulama odağı (kısayol) ya da kaynak sürecin izin durumu (Reader düğmesi) her çağrıda yeniden denetlenir. Metin aynı UIA öğesinde değişirse önceki cümle indeksi kullanılmaz. Başlatma/durdurma iptal kuralları ve kendi Türkçe ses motoru geçerlidir.
+- Küçük ekranlarda alt düğmelerin örtüşmesini engellemek için pencere **kaydırılabilir** hale getirildi: varsayılan 800×740, minimum 760×540, sanal içerik 760×855. Ses kontrolleri pencerenin altına sabitlenmek yerine içeriğin kendi yerinde kalır.
+- `tools/dou-reader-uia-fixture.html` tamamen çevrimdışı, sentetik başlık/paragraf/liste/tablo/gizlilik senaryoları içerir. Dış ağ çağrısı, JavaScript veya gerçek öğrenci verisi yoktur; Windows kabulü için başlatılması isteğe bağlıdır.
+- Node regresyon kaynak denetimleri ve Windows `-Check` C# sözleşme öz testi eklendi.
+
+**Önemli doğrulama ayrımı:** Kaynak düzeyi kontroller ve arşivde SHA eşleşen ses çekirdeğinin 9/9 Node testi, güncel C# Windows derlemesi, gerçek erişilebilirlik hizmeti veya duyulur/doğal Türkçe sesi kanıtlamaz. Son derleme, kullanıcı odağı, küçük ekran, metin değişimi, durdurma ve geri gezinme kabulü hâlâ beklemektedir. Bu özellik tam Word/PDF metin okuması değildir.
