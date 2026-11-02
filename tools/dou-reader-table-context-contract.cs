@@ -32,6 +32,20 @@ namespace DouBepReader
             return columnSpan + " sütun boyunca";
         }
 
+        // One consistent contract for position + span. Even if both individual
+        // values are valid, a span extending beyond the maximum grid is rejected.
+        public static string DescribeGridItem(int rowZeroBased, int columnZeroBased,
+            int rowSpan, int columnSpan)
+        {
+            string position = DescribeCell(rowZeroBased, columnZeroBased);
+            string span = DescribeSpan(rowSpan, columnSpan);
+            if (position == null || span == null) return null;
+            if ((long)rowZeroBased + rowSpan > MaxCoordinate ||
+                (long)columnZeroBased + columnSpan > MaxCoordinate)
+                return null;
+            return span.Length == 0 ? position : position + ", " + span;
+        }
+
         public static string DescribeAccessibleCell(int rowZeroBased, int columnZeroBased, string label)
         {
             string position = DescribeCell(rowZeroBased, columnZeroBased);
@@ -61,6 +75,14 @@ namespace DouBepReader
                 DescribeSpan(10001, 1) != null ||
                 DescribeSpan(1, Int32.MaxValue) != null)
                 throw new InvalidOperationException("Invalid grid span accepted.");
+            if (DescribeGridItem(0, 0, 1, 1) != "satır 1 sütun 1" ||
+                DescribeGridItem(1, 2, 2, 3) != "satır 2 sütun 3, 2 satır ve 3 sütun boyunca" ||
+                DescribeGridItem(9999, 9999, 1, 1) != "satır 10000 sütun 10000" ||
+                DescribeGridItem(9999, 0, 2, 1) != null ||
+                DescribeGridItem(0, 9999, 1, 2) != null ||
+                DescribeGridItem(-1, 0, 1, 1) != null ||
+                DescribeGridItem(0, 0, 0, 1) != null)
+                throw new InvalidOperationException("Grid item cross-boundary span accepted.");
             if (DescribeAccessibleCell(1, 2, "Toplam") != "satır 2 sütun 3: Toplam" ||
                 DescribeAccessibleCell(1, 2, null) != "satır 2 sütun 3" ||
                 DescribeAccessibleCell(1, 2, new string('A', 221)) != null ||
