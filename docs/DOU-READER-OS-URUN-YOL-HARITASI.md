@@ -105,3 +105,14 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - `tools/dou-reader-windows.ps1 -Check` saf yapı sözleşmesinin derlenmesini ve `SelfTest()` testlerini çalıştıracak şekilde genişletildi. Node kaynak regresyonlarında sınıflandırma ve kısayol sınırları denetlenir.
 
 **Açık sorunlar:** Bazı UIA sağlayıcıları listelere, tablolara veya hücrelere açık rol/erişilebilir isim sağlamaz; böyle öğeler seslendirilmez. Gerçek tablo içeriği, hücre koordinatları, Word/PDF ve akademik belge hiyerarşisi henüz tamamlanmadı. Sprint 04 için Windows gerçek derleme, ses ve klavye kabulü henüz yapılmadı.
+
+## Sprint 05 — liste öğeleri / tablo satırları / ters gezinme / arayüz yerleşimi (kodlandı, Windows kabulü bekliyor)
+
+- Önceki grafit/turkuaz Windows panelindeki **yapısal gezinme ve ses kontrolü çakışması** giderildi. Altı öğe türü (Başlık, Liste, Liste öğesi, Tablo, Satır, Hücre) için iki sıralı kontrol alanı eklendi.
+- `Önceki öğeyi bul` seçeneği yapısal gezinme düğmelerini geriye yönlendirir; klavye kısayolları ileri yönü kullanmaya devam eder.
+- İsteğe bağlı `Ctrl+Alt+Shift+I` liste öğesi ve `Ctrl+Alt+Shift+R` satır gezinmesi eklendi.
+- Açık ARIA ve UIA rol bilgileri bilinen iki farklı türü işaretliyorsa `ReaderStructureContract` öğeyi yanlış etiketlemek yerine reddeder. Gerçek UIA `DataItem` öğelerinden satır/k hücre rolü tahmin edilmez.
+- İsimsiz ancak **açık yapısal role** sahip izinli öğeler için, parola / düzenlenebilir alan ve ata denetimleri başarılıysa yalnız rolün adı seslendirilir. Görünür ama desteklenmeyen/uzun etiket güvenli biçimde atlanır.
+- Statik kaynak kontrolleri, otomatik C# sözleşme öz testleri ve `docs/DOU-READER-OS-KABUL-MATRISI.md` senaryoları genişletildi.
+
+**Kritik kabul kapıları:** Yeni UI'nın Windows derlemesi, özellikle %200 DPI ve yüksek kontrastta düğme düzeni, kendi Türkçe ses cihazı ve komutlar arası iptal/geri gezinme testleri tamamlanmadı. Ürünün genel erişilebilirliği onaylanmış değildir.
