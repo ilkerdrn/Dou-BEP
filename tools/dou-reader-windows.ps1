@@ -35,13 +35,23 @@ foreach ($name in $AllowedProcesses) {
 }
 $source = Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
-$refs = @('System.Windows.Forms.dll','System.Drawing.dll','UIAutomationClient.dll','UIAutomationTypes.dll','System.Speech.dll','System.Core.dll')
+# Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
+# Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
+$referenceNames = @('System.Windows.Forms','System.Drawing','UIAutomationClient','UIAutomationTypes','System.Speech','System.Core')
+$refs = @()
 try {
     Add-Type -AssemblyName 'System.Windows.Forms' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Drawing' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
+    foreach ($assemblyName in $referenceNames) {
+        $assembly = [System.Reflection.Assembly]::Load($assemblyName)
+        if ($null -eq $assembly -or [string]::IsNullOrWhiteSpace($assembly.Location) -or -not (Test-Path -LiteralPath $assembly.Location -PathType Leaf)) {
+            throw ('Gerekli .NET derlemesi diskte bulunamadi: ' + $assemblyName)
+        }
+        $refs += $assembly.Location
+    }
     Add-Type -TypeDefinition ([IO.File]::ReadAllText($source)) -ReferencedAssemblies $refs -ErrorAction Stop
     $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
     try {
