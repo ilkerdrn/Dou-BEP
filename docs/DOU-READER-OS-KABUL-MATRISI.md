@@ -59,6 +59,6 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 19 | Statik metin çok uzun, tekrarlı veya destek dışı karakter içeriyor | Geçersiz öğeler atlanır; desteklenen toplam 850 karakter sınırını aşmaz | Bekliyor |
 | 20 | Ağır UIA sağlayıcısı | En fazla 350 adım ve adımlar arasında 1,5 sn tarama bütçesi; **tek tek UIA çağrıları için kesin zaman aşımı garantisi yoktur** | Bekliyor |
 
-**Önemli:** Statik metin düğümleri her tarayıcıda aynı biçimde sunulmaz; boş sonuç normaldir. Gerçek Word/PDF, uzun metinlerde sayfa devamı, tablo hücresi anlamsallaştırma ve ekran okuyucunun sesli keşif deneyimi henüz yoktur. Bu on-demand pilotu, doğrulanmış ürün gibi sunmayacağız.
-
 | 21 | Kısa bölüm komutunu arka arkaya kullanma | Son okunmuş statik metin ikinci defa okunmaz; seçim/gezinti yapıldığında okuma noktası sıfırlanır | Bekliyor |
+
+**Önemli:** Statik metin düğümleri her tarayıcıda aynı biçimde sunulmaz; boş sonuç normaldir. Gerçek Word/PDF, uzun metinlerde sayfa devamı, tablo hücresi anlamsallaştırma ve ekran okuyucunun sesli keşif deneyimi henüz yoktur. Bu on-demand pilotu, doğrulanmış ürün gibi sunmayacağız.
