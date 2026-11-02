@@ -131,6 +131,7 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - `ReaderTableContextContract.DescribeGridItem(row, column, rowSpan, columnSpan)` koordinat ve birleşik hücre span bilgisini **birlikte** doğrular; 10.000 sınırını aşan son hücre koordinatları reddedilir.
 - UI Automation `DataItem`, yalnız `GridItemPattern` gerçekten sunulduğunda **nötr “ızgara öğesi”** olarak sınıflandırılır. `DataItem` tüm satır veya tek hücre olabileceğinden otomatik **“hücre”** diye adlandırılmaz. Açık ARIA `cell` varsa normal hücre sınıflandırması korunur.
 - `DataItem` öğesinin erişilebilir `Name` değeri altta bulunan düzenlenebilir metinden türetilmiş olabileceği için bu nötr gezinmede **okunmaz**; yalnız izinli konum ve rol bilgisi seslendirilir.
+- Masaüstü düğmesi **Hücre / ızgara** olarak güncellendi ve erişilebilir adı hücre ile ızgara kaydını ayırt edecek şekilde açıklandı. Böylece sağlayıcı semantiğinin belirsizliği arayüzde de gizlenmez.
 - Herhangi bir ARIA/UIA rol uyuşmazlığında açık destek kanıtı yoksa rol atlanır. Parola/Edit ataları, süreç sınırı ve 350 adımlık tarama sınırı devam eder.
 - Sınıflandırma/konum/mahremiyet regresyon testleri ve sekiz Türkçe seslendirilebilir sentetik cümle test kapsamına alındı. İzole eski arşivde **GitHub sürümüyle SHA'sı eşleşen** `dou-speech-free-text.mjs` motoruyla 8/8 sentetik WAV üretimi yerel olarak doğrulandı; güncel Windows C# sürümünün derlemesi veya hoparlör sesi henüz doğrulanmadı.
 
