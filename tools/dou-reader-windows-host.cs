@@ -306,13 +306,16 @@ namespace DouBepReader
             if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
             // Some UIA providers expose text children nested inside an Edit control.
             // Do not treat their accessible Name as safe just because the child is Text.
+            int sourcePid = element.Current.ProcessId;
             var ancestor = TreeWalker.ControlViewWalker.GetParent(element);
-            for (int depth = 0; depth < 8 && ancestor != null; depth++)
+            for (int depth = 0; depth < 20 && ancestor != null; depth++)
             {
+                if (ancestor.Current.ProcessId != sourcePid) break;
                 if (ancestor.Current.IsPassword || ancestor.Current.ControlType == ControlType.Edit) return null;
-                if (ancestor.Current.ProcessId != element.Current.ProcessId) break;
                 ancestor = TreeWalker.ControlViewWalker.GetParent(ancestor);
             }
+            // Fail closed when ancestry remains deeper than the inspected bound.
+            if (ancestor != null && ancestor.Current.ProcessId == sourcePid) return null;
             var name = element.Current.Name;
             if (String.IsNullOrWhiteSpace(name)) return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
@@ -476,7 +479,12 @@ namespace DouBepReader
                 var segments = new List<string>();
                 AutomationElement item = _cursor;
                 AutomationElement lastIncluded = null;
-                for (int step = 0; step < ReaderDocumentContract.MaxTraversalSteps && item != null; step++)
+                var scanWatch = Stopwatch.StartNew();
+                // Best-effort time budget between UIA provider calls. Individual
+                // provider calls may still be slow and need real Windows testing.
+                for (int step = 0; step < ReaderDocumentContract.MaxTraversalSteps &&
+                    scanWatch.ElapsedMilliseconds < ReaderDocumentContract.MaxScanMilliseconds &&
+                    item != null; step++)
                 {
                     if (item.Current.ProcessId != _scopeProcessId) break;
                     if (IsDocumentText(item) && GetReadableName(item) != null)
