@@ -116,3 +116,12 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Statik kaynak kontrolleri, otomatik C# sözleşme öz testleri ve `docs/DOU-READER-OS-KABUL-MATRISI.md` senaryoları genişletildi.
 
 **Kritik kabul kapıları:** Yeni UI'nın Windows derlemesi, özellikle %200 DPI ve yüksek kontrastta düğme düzeni, kendi Türkçe ses cihazı ve komutlar arası iptal/geri gezinme testleri tamamlanmadı. Ürünün genel erişilebilirliği onaylanmış değildir.
+
+## Sprint 06 — gerçek UIA hücre koordinatı ve birleşik hücre okuma (kodlandı, Windows kabulü bekliyor)
+
+- Salt-okunur `GridItemPattern` bulunan izinli hücre için gerçek sıfır tabanlı koordinatlar bir tabanlı Türkçe anlatıma çevrilir: `hücre, satır 1 sütun 2`. Sağlayıcıda veri yoksa hücre koordinatı **uydurulmaz**.
+- Gerçek `RowSpan` ve `ColumnSpan` bilgisi 1×1 değilse birleşik hücre açıklaması eklenir: `2 satır ve 3 sütun boyunca`. Geçersiz/negatif/sıfır/aşırı büyük hücre span ve koordinatları reddedilir.
+- Ayrı saf C# `ReaderTableContextContract` dosyası `-Check` içindeki öz testlere bağlandı; Node kaynak regresyonları ve manuel kabul matrisi genişletildi.
+- Koordinat ve rol okuma yalnız açıkça izinli, güvenli UIA öğe ve ataları üzerinde çalışır; `TextPattern`/`ValuePattern`, düzenleme, kullanıcı tuşları veya tablo içeriği çıkarımı yapılmaz.
+
+**Açık:** Tablo başlıkları ve satır/sütun başlık eşleşmesi, PDF/Word içeriği ve gerçek NVDA düzeyinde gezinme henüz mevcut değildir. Son C# sürümünün Windows PowerShell derlemesi, hoparlör sesi ve UIA sağlayıcı karşılaştırması bekliyor.
