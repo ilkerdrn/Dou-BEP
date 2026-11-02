@@ -125,3 +125,13 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Koordinat ve rol okuma yalnız açıkça izinli, güvenli UIA öğe ve ataları üzerinde çalışır; `TextPattern`/`ValuePattern`, düzenleme, kullanıcı tuşları veya tablo içeriği çıkarımı yapılmaz.
 
 **Açık:** Tablo başlıkları ve satır/sütun başlık eşleşmesi, PDF/Word içeriği ve gerçek NVDA düzeyinde gezinme henüz mevcut değildir. Son C# sürümünün Windows PowerShell derlemesi, hoparlör sesi ve UIA sağlayıcı karşılaştırması bekliyor.
+
+## Sprint 07 — doğrulanabilir tablo bağlamı ve DataItem gizliliği (kodlandı, Windows kabulü bekliyor)
+
+- `ReaderTableContextContract.DescribeGridItem(row, column, rowSpan, columnSpan)` koordinat ve birleşik hücre span bilgisini **birlikte** doğrular; 10.000 sınırını aşan son hücre koordinatları reddedilir.
+- UI Automation `DataItem`, yalnız `GridItemPattern` gerçekten sunulduğunda **nötr “ızgara öğesi”** olarak sınıflandırılır. `DataItem` tüm satır veya tek hücre olabileceğinden otomatik **“hücre”** diye adlandırılmaz. Açık ARIA `cell` varsa normal hücre sınıflandırması korunur.
+- `DataItem` öğesinin erişilebilir `Name` değeri altta bulunan düzenlenebilir metinden türetilmiş olabileceği için bu nötr gezinmede **okunmaz**; yalnız izinli konum ve rol bilgisi seslendirilir.
+- Herhangi bir ARIA/UIA rol uyuşmazlığında açık destek kanıtı yoksa rol atlanır. Parola/Edit ataları, süreç sınırı ve 350 adımlık tarama sınırı devam eder.
+- Sınıflandırma/konum/mahremiyet regresyon testleri ve sekiz Türkçe seslendirilebilir sentetik cümle test kapsamına alındı. İzole eski arşivde **GitHub sürümüyle SHA'sı eşleşen** `dou-speech-free-text.mjs` motoruyla 8/8 sentetik WAV üretimi yerel olarak doğrulandı; güncel Windows C# sürümünün derlemesi veya hoparlör sesi henüz doğrulanmadı.
+
+**Sınır:** UIA GridItemPattern koordinatı tablonun anlamını, sütun başlıklarını veya öğrenci verisinin okunabilirliğini tek başına kanıtlamaz. DataItem altındaki tam metin ya da Word/PDF belge içeriği hâlâ desteklenmiyor. PR #8 Windows kabulü olmadan birleştirilmez.
