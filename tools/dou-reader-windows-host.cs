@@ -362,10 +362,10 @@ namespace DouBepReader
 
         // Always obey UIA IsPassword, never request ValuePattern/TextPattern, and
         // never read contents of edit controls. Even unmarked form fields are skipped.
-        private static string GetReadableName(AutomationElement element)
+        private static bool SafeReadableScope(AutomationElement element)
         {
-            if (element == null) return null;
-            if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
+            if (element == null) return false;
+            if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return false;
             // Some UIA providers expose text children nested inside an Edit control.
             // Do not treat their accessible Name as safe just because the child is Text.
             int sourcePid = element.Current.ProcessId;
@@ -373,11 +373,17 @@ namespace DouBepReader
             for (int depth = 0; depth < 20 && ancestor != null; depth++)
             {
                 if (ancestor.Current.ProcessId != sourcePid) break;
-                if (ancestor.Current.IsPassword || ancestor.Current.ControlType == ControlType.Edit) return null;
+                if (ancestor.Current.IsPassword || ancestor.Current.ControlType == ControlType.Edit) return false;
                 ancestor = TreeWalker.ControlViewWalker.GetParent(ancestor);
             }
             // Fail closed when ancestry remains deeper than the inspected bound.
-            if (ancestor != null && ancestor.Current.ProcessId == sourcePid) return null;
+            if (ancestor != null && ancestor.Current.ProcessId == sourcePid) return false;
+            return true;
+        }
+
+        private static string GetReadableName(AutomationElement element)
+        {
+            if (!SafeReadableScope(element)) return null;
             var name = element.Current.Name;
             if (String.IsNullOrWhiteSpace(name)) return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
@@ -682,14 +688,21 @@ namespace DouBepReader
         private void SayStructuredElement(AutomationElement element, ReaderStructureKind kind, string readableName)
         {
             string role = ReaderStructureContract.TurkishRole(kind);
-            if (role == null || String.IsNullOrEmpty(readableName)) return;
+            if (role == null) return;
             if (kind == ReaderStructureKind.Heading)
             {
                 int level = ExplicitHeadingLevel(element);
                 if (level > 0) role += " seviye " + level;
             }
-            int separator = readableName.IndexOf(": ", StringComparison.Ordinal);
-            string speech = role + ": " + (separator < 0 ? readableName : readableName.Substring(separator + 2));
+            // Explicitly named structures may be read by name. Unnamed structures
+            // are announced by role only; Edit/password ancestry was checked before
+            // the role classifier ran.
+            string speech = role;
+            if (!String.IsNullOrWhiteSpace(readableName))
+            {
+                int separator = readableName.IndexOf(": ", StringComparison.Ordinal);
+                speech += ": " + (separator < 0 ? readableName : readableName.Substring(separator + 2));
+            }
             if (speech.Length > MAX_SPEECH_CHARACTERS)
             {
                 StopSpeech();
@@ -750,10 +763,13 @@ namespace DouBepReader
                 {
                     candidate = Step(candidate, direction);
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
-                    // Validate privacy *before* reading ARIA roles or the UIA Name.
-                    string name = GetReadableName(candidate);
-                    if (name == null) continue;
+                    // Validate privacy before inspecting ARIA/UIA role metadata.
+                    if (!SafeReadableScope(candidate)) continue;
                     if (!ReaderStructureContract.Matches(DetectStructure(candidate), target)) continue;
+                    string name = GetReadableName(candidate);
+                    // A declared structural role may have no Name. Speak the role,
+                    // but never a missing, hidden, oversized, or sensitive Name.
+                    if (name == null && !String.IsNullOrWhiteSpace(candidate.Current.Name)) continue;
                     _cursor = candidate;
                     _advanceAfterSection = false;
                     SayStructuredElement(candidate, target, name);
