@@ -189,17 +189,17 @@ test('structural shortcut conflicts do not disable core hotkeys', () => {
 
 test('structured controls do not overlap playback controls at design size', () => {
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- assert.match(cs, /Width = 800;\s*Height = 780/);
+ assert.match(cs, /Width = 800;\s*Height = 905/);
  assert.match(cs, /_reverseStructure = new CheckBox/);
  assert.match(cs, /Top = 494 \+ \(row \* 60\)/);
  assert.match(cs, /Width = 166, Height = 48/);
  assert.match(cs, /int row = index \/ 4/);
  assert.match(cs, /int column = index % 4/);
- assert.match(cs, /Top = 645, Width = 152, Height = 48/);
+ assert.match(cs, /Top = 767, Width = 152, Height = 48/);
  const helpEnd = 147 + 200;
  const statusStart = 390, statusEnd = 390 + 58;
  const structureStart = 494, structureEnd = 554 + 48;
- const playbackStart = 645;
+ const playbackStart = 767;
  assert.ok(helpEnd < statusStart && statusEnd < structureStart && structureEnd < playbackStart);
 });
 
