@@ -670,7 +670,24 @@ namespace DouBepReader
             else if (type == ControlType.Table) control = "Table";
             else if (type == ControlType.DataGrid) control = "DataGrid";
             else if (type == ControlType.HeaderItem) control = "HeaderItem";
-            return ReaderStructureContract.Classify(role, control, IsHeading(element));
+            else if (type == ControlType.DataItem) control = "DataItem";
+            // An explicit GridItem pattern yields the neutral 'grid item' role,
+            // NOT 'cell': Windows UIA DataItem can represent an entire record.
+            bool hasGridItemPattern = false;
+            if (type == ControlType.DataItem)
+            {
+                try
+                {
+                    object pattern;
+                    hasGridItemPattern = element.TryGetCurrentPattern(
+                        GridItemPattern.Pattern, out pattern) && pattern is GridItemPattern;
+                }
+                catch (ElementNotAvailableException) { return ReaderStructureKind.Unknown; }
+                catch (InvalidOperationException) { return ReaderStructureKind.Unknown; }
+                catch (System.Runtime.InteropServices.COMException) { return ReaderStructureKind.Unknown; }
+            }
+            return ReaderStructureContract.Classify(role, control,
+                IsHeading(element), hasGridItemPattern);
         }
 
         // Report only a genuine UIA heading level, never one inferred from font size.
@@ -721,7 +738,7 @@ namespace DouBepReader
                 int level = ExplicitHeadingLevel(element);
                 if (level > 0) role += " seviye " + level;
             }
-            if (kind == ReaderStructureKind.Cell)
+            if (kind == ReaderStructureKind.Cell || kind == ReaderStructureKind.GridItem)
             {
                 // Coordinates are added only if the actual UIA provider supplies a
                 // valid GridItemPattern (zero-based); never guess row/column.
@@ -799,14 +816,15 @@ namespace DouBepReader
                     if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
                     // Validate privacy before inspecting ARIA/UIA role metadata.
                     if (!SafeReadableScope(candidate)) continue;
-                    if (!ReaderStructureContract.Matches(DetectStructure(candidate), target)) continue;
+                    ReaderStructureKind actual = DetectStructure(candidate);
+                    if (!ReaderStructureContract.Matches(actual, target)) continue;
                     string name = GetReadableName(candidate);
                     // A declared structural role may have no Name. Speak the role,
                     // but never a missing, hidden, oversized, or sensitive Name.
                     if (name == null && !String.IsNullOrWhiteSpace(candidate.Current.Name)) continue;
                     _cursor = candidate;
                     _advanceAfterSection = false;
-                    SayStructuredElement(candidate, target, name);
+                    SayStructuredElement(candidate, actual, name);
                     return;
                 }
                 SetStatus("Bu bölümde başka " + ReaderStructureContract.TurkishRole(target) + " bulunamadı.");
