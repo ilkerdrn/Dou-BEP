@@ -88,6 +88,9 @@ test('access rejection and focus loss interrupt speech and clear scoped content'
  assert.match(cs, /if \(!_allowed\.Contains\(name\)\) return false/);
  assert.match(cs, /if \(!Allowed\(element\)\) \{ StopSpeech\(\)/);
  assert.match(cs, /if \(text == null\) \{ StopSpeech\(\)/);
+ assert.match(cs, /TreeWalker\.ControlViewWalker\.GetParent\(element\)/);
+ assert.match(cs, /ancestor\.Current\.IsPassword/);
+ assert.match(cs, /ancestor\.Current\.ControlType == ControlType\.Edit/);
  assert.match(cs, /if \(focusedNow == null[\s\S]*?StopSpeech\(\)/);
  assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
 });
