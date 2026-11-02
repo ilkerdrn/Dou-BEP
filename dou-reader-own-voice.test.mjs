@@ -178,7 +178,9 @@ test('structural shortcut conflicts do not disable core hotkeys', () => {
  assert.match(cs, /ReaderStructureKind\.Cell, 1, false/);
  assert.match(cs, /nav\.Click \+= delegate \{/);
  assert.match(cs, /TraverseStructureKind\(target, _reverseStructure\.Checked \? -1 : 1, true\)/);
- assert.match(cs, /AccessibleName = ReaderStructureContract\.TurkishRole\(target\) \+ " arasında gezin"/);
+ assert.match(cs, /AccessibleName = target == ReaderStructureKind\.Cell \?/);
+ assert.match(cs, /"Hücre veya ızgara öğeleri arasında gezin"/);
+ assert.match(cs, /ReaderStructureContract\.TurkishRole\(target\) \+ " arasında gezin"/);
  assert.match(cs, /Tuple\.Create\("Liste öğesi", ReaderStructureKind\.ListItem\)/);
  assert.match(cs, /Tuple\.Create\("Satır", ReaderStructureKind\.Row\)/);
 });
