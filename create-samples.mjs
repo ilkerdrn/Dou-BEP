@@ -1,0 +1,16 @@
+import {writeFile} from 'node:fs/promises';
+import {createDemo,generateDocx,printableHtml} from './core.mjs';
+import {createAssessment,evaluationPrintable,evaluationCsv} from './assessment.mjs';
+const exam=createDemo();
+const assessment=createAssessment(exam,{id:'ornek-01',code:'Örnek Oturum A'});
+assessment.entries[0].pointsAwarded=0;
+assessment.entries[0].observation='İşleme ilişkin ilk denemede yanıt oluşturamadı.';
+assessment.entries[1].pointsAwarded=15;
+assessment.entries[1].support='material';
+assessment.entries[1].observation='Somut nesnelerle işlemi tamamladı.';
+assessment.overallNote='Bu kayıt yalnızca örnek amaçlıdır. Öğretmen kazanımları ve destekleri bireysel plana göre yorumlamalıdır.';
+await writeFile('DOU-v05-Ornek-Degerlendirme.html',evaluationPrintable(exam,assessment));
+await writeFile('DOU-v05-Ornek-Sinav.docx',generateDocx(exam));
+await writeFile('DOU-v05-Ornek-Cevap-Anahtari.docx',generateDocx(exam,true));
+await writeFile('DOU-v05-Ornek-Sinav.html',printableHtml(exam));
+console.log('sample generated');

@@ -1,0 +1,17 @@
+﻿DOU BEP v2.81 — ERİŞİLEBİLİRLİK KONTROL EKRANI R2
+
+Bu yamayı kurulu v2.81 Premium Tasarım R1 projesine uygulayın.
+1) BASLAT.bat penceresini kapatın; proje klasörünü ayrıca yedekleyin.
+2) ZIP dosyasını ayrı bir klasöre tamamen çıkarın.
+3) TASARIMI_UYGULA.bat dosyasını açın.
+4) Sorulursa mevcut "New folder (9)" proje klasörünün TAM yolunu girin.
+5) BASLAT.bat ile tekrar başlatın; /erisilebilirlik-kontrol sayfasında Ctrl+F5.
+
+Değişen dosyalar: accessibility-check.html, accessibility-check.mjs.
+Kaynakların orijinali _design_backups/ERISILEBILIRLIK-R2-... içinde tutulur.
+Kurum hesabı, data, SQLite, sınav kayıtları ve diğer modüller değişmez.
+Bu tasarım güncellemesi erişilebilirlik sertifikası değildir.
+
+Testler: 2 yeni UI testi, 4 mevcut erişilebilirlik veri testi,
+4 R1 entegrasyon testi, 335/335 dağıtım denetimi,
+25/25 izole sınav kapanış kontrolü. Gerçek Windows görsel testi kullanıcıda yapılmalıdır.

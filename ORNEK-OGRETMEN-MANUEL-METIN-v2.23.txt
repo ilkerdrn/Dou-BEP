@@ -1,0 +1,3 @@
+1. Soru: Süreç tablosuna göre işlem sırasındaki bekleme sürelerini yorumlayınız. Tablo üç sütunludur: Süreç, varış zamanı, CPU süresi. Birinci satır P1, 0, 4. İkinci satır P2, 1, 3. Üçüncü satır P3, 2, 2.
+2. Soru: x kare artı iki x eksi üç eşittir sıfır denkleminin köklerini bulunuz. Denklem sembolik olarak x² + 2x − 3 = 0 biçimindedir.
+3. Soru: Üç adımlı akış şemasında ikinci adımın amacını açıklayınız. Şema soldan sağa okunur: Başla, ok, Hesapla, ok, Bitir.

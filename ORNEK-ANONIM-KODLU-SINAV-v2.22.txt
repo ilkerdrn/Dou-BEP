@@ -1,0 +1,11 @@
+BLP 104 - ALGORITMA VE PROGRAMLAMA (ANONIM ORNEK)
+1. Aşağıdaki kodun çıktısını açıklayınız.
+```js
+const sayi = 3;
+if (sayi > 1) {
+    console.log(sayi);
+}
+```
+2. Bir algoritmanın deterministik olması ne anlama gelir?
+3. İşletim sistemlerinde süreç ve iş parçacığı arasındaki farkı açıklayınız.
+Not: Bu belge yalnızca yerel örnek aktarım içindir.

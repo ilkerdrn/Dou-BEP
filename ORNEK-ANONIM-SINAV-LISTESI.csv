@@ -1,0 +1,6 @@
+ogrenci_kodu;gereksinim_alani;onayli_duzenlemeler;ek_sure_dakika;onay_durumu
+ORNEK-001;vision;LARGE_PRINT|HIGH_CONTRAST;15;onayli
+ORNEK-002;hearing;SIGN_SUPPORT;0;onayli
+ORNEK-003;speech;SCRIBE|QUIET_ROOM;10;bekliyor
+ORNEK-004;motor;WIDE_RESPONSE|SCRIBE;20;onayli
+ORNEK-005;vision;ACCESSIBLE_HTML|READER;0;onayli

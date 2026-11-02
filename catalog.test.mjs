@@ -1,0 +1,14 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {parseCatalog,mergeObjectives,objectivesCsv,objectivesTemplate,sanitizeObjectives} from './catalog.mjs';
+const item={id:'X-01',subject:'Matematik',grade:'2. Sınıf',domain:'İşlemler',title:'İki sayının toplamı',description:'Birinci ve ikinci sayıyı toplayabilme.',source:'Kurum dışa aktarımı'};
+test('CSV template reads with UTF8 BOM',()=>assert.equal(parseCatalog(objectivesTemplate()).length,1));
+test('semicolon CSV round-trip with quotes newline',()=>{const x={...item,description:'İki sayıyı; "birlikte"\ntoplar.'};assert.deepEqual(parseCatalog(objectivesCsv([x]))[0],x);});
+test('JSON catalogue array',()=>assert.equal(parseCatalog(JSON.stringify([item]),'objectives.json')[0].id,'X-01'));
+test('JSON object catalogue',()=>assert.equal(parseCatalog(JSON.stringify({objectives:[item]}),'foo.json').length,1));
+test('duplicate objective code is rejected',()=>assert.throws(()=>sanitizeObjectives([item,{...item,id:'x-01'}]),/Tekrarlanan/));
+test('unsafe objective ID rejected',()=>assert.throws(()=>sanitizeObjectives([{...item,id:'<script>'}]),/geçersiz/));
+test('headers missing rejected',()=>assert.throws(()=>parseCatalog('A;B\n1;2'),/başlıkları/));
+test('unterminated csv quotes rejected',()=>assert.throws(()=>parseCatalog('id;subject;grade;title;description\n"a;b'),/kapanmamış/));
+test('merge replaces repeated IDs, preserves others',()=>{const arr=mergeObjectives([item],[{...item,title:'Güncel'}]);assert.equal(arr.length,1);assert.equal(arr[0].title,'Güncel');});
+test('max catalogue entries enforced',()=>assert.throws(()=>sanitizeObjectives(Array.from({length:501},(_,i)=>({...item,id:String(i)}))),/çok büyük/));
+test('overlarge import rejects',()=>assert.throws(()=>parseCatalog('id;subject;grade;title;description\n'+'X'.repeat(270000)),/256 KB/));

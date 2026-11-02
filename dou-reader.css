@@ -1,0 +1,22 @@
+/* DOU Reader v2.41: respects the existing high-contrast learner mode. */
+.reader-panel{border:2px solid #861632;background:#fff8f9}
+.reader-panel .reader-actions{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.reader-panel .reader-settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+.reader-panel .reader-settings label{margin:2px 0}
+.reader-panel .reader-settings select{margin-top:6px}
+.reader-panel button{min-width:110px}
+.reader-panel #reader-status{border-left:4px solid #861632;padding:10px 13px;margin:12px 0;background:#f4ebee;min-height:45px}
+.reader-panel .reader-limits{font-size:.9rem;line-height:1.6}
+.high .reader-panel{background:#000;color:#fff;border-color:#fff}
+.high .reader-panel #reader-status{color:#fff;background:#111;border-color:#fff}
+.reader-panel :focus-visible{outline:4px solid #1165de;outline-offset:4px}
+@media(max-width:580px){.reader-panel .reader-actions button{flex:1;min-width:120px}}
+
+/* v2.78: local report review tables */
+.dou-audit-table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:.91rem}
+.dou-audit-table th,.dou-audit-table td{border-bottom:1px solid #d6dae1;padding:10px 8px;text-align:left;vertical-align:top}
+.dou-audit-table th{font-weight:700;background:#f3f4f6;color:#27242b}
+#speech-local-audit input[type=file]{display:block;max-width:100%;margin-top:8px}
+#speech-local-audit{overflow-x:auto}
+#audit-status{font-weight:600}
+@media(max-width:560px){.dou-audit-table{font-size:.78rem}.dou-audit-table th,.dou-audit-table td{padding:8px 5px}}

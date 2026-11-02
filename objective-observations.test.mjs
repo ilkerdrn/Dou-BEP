@@ -1,0 +1,5 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {summarizeObjectives} from './objective-observations.mjs';
+test('zero is scored but missing question excluded from denominator',()=>{const s=summarizeObjectives({questions:[{objective:'A',score:0,maxPoints:10,note:''},{objective:'A',score:null,maxPoints:20,note:'gözlem'},{objective:'A',score:5,maxPoints:10,note:''}]});assert.deepEqual(s,[{objective:'A',questionCount:3,reviewed:2,unreviewed:1,earned:5,possible:20,notes:1,rate:25}]);});
+test('groups objectives without cross-student ranking',()=>{const s=summarizeObjectives({questions:[{objective:'İlk hedef',score:2,maxPoints:4},{objective:'Başka hedef',score:null,maxPoints:5}]});assert.equal(s.length,2);assert.equal(s[1].rate,null);});
+test('empty reviews produce no summaries',()=>{assert.deepEqual(summarizeObjectives({questions:[]}),[]);});
+test('rejects invalid manually entered score',()=>{assert.throws(()=>summarizeObjectives({questions:[{objective:'X',score:30,maxPoints:10}]}),/Geçersiz/);});

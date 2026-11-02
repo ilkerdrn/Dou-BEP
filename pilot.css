@@ -1,0 +1,43 @@
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#17232f;background:#f4f6f8}*{box-sizing:border-box}body{margin:0;line-height:1.55}a{color:#b71930}a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #147ad6;outline-offset:3px}header{background:#161b25;color:white;border-bottom:5px solid #c50e1f;padding:14px max(20px,calc((100vw - 1140px)/2));display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap}.brand{font-size:15px;font-weight:800;letter-spacing:.06em}.mark{display:inline-grid;place-items:center;width:52px;height:52px;border-radius:12px;background:#c50e1f;color:white;margin-right:14px}header a{color:#fff}main{max-width:1120px;margin:auto;padding:34px 20px 100px}.eyebrow{font-size:12px;letter-spacing:.12em;font-weight:800;color:#9f0e24}h1{font-size:clamp(30px,4vw,46px);letter-spacing:-.035em;line-height:1.12;margin:10px 0 16px}h2{font-size:22px;margin:0 0 10px}p{margin:10px 0;color:#394455}.card{border:1px solid #d8dee5;border-radius:18px;background:#fff;padding:24px;margin:18px 0;box-shadow:0 7px 26px #17232f0a}.hero{background:linear-gradient(112deg,#fff 30%,#fff0f0);border-top:4px solid #c50e1f}.grid{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}.inline{display:flex;flex-wrap:wrap;gap:12px;align-items:center}button{padding:12px 18px;border:2px solid #c50e1f;background:#c50e1f;border-radius:11px;color:white;font:inherit;font-weight:700;min-height:48px;cursor:pointer}button.ghost{color:#9f0e24;background:white}button.danger{border-color:#8e2434;background:#fff;color:#8e2434}button:disabled{opacity:.5;cursor:not-allowed}label{font-weight:650;display:block;margin:13px 0 7px}input,select,textarea{font:inherit;border:2px solid #8994a4;border-radius:10px;padding:12px;width:100%;background:#fff;color:#17232f;min-height:46px}label small{display:block;color:#526070;font-weight:400}fieldset{border:1px solid #cbd2dd;border-radius:12px;padding:18px;margin:20px 0}legend{font-weight:800;padding:0 10px}label.option{display:flex;gap:14px;align-items:center;border:2px solid #dae0e8;padding:16px;border-radius:12px;font-weight:500;cursor:pointer;margin:10px 0}label.option:has(input:checked){border-color:#c50e1f;background:#fff3f5}input[type=radio]{width:25px;height:25px;min-height:auto;flex:0 0 25px;accent-color:#a30c22}.session-item{padding:14px 0;border-top:1px solid #e2e5eb}.session-item small{display:block;color:#5b6573}.pill{display:inline-block;background:#f9e6e9;color:#901324;padding:4px 10px;border-radius:30px;font-weight:800;font-size:12px}.hint{background:#f1f4f8;border-left:4px solid #c50e1f;padding:15px;border-radius:6px;font-size:14px}.code{font-size:clamp(17px,2.2vw,23px);font-weight:900;letter-spacing:.06em;background:#f5f6f8;border-radius:12px;padding:16px;word-break:break-all}.muted{color:#5a6676}.notice{font-weight:650;margin:18px 0;min-height:20px}.notice.err{color:#aa1528}.notice.good{color:#176244}.question{border-top:3px solid #c50e1f;padding:23px;margin-bottom:18px}.question p{font-size:1.1em;color:inherit}#student-questions{font-size:var(--student-size,20px)}#student-questions button{font-size:14px}.row{margin:16px 0}.row select{max-width:450px}.answer-content{margin:12px 0;padding:12px 16px;background:#f4f7fa;border-radius:12px}.skip{position:absolute;top:-70px;left:12px}.skip:focus{top:14px;background:#fff;padding:8px;z-index:3}.high{background:black;color:white}.high .card,.high header{background:#090909;color:white;border-color:white}.high p,.high .muted{color:#fff}.high .hint,.high .code,.high .answer-content{background:#111;color:white;border-color:white}.high fieldset,.high .option{border-color:white}.high .option:has(input:checked){background:#1c3b66}.high input,.high select{background:black;color:white;border-color:white}.high button.ghost{background:black;color:white;border-color:white}[hidden]{display:none!important}@media(max-width:790px){.grid{grid-template-columns:1fr}main{padding:18px 14px 50px}.card{padding:18px}header{padding:12px 16px}button{max-width:100%}}
+
+/* v1.6 · manual assessment + accessibility */
+.review-question{border:1px solid #cbd2dd;margin:14px 0;padding:18px;border-radius:12px}
+.review-row{display:grid;grid-template-columns:minmax(130px,.38fr) minmax(220px,1fr);gap:16px}
+.review-row label{margin:0}.review-row input,.review-row textarea{margin-top:8px}
+.review-row textarea{resize:vertical;min-height:86px}
+.download-link{display:inline-block;padding:12px 16px;background:#fff0f1;border-radius:12px;font-weight:700;text-underline-offset:3px}
+#question-navigation{border-left:4px solid #c50e1f}
+#question-progress{font-weight:750;min-width:110px;text-align:center}
+@media(max-width:650px){.review-row{grid-template-columns:1fr}#question-navigation nav{gap:8px}#question-navigation button{flex:1;min-width:100px}}
+
+.written-cue{background:#f3f5f9;border-left:4px solid #c50e1f;padding:13px 16px;white-space:pre-wrap}.large-target label.option{min-height:76px;padding:24px}.large-target select{min-height:66px}.high .written-cue{background:#111;color:#fff}
+
+/* v1.7 question presentation comparison and teacher objective summaries */
+.variant-comparison{margin:12px 0 17px;border:1px solid #d6dae2;border-radius:14px;padding:14px;background:#f9fafc}
+.variant-duo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.variant-cell{background:#fff;border:1px solid #dce1e7;padding:14px;border-radius:10px;min-width:0;overflow-wrap:anywhere}
+.variant-cell span{font-size:11px;color:#9b1024;font-weight:800;letter-spacing:.06em}
+.variant-cell p{color:#17232f;white-space:pre-wrap;margin:8px 0 0;line-height:1.6}
+.variant-active{margin:13px 0 4px;font-size:14px;overflow-wrap:anywhere}
+.variant-warning{color:#5a4150;font-size:13px;line-height:1.45;margin:8px 0 2px}
+.objective-observation-list{border-top:1px solid #e4e7ec;margin:22px 0;padding-top:16px}
+.objective-observation{padding:12px 15px;border:1px solid #dde3ea;border-left:4px solid #c50e1f;background:#fff;margin:10px 0;border-radius:9px;overflow-wrap:anywhere}
+.objective-observation p{margin:6px 0;color:#455164}
+@media(max-width:690px){.variant-duo{grid-template-columns:minmax(0,1fr)}}
+
+/* v1.9 Accessible pilot checklist */
+.checklist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+.check-item{border:1px solid #cbd2dd;border-radius:12px;padding:15px;background:white}
+.check-item label{display:flex;align-items:flex-start;gap:12px;line-height:1.5;cursor:pointer}
+.check-item input{min-height:23px;height:23px;width:23px;flex-shrink:0;accent-color:#b71930;margin:2px 0}
+.check-item p{margin-left:35px;font-size:14px}
+#pilot-check-count{font-weight:750}
+@media print{header,.controls,#export-checklist{display:none!important}.card{box-shadow:none;border-color:#aaa}}
+
+/* v2.1 accessibility pilot evidence */
+.check-item{padding:14px;border:1px solid #dee4ea;border-radius:12px;margin:10px 0;}
+.check-item label{display:block;margin:8px 0 4px;}
+.check-item select,.check-item textarea{display:block;width:100%;max-width:100%;box-sizing:border-box;font:inherit;border-radius:7px;border:1px solid #8694a2;background:white;color:#1b2530;padding:9px;}
+.check-item :focus-visible,#pilot-reader:focus-visible,#pilot-platform:focus-visible,#pilot-browser:focus-visible{outline:3px solid #c50e1f;outline-offset:2px;}
+#pilot-export-error:not(:empty){padding:10px;border-left:4px solid #c50e1f;}
+@media print{button{display:none!important}.check-item{break-inside:avoid;}}

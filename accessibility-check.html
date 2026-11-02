@@ -1,0 +1,173 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#c50e1f"><title>DOU BEP | Erişilebilirlik Pilot Kontrolü</title><link rel="stylesheet" href="/pilot.css"><link rel="stylesheet" href="/pilot-refresh.css"><link rel="stylesheet" href="/admin-premium.css"><style>
+/* DOU BEP • Pilot Accessibility Audit R2 — isolated, offline, responsive. */
+body.dou-admin-standalone.pilot-audit-page {background:#f4f6fa;color:#17253a}
+.pilot-audit-page .pilot-audit{max-width:1450px!important;padding-top:26px!important;padding-bottom:126px!important}
+.pilot-audit .card{margin:0 0 19px!important;border:1px solid #e3e8f1!important;border-radius:20px!important;box-shadow:0 9px 32px rgba(20,35,60,.045)!important;background:#fff}
+.pilot-audit .pilot-hero{padding:31px clamp(22px,3vw,40px);background:linear-gradient(116deg,#ffffff 0%,#ffffff 59%,#fff1f4 100%)!important;border-top:4px solid #b51c3d!important}
+.pilot-audit .pilot-kicker{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.11em;font-weight:900;color:#ae2140;text-transform:uppercase}
+.pilot-audit .pilot-kicker:before{content:"";width:8px;height:8px;border-radius:50%;background:#b52043;box-shadow:0 0 0 4px #f8dbe3}
+.pilot-audit .pilot-hero-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-top:13px}
+.pilot-audit .pilot-hero-heading>div{min-width:0}
+.pilot-audit .pilot-hero h1{font-size:clamp(27px,3vw,42px)!important;line-height:1.13;margin:0 0 13px!important;color:#18263d!important;max-width:720px}
+.pilot-audit .pilot-hero p{max-width:780px;color:#58667a;font-size:14px;line-height:1.7;margin:0}
+.pilot-audit .pilot-hero-pill{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:#f9e8ed;color:#8f1a38;border:1px solid #f0cfd8;padding:9px 13px;border-radius:999px;font-size:11px;font-weight:800}
+.pilot-audit .pilot-privacy{margin-top:24px;display:flex;align-items:flex-start;gap:11px;border:1px solid #dfe8f2;border-left:4px solid #af2748;background:#f8fafc;color:#35445a;padding:13px 16px;border-radius:12px;font-size:12px;line-height:1.6}
+.pilot-audit .pilot-privacy svg{flex:0 0 19px;width:19px;height:19px;color:#a92345}
+.pilot-audit .pilot-block{padding:25px clamp(20px,2.5vw,32px)}
+.pilot-audit .pilot-section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:19px}
+.pilot-audit .pilot-section-head h2{font-size:20px!important;color:#18263d;margin:0!important;line-height:1.25}
+.pilot-audit .pilot-section-head p{font-size:12px;color:#64728a;margin:7px 0 0;line-height:1.55}
+.pilot-audit .pilot-step{color:#9e3652;background:#fbf1f4;border:1px solid #f1e0e6;font-size:11px;font-weight:800;border-radius:999px;padding:5px 10px;white-space:nowrap}
+.pilot-audit .pilot-environment{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.pilot-audit .pilot-env-field{margin:0!important;display:block;font-size:12px;font-weight:800;color:#30405a}
+.pilot-audit .pilot-env-field>span{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.pilot-audit .pilot-env-field svg{width:17px;height:17px;color:#a52143}
+.pilot-audit .pilot-env-field select{margin:0;border:1px solid #cbd5e2;border-radius:12px;min-height:48px;padding:11px 13px;font-size:13px;font-weight:650;color:#25344a;background:#fff;box-shadow:0 2px 5px #14253905}
+.pilot-audit .pilot-env-caption{margin:13px 0 0;font-size:12px;color:#69788b}
+.pilot-audit .pilot-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.pilot-audit .pilot-stat{min-width:0;padding:17px 17px 14px;border:1px solid #e2e8f1;border-radius:16px;background:#fafbfe;position:relative;overflow:hidden}
+.pilot-audit .pilot-stat:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:#91a2b8}
+.pilot-audit .pilot-stat[data-stat="pass"]{background:#f3fbf6;border-color:#dbeee1}.pilot-audit .pilot-stat[data-stat="pass"]:before{background:#1e905d}
+.pilot-audit .pilot-stat[data-stat="fail"]{background:#fff5f5;border-color:#f8dfe0}.pilot-audit .pilot-stat[data-stat="fail"]:before{background:#d13c49}
+.pilot-audit .pilot-stat[data-stat="progress"]{background:#fcf5f8;border-color:#f2e0e8}.pilot-audit .pilot-stat[data-stat="progress"]:before{background:#b02649}
+.pilot-audit .pilot-stat-label{display:block;color:#607086;font-size:11px;font-weight:800;letter-spacing:.01em}
+.pilot-audit .pilot-stat-value{display:block;color:#19283f;font-size:32px;line-height:1.15;margin-top:8px;letter-spacing:-.04em;font-weight:850;font-variant-numeric:tabular-nums}
+.pilot-audit .pilot-stat[data-stat="pass"] .pilot-stat-value{color:#16643d}.pilot-audit .pilot-stat[data-stat="fail"] .pilot-stat-value{color:#a82b38}
+.pilot-audit .pilot-progress-area{display:grid;grid-template-columns:1fr auto;gap:9px 16px;align-items:center;border-top:1px solid #e7ebf2;padding-top:16px;margin-top:2px}
+.pilot-audit .pilot-progress-label{font-size:12px;font-weight:800;color:#314259}
+.pilot-audit .pilot-progress-value{font-size:11px;color:#65758a}
+.pilot-audit #pilot-progress{grid-column:1/-1;width:100%;height:11px;appearance:none;border:0;overflow:hidden;border-radius:999px;background:#e7ecf3}
+.pilot-audit #pilot-progress::-webkit-progress-bar{background:#e7ecf3;border-radius:999px}
+.pilot-audit #pilot-progress::-webkit-progress-value{background:linear-gradient(90deg,#a9284a,#d34567);border-radius:999px}
+.pilot-audit #pilot-progress::-moz-progress-bar{background:#b5284d;border-radius:999px}
+.pilot-audit #pilot-check-count{font-size:12px;color:#53647b;margin:12px 0 0;min-height:18px}
+.pilot-audit .pilot-check-tools{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:19px}
+.pilot-audit .pilot-check-tools h2{font-size:20px!important;margin:0!important}
+.pilot-audit .pilot-check-tools p{font-size:12px;color:#6a788e;margin:5px 0 0}
+.pilot-audit .pilot-filterbar{display:flex;gap:5px;flex-wrap:wrap;padding:4px;background:#f2f5fa;border:1px solid #e5ebf2;border-radius:13px}
+.pilot-audit .pilot-filterbar button{background:transparent;border:1px solid transparent;border-radius:9px;padding:9px 13px;min-height:37px;font-size:12px;font-weight:750;color:#5b6a80;box-shadow:none}
+.pilot-audit .pilot-filterbar button[aria-pressed="true"]{background:#fff;border-color:#e2e7f0;box-shadow:0 2px 6px #192c4210;color:#a21f42}
+.pilot-audit .pilot-check-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;align-items:stretch}
+.pilot-audit .pilot-check-grid .check-item{display:flex;flex-direction:column;min-width:0;min-height:316px;margin:0!important;border:1px solid #dfe6f0;border-radius:17px;padding:20px;background:#fff;box-shadow:0 3px 13px #1c2d4407;transition:border-color .18s,box-shadow .18s;break-inside:avoid}
+.pilot-audit .pilot-check-grid .check-item[hidden]{display:none!important}
+.pilot-audit .pilot-check-grid .check-item:hover{border-color:#c9d5e4;box-shadow:0 8px 21px #1c2d4410}
+.pilot-audit .pilot-check-grid .check-item[data-outcome="pass"]{border-color:#baddc8;background:linear-gradient(180deg,#f8fdf9 0%,#fff 42%)}
+.pilot-audit .pilot-check-grid .check-item[data-outcome="fail"]{border-color:#f1bfc5;background:linear-gradient(180deg,#fff8f8 0%,#fff 42%)}
+.pilot-audit .pilot-check-header{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px}
+.pilot-audit .pilot-check-number{display:grid;place-items:center;background:#edf1f6;color:#56677f;font-size:12px;font-weight:850;width:32px;height:32px;flex:0 0 32px;border-radius:10px}
+.pilot-audit .pilot-check-title{flex:1;min-width:0;margin:4px 0 0!important;color:#202f46!important;font-size:15px!important;line-height:1.3!important;letter-spacing:-.02em!important;font-weight:800}
+.pilot-audit .pilot-check-badge{display:inline-flex;justify-content:center;align-items:center;white-space:nowrap;flex:0 0 auto;padding:5px 8px;font-size:10px;font-weight:800;background:#edf1f6;border:1px solid #e2e8ef;color:#586b83;border-radius:999px}
+.pilot-audit .check-item[data-outcome="pass"] .pilot-check-badge{background:#e3f6e9;color:#16663c;border-color:#c6eacf}
+.pilot-audit .check-item[data-outcome="fail"] .pilot-check-badge{background:#ffe5e7;color:#a42e3a;border-color:#ffd0d5}
+.pilot-audit .check-item .pilot-check-help{margin:0 0 19px!important;font-size:12px;line-height:1.6;color:#607086;min-height:38px}
+.pilot-audit .check-item .pilot-field-label{display:block;margin:0 0 7px;font-size:11.5px;font-weight:800;color:#34455d}
+.pilot-audit .check-item .pilot-result{margin:0 0 15px;min-height:44px;padding:9px 12px;border:1px solid #c9d4e2;border-radius:10px;font-size:12.5px;font-weight:700;background:#fff;color:#27364b;width:100%}
+.pilot-audit .check-item[data-outcome="pass"] .pilot-result{border-color:#94d6ac;background:#f2fcf5}
+.pilot-audit .check-item[data-outcome="fail"] .pilot-result{border-color:#ed9da5;background:#fff3f3}
+.pilot-audit .pilot-note-group{margin-top:auto}
+.pilot-audit .check-item .pilot-note{border:1px solid #cbd5e2;border-radius:10px;background:#fff;padding:11px 12px;font-size:12px;line-height:1.5;resize:vertical;min-height:77px;width:100%;max-height:170px;color:#27364b}
+.pilot-audit .check-item .pilot-note::placeholder{color:#8290a3}
+.pilot-audit .pilot-note-limit{display:block;margin-top:5px;text-align:right;font-size:10px;color:#8190a4;font-variant-numeric:tabular-nums}
+.pilot-audit .pilot-no-results{padding:30px 18px;text-align:center;border:1px dashed #cbd6e5;border-radius:15px;background:#f8fafc;color:#57687d;font-size:13px;margin:14px 0 0}
+.pilot-audit .pilot-actions{position:sticky;bottom:13px;z-index:12;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:22px;padding:13px 17px;border:1px solid #dbe2ed;border-radius:16px;background:rgba(255,255,255,.97);box-shadow:0 16px 46px #17233821;backdrop-filter:blur(12px)}
+.pilot-audit .pilot-action-copy{font-size:12px;line-height:1.45;font-weight:750;color:#34455f}.pilot-audit .pilot-action-copy small{display:block;color:#708198;font-weight:500;font-size:11px}
+.pilot-audit .pilot-action-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.pilot-audit .pilot-action-buttons button{min-height:41px;padding:9px 15px;font-size:12px;border-radius:10px;border:1px solid #a82142;background:#a82142;color:#fff}
+.pilot-audit .pilot-action-buttons button.secondary{border-color:#d3dce8;color:#35455a;background:#fff}
+.pilot-audit .pilot-action-buttons button.reset{border-color:#f2d6dd;color:#a72e49;background:#fff9fb}
+/* R3 – offline resume, card navigation, and visible keyboard controls. */
+.pilot-audit .pilot-toolbar-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pilot-audit .pilot-jump{font:inherit;font-size:12px;font-weight:750;min-height:40px;border-radius:10px;background:#fff;border:1px solid #d0dbe9;color:#34445e;padding:8px 13px}
+.pilot-audit .pilot-resume-note{font-size:11.5px;color:#697c93;margin:12px 0 0;line-height:1.6}
+.pilot-audit .pilot-import-label{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;min-height:41px;padding:9px 13px;border-radius:10px;background:#edf3f9;color:#293e59;border:1px solid #cfdae7;font-weight:800;font-size:12px;white-space:nowrap}
+.pilot-audit .pilot-import-label:focus-within{outline:3px solid #9c2853;outline-offset:3px}
+.pilot-audit .pilot-import-label input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}
+.pilot-audit .pilot-import-label input:focus-visible{outline:none!important}
+.pilot-audit .pilot-filterbar button{background:transparent!important;color:#5b6a80!important;border-color:transparent!important;box-shadow:none!important}
+.pilot-audit .pilot-filterbar button[aria-pressed="true"]{background:#fff!important;color:#9c2348!important;border-color:#dee5f0!important;box-shadow:0 2px 7px #16213a14!important}
+.pilot-audit .pilot-filterbar button:hover{background:#fff6f8!important;color:#9c2348!important}
+.pilot-audit .pilot-jump{background:#fff!important;color:#34445e!important;border:1px solid #d0dbe9!important;box-shadow:none!important}
+.pilot-audit .pilot-action-buttons .secondary{background:#fff!important;color:#33455c!important;border-color:#d1deea!important}
+.pilot-audit .pilot-action-buttons .reset{background:#fff9fb!important;color:#a72e49!important;border-color:#edcbd5!important}
+.pilot-audit .pilot-import-label{background:#edf3f9!important;color:#293e59!important}
+.pilot-audit .pilot-export-status{color:#445975;min-height:15px;font-size:12px;margin:10px 1px 0}
+.pilot-audit .pilot-rules{background:#f8fafc!important}
+.pilot-audit .pilot-rules p{max-width:90ch;color:#52627a;font-size:13px;line-height:1.75}
+.pilot-audit :is(button,input,select,textarea):focus-visible{outline:3px solid #9c2853!important;outline-offset:3px!important}
+@media(max-width:1160px){.pilot-audit .pilot-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.pilot-audit .pilot-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.pilot-audit .pilot-environment{grid-template-columns:1fr}.pilot-audit .pilot-hero-heading{flex-direction:column;gap:10px}.pilot-audit .pilot-actions{bottom:8px}}
+@media(max-width:650px){.pilot-audit-page .pilot-audit{padding:15px 12px 90px!important}.pilot-audit .pilot-block{padding:19px 16px}.pilot-audit .pilot-hero{padding:23px 18px}.pilot-audit .pilot-check-grid{grid-template-columns:1fr}.pilot-audit .pilot-check-grid .check-item{min-height:0}.pilot-audit .pilot-filterbar{width:100%}.pilot-audit .pilot-filterbar button{flex:1;padding:8px 6px}.pilot-audit .pilot-action-copy{display:none}.pilot-audit .pilot-action-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.pilot-audit .pilot-action-buttons button{padding:10px 6px}.pilot-audit .pilot-section-head{flex-direction:column;gap:5px}.pilot-audit .pilot-toolbar-left{width:100%}.pilot-audit .pilot-jump{width:100%}.pilot-audit .pilot-import-label{width:100%}}
+@media(prefers-reduced-motion:reduce){.pilot-audit .check-item{transition:none!important}}
+@media(forced-colors:active){.pilot-audit .check-item,.pilot-audit .pilot-stat,.pilot-audit .pilot-actions{border:1px solid CanvasText!important}.pilot-audit .pilot-check-badge{border:1px solid CanvasText!important}}
+@media print{body.dou-admin-standalone.pilot-audit-page{padding-left:0!important}.pilot-audit-page>header,.pilot-audit-page>.dou-nav,.pilot-filterbar,.pilot-actions,#pilot-export-error{display:none!important}.pilot-audit-page .pilot-audit{max-width:none!important;padding:0!important}.pilot-audit .pilot-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}.pilot-audit .card,.pilot-audit .check-item{box-shadow:none!important}.pilot-audit .check-item{min-height:0!important}.pilot-audit .pilot-hero{background:white!important}.pilot-audit .pilot-check-grid .check-item[hidden]{display:flex!important}}
+</style></head><body class="dou-admin-standalone pilot-audit-page">
+<a class="dou-skip" href="#dou-content">İçeriğe geç</a>
+<aside class="portal-side dou-nav" aria-label="BEP ana menü">
+<div class="dou-nav-brand"><div class="dou-brand-mark" aria-hidden="true"><span>DOU</span><i></i></div><div class="dou-brand-title"><strong>BEP Sınav Atölyesi</strong><small>Kurumsal çalışma alanı</small></div><button class="dou-nav-toggle" type="button" aria-label="Menüyü aç veya kapat" aria-controls="dou-nav-sections" aria-expanded="false"><span></span><span></span><span></span></button></div>
+<div class="dou-nav-actions"><a class="dou-create" href="/kurumsal-sinav?new=1"><span aria-hidden="true">＋</span> Yeni sınav oluştur</a></div>
+<div class="dou-nav-find"><label for="dou-nav-search">Modüllerde ara</label><div class="dou-nav-find-field"><input id="dou-nav-search" type="search" autocomplete="off" spellcheck="false" placeholder="Menüde ara…" aria-controls="dou-nav-sections" aria-describedby="dou-nav-find-status"></div><p id="dou-nav-find-status" class="dou-nav-find-status" role="status" aria-live="polite" hidden></p></div>
+<nav id="dou-nav-sections" class="dou-nav-sections" aria-label="Modül bağlantıları">
+<div class="dou-nav-group"><p class="dou-nav-group-title">ÇALIŞMA ALANI</p>
+<a class="dou-nav-link portal-menu" href="/kurum"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Genel bakış</span></a>
+<a class="dou-nav-link portal-menu" href="/kurumsal-sinav"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3h10M7 10h10M7 14h7M7 18h5"/></svg><span>Sınav Hazırla</span></a>
+<a class="dou-nav-link portal-menu" href="/sinav-dosya-aktar"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg><span>Word / PDF aktar</span></a>
+</div>
+<div class="dou-nav-group"><p class="dou-nav-group-title">SINAV YÖNETİMİ</p>
+<a class="dou-nav-link portal-menu" href="/sinav-koordinasyon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 14h3"/></svg><span>Sınav koordinasyonu</span></a>
+<a class="dou-nav-link portal-menu" href="/uyarlama-kararlari"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="m7 12 3.5 3.5L17 9"/></svg><span>Uyarlama kararları</span></a>
+<a class="dou-nav-link portal-menu" href="/toplu-sinav"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="15" rx="2"/><path d="M8 8h8M8 12h8M8 16h5M3 8v12a2 2 0 0 0 2 2h12"/></svg><span>Toplu uyarlama</span></a>
+<a class="dou-nav-link portal-menu" href="/sinav-operasyon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><span>Operasyon merkezi</span></a>
+</div>
+<div class="dou-nav-group"><p class="dou-nav-group-title">KALİTE VE ARAÇLAR</p>
+<a class="dou-nav-link portal-menu" href="/bep-import"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 5.5v14M8 7h8M8 11h6"/></svg><span>BEP kazanım aktarımı</span></a>
+<a class="dou-nav-link portal-menu" href="/erisilebilirlik-kabul"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg><span>Erişilebilirlik kabulü</span></a>
+<a class="dou-nav-link portal-menu current" href="/erisilebilirlik-kontrol" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h12M9 12h12M9 18h12M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg><span>Kontrol listesi</span></a>
+<a class="dou-nav-link portal-menu" href="/pilot-yonetim"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Demo oturumları</span></a>
+<a class="dou-nav-link portal-menu" href="/dou-reader-demo"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4zM15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/></svg><span>DOU Reader laboratuvarı</span></a>
+</div>
+</nav>
+<div class="dou-nav-bottom"><span class="dou-nav-offline"><i aria-hidden="true"></i> Yalnızca yerel ortam</span><span class="dou-nav-version">ARAŞTIRMA PROTOTİPİ · v2.81</span><p>Gerçek öğrenci veya sağlık verisi girmeyin.</p></div>
+</aside>
+
+<header><div class="brand"><span class="mark" aria-hidden="true">DOU</span>BEP SINAV ATÖLYESİ <span class="pill">KALİTE DENETİMİ</span></div><nav><a href="/pilot-yonetim">Demo oturumlarına dön</a></nav></header>
+<main id="dou-content" class="pilot-audit">
+  <section class="card pilot-hero" aria-labelledby="pilot-title">
+    <div class="pilot-kicker">DOU BEP · KALİTE GÜVENCESİ</div>
+    <div class="pilot-hero-heading"><div>
+      <h1 id="pilot-title">Erişilebilirlik kontrol merkezi</h1>
+      <p>NVDA, VoiceOver veya benzeri yardımcı teknolojilerle yapılacak gerçek cihaz kontrolü. Her maddeyi tek tek değerlendir, teknik notları kimliksiz tut ve sonuçları cihazına indir.</p>
+    </div><span class="pilot-hero-pill">12 manuel kontrol · Yerel çalışma</span></div>
+    <div class="pilot-privacy" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v5m0 3h.01"/></svg><span><strong>Gizlilik:</strong> Öğrenci adı, tanı, iletişim veya ses kaydı girmeyin. Kontroller yalnız bu sekmede tutulur; sunucuya gönderilmez. Bu ekran erişilebilirlik sertifikası ya da resmî onay üretmez.</span></div>
+  </section>
+  <section class="card pilot-block" aria-labelledby="pilot-env-title"><div class="pilot-section-head"><div><h2 id="pilot-env-title">Test ortamı</h2><p>Denemeyi yaptığın cihazı ve yardımcı teknolojiyi seç. Kişisel bilgi girmen gerekmiyor.</p></div><span class="pilot-step">01 / ORTAM</span></div>
+    <div class="pilot-environment">
+      <label class="pilot-env-field" for="pilot-reader"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4a4 4 0 0 0 4 4h2V6H8a4 4 0 0 0-4 4zM20 10v4a4 4 0 0 1-4 4h-2V6h2a4 4 0 0 1 4 4z"/></svg>Ekran okuyucu</span><select id="pilot-reader"><option value="other">Diğer / henüz seçilmedi</option><option value="nvda">NVDA</option><option value="voiceover">VoiceOver</option><option value="jaws">JAWS</option><option value="talkback">TalkBack</option></select></label>
+      <label class="pilot-env-field" for="pilot-platform"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>İşletim sistemi</span><select id="pilot-platform"><option value="other">Diğer / belirtilmedi</option><option value="windows">Windows</option><option value="macos">macOS</option><option value="ios">iOS</option><option value="android">Android</option><option value="linux">Linux</option></select></label>
+      <label class="pilot-env-field" for="pilot-browser"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg>Tarayıcı</span><select id="pilot-browser"><option value="other">Diğer / belirtilmedi</option><option value="chrome">Chrome</option><option value="edge">Edge</option><option value="firefox">Firefox</option><option value="safari">Safari</option></select></label>
+    </div><p class="pilot-env-caption">Cihaz kimliği, uygulayıcının kimliği ve kullanıcıya ait herhangi bir tanımlayıcı bilgi alınmaz.</p>
+  </section>
+  <section class="card pilot-block" aria-labelledby="pilot-summary-title"><div class="pilot-section-head"><div><h2 id="pilot-summary-title">Denetim özeti</h2><p>İlerleme, durum seçimleri değiştikçe otomatik güncellenir.</p></div><span class="pilot-step">02 / İLERLEME</span></div>
+    <div class="pilot-summary" aria-label="Kontrol özeti">
+      <div class="pilot-stat" data-stat="pass"><span class="pilot-stat-label">Geçen kontroller</span><strong class="pilot-stat-value" id="pilot-passed">0</strong></div>
+      <div class="pilot-stat" data-stat="fail"><span class="pilot-stat-label">Sorunlu kontroller</span><strong class="pilot-stat-value" id="pilot-failed">0</strong></div>
+      <div class="pilot-stat" data-stat="pending"><span class="pilot-stat-label">Henüz test edilmedi</span><strong class="pilot-stat-value" id="pilot-untested">12</strong></div>
+      <div class="pilot-stat" data-stat="progress"><span class="pilot-stat-label">Tamamlanma</span><strong class="pilot-stat-value" id="pilot-percent">%0</strong></div>
+    </div>
+    <div class="pilot-progress-area"><label for="pilot-progress" class="pilot-progress-label">Kontrol ilerlemesi</label><span class="pilot-progress-value" id="pilot-progress-text">0 / 12 değerlendirildi</span><progress id="pilot-progress" value="0" max="12">0 / 12</progress></div>
+    <p id="pilot-check-count" role="status" aria-live="polite">0 geçti · 0 sorun · 12 test edilmedi.</p>
+  </section>
+  <section class="card pilot-block" aria-labelledby="pilot-checks-title">
+    <div class="pilot-check-tools"><div class="pilot-toolbar-left"><div><h2 id="pilot-checks-title">Pilot doğrulama adımları</h2><p>Her kart için sonuç seç; istersen teknik gözlem ekle.</p></div><button type="button" class="pilot-jump" id="pilot-jump" aria-label="İlk bekleyen kontrolün sonuç seçimine git">İlk bekleyene git</button></div>
+      <div class="pilot-filterbar" role="group" aria-label="Kontrol listesi filtresi">
+        <button type="button" data-filter="all" aria-pressed="true">Tümü</button><button type="button" data-filter="not-tested" aria-pressed="false">Bekleyenler</button><button type="button" data-filter="fail" aria-pressed="false">Sorunlular</button><button type="button" data-filter="pass" aria-pressed="false">Geçenler</button>
+      </div></div>
+    <div id="checks" class="pilot-check-grid checklist-grid"></div>
+    <p id="pilot-no-results" class="pilot-no-results" hidden>Bu filtrede gösterilecek kontrol yok. Başka bir durum seçebilirsin.</p>
+    <div class="pilot-actions" role="group" aria-label="Kontrol listesi işlemleri">
+      <div class="pilot-action-copy">Kontrol sonuçların bu sekmede tutulur<small>İndirme işlemi yalnızca sen düğmeye bastığında yapılır.</small></div>
+      <div class="pilot-action-buttons"><label class="pilot-import-label" for="pilot-import-json">JSON'u yeniden aç<input type="file" id="pilot-import-json" accept=".json,application/json" aria-describedby="pilot-resume-note" /></label><button type="button" id="pilot-export-csv">CSV indir</button><button type="button" id="pilot-export-json">JSON indir</button><button type="button" id="print" class="secondary">Yazdır</button><button type="button" id="reset" class="reset">Sıfırla</button></div>
+    </div>
+    <p class="pilot-resume-note" id="pilot-resume-note">Sekme kapandığında seçimler silinir. Devam etmek için önce JSON indir, sonra bu dosyayı “JSON'u yeniden aç” alanından seç. Dosya yalnızca tarayıcıda okunur.</p><p id="pilot-export-error" class="pilot-export-status" role="status" aria-live="polite" aria-atomic="true"></p>
+  </section>
+  <section class="card pilot-block pilot-rules" aria-labelledby="pilot-rule-title"><h2 id="pilot-rule-title">Sonuçların değerlendirilmesi</h2><p>Kontroller tamamlanmadan veya gerçek yardımcı teknoloji kullanıcısıyla doğrulanmadan sistemin erişilebilir olduğu iddia edilmemelidir. Öğrenme kazanımını etkileyen seslendirme ve soru sunumu uyarlamaları ayrıca akademik inceleme gerektirir.</p><p class="pilot-env-caption">Yerel araştırma prototipi v2.81 · Manuel kontrol formu · Resmî DOU kabulü ya da WCAG / PDF/UA sertifikası değildir.</p></section>
+</main><script type="module" src="/accessibility-check.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>

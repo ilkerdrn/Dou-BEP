@@ -1,0 +1,18 @@
+/* Visual polish only for anonymous pilot and accessibility review. Honor high contrast. */
+:root{--pilot-ink:#2d222b;--pilot-rose:#ab1938;--pilot-paper:#f8f6f6}
+body:not(.high){background:var(--pilot-paper);color:var(--pilot-ink)}
+body:not(.high) header{background:linear-gradient(105deg,#241a26,#55223b);border-bottom:3px solid #c72b4d;box-shadow:0 5px 18px #361e2b17}
+header .mark{background:linear-gradient(135deg,#d6304d,#8e1533);border-radius:14px;box-shadow:0 6px 16px #140b1a29}
+main{max-width:1180px}
+body:not(.high) .card{background:#fff;border-color:#e9e1e6;border-radius:19px;box-shadow:0 7px 23px #32212b0a}
+body:not(.high) .hero{background:linear-gradient(112deg,#fff 33%,#fdf0f3);border-top-color:#b41432}
+body:not(.high) .eyebrow{color:#ab1938}
+body:not(.high) h1{letter-spacing:-.055em}
+body:not(.high) button:not(.ghost):not(.danger){background:#ad1737;border-color:#ad1737}
+body:not(.high) button:not(:disabled):hover{filter:brightness(.95)}
+body:not(.high) .pill{background:#fae7ec;color:#8c1734}
+body:not(.high) .check-item,body:not(.high) .review-question{border-color:#e9dee5;border-radius:14px}
+body:not(.high) .option{border-color:#e9e2e8;border-radius:12px}
+body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d69}
+/* Never override high contrast view: it is an intentional accessibility mode. */
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}

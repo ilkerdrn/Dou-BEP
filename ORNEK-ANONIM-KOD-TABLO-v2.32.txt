@@ -1,0 +1,14 @@
+1. Programlama sorusu. Aşağıdaki kodu açıklayınız.
+```python
+value = 4
+if value < 8:
+    print("başarılı")
+
+    result = value + 1
+```
+
+2. Veri analizi sorusu. Yöntemleri karşılaştırınız.
+| Ölçüt | Yöntem A | Yöntem B |
+| --- | --- | --- |
+| Süre | 12 ms | 18 ms |
+| Bellek | 64 MB | 48 MB |

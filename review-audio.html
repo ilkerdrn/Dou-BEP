@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; media-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Yerel Ses Yanıtı İnceleme — DOU BEP</title>
+<link rel="stylesheet" href="review-audio.css"><script src="review-audio.js" defer></script>
+<link rel="stylesheet" href="/pilot-refresh.css"></head>
+<body>
+<header><div class="wrap"><small>DOU TEMASI · BEP SINAV ATÖLYESİ</small><h1>Yerel ses yanıtı inceleme</h1><p>Öğretmen için çevrimdışı ses dinleme ve gözlem aracı</p></div></header>
+<main class="wrap">
+<section class="panel">
+<h2>Ses dosyalarını aç</h2>
+<p>Bu ekran ses kayıtlarını herhangi bir sunucuya göndermez. Ses dosyaları ve notlar yalnızca açık sekmede tutulur. Gerçek öğrenci verileriyle kullanım için kurum güvenlik ve izin süreçleri tamamlanmalıdır.</p>
+<label for="audio-files">Örnek/anonim ses yanıtları seçin (WebM, OGG, M4A veya MP3)</label>
+<input id="audio-files" type="file" accept="audio/*,.webm,.ogg,.m4a,.mp3" multiple>
+<p id="feedback" role="status" aria-live="polite">Henüz dosya seçilmedi.</p>
+</section>
+<section class="panel"><h2>Yanıt listesi</h2><div id="record-list"><p>Dinlenecek kayıt yok.</p></div></section>
+<section class="panel"><h2>İnceleme notları</h2><p>Notlar otomatik puanlama değildir. İndirilen CSV şifreli değildir.</p>
+<div class="toolbar"><button type="button" id="export" disabled>Gözlem notlarını CSV olarak indir</button><button type="button" id="clear" class="secondary" disabled>Bütün kayıtları ve notları temizle</button></div></section>
+</main>
+</body></html>

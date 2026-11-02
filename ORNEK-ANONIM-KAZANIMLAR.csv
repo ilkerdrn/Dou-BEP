@@ -1,0 +1,13 @@
+﻿id;subject;grade;domain;title;description;source
+ORNEK-MAT-001;Matematik;1. Sınıf;Sayılar;10 içinde toplama;10 içinde iki doğal sayının toplamını bulur.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-MAT-002;Matematik;1. Sınıf;Sayılar;Karşılaştırma;10 içinde iki doğal sayıyı büyüklük açısından karşılaştırır.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-MAT-003;Matematik;2. Sınıf;Sayılar;20 içinde toplama;20 içinde iki doğal sayıyı toplar.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-MAT-004;Matematik;2. Sınıf;Sayılar;20 içinde çıkarma;20 içinde iki doğal sayının farkını bulur.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-MAT-005;Matematik;3. Sınıf;Sayılar;100 içinde toplama;100 içinde iki doğal sayıyı toplar.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-TR-001;Türkçe;1. Sınıf;Sözcük;Karşıt anlam;Günlük sözcüklerin karşıt anlamlılarını seçer.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-TR-002;Türkçe;1. Sınıf;Okuma;Basit cümle;Kısa bir cümlede anlatılan temel bilgiyi belirler.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-TR-003;Türkçe;2. Sınıf;Okuma;Metinden bilgi bulma;Kısa bir metinde açıkça verilen bir bilgiyi bulur.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-TR-004;Türkçe;3. Sınıf;Yazma;Anlamlı cümle;Verilen sözcüklerle anlamlı bir cümle kurar.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-HB-001;Hayat Bilgisi;1. Sınıf;Günlük yaşam;Kişisel güvenlik;Günlük yaşamda güvenli bir davranış örneğini seçer.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-HB-002;Hayat Bilgisi;2. Sınıf;Günlük yaşam;Trafik kuralları;Yaya geçidinde uygun güvenli davranışı belirler.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil
+ORNEK-FEN-001;Fen Bilimleri;3. Sınıf;Gözlem;Canlı-cansız;Verilen örnekleri canlı ve cansız olarak ayırt eder.;ÖĞRETMEN İÇİN ÖRNEK — resmî MEB kodu değil

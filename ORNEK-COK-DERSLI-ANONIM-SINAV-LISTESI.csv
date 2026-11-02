@@ -1,0 +1,6 @@
+ders_kodu;sinav_etiketi;ogrenci_kodu;gereksinim_alani;onayli_duzenlemeler;ek_sure_dakika;onay_durumu
+BLP103;VIZE;KOD-001;vision;LARGE_PRINT|HIGH_CONTRAST;15;onayli
+BLP103;VIZE;KOD-002;hearing;SIGN_SUPPORT;0;onayli
+BGT1011;VIZE;KOD-001;vision;ACCESSIBLE_HTML|READER;15;onayli
+ALG101;FINAL;KOD-003;motor;WIDE_RESPONSE|SCRIBE;20;onayli
+ALG101;FINAL;KOD-004;speech;QUIET_ROOM;10;bekliyor
