@@ -367,10 +367,10 @@ namespace DouBepReader
         private static List<string> SpeechChunks(string text)
         {
             if (String.IsNullOrWhiteSpace(text) || text.Length > 850 ||
-                !Regex.IsMatch(text, @"\\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\\s,.!?;:–\\-’']+\\z"))
+                !Regex.IsMatch(text, @"\A[a-zA-ZçğıöşüÇĞİÖŞÜ0-9\s,.!?;:–\-’']+\z"))
                 return null;
             var result = new List<string>();
-            var words = Regex.Split(text.Trim(), @"\\s+");
+            var words = Regex.Split(text.Trim(), @"\s+");
             var part = "";
             foreach (var word in words)
             {
