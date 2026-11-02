@@ -201,7 +201,7 @@ namespace DouBepReader
             };
             stop.FlatAppearance.BorderSize = 1;
             stop.FlatAppearance.BorderColor = accent;
-            stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
+            stop.Click += delegate { StopSpeech(); _sentenceAnchor = null; _sentenceIndex = -1; SetStatus("Seslendirme durduruldu."); };
             var rateLabel = new Label {
                 Text = "KONUŞMA HIZI", Left = 524, Top = 732, Width = 196, Height = 22,
                 ForeColor = muted, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold),
@@ -378,7 +378,7 @@ namespace DouBepReader
                     case HOTKEY_READ: ReadFocused(); break;
                     case HOTKEY_NEXT: Traverse(1); break;
                     case HOTKEY_PREVIOUS: Traverse(-1); break;
-                    case HOTKEY_STOP: StopSpeech(); SetStatus("Seslendirme durduruldu."); break;
+                    case HOTKEY_STOP: StopSpeech(); _sentenceAnchor = null; _sentenceIndex = -1; SetStatus("Seslendirme durduruldu."); break;
                     case HOTKEY_PAUSE_RESUME: TogglePause(); break;
                     case HOTKEY_SECTION_TEXT: ReadStaticTextSection(false); break;
                     case HOTKEY_NEXT_LIST: TraverseStructureKind(ReaderStructureKind.List, 1, false); break;
@@ -562,6 +562,95 @@ namespace DouBepReader
         {
             // Only normal non-edit text nodes. Avoid reading entire documents or input fields.
             return element != null && element.Current.ControlType == ControlType.Text;
+        }
+
+        // Read only the Name of an explicitly selected, static UIA Text or
+        // ARIA paragraph control. No TextPattern, ValuePattern, clipboard,
+        // virtual cursor injection, document import or passive monitoring.
+        private void ReadSentence(int direction, bool fromReaderButton)
+        {
+            try
+            {
+                if (_cursor == null || _scopeProcessId <= 0 ||
+                    _cursor.Current.ProcessId != _scopeProcessId ||
+                    !SafeReadableScope(_cursor))
+                {
+                    StopSpeech();
+                    _sentenceAnchor = null;
+                    SetStatus("Önce izinli statik metinde Ctrl+Alt+R ile okuma noktası seçin.");
+                    return;
+                }
+                // A static Text node is not automatically a paragraph. This
+                // command reads sentences only after explicit user selection.
+                if (_cursor.Current.ControlType != ControlType.Text &&
+                    DetectStructure(_cursor) != ReaderStructureKind.Paragraph)
+                {
+                    StopSpeech();
+                    _sentenceAnchor = null;
+                    SetStatus("Cümle gezinmesi yalnız seçili statik metin veya paragrafta çalışır.");
+                    return;
+                }
+                if (fromReaderButton)
+                {
+                    var source = Process.GetProcessById(_scopeProcessId);
+                    if (source.HasExited || !_allowed.Contains(source.ProcessName))
+                        throw new InvalidOperationException("Source no longer permitted.");
+                }
+                else
+                {
+                    var focused = AutomationElement.FocusedElement;
+                    if (focused == null || focused.Current.ProcessId != _scopeProcessId ||
+                        !Allowed(focused))
+                        throw new InvalidOperationException("Source focus has changed.");
+                }
+                string raw = _cursor.Current.Name;
+                var sentences = ReaderSentenceContract.Plan(raw);
+                if (sentences == null)
+                {
+                    StopSpeech();
+                    _sentenceAnchor = null;
+                    SetStatus("Bu statik metin güvenli cümle okuma sınırlarında değil.");
+                    return;
+                }
+                bool newAnchor = !ReferenceEquals(_cursor, _sentenceAnchor) ||
+                    _sentencePid != _scopeProcessId;
+                int index = newAnchor ?
+                    (direction > 0 ? 0 : sentences.Count - 1) : _sentenceIndex + direction;
+                if (index < 0 || index >= sentences.Count)
+                {
+                    StopSpeech();
+                    SetStatus(direction > 0 ? "Sonraki cümle bulunamadı." : "Önceki cümle bulunamadı.");
+                    return;
+                }
+                string sentence = sentences[index];
+                if (_ownVoice && ReaderSpeechContract.Split(
+                    TurkishMathPronunciation.Prepare(sentence)) == null)
+                {
+                    StopSpeech();
+                    SetStatus("Cümle, deneysel ses motorunun güvenli sınırlarını aşıyor.");
+                    return;
+                }
+                StopSpeech();
+                _sentenceAnchor = _cursor;
+                _sentencePid = _scopeProcessId;
+                _sentenceIndex = index;
+                if (_ownVoice)
+                    SpeakOwnVoice(sentence, _scopeProcessId);
+                else if (_turkishVoice != null)
+                {
+                    _speaker.Rate = _rateControl.Value;
+                    _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(sentence));
+                    SetStatus("Cümle okunuyor: " + (index + 1) + " / " + sentences.Count);
+                }
+                else SetStatus("Türkçe yerel ses bulunamadı; içerik okunmadı.");
+            }
+            catch (Exception)
+            {
+                StopSpeech();
+                _sentenceAnchor = null;
+                _sentenceIndex = -1;
+                SetStatus("Cümle gezinmesi güvenli şekilde durduruldu; hedefi tekrar seçin.");
+            }
         }
 
         // Explicit one-shot reading of a nearby bounded sequence of UIA static text.
