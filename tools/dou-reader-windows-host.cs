@@ -78,6 +78,8 @@ namespace DouBepReader
         private AutomationElement _sentenceAnchor;
         private int _sentenceIndex = -1;
         private int _sentencePid;
+        private int _sentenceTextHash;
+        private int _sentenceTextLength;
         // Only a short, bounded utterance is kept in RAM during playback or pause.
         // Stop, new reading, and window close clear the pending session.
         private sealed class OwnVoiceSession
@@ -612,8 +614,13 @@ namespace DouBepReader
                     SetStatus("Bu statik metin güvenli cümle okuma sınırlarında değil.");
                     return;
                 }
+                // Detect in-place UIA Name changes without retaining raw text in
+                // Reader's navigation state. This is a cursor check, not a hash
+                // used for security/authorization (those are checked above).
                 bool newAnchor = !ReferenceEquals(_cursor, _sentenceAnchor) ||
-                    _sentencePid != _scopeProcessId;
+                    _sentencePid != _scopeProcessId ||
+                    _sentenceTextHash != raw.GetHashCode() ||
+                    _sentenceTextLength != raw.Length;
                 int index = newAnchor ?
                     (direction > 0 ? 0 : sentences.Count - 1) : _sentenceIndex + direction;
                 if (index < 0 || index >= sentences.Count)
@@ -633,6 +640,8 @@ namespace DouBepReader
                 StopSpeech();
                 _sentenceAnchor = _cursor;
                 _sentencePid = _scopeProcessId;
+                _sentenceTextHash = raw.GetHashCode();
+                _sentenceTextLength = raw.Length;
                 _sentenceIndex = index;
                 if (_ownVoice)
                     SpeakOwnVoice(sentence, _scopeProcessId);
