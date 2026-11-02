@@ -94,3 +94,34 @@ test('access rejection and focus loss interrupt speech and clear scoped content'
  assert.match(cs, /if \(focusedNow == null[\s\S]*?StopSpeech\(\)/);
  assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
 });
+
+test('opt-in static text section is bounded and excludes edited or password descendants', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const source = readFileSync(new URL('./tools/dou-reader-document-contract.cs', import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(cs, /private void ReadStaticTextSection\(bool fromReaderButton\)/);
+ assert.match(cs, /ReaderDocumentContract\.MaxTraversalSteps/);
+ assert.match(cs, /ReaderDocumentContract\.MaxTextNodes/);
+ assert.match(cs, /ReaderDocumentContract\.TryAdd\(segments, name\)/);
+ assert.match(cs, /if \(IsDocumentText\(item\) && GetReadableName\(item\) != null\)/);
+ assert.match(cs, /if \(item\.Current\.ProcessId != _scopeProcessId\) break/);
+ assert.match(cs, /focused\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs, /if \(source\.HasExited \|\| !_allowed\.Contains\(source\.ProcessName\)\)/);
+ assert.match(cs, /ReadStaticTextSection\(false\)/);
+ assert.match(cs, /ReadStaticTextSection\(true\)/);
+ assert.match(source, /MaxTextNodes = 16/);
+ assert.match(source, /MaxTraversalSteps = 350/);
+ assert.match(source, /MaxCharacters = 850/);
+ assert.match(source, /new string\('Z', 39\)/);
+ assert.match(ps, /ReaderDocumentContract\]::SelfTest\(\)/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
+});
+
+test('optional document shortcut preserves the essential Reader hotkeys', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /HOTKEY_SECTION_TEXT = 111/);
+ assert.match(cs, /if \(RegisterHotKey\(Handle, HOTKEY_SECTION_TEXT/);
+ assert.match(cs, /MOD_CONTROL \| MOD_ALT \| MOD_SHIFT, \(uint\)Keys\.D/);
+ assert.match(cs, /sectionButton\.Click \+= delegate \{ ReadStaticTextSection\(true\); \}/);
+ assert.match(cs, /Ctrl\+Alt\+Shift\+D/);
+});
