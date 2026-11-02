@@ -725,6 +725,9 @@ namespace DouBepReader
                         throw new InvalidOperationException("Target process has lost focus.");
                 }
 
+                // New navigation request interrupts the previous utterance whether
+                // a matching structure is found or not.
+                StopSpeech();
                 var candidate = _cursor;
                 var scan = Stopwatch.StartNew();
                 for (int i = 0; i < MAX_TRAVERSAL &&
