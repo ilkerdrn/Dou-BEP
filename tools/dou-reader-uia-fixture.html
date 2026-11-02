@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; form-action 'none'; base-uri 'none'">
+<title>DOU Reader OS — Anonim UIA kabul örnekleri</title>
+<style>
+  body{font:1.125rem/1.6 system-ui,sans-serif;max-width:52rem;margin:2rem auto;padding:0 1rem;background:Canvas;color:CanvasText}
+  h1,h2{line-height:1.25} a{color:LinkText} a:focus,button:focus,input:focus{outline:3px solid Highlight;outline-offset:4px}
+  table{border-collapse:collapse;width:100%} th,td{border:1px solid GrayText;padding:.65rem;text-align:left}
+  caption{text-align:left;font-weight:bold;padding:.5rem 0} fieldset{margin-top:2rem} label{display:block;margin:.75rem 0}
+</style>
+</head>
+<body>
+<main aria-label="Yalnızca sentetik erişilebilirlik test sayfası">
+  <h1>DOU Reader OS: Çevrimdışı erişilebilirlik örneği</h1>
+  <p>Bu sayfa gerçek öğrenci veya sınav verisi içermez. Tamamen çevrimdışı test içindir.</p>
+  <h2>Paragraf ve cümle gezinmesi</h2>
+  <p>Merhaba dünya. Bugün sınav var! Hazır mısınız?</p>
+  <p>Matematik örneğinde 2.5 sayısı kullanılır. Bu ikinci cümledir.</p>
+  <h2>Liste örneği</h2>
+  <ul aria-label="Örnek sınav adımları">
+    <li>Talimatları okuyun.</li>
+    <li>Soruyu anlayın.</li>
+    <li>Yanıtınızı kontrol edin.</li>
+  </ul>
+  <h2>Tablo ve başlık ilişkileri</h2>
+  <table aria-label="Anonim örnek sonuç tablosu">
+    <caption>Sentetik tablo</caption>
+    <thead><tr><th scope="col">Bölüm</th><th scope="col">Soru</th><th scope="col">Puan</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Birinci örnek</th><td>İki</td><td>On</td></tr>
+      <tr><th scope="row">İkinci örnek</th><td>Üç</td><td>Yirmi</td></tr>
+    </tbody>
+  </table>
+  <h2>Gizlilik sınırı</h2>
+  <fieldset>
+    <legend>Bu alanların değerleri seslendirilmemelidir</legend>
+    <label>Sentetik parola <input type="password" autocomplete="off" value="DUMMY_CANARY_DO_NOT_READ"></label>
+    <label>Sentetik giriş <input type="text" autocomplete="off" value="DUMMY_EDIT_DO_NOT_READ"></label>
+  </fieldset>
+  <p>Test sonunda önceki ve sonraki cümle komutlarını sınayın.</p>
+</main>
+</body>
+</html>
