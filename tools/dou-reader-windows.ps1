@@ -46,7 +46,9 @@ try {
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
     foreach ($assemblyName in $referenceNames) {
-        $assembly = [System.Reflection.Assembly]::Load($assemblyName)
+        $assembly = [AppDomain]::CurrentDomain.GetAssemblies() |
+            Where-Object { $_.GetName().Name -eq $assemblyName -and -not $_.IsDynamic } |
+            Select-Object -First 1
         if ($null -eq $assembly -or [string]::IsNullOrWhiteSpace($assembly.Location) -or -not (Test-Path -LiteralPath $assembly.Location -PathType Leaf)) {
             throw ('Gerekli .NET derlemesi diskte bulunamadi: ' + $assemblyName)
         }
