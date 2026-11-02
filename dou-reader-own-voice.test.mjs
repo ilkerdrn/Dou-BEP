@@ -156,14 +156,14 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(cs, /ReaderStructureContract\.Matches\(actual, target\)/);
  assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
  assert.match(cs, /if \(!SafeReadableScope\(candidate\)\) continue/);
- assert.match(cs, /string name = GetReadableName\(candidate\)/);
+ assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
  assert.match(cs, /bool gridRecord = candidate\.Current\.ControlType == ControlType\.DataItem/);
  assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
  assert.match(cs, /!gridRecord && name == null/);
  assert.match(cs, /if \(candidate == null \|\| candidate\.Current\.ProcessId != _scopeProcessId\) break/);
  assert.match(ps, /ReaderStructureContract\]::SelfTest\(\)/);
  assert.match(ps, /ReadAllText\(\$structureContract\)/);
- assert.doesNotMatch(cs, /GetCurrentPattern\(/);
+ assert.doesNotMatch(cs, /\.GetCurrentPattern\(/);
 });
 
 test('structural shortcut conflicts do not disable core hotkeys', () => {
@@ -226,7 +226,7 @@ test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
  assert.match(contract, /DescribeSpan\(2, 3\) != "2 satır ve 3 sütun boyunca"/);
  assert.match(contract, /DescribeSpan\(1, Int32\.MaxValue\) != null/);
  assert.match(cs, /if \(position != null\) role \+= ", " \+ position/);
- assert.match(cs, /if \(kind == ReaderStructureKind\.Cell\)/);
+ assert.match(cs, /if \(kind == ReaderStructureKind\.Cell \|\| kind == ReaderStructureKind\.GridItem\)/);
  assert.match(contract, /MaxCoordinate = 10000/);
  assert.match(contract, /if \(rowZeroBased < 0 \|\| columnZeroBased < 0/);
  assert.match(contract, /rowZeroBased \+ 1/);
