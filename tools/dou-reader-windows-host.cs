@@ -37,6 +37,9 @@ namespace DouBepReader
         private const int HOTKEY_DOCUMENT_TEXT = 109;
         private const int HOTKEY_PAUSE_RESUME = 110;
         private const int HOTKEY_SECTION_TEXT = 111;
+        private const int HOTKEY_NEXT_LIST = 112;
+        private const int HOTKEY_NEXT_TABLE = 113;
+        private const int HOTKEY_NEXT_CELL = 114;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -44,7 +47,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_SECTION_TEXT, HOTKEY_NEXT_LIST, HOTKEY_NEXT_TABLE, HOTKEY_NEXT_CELL };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -91,8 +94,8 @@ namespace DouBepReader
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 760;
-            Height = 570;
-            MinimumSize = new Size(760, 570);
+            Height = 650;
+            MinimumSize = new Size(760, 650);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             Font = new Font("Segoe UI", 10.0f);
@@ -138,7 +141,7 @@ namespace DouBepReader
             sectionButton.FlatAppearance.BorderColor = accent;
             sectionButton.Click += delegate { ReadStaticTextSection(true); };
             var help = new Label {
-                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
+                Text = "KISAYOLLAR\r\nCtrl+Alt+R  Odağı oku       Ctrl+Alt+↑/↓  Önceki / sonraki öğe\r\nCtrl+Alt+H  Sonraki başlık       Ctrl+Alt+Shift+H  Önceki başlık\r\nCtrl+Alt+L/B  Bağlantı / düğme        Ctrl+Alt+D  Sonraki metin\r\nCtrl+Alt+Shift+D  Kısa statik metin bölümünü oku\r\nCtrl+Alt+Shift+L/T/C  Sonraki liste / tablo / hücre\r\nCtrl+Alt+P  Duraklat / devam et      Ctrl+Alt+X  Durdur\r\nYalnız izinli uygulamalar; parola ve metin girişlerinin içeriği okunmaz.",
                 Left = 26, Top = 147, Width = 680, Height = 175, AutoSize = false,
                 ForeColor = ink, BackColor = surface,
                 Padding = new Padding(15, 10, 10, 8),
@@ -202,6 +205,35 @@ namespace DouBepReader
                 AccessibleDescription = "Sol yavaş, sağ hızlı, ortada normal.",
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
+            var structureLabel = new Label {
+                Text = "YAPISAL GEZİNME", Left = 26, Top = 430, Width = 250, Height = 22,
+                ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
+            };
+            Controls.Add(structureLabel);
+            var structureActions = new[] {
+                Tuple.Create("Başlık", ReaderStructureKind.Heading),
+                Tuple.Create("Liste", ReaderStructureKind.List),
+                Tuple.Create("Tablo", ReaderStructureKind.Table),
+                Tuple.Create("Hücre", ReaderStructureKind.Cell)
+            };
+            for (int index = 0; index < structureActions.Length; index++)
+            {
+                var action = structureActions[index];
+                ReaderStructureKind target = action.Item2;
+                var nav = new Button {
+                    Text = action.Item1, Left = 26 + (index * 169), Top = 456,
+                    Width = 156, Height = 46,
+                    AccessibleName = "Sonraki " + ReaderStructureContract.TurkishRole(target) + " öğesini bul",
+                    AccessibleDescription = "İzinli uygulamada seçili okuma noktasından sonra ara.",
+                    TabIndex = 5 + index, FlatStyle = FlatStyle.Flat,
+                    ForeColor = ink, BackColor = surface,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left
+                };
+                nav.FlatAppearance.BorderSize = 1;
+                nav.FlatAppearance.BorderColor = accent;
+                nav.Click += delegate { TraverseStructureKind(target, 1, true); };
+                Controls.Add(nav);
+            }
             Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle); Controls.Add(sectionButton);
             Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
             Controls.Add(voiceTest); Controls.Add(pause); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
@@ -263,6 +295,17 @@ namespace DouBepReader
                 _registeredHotkeys.Add(HOTKEY_SECTION_TEXT);
             else
                 SetStatus("Ctrl+Alt+Shift+D kullanılıyor; kısa bölüm düğmesi kullanılabilir.");
+            var structureHotkeys = new[] {
+                Tuple.Create(HOTKEY_NEXT_LIST, (uint)Keys.L),
+                Tuple.Create(HOTKEY_NEXT_TABLE, (uint)Keys.T),
+                Tuple.Create(HOTKEY_NEXT_CELL, (uint)Keys.C)
+            };
+            foreach (var hotkey in structureHotkeys)
+            {
+                if (RegisterHotKey(Handle, hotkey.Item1, MOD_CONTROL | MOD_ALT | MOD_SHIFT, hotkey.Item2))
+                    _registeredHotkeys.Add(hotkey.Item1);
+                // Optional structural hotkeys never disable core navigation.
+            }
         }
 
         protected override void WndProc(ref Message m)
@@ -277,6 +320,9 @@ namespace DouBepReader
                     case HOTKEY_STOP: StopSpeech(); SetStatus("Seslendirme durduruldu."); break;
                     case HOTKEY_PAUSE_RESUME: TogglePause(); break;
                     case HOTKEY_SECTION_TEXT: ReadStaticTextSection(false); break;
+                    case HOTKEY_NEXT_LIST: TraverseStructureKind(ReaderStructureKind.List, 1, false); break;
+                    case HOTKEY_NEXT_TABLE: TraverseStructureKind(ReaderStructureKind.Table, 1, false); break;
+                    case HOTKEY_NEXT_CELL: TraverseStructureKind(ReaderStructureKind.Cell, 1, false); break;
                     case HOTKEY_LINK: TraverseRole(ControlType.Hyperlink, "bağlantı"); break;
                     case HOTKEY_BUTTON: TraverseRole(ControlType.Button, "düğme"); break;
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
