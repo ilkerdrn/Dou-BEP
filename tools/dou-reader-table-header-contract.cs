@@ -19,6 +19,7 @@ namespace DouBepReader
             // Reject scripts, URLs, markup and unsupported characters instead of
             // replacing arbitrary portions of potentially sensitive source labels.
             if (cleaned.Length == 0 || cleaned.Length > MaxHeaderCharacters ||
+                !Regex.IsMatch(cleaned, @"[a-zA-ZçğıöşüÇĞİÖŞÜ0-9]") ||
                 ReaderSpeechContract.Split(cleaned) == null) return null;
             return cleaned;
         }
@@ -42,6 +43,8 @@ namespace DouBepReader
                 CleanHeader("Gizli<alan>") != null ||
                 CleanHeader(new string('a', 65)) != null ||
                 CleanHeader("  ") != null ||
+                CleanHeader("...") != null ||
+                CleanHeader("?!") != null ||
                 Compose("Birinci satır", "Not") !=
                     "satır başlığı: Birinci satır, sütun başlığı: Not" ||
                 Compose(null, "Puan") != "sütun başlığı: Puan" ||
