@@ -145,6 +145,11 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(contract, /case "Edit":|Classify\(null, "Edit", false\)/);
  assert.match(contract, /Classify\(null, "Text", true\)/);
  assert.match(cs, /private static ReaderStructureKind DetectStructure/);
+ assert.match(cs, /private static int ExplicitHeadingLevel\(AutomationElement element\)/);
+ assert.match(cs, /if \(value >= 1 && value <= 9\) return value/);
+ assert.match(cs, /if \(value >= 80051 && value <= 80059\) return value - 80050/);
+ assert.match(cs, /role \+= " seviye " \+ level/);
+ assert.match(cs, /SayStructuredElement\(candidate, ReaderStructureKind\.Heading, GetReadableName\(candidate\)\)/);
  assert.match(cs, /ReaderStructureContract\.Classify\(role, control, IsHeading\(element\)\)/);
  assert.match(cs, /ReaderStructureContract\.Matches\(DetectStructure\(candidate\), target\)/);
  assert.match(cs, /scan\.ElapsedMilliseconds < ReaderDocumentContract\.MaxScanMilliseconds/);
