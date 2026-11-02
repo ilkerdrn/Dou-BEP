@@ -1,0 +1,61 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {readFileSync} from 'node:fs';
+
+const bridge = fileURLToPath(new URL('./tools/dou-speech-nvda-stdio.mjs', import.meta.url));
+const start = (payload) => spawnSync(process.execPath, [bridge], {
+ input: JSON.stringify(payload), timeout: 15000, maxBuffer: 3_500_000
+});
+
+function assertPcm(r) {
+ assert.equal(r.status, 0, String(r.stderr));
+ const bytes = r.stdout;
+ assert.ok(bytes.length > 44);
+ assert.equal(bytes.subarray(0, 4).toString(), 'RIFF');
+ assert.equal(bytes.subarray(8, 12).toString(), 'WAVE');
+ assert.equal(bytes.readUInt32LE(4), bytes.length - 8);
+ assert.equal(bytes.readUInt16LE(20), 1);
+ assert.equal(bytes.readUInt16LE(22), 1);
+ assert.equal(bytes.readUInt32LE(24), 22050);
+ assert.equal(bytes.readUInt32LE(28), 44100);
+ assert.equal(bytes.readUInt16LE(32), 2);
+ assert.equal(bytes.readUInt16LE(34), 16);
+ assert.equal(bytes.readUInt32LE(40), bytes.length - 44);
+ assert.ok(bytes.length <= 3_000_000);
+}
+
+test('own voice produces valid WAV for Turkish synthetic UIA-style phrases', () => {
+ for (const phrase of ['Merhaba dünya', 'Öğrenci için Türkçe sınav açıklaması']) {
+  assertPcm(start({text: phrase, rate: 1, acousticModel: 'legacy'}));
+ }
+});
+
+test('own voice slider rate endpoints stay inside synthesizer contract', () => {
+ for (const rate of [0.76, 1.0, 1.24]) assertPcm(start({text: 'Merhaba dünya', rate, acousticModel: 'legacy'}));
+});
+
+test('invalid characters and excess length fail closed without plaintext echo', () => {
+ for (const phrase of ['Parola: abc@example.com', 'x'.repeat(261)]) {
+  const r = start({text: phrase, rate: 1, acousticModel: 'legacy'});
+  assert.notEqual(r.status, 0);
+  assert.equal(r.stdout.length, 0);
+  assert.ok(!String(r.stderr).includes(phrase));
+ }
+});
+
+test('reader uses bounded nonpersisted WAV pipeline with opt-in activation', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-speech-contract.cs',import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url), 'utf8');
+ assert.match(cs, /_ownVoice\) \{ SpeakOwnVoice/);
+ assert.match(cs, /new MemoryStream\(pcmWav, false\)/);
+ assert.match(cs, /ReaderSpeechContract\.IsPcmWav/);
+ assert.match(cs, /_audioGeneration != generation/);
+ assert.match(cs, /process|proc\.Kill/);
+ assert.doesNotMatch(cs, /FileStream\(path|GetTempPath|File\.WriteAllBytes/);
+ assert.match(contract, /MaxAudioBytes = 3000000/);
+ assert.match(ps, /ReaderSpeechContract\]::SelfTest\(\)/);
+ assert.match(ps, /\[switch\]\$OwnVoice/);
+});
