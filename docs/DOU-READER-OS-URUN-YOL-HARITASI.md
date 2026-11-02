@@ -94,3 +94,13 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - `docs/DOU-READER-OS-KABUL-MATRISI.md` belge okuma için sekiz ek manuel senaryo içerir.
 
 **Bilinçli sınırlar:** Bu aşama *tam belge metni* ya da *düzenlenebilir Not Defteri içeriği* okuması değildir; görünür UIA statik metin düğümlerine dayalı kısa bir bölümdür. UIA sağlayıcısının tek tek yavaş veya takılmış çağrıları için 1,5 saniye kesin zaman aşımı garantisi yoktur. Word/PDF, erişilebilir sınav akışı ve tam metin okuma sonraki aşamalardır. Son değişiklikler Windows'ta henüz derlenip cihazda doğrulanmadı.
+
+## Sprint 04 — yapısal belge gezinmesi (kodlandı, Windows kabulü bekliyor)
+
+- Ayrı saf C# `ReaderStructureContract` sınıfında **başlık, liste, liste öğesi, tablo, satır, hücre** rolleri yalnız açık **ARIA rolü / UIA kontrol türü / heading-level** bilgisiyle belirlenir. Stil veya yazı biçimi üzerinden anlam tahmin edilmez; çelişen ARIA/UIA tanımları güvenli biçimde reddedilir.
+- DOU Reader arayüzüne **Başlık, Liste, Tablo, Hücre** için ayrı, erişilebilir gezinme düğmeleri eklendi. `Ctrl+Alt+Shift+L/T/C` isteğe bağlı kısayolları tanımlandı; başka uygulamayla çakışmaları ana okuma kısayollarını kapatmaz.
+- Her gezinme yalnız önceden seçilen izinli uygulama içinde, en fazla 350 UIA adımı ve adımlar arasında en fazla 1,5 saniyelik *best-effort* tarama bütçesiyle çalışır. Tek tek UIA sağlayıcısı çağrılarının bu süreye tabi olduğu garanti edilemez.
+- Gizli/parola/edit denetimleri, uzun erişilebilir etiket sınırı, durdurma/izin kontrolü ve manuel gezinme ile bölüm noktasının sıfırlanması korunur.
+- `tools/dou-reader-windows.ps1 -Check` saf yapı sözleşmesinin derlenmesini ve `SelfTest()` testlerini çalıştıracak şekilde genişletildi. Node kaynak regresyonlarında sınıflandırma ve kısayol sınırları denetlenir.
+
+**Açık sorunlar:** Bazı UIA sağlayıcıları listelere, tablolara veya hücrelere açık rol/erişilebilir isim sağlamaz; böyle öğeler seslendirilmez. Gerçek tablo içeriği, hücre koordinatları, Word/PDF ve akademik belge hiyerarşisi henüz tamamlanmadı. Sprint 04 için Windows gerçek derleme, ses ve klavye kabulü henüz yapılmadı.
