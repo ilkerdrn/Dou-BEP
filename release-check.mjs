@@ -1,5 +1,6 @@
 /** v2.1 local pilot release sanity checks. Not a penetration test or deployment approval. */
-import {readFileSync,readdirSync} from 'node:fs';
+import {readFileSync,readdirSync,existsSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 import {auditLocalAssets} from './tools/offline-audit.mjs';
 import {fileURLToPath} from 'node:url';
 import {dirname,join} from 'node:path';
@@ -22,11 +23,26 @@ check('v2.35 pilot issue, redeem, submit and review all validate approval ledger
 check('v2.35 student redemption request body is size-limited',api.includes("const body=await readJson(req,3000)")&&api.includes('store.pilotRedeem(body.code)'));
 
 const prohibited=[];
+const secretExtension=/\.(sqlite|sqlite-shm|sqlite-wal|db|key|pem|p12)$/i;
+const isPrivatePath=(path)=>/(^|[\\/])data([\\/]|$)/i.test(path);
+const inGitRepo=existsSync(join(root,'.git'));
+let trackedPaths=[];
+if(inGitRepo){
+ try {
+  trackedPaths=execFileSync('git',['ls-files','-z'],{cwd:root,encoding:'utf8'})
+   .split('\0').filter(Boolean);
+ }catch{prohibited.push('git_tracked_paths_unavailable');}
+ for(const file of trackedPaths)if(isPrivatePath(file)||secretExtension.test(file))prohibited.push(file);
+}
 function walk(directory){for(const d of readdirSync(directory,{withFileTypes:true})){
  if(['node_modules','.git','__pycache__'].includes(d.name))continue;
  const pathname=join(directory,d.name);
- if(d.isDirectory())walk(pathname);
- else if(/\.(sqlite|sqlite-shm|sqlite-wal|db|key|pem|p12)$/i.test(d.name))prohibited.push(pathname.slice(root.length+1));
+ // Runtime SQLite under an untracked data/ folder is not part of the Git release.
+ // For standalone ZIP deliveries, scan everything because no Git index exists.
+ if(d.isDirectory()){
+  if(inGitRepo&&isPrivatePath(pathname.slice(root.length+1)))continue;
+  walk(pathname);
+ }else if(secretExtension.test(d.name))prohibited.push(pathname.slice(root.length+1));
 }}
 walk(root);check('No database or private key shipped',prohibited.length===0);
 const encryptedBackup=readFileSync(join(root,'tools/secure-backup.mjs'),'utf8');
