@@ -204,3 +204,24 @@ test('known ARIA versus UIA conflicts must be rejected, unnamed roles may be spo
  assert.match(cs, /if \(!String\.IsNullOrWhiteSpace\(readableName\)\)/);
  assert.match(cs, /if \(name == null && !String\.IsNullOrWhiteSpace\(candidate\.Current\.Name\)\) continue/);
 });
+
+test('cell coordinates use only explicit read-only UIA GridItemPattern', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-table-context-contract.cs', import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(cs, /private static string ExplicitCellPosition\(AutomationElement element\)/);
+ assert.match(cs, /if \(!SafeReadableScope\(element\)\) return null/);
+ assert.match(cs, /element\.TryGetCurrentPattern\(GridItemPattern\.Pattern, out rawPattern\)/);
+ assert.match(cs, /ReaderTableContextContract\.DescribeCell\(grid\.Current\.Row, grid\.Current\.Column\)/);
+ assert.match(cs, /if \(position != null\) role \+= ", " \+ position/);
+ assert.match(cs, /if \(kind == ReaderStructureKind\.Cell\)/);
+ assert.match(contract, /MaxCoordinate = 10000/);
+ assert.match(contract, /if \(rowZeroBased < 0 \|\| columnZeroBased < 0/);
+ assert.match(contract, /rowZeroBased \+ 1/);
+ assert.match(contract, /columnZeroBased \+ 1/);
+ assert.match(contract, /DescribeCell\(Int32\.MaxValue, 1\) != null/);
+ assert.match(ps, /ReadAllText\(\$tableContextContract\)/);
+ assert.match(ps, /ReaderTableContextContract\]::SelfTest\(\)/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(\s*TextPattern/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(\s*ValuePattern/);
+});
