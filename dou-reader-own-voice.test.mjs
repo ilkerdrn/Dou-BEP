@@ -140,6 +140,8 @@ test('explicit heading/list/table/cell navigation uses declared roles only', () 
  assert.match(contract, /enum ReaderStructureKind/);
  assert.match(contract, /case "heading"/);
  assert.match(contract, /case "listitem"/);
+ assert.match(contract, /case "paragraph"/);
+ assert.match(contract, /Paragraph = 8/);
  assert.match(contract, /case "gridcell"/);
  assert.match(contract, /case "DataGrid"/);
  assert.match(contract, /case "Edit":|Classify\(null, "Edit", false\)/);
@@ -190,7 +192,9 @@ test('structured controls do not overlap playback controls at design size', () =
  assert.match(cs, /Width = 800;\s*Height = 780/);
  assert.match(cs, /_reverseStructure = new CheckBox/);
  assert.match(cs, /Top = 494 \+ \(row \* 60\)/);
- assert.match(cs, /Width = 219, Height = 48/);
+ assert.match(cs, /Width = 166, Height = 48/);
+ assert.match(cs, /int row = index \/ 4/);
+ assert.match(cs, /int column = index % 4/);
  assert.match(cs, /Top = 645, Width = 152, Height = 48/);
  const helpEnd = 147 + 200;
  const statusStart = 390, statusEnd = 390 + 58;
@@ -277,4 +281,42 @@ test('DataItem records never expose potentially editable accessible Name', () =>
  assert.match(cs, /bool gridRecord = candidate\.Current\.ControlType == ControlType\.DataItem/);
  assert.match(cs, /string name = gridRecord \? null : GetReadableName\(candidate\)/);
  assert.match(cs, /SayStructuredElement\(candidate, actual, name\)/);
+});
+
+test('paragraph navigation is explicit ARIA-only with a non-conflicting shortcut', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-structure-contract.cs', import.meta.url), 'utf8');
+ assert.match(contract, /case "paragraph": return ReaderStructureKind\.Paragraph/);
+ assert.match(contract, /case ReaderStructureKind\.Paragraph: return "paragraf"/);
+ assert.match(contract, /Classify\(null, "Text", false\) != ReaderStructureKind\.Unknown/);
+ assert.match(contract, /Classify\("paragraph", "Text", false\) != ReaderStructureKind\.Paragraph/);
+ assert.match(cs, /HOTKEY_NEXT_PARAGRAPH = 117/);
+ assert.match(cs, /Tuple\.Create\("Paragraf", ReaderStructureKind\.Paragraph\)/);
+ assert.match(cs, /Tuple\.Create\(HOTKEY_NEXT_PARAGRAPH, \(uint\)Keys\.P\)/);
+ assert.match(cs, /HOTKEY_NEXT_PARAGRAPH: TraverseStructureKind\(ReaderStructureKind\.Paragraph, 1, false\)/);
+ assert.match(cs, /TraverseStructureKind\(target, _reverseStructure\.Checked \? -1 : 1, true\)/);
+});
+
+test('table headers come only from actual bounded UIA TableItemPattern associated headers', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const contract = readFileSync(new URL('./tools/dou-reader-table-header-contract.cs', import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(cs, /private static string ExplicitTableHeaders\(AutomationElement cell\)/);
+ assert.match(cs, /cell\.TryGetCurrentPattern\(TableItemPattern\.Pattern, out raw\)/);
+ assert.match(cs, /table\.Current\.GetRowHeaderItems\(\)/);
+ assert.match(cs, /table\.Current\.GetColumnHeaderItems\(\)/);
+ assert.match(cs, /headers\.Length > ReaderTableHeaderContract\.MaxHeadersPerAxis/);
+ assert.match(cs, /header\.Current\.ProcessId != processId/);
+ assert.match(cs, /header\.Current\.ControlType != ControlType\.HeaderItem/);
+ assert.match(cs, /!SafeReadableScope\(header\)/);
+ assert.match(cs, /ReaderTableHeaderContract\.CleanHeader\(header\.Current\.Name\)/);
+ assert.match(cs, /if \(kind == ReaderStructureKind\.Cell\)/);
+ assert.match(cs, /string headers = ExplicitTableHeaders\(element\)/);
+ assert.match(cs, /cell\.Current\.ControlType == ControlType\.DataItem/);
+ assert.match(contract, /MaxHeadersPerAxis = 2/);
+ assert.match(contract, /MaxHeaderCharacters = 64/);
+ assert.match(contract, /ReaderSpeechContract\.Split\(cleaned\) == null/);
+ assert.match(ps, /ReadAllText\(\$tableHeaderContract\)/);
+ assert.match(ps, /ReaderTableHeaderContract\]::SelfTest\(\)/);
+ assert.doesNotMatch(cs, /GetCurrentPattern\(\s*ValuePattern/);
 });
