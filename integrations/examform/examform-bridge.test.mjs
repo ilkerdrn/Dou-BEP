@@ -1,0 +1,11 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {previewExamFormConversion as map} from './examform-bridge.mjs';
+const src={info:{exam:'Vize',course:'Programlama',code:'BLP101'},questions:[{kind:'Klasik',text:'Algoritma nedir?',points:20},{kind:'Çoktan seçmeli',text:'Hangisi?',options:['A','B'],answer:'B',points:30},{kind:'Doğru / Yanlış',text:'Python yorumlanır.',points:50}]};
+test('converts all supported question kinds as preview',()=>{const x=map(src);assert.deepEqual(x.questions.map(q=>q.type),['short','choice','truefalse']);assert.equal(x.mode,'preview_only');});
+test('never accepts foreign approval or identity as mapped field',()=>{const x=map({...src,approved:true,studentId:'student'});assert.equal(x.approved,undefined);assert.equal(x.studentId,undefined);});
+test('rejects unsupported kind',()=>assert.throws(()=>map({...src,questions:[{kind:'X'}]}),/unsupported kind/));
+test('rejects non-finite points',()=>assert.throws(()=>map({...src,questions:[{points:Infinity}]}),/invalid points/));
+test('rejects excess question count',()=>assert.throws(()=>map({...src,questions:Array(121).fill({})}),/Question count/));
+test('rejects malformed options',()=>assert.throws(()=>map({...src,questions:[{kind:'Çoktan seçmeli',options:[10]}]}),/invalid text/));
+test('leaves input unchanged',()=>{const before=JSON.stringify(src);map(src);assert.equal(JSON.stringify(src),before);});
