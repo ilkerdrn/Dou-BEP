@@ -379,6 +379,24 @@ namespace DouBepReader
             Task.Run(() => PlayOwnVoice(safe, generation));
         }
 
+        private void AudioStatus(int generation, string message)
+        {
+            // Only the latest audio request may update the visible status.
+            try
+            {
+                if (IsDisposed || !IsHandleCreated) return;
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    lock (_audioLock)
+                    {
+                        if (_audioGeneration == generation && !IsDisposed) SetStatus(message);
+                    }
+                });
+            }
+            catch (InvalidOperationException) { }
+            catch (ObjectDisposedException) { }
+        }
+
         private void PlayOwnVoice(string text, int generation)
         {
             string path = Path.Combine(Path.GetTempPath(), "dou-reader-" + Guid.NewGuid().ToString("N") + ".wav");
@@ -407,16 +425,22 @@ namespace DouBepReader
                 proc.StandardInput.Close();
                 using (var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                     proc.StandardOutput.BaseStream.CopyTo(output);
-                if (!proc.WaitForExit(15000)) { try { proc.Kill(); } catch { } return; }
-                if (proc.ExitCode != 0) return;
+                if (!proc.WaitForExit(15000)) { try { proc.Kill(); } catch { } AudioStatus(generation, "Ses motoru zaman aşımına uğradı."); return; }
+                if (proc.ExitCode != 0) { AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi."); return; }
                 byte[] header = new byte[44];
                 using (var f = File.OpenRead(path))
                     if (f.Length < 44 || f.Read(header, 0, header.Length) != 44 ||
                         Encoding.ASCII.GetString(header, 0, 4) != "RIFF" ||
+                        Encoding.ASCII.GetString(header, 8, 4) != "WAVE" ||
+                        Encoding.ASCII.GetString(header, 12, 4) != "fmt " ||
+                        Encoding.ASCII.GetString(header, 36, 4) != "data" ||
+                        BitConverter.ToInt32(header, 4) != f.Length - 8 ||
+                        BitConverter.ToInt16(header, 20) != 1 ||
                         BitConverter.ToInt32(header, 24) != 22050 ||
                         BitConverter.ToInt16(header, 22) != 1 ||
                         BitConverter.ToInt16(header, 34) != 16 ||
-                        f.Length > 3000000) return;
+                        BitConverter.ToInt32(header, 40) != f.Length - 44 ||
+                        f.Length > 3000000) { AudioStatus(generation, "Ses dosyası doğrulaması başarısız."); return; }
                 player = new SoundPlayer(path);
                 lock (_audioLock)
                 {
@@ -425,9 +449,11 @@ namespace DouBepReader
                 }
                 player.Load();
                 lock (_audioLock) { if (_audioGeneration != generation) return; }
+                AudioStatus(generation, "DOU Türkçe sesi oynatılıyor...");
                 player.PlaySync();
+                AudioStatus(generation, "Ses oynatımı tamamlandı.");
             }
-            catch (Exception) { /* No sensitive text or exception details are logged. */ }
+            catch (Exception) { AudioStatus(generation, "Yerel ses oynatma hatası. Metin kaydedilmedi."); }
             finally
             {
                 lock (_audioLock)
