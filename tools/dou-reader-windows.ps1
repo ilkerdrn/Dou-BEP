@@ -5,11 +5,12 @@
 param(
     [string[]]$AllowedProcesses = @('msedge', 'chrome', 'firefox', 'notepad'),
     [switch]$Check,
+    [switch]$OwnVoice,
     [switch]$Help
 )
 $ErrorActionPreference = 'Stop'
 if ($Help) {
-    Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-AllowedProcesses chrome,msedge,notepad]'
+    Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-OwnVoice] [-AllowedProcesses chrome,msedge,notepad]'
     Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: belge metni | Ctrl+Alt+X: durdur.'
     return
 }
@@ -55,7 +56,13 @@ try {
     }
     Write-Host 'DOU Reader v2.44: uygulama icinde metin tutulmaz ve hicbir sunucuya gonderilmez.'
     Write-Host ('Izin verilen uygulamalar: ' + ($AllowedProcesses -join ', '))
-    [DouBepReader.Program]::Run([string[]]$AllowedProcesses)
+    $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
+    if ($OwnVoice) {
+        if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'DOU yerel ses icin Node.js gereklidir.' }
+        if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) { throw 'DOU yerel ses koprusu bulunamadi.' }
+        Write-Host 'Ses: DOU yerel Turkce motor (deneysel); SAPI fallback kapali.'
+    }
+    [DouBepReader.Program]::Run([string[]]$AllowedProcesses,[bool]$OwnVoice,[string]$bridge)
 } catch {
     throw ('DOU Reader baslatilamadi. Windows PowerShell 5.1, .NET Framework UIA ve yerel ses ayarlarini kontrol edin. ' + $_.Exception.Message)
 }
