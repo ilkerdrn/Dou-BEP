@@ -18,6 +18,20 @@ namespace DouBepReader
             return "satır " + (rowZeroBased + 1) + " sütun " + (columnZeroBased + 1);
         }
 
+        // GridItemPattern exposes spans explicitly. A 1x1 cell needs no suffix;
+        // invalid dimensions are rejected instead of guessed.
+        public static string DescribeSpan(int rowSpan, int columnSpan)
+        {
+            if (rowSpan < 1 || columnSpan < 1 ||
+                rowSpan > MaxCoordinate || columnSpan > MaxCoordinate)
+                return null;
+            if (rowSpan == 1 && columnSpan == 1) return "";
+            if (rowSpan > 1 && columnSpan > 1)
+                return rowSpan + " satır ve " + columnSpan + " sütun boyunca";
+            if (rowSpan > 1) return rowSpan + " satır boyunca";
+            return columnSpan + " sütun boyunca";
+        }
+
         public static string DescribeAccessibleCell(int rowZeroBased, int columnZeroBased, string label)
         {
             string position = DescribeCell(rowZeroBased, columnZeroBased);
@@ -38,6 +52,15 @@ namespace DouBepReader
                 DescribeCell(0, 10000) != null ||
                 DescribeCell(Int32.MaxValue, 1) != null)
                 throw new InvalidOperationException("Grid coordinate bounds failed.");
+            if (DescribeSpan(1, 1) != "" ||
+                DescribeSpan(2, 1) != "2 satır boyunca" ||
+                DescribeSpan(1, 3) != "3 sütun boyunca" ||
+                DescribeSpan(2, 3) != "2 satır ve 3 sütun boyunca" ||
+                DescribeSpan(0, 1) != null ||
+                DescribeSpan(1, 0) != null ||
+                DescribeSpan(10001, 1) != null ||
+                DescribeSpan(1, Int32.MaxValue) != null)
+                throw new InvalidOperationException("Invalid grid span accepted.");
             if (DescribeAccessibleCell(1, 2, "Toplam") != "satır 2 sütun 3: Toplam" ||
                 DescribeAccessibleCell(1, 2, null) != "satır 2 sütun 3" ||
                 DescribeAccessibleCell(1, 2, new string('A', 221)) != null ||
