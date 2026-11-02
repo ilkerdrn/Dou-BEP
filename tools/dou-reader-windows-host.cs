@@ -437,6 +437,7 @@ namespace DouBepReader
                         }
                     }
                     catch (InvalidOperationException) { }
+                    catch (ObjectDisposedException) { }
                     catch (System.ComponentModel.Win32Exception) { }
                 });
                 bool oversized = false;
