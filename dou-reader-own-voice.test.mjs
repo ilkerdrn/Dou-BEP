@@ -249,3 +249,19 @@ test('DataItem with GridItem is called neutral grid item, not guessed cell', () 
  assert.match(cs, /SayStructuredElement\(candidate, actual, name\)/);
  assert.match(cs, /kind == ReaderStructureKind\.Cell \|\| kind == ReaderStructureKind\.GridItem/);
 });
+
+test('safe Turkish table, list and heading announcements synthesize as local PCM', () => {
+ const phrases = [
+  'ızgara öğesi, satır 1 sütun 1',
+  'hücre, satır 2 sütun 3, 2 satır ve 3 sütun boyunca',
+  'liste öğesi: Türkçe metin',
+  'başlık seviye 2: Ünite giriş',
+  'hücre: Sınav sonuçları',
+  'On iki öğrenci toplam üç soru çözdü.',
+  'Öğrenci değerlendirme tablosu',
+  'Tablo birinci satır ikinci sütun'
+ ];
+ for (const phrase of phrases) {
+  assertPcm(start({text: phrase, rate: 1, acousticModel: 'legacy'}));
+ }
+});
