@@ -82,3 +82,14 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - **`tools/dou-reader-acceptance.ps1`** adında üretim verisine dokunmayan otomatik test başlatıcısı ve **`docs/DOU-READER-OS-KABUL-MATRISI.md`** kabul senaryoları eklendi.
 
 **Kalan kritik kapı:** Son C# kaynaklarının gerçek Windows PowerShell 5.1 ortamında derlenmesi ve kullanıcı tarafından ses, iptal, klavye, kontrast ve ses aygıtı davranışlarının doğrulanması. PR ana dala aktarılmamalıdır.
+
+## Sprint 03 — sınırlı statik belge bölümü okuma (kodlandı, Windows kabulü bekliyor)
+
+- Yeni `ReaderDocumentContract`: **16 statik metin düğümü**, **850 karakter**, **350 gezinme adımı**, **1,5 saniye adımlar-arası tarama bütçesi**; tamamen bellekte ve yalnız kullanıcı komutuyla.
+- `Ctrl+Alt+Shift+D` isteğe bağlı kısayol ve **Kısa bölümü oku** kontrolü, seçilmiş izinli UIA noktası çevresindeki `ControlType.Text` öğelerinin `Name` alanını toplar.
+- Alt süreç/uygulama odağı ve izinler tekrar doğrulanır. Parola ve düzenlenebilir alanların *alt öğeleri* de reddedilir; 20'den derin aynı-süreç atalarında okunabilirlik kanıtlanamazsa güvenli şekilde atlanır.
+- Uygun olmayan metinler, desteklenmeyen karakterler, aşırı uzun tek düğümler ve art arda yinelenen öğeler ses kuyruğuna alınmaz. Çıktı yalnız yerel ses köprüsüne gider.
+- Saf C# sözleşme öz testleri `-Check` adımına eklendi; Node regresyon kaynak testlerine gezinme sınırı ve izin/şifre kontrolleri eklendi.
+- `docs/DOU-READER-OS-KABUL-MATRISI.md` belge okuma için sekiz ek manuel senaryo içerir.
+
+**Bilinçli sınırlar:** Bu aşama *tam belge metni* ya da *düzenlenebilir Not Defteri içeriği* okuması değildir; görünür UIA statik metin düğümlerine dayalı kısa bir bölümdür. UIA sağlayıcısının tek tek yavaş veya takılmış çağrıları için 1,5 saniye kesin zaman aşımı garantisi yoktur. Word/PDF, erişilebilir sınav akışı ve tam metin okuma sonraki aşamalardır. Son değişiklikler Windows'ta henüz derlenip cihazda doğrulanmadı.
