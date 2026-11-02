@@ -3,7 +3,7 @@
 [CmdletBinding()]
 param(
     [switch]$LaunchReader,
-    [string[]]$AllowedProcesses = @('notepad')
+    [string]$AllowedProcess = 'notepad'
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -25,7 +25,8 @@ if ($null -eq $node) {
 }
 
 Write-Host '[1/2] Yerel Turkce WAV / guvenlik / kaynak regresyon testleri' -ForegroundColor Cyan
-& $node.Source --test $js
+$nodePath = $node.Source
+& $nodePath --test $js
 if ($LASTEXITCODE -ne 0) { throw 'DOU Reader Node testleri basarisiz.' }
 
 Write-Host '[2/2] Windows UIA C# derleme ve ses sozlesmesi self-test' -ForegroundColor Cyan
@@ -36,6 +37,6 @@ Write-Host 'DOU Reader on-kabul basarili: Node + C# testleri gecti.' -Foreground
 Write-Warning 'Bu otomatik testler duyulur ses, gercek klavye erisilebilirligi veya UIA kabulunu kanitlamaz.'
 if ($LaunchReader) {
     Write-Host 'Manuel ses kabul modu: uygulama yalniz izin verilen islemlere erisir.' -ForegroundColor Cyan
-    & powershell.exe -NoProfile -STA -File $reader -OwnVoice -AllowedProcesses $AllowedProcesses
+    & powershell.exe -NoProfile -STA -File $reader -OwnVoice -AllowedProcesses $AllowedProcess
     if ($LASTEXITCODE -ne 0) { throw 'DOU Reader manuel ses test penceresi baslatilamadi.' }
 }
