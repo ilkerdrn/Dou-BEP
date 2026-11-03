@@ -597,3 +597,18 @@ test('document import UI clears completed cancellation reference without changin
  assert.match(cs, /if \(ReferenceEquals\(_documentImportCancellation, cancellation\)\)\s*_documentImportCancellation = null;/);
  assert.match(cs, /private void CloseOfflineDocument\(\)\s*\{\s*CancelPendingDocumentImport\(\)/);
 });
+
+test('DOCX hidden exam text and unreconciled revisions fail closed', () => {
+ const importer = readFileSync(new URL('./tools/dou-reader-offline-document.cs', import.meta.url), 'utf8');
+ assert.match(importer, /\/\/w:body\/\/w:vanish/);
+ assert.match(importer, /\/\/w:body\/\/w:webHidden/);
+ assert.match(importer, /\/\/w:body\/\/w:specVanish/);
+ assert.match(importer, /\/\/w:body\/\/w:del/);
+ assert.match(importer, /\/\/w:body\/\/w:ins/);
+ assert.match(importer, /\/\/w:body\/\/w:moveFrom/);
+ assert.match(importer, /\/\/w:body\/\/w:moveTo/);
+ assert.match(importer, /\/\/w:body\/\/w:altChunk/);
+ assert.match(importer, /xml\.SelectSingleNode\(unsafeWordMarkup, ns\) != null/);
+ assert.match(importer, /Tracked DOCX revisions were admitted/);
+ assert.match(importer, /Gizli, izlenen değişiklik veya alternatif DOCX içeriği desteklenmiyor/);
+});
