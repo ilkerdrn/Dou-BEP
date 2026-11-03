@@ -10,6 +10,7 @@ namespace DouBepReader
     using System.Text;
     using System.Text.RegularExpressions;
     using System.Xml;
+    using System.Threading;
 
     public sealed class ReaderImportedDocument
     {
@@ -67,6 +68,12 @@ namespace DouBepReader
 
         public static ReaderImportedDocument Import(string path)
         {
+            return Import(path, CancellationToken.None);
+        }
+
+        public static ReaderImportedDocument Import(string path, CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
             string fullPath = RequireLocalFile(path, MaxFileBytes);
             var info = new FileInfo(fullPath);
             if (!info.Exists || info.Length == 0 || info.Length > MaxFileBytes)
@@ -77,17 +84,23 @@ namespace DouBepReader
                 if (info.Length > MaxTextFileBytes)
                     throw new InvalidDataException("TXT boyutu güvenli sınırı aşıyor.");
                 using (var stream = File.Open(info.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    return ReadText(stream);
+                    return ReadText(stream, cancellation);
             }
             if (extension == ".docx")
             {
                 using (var stream = File.Open(info.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    return ReadDocx(stream);
+                    return ReadDocx(stream, cancellation);
             }
             throw new NotSupportedException("Yalnız UTF-8 TXT ve DOCX destekleniyor; PDF henüz desteklenmiyor.");
         }
 
         private static ReaderImportedDocument ReadText(Stream stream)
+        {
+            return ReadText(stream, CancellationToken.None);
+        }
+
+        private static ReaderImportedDocument ReadText(Stream stream,
+            CancellationToken cancellation)
         {
             using (var buffer = new MemoryStream())
             {
@@ -95,17 +108,26 @@ namespace DouBepReader
                 int read;
                 while ((read = stream.Read(chunk, 0, chunk.Length)) > 0)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     if (buffer.Length + read > MaxTextFileBytes)
                         throw new InvalidDataException("TXT boyutu güvenli sınırı aşıyor.");
                     buffer.Write(chunk, 0, read);
                 }
                 string text = new UTF8Encoding(false, true).GetString(buffer.ToArray()).TrimStart('\uFEFF');
-                return Build("TXT", Regex.Split(text, @"\r\n|\n|\r"));
+                cancellation.ThrowIfCancellationRequested();
+                return Build("TXT", Regex.Split(text, @"\r\n|\n|\r"), cancellation);
             }
         }
 
         private static ReaderImportedDocument ReadDocx(Stream stream)
         {
+            return ReadDocx(stream, CancellationToken.None);
+        }
+
+        private static ReaderImportedDocument ReadDocx(Stream stream,
+            CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
             using (var archive = new ZipArchive(stream, ZipArchiveMode.Read, true))
             {
                 if (archive.Entries.Count > 1000)
@@ -137,6 +159,7 @@ namespace DouBepReader
                     var xml = new XmlDocument { XmlResolver = null };
                     using (var reader = XmlReader.Create(content, settings))
                         xml.Load(reader);
+                    cancellation.ThrowIfCancellationRequested();
                     var ns = new XmlNamespaceManager(xml.NameTable);
                     ns.AddNamespace("w", WordNamespace);
                     var nodes = xml.SelectNodes("//w:body//w:p", ns);
@@ -145,11 +168,13 @@ namespace DouBepReader
                     var paragraphs = new List<string>();
                     foreach (XmlNode paragraph in nodes)
                     {
+                        cancellation.ThrowIfCancellationRequested();
                         var line = new StringBuilder();
                         var elements = paragraph.SelectNodes(".//w:t | .//w:tab | .//w:br", ns);
                         if (elements == null) continue;
                         foreach (XmlNode part in elements)
                         {
+                            cancellation.ThrowIfCancellationRequested();
                             if (part.LocalName == "t") line.Append(part.InnerText);
                             else if (part.LocalName == "tab") line.Append(' ');
                             else if (part.LocalName == "br") line.Append(' ');
@@ -158,7 +183,7 @@ namespace DouBepReader
                         }
                         paragraphs.Add(line.ToString());
                     }
-                    return Build("DOCX", paragraphs);
+                    return Build("DOCX", paragraphs, cancellation);
                 }
             }
         }
@@ -175,10 +200,17 @@ namespace DouBepReader
 
         private static ReaderImportedDocument Build(string format, IEnumerable<string> source)
         {
+            return Build(format, source, CancellationToken.None);
+        }
+
+        private static ReaderImportedDocument Build(string format, IEnumerable<string> source,
+            CancellationToken cancellation)
+        {
             var items = new List<string>();
             int total = 0;
             foreach (string value in source)
             {
+                cancellation.ThrowIfCancellationRequested();
                 string paragraph = Regex.Replace((value ?? "").Trim(), @"\s+", " ");
                 if (paragraph.Length == 0) continue;
                 if (paragraph.Length > MaxParagraphCharacters)
@@ -193,6 +225,7 @@ namespace DouBepReader
                     throw new InvalidDataException("Belge güvenli metin sınırını aşıyor.");
                 items.Add(paragraph);
             }
+            cancellation.ThrowIfCancellationRequested();
             if (items.Count == 0) throw new InvalidDataException("Okunabilir paragraf bulunamadı.");
             return new ReaderImportedDocument(format, items);
         }
