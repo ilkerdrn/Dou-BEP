@@ -442,8 +442,8 @@ test('explicit offline document UI has paragraph and sentence buttons without ex
  assert.match(cs, /private ReaderImportedDocument _imported/);
  assert.match(cs, /private void OpenOfflineDocument\(\)/);
  assert.match(cs, /new OpenFileDialog/);
- assert.match(cs, /Filter = "Güvenli metin belgeleri/);
- assert.match(cs, /ReaderOfflineDocument\.Import\(picker\.FileName\)/);
+ assert.match(cs, /Filter = "Yerel belgeler/);
+ assert.match(cs, /ReaderOfflineDocument\.Import\(path\)/);
  assert.match(cs, /private void CloseOfflineDocument\(\)/);
  assert.match(cs, /_imported = null/);
  assert.match(cs, /private void ReadOfflineParagraph\(int direction\)/);
@@ -455,8 +455,8 @@ test('explicit offline document UI has paragraph and sentence buttons without ex
  assert.match(cs, /OpenOfflineDocument\(\);/);
  assert.match(cs, /ReadOfflineParagraph\(1\);/);
  assert.match(cs, /ReadOfflineSentence\(-1\);/);
- assert.match(cs, /catch \(Exception ex\)/);
- assert.match(cs, /ex is InvalidDataException/);
+ assert.match(cs, /catch \(Exception\) \{ \/\* Never surface source paths or document text/);
+ assert.match(cs, /Interlocked\.CompareExchange\(/);
  assert.doesNotMatch(cs, /SetStatus\([^;]*picker\.FileName/);
  assert.doesNotMatch(cs, /File\.WriteAllText|File\.WriteAllBytes/);
 });
@@ -469,4 +469,58 @@ test('offline TXT fixture contains only anonymous bounded paragraphs', () => {
  assert.ok(fixture.length < 2048);
  assert.doesNotMatch(fixture, /https?:\/\//);
  assert.doesNotMatch(fixture, /@/);
+});
+
+test('opt-in PDF converter never downloads, writes text files or searches PATH', () => {
+ const pdf = readFileSync(new URL('./tools/dou-reader-offline-pdf.cs', import.meta.url), 'utf8');
+ const importer = readFileSync(new URL('./tools/dou-reader-offline-document.cs', import.meta.url), 'utf8');
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(pdf, /public static class ReaderOfflinePdf/);
+ assert.match(pdf, /MaxPages = 12/);
+ assert.match(pdf, /MaxOutputBytes = 128 \* 1024/);
+ assert.match(pdf, /ProcessTimeoutMilliseconds = 10000/);
+ assert.match(pdf, /String\.Equals\(Path\.GetFileName\(fullPath\), "pdftotext\.exe"/);
+ assert.match(pdf, /ReaderOfflineDocument\.RequireLocalFile\(pdfPath, MaxInputBytes\)/);
+ assert.match(pdf, /-enc UTF-8 -eol unix -nopgbrk -q/);
+ assert.match(pdf, /UseShellExecute = false, CreateNoWindow = true/);
+ assert.match(pdf, /RedirectStandardOutput = true, RedirectStandardError = false/);
+ assert.match(pdf, /WorkingDirectory = Path\.GetDirectoryName\(exe\)/);
+ assert.match(pdf, /WaitForExit\(ProcessTimeoutMilliseconds\)/);
+ assert.match(pdf, /output\.Length \+ read > MaxOutputBytes/);
+ assert.match(pdf, /new UTF8Encoding\(false, true\)\.GetString/);
+ assert.match(pdf, /ReaderOfflineDocument\.FromPdfText\(text\)/);
+ assert.match(importer, /FileAttributes\.ReparsePoint/);
+ assert.match(importer, /DriveType\.Fixed && kind != DriveType\.Removable/);
+ assert.match(importer, /internal static ReaderImportedDocument FromPdfText/);
+ assert.match(ps, /\[string\]\$PdfTextExecutable = ''/);
+ assert.match(ps, /ReadAllText\(\$offlinePdf\)/);
+ assert.match(ps, /ReaderOfflinePdf\]::SelfTest\(\)/);
+ assert.doesNotMatch(pdf, /File\.WriteAllText|File\.WriteAllBytes|FileStream\(.*FileMode\.Create/);
+ assert.doesNotMatch(pdf, /HttpClient|WebClient|Invoke-WebRequest|DownloadString/);
+});
+
+test('async PDF TXT DOCX import ignores stale results and can be cancelled by closing document', () => {
+ const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(host, /ReaderOfflinePdf\.Import\(path, _pdfTextExecutable\)/);
+ assert.match(host, /ReaderOfflineDocument\.Import\(path\)/);
+ assert.match(host, /int generation = Interlocked\.Increment\(ref _documentImportGeneration\)/);
+ assert.match(host, /Task\.Run\(\(\) =>/);
+ assert.match(host, /BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(host, /ref _documentImportGeneration, 0, 0\) != generation/);
+ assert.match(host, /private void CloseOfflineDocument\(\)/);
+ assert.match(host, /Interlocked\.Increment\(ref _documentImportGeneration\)/);
+ assert.match(host, /if \(IsDisposed \|\| !IsHandleCreated\) return/);
+ assert.match(host, /String\.IsNullOrWhiteSpace\(_pdfTextExecutable\)/);
+ assert.match(host, /_imported = result/);
+ assert.doesNotMatch(host, /SetStatus\([^;]*path/);
+});
+
+test('PDF pure contract fails closed on missing tool, oversized text and unsupported chars', () => {
+ const pdf = readFileSync(new URL('./tools/dou-reader-offline-pdf.cs', import.meta.url), 'utf8');
+ assert.match(pdf, /ValidateExecutable\(null\) != null/);
+ assert.match(pdf, /ReaderOfflineDocument\.FromPdfText\(/);
+ assert.match(pdf, /Overlong PDF text accepted/);
+ assert.match(pdf, /Unsupported PDF text admitted/);
+ assert.match(pdf, /PDF metni çıkarılamadı/);
+ assert.match(pdf, /Yerel PDF metin çıkarımı zaman aşımına uğradı/);
 });
