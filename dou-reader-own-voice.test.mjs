@@ -489,6 +489,9 @@ test('opt-in PDF converter never downloads, writes text files or searches PATH',
  assert.match(pdf, /output\.Length \+ read > MaxOutputBytes/);
  assert.match(pdf, /new UTF8Encoding\(false, true\)\.GetString/);
  assert.match(pdf, /ReaderOfflineDocument\.FromPdfText\(text\)/);
+ assert.match(pdf, /VerifyPdfSignature\(input\)/);
+ assert.match(pdf, /HasPdfSignature\(new byte\[\] \{ 37, 80, 68, 70, 45 \}\)/);
+ assert.match(pdf, /prefix\[0\] == \(byte\)'%'/);
  assert.match(importer, /FileAttributes\.ReparsePoint/);
  assert.match(importer, /DriveType\.Fixed && kind != DriveType\.Removable/);
  assert.match(importer, /internal static ReaderImportedDocument FromPdfText/);
@@ -523,4 +526,15 @@ test('PDF pure contract fails closed on missing tool, oversized text and unsuppo
  assert.match(pdf, /Unsupported PDF text admitted/);
  assert.match(pdf, /PDF metni çıkarılamadı/);
  assert.match(pdf, /Yerel PDF metin çıkarımı zaman aşımına uğradı/);
+});
+
+test('Windows acceptance can pass a trusted local PDF executable without downloading it', () => {
+ const acceptance = readFileSync(new URL('./tools/dou-reader-acceptance.ps1', import.meta.url), 'utf8');
+ const launcher = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(acceptance, /\[string\]\$PdfTextExecutable = ''/);
+ assert.match(acceptance, /-Check -PdfTextExecutable \$PdfTextExecutable/);
+ assert.match(acceptance, /-OwnVoice -AllowedProcesses \$AllowedProcess -PdfTextExecutable \$PdfTextExecutable/);
+ assert.match(launcher, /ReaderOfflinePdf\]::ValidateExecutable\(\$PdfTextExecutable\)/);
+ assert.match(launcher, /ReaderOfflinePdf\]::SelfTest\(\)/);
+ assert.match(launcher, /\[string\]\$pdfExe/);
 });
