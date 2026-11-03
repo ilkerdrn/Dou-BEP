@@ -54,9 +54,10 @@ if (-not (Test-Path -LiteralPath $offlinePdf -PathType Leaf)) { throw 'Okuyucu c
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
-$referenceNames = @('System.Windows.Forms','System.Drawing','UIAutomationClient','UIAutomationTypes','System.Speech','System.Core','System.IO.Compression','System.Xml')
+$referenceNames = @('System','System.Core','System.Windows.Forms','System.Drawing','UIAutomationClient','UIAutomationTypes','System.Speech','System.IO.Compression','System.Xml')
 $refs = @()
 try {
+    Add-Type -AssemblyName 'System' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Windows.Forms' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Drawing' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
