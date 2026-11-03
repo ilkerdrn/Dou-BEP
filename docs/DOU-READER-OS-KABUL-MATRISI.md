@@ -196,3 +196,15 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 98 | Gerçek PDF sağlayıcısı güvenlik/erişilebilirlik değerlendirmesi | Yerel üçüncü taraf dönüştürücünün kurulum ve çalışma güvenliği ayrı doğrulanır | Bekliyor |
 
 **İzin sınırı:** Bunlar manuel Windows kabul senaryolarıdır; kod düzeyinde tanımlanmaları tamamlandıkları anlamına gelmez. Yeni PDF yolu yalnız isteğe bağlıdır; güvenilir araç ve gerçek kullanıcı testi yapılana kadar öğrenci/sınav belgelerinde kullanılmamalıdır.
+
+## Sprint 12 — asenkron belge iptali ve açıklanan PDF kapsamı
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 99 | Büyük PDF işlenirken **Belgeyi kapat** | Aktif PDF alt sürecine iptal sinyali iletilir ve kapanması doğrulanır; sonuç eski belgeyi yeniden açmaz | Bekliyor |
+| 100 | PDF çıkarımı bitmeden yeni TXT/DOCX/PDF seçimi | Önceki iş iptal olur; yalnız en yeni açık seçim ekrana yansır | Bekliyor |
+| 101 | DOCX XML okuması sürerken Reader'ı kapatma | İşlem, iptal noktalarında sonlanır; kapanmış forma durum güncellemesi yapılamaz | Bekliyor |
+| 102 | Önceden iptal edilmiş dosya işi | Dosya veya PDF dönüştürücüsüne erişim başlamadan işlem sonlanır | Bekliyor |
+| 103 | 12 sayfadan uzun PDF'nin içe aktarımı | Durum metni tüm PDF'nin değil **yalnız ilk en fazla 12 sayfanın metninin** hazırlandığını açıkça söyler | Bekliyor |
+
+**Not:** Önceki kaynak ve statik kontrollerin geçmesi, Windows'ta süreçlerin gerçekten kapandığı anlamına gelmez. Gerçek cihazda işlem listesi, klavye, duyulur ses ve kaynak tüketimi ayrıca incelenmelidir.
