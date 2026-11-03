@@ -568,3 +568,31 @@ test('all offline imports support cancellation and PDF process is killed on clos
  assert.match(host, /string scope = String\.Equals\(result\.Format, "PDF"/);
  assert.match(host, /"PDF \(yalnız ilk en fazla 12 sayfanın metni\)"/);
 });
+
+test('stale audio generation cannot stop a newly started SoundPlayer during cleanup', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const begin = cs.indexOf('private bool PlayOwnVoice(');
+ const end = cs.indexOf('private void CancelAudioLocked(', begin);
+ assert.ok(begin >= 0 && end > begin);
+ const segment = cs.slice(begin, end);
+ assert.match(segment, /lock \(_audioLock\)\s*\{\s*if \(ReferenceEquals\(_audioProcess, proc\)\)/);
+ assert.match(segment, /if \(player != null && ReferenceEquals\(_audioPlayer, player\)\)\s*\{\s*try \{ player\.Stop\(\); \} catch \(Exception\) \{ \}\s*_audioPlayer = null;/);
+ assert.match(segment, /if \(player != null\) player\.Dispose\(\);/);
+ assert.doesNotMatch(segment, /if \(player != null\) \{ try \{ player\.Stop\(\); \}/);
+});
+
+test('PDF timeout state is synchronized with the watchdog, not a racy bool', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-offline-pdf.cs', import.meta.url), 'utf8');
+ assert.match(cs, /int timedOut = 0/);
+ assert.match(cs, /Interlocked\.Exchange\(ref timedOut, 1\)/);
+ assert.match(cs, /Interlocked\.CompareExchange\(ref timedOut, 0, 0\) != 0/);
+ assert.match(cs, /using \(cancellation\.Register\(\(\) =>/);
+ assert.doesNotMatch(cs, /bool timedOut = false/);
+});
+
+test('document import UI clears completed cancellation reference without changing generation guard', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /ref _documentImportGeneration, 0, 0\) != generation\) return;/);
+ assert.match(cs, /if \(ReferenceEquals\(_documentImportCancellation, cancellation\)\)\s*_documentImportCancellation = null;/);
+ assert.match(cs, /private void CloseOfflineDocument\(\)\s*\{\s*CancelPendingDocumentImport\(\)/);
+});
