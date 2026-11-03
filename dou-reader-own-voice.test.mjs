@@ -672,3 +672,25 @@ test('own voice pins a local node.exe executable for every speech child process'
  assert.match(host, /public static void Run\(string\[\] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable, string nodeExecutable\)/);
  assert.doesNotMatch(host, /new ProcessStartInfo\("node",/);
 });
+
+test('Windows OwnVoice preflight synthesizes a synthetic PCM WAV in RAM and never plays it', () => {
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ const probe = readFileSync(new URL('./tools/dou-reader-ownvoice-probe.cs', import.meta.url), 'utf8');
+ assert.match(ps, /ReadAllText\(\$ownVoiceProbe\)/);
+ assert.match(ps, /ReaderOwnVoiceProbe\]::Verify\(\[string\]\$nodeExe, \[string\]\$bridge\)/);
+ assert.match(probe, /public static class ReaderOwnVoiceProbe/);
+ assert.match(probe, /MaxDurationMilliseconds = 15000/);
+ assert.match(probe, /MaxOutputBytes = ReaderSpeechContract\.MaxAudioBytes/);
+ assert.match(probe, /"node\.exe"/);
+ assert.match(probe, /"Merhaba dünya/);
+ assert.match(probe, /RedirectStandardInput = true/);
+ assert.match(probe, /RedirectStandardOutput = true/);
+ assert.match(probe, /UseShellExecute = false/);
+ assert.match(probe, /WaitForExit\(MaxDurationMilliseconds\)/);
+ assert.match(probe, /output\.Length \+ read > MaxOutputBytes/);
+ assert.match(probe, /ReaderSpeechContract\.IsPcmWav\(wav\)/);
+ assert.match(probe, /Array\.Clear\(request, 0, request\.Length\)/);
+ assert.match(probe, /Array\.Clear\(wav, 0, wav\.Length\)/);
+ assert.match(probe, /Array\.Clear\(bytes, 0, bytes\.Length\)/);
+ assert.doesNotMatch(probe, /SoundPlayer|File\.Write|HttpClient|WebClient/);
+});
