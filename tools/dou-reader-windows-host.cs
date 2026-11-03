@@ -436,6 +436,10 @@ namespace DouBepReader
                     {
                         if (IsDisposed || Interlocked.CompareExchange(
                             ref _documentImportGeneration, 0, 0) != generation) return;
+                        // The completed worker owns CTS disposal. Drop the stale
+                        // reference so a future open/close never Cancels it again.
+                        if (ReferenceEquals(_documentImportCancellation, cancellation))
+                            _documentImportCancellation = null;
                         if (result == null)
                         {
                             SetStatus("Belge açılamadı: biçim, erişim veya güvenlik sınırı.");
