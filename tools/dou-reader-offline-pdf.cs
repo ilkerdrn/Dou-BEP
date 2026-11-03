@@ -102,14 +102,14 @@ namespace DouBepReader
                     }))
                     {
                     cancellation.ThrowIfCancellationRequested();
-                    bool timedOut = false;
+                    int timedOut = 0; // Interlocked shared across watchdog and reader tasks
                     var watchdog = Task.Run(() =>
                     {
                         try
                         {
                             if (!child.WaitForExit(ProcessTimeoutMilliseconds))
                             {
-                                timedOut = true;
+                                Interlocked.Exchange(ref timedOut, 1);
                                 child.Kill();
                             }
                         }
@@ -134,7 +134,8 @@ namespace DouBepReader
                         }
                         cancellation.ThrowIfCancellationRequested();
                         if (!watchdog.Wait(ProcessTimeoutMilliseconds + 1500) ||
-                            timedOut || !child.HasExited)
+                            Interlocked.CompareExchange(ref timedOut, 0, 0) != 0 ||
+                            !child.HasExited)
                             throw new InvalidDataException("Yerel PDF metin çıkarımı zaman aşımına uğradı.");
                         if (child.ExitCode != 0)
                             throw new InvalidDataException("PDF metni çıkarılamadı.");
