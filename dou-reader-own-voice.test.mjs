@@ -443,7 +443,7 @@ test('explicit offline document UI has paragraph and sentence buttons without ex
  assert.match(cs, /private void OpenOfflineDocument\(\)/);
  assert.match(cs, /new OpenFileDialog/);
  assert.match(cs, /Filter = "Yerel belgeler/);
- assert.match(cs, /ReaderOfflineDocument\.Import\(path\)/);
+ assert.match(cs, /ReaderOfflineDocument\.Import\(path, cancellation\.Token\)/);
  assert.match(cs, /private void CloseOfflineDocument\(\)/);
  assert.match(cs, /_imported = null/);
  assert.match(cs, /private void ReadOfflineParagraph\(int direction\)/);
@@ -504,9 +504,11 @@ test('opt-in PDF converter never downloads, writes text files or searches PATH',
 
 test('async PDF TXT DOCX import ignores stale results and can be cancelled by closing document', () => {
  const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- assert.match(host, /ReaderOfflinePdf\.Import\(path, _pdfTextExecutable\)/);
- assert.match(host, /ReaderOfflineDocument\.Import\(path\)/);
- assert.match(host, /int generation = Interlocked\.Increment\(ref _documentImportGeneration\)/);
+ assert.match(host, /ReaderOfflinePdf\.Import\(path, _pdfTextExecutable, cancellation\.Token\)/);
+ assert.match(host, /ReaderOfflineDocument\.Import\(path, cancellation\.Token\)/);
+ assert.match(host, /CancelPendingDocumentImport\(\)/);
+ assert.match(host, /var cancellation = new CancellationTokenSource\(\)/);
+ assert.match(host, /Interlocked\.CompareExchange\(ref _documentImportGeneration, 0, 0\)/);
  assert.match(host, /Task\.Run\(\(\) =>/);
  assert.match(host, /BeginInvoke\(\(MethodInvoker\)delegate/);
  assert.match(host, /ref _documentImportGeneration, 0, 0\) != generation/);
@@ -537,4 +539,27 @@ test('Windows acceptance can pass a trusted local PDF executable without downloa
  assert.match(launcher, /ReaderOfflinePdf\]::ValidateExecutable\(\$PdfTextExecutable\)/);
  assert.match(launcher, /ReaderOfflinePdf\]::SelfTest\(\)/);
  assert.match(launcher, /\[string\]\$pdfExe/);
+});
+
+test('all offline imports support cancellation and PDF process is killed on close', () => {
+ const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const importer = readFileSync(new URL('./tools/dou-reader-offline-document.cs', import.meta.url), 'utf8');
+ const pdf = readFileSync(new URL('./tools/dou-reader-offline-pdf.cs', import.meta.url), 'utf8');
+ assert.match(host, /private CancellationTokenSource _documentImportCancellation/);
+ assert.match(host, /private void CancelPendingDocumentImport\(\)/);
+ assert.match(host, /pending\.Cancel\(\)/);
+ assert.match(host, /catch \(ObjectDisposedException\)/);
+ assert.match(host, /finally \{ cancellation\.Dispose\(\); \}/);
+ assert.match(host, /ReaderOfflinePdf\.Import\(path, _pdfTextExecutable, cancellation\.Token\)/);
+ assert.match(host, /ReaderOfflineDocument\.Import\(path, cancellation\.Token\)/);
+ assert.match(host, /private void CloseOfflineDocument\(\)\s*\{\s*CancelPendingDocumentImport\(\)/);
+ assert.match(importer, /public static ReaderImportedDocument Import\(string path, CancellationToken cancellation\)/);
+ assert.match(importer, /cancellation\.ThrowIfCancellationRequested\(\)/);
+ assert.match(importer, /private static ReaderImportedDocument ReadText\(Stream stream,\s*CancellationToken cancellation\)/);
+ assert.match(importer, /private static ReaderImportedDocument ReadDocx\(Stream stream,\s*CancellationToken cancellation\)/);
+ assert.match(importer, /private static ReaderImportedDocument Build\(string format, IEnumerable<string> source,\s*CancellationToken cancellation\)/);
+ assert.match(pdf, /public static ReaderImportedDocument Import\(string pdfPath, string converterPath,\s*CancellationToken cancellation\)/);
+ assert.match(pdf, /using \(cancellation\.Register\(\(\) =>/);
+ assert.match(pdf, /if \(!child\.HasExited\) child\.Kill\(\)/);
+ assert.match(pdf, /cancellation\.ThrowIfCancellationRequested\(\)/);
 });
