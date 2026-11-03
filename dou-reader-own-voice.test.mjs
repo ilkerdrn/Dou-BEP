@@ -631,7 +631,7 @@ test('OwnVoice preflight checks bridge without instantiating Windows SAPI', () =
  assert.match(ps, /\$referenceNames = @\('System','System.Core'/);
  assert.match(ps, /if \(-not \$OwnVoice\)/);
  assert.match(ps, /if \(\$Check\) \{\s*if \(\$OwnVoice\)/);
- assert.match(ps, /Get-Command node -ErrorAction SilentlyContinue/);
+ assert.match(ps, /Get-Command node\.exe -CommandType Application -ErrorAction SilentlyContinue/);
  assert.match(ps, /Test-Path -LiteralPath \$bridge -PathType Leaf/);
  assert.match(acceptance, /-Check -OwnVoice -PdfTextExecutable \$PdfTextExecutable/);
  assert.doesNotMatch(ps, /if \(\$Check -or -not \$OwnVoice\)/);
@@ -656,4 +656,19 @@ test('own speech watchdog publishes timeout using Interlocked', () => {
  assert.match(host, /Interlocked\.Exchange\(ref timedOut, 1\)/);
  assert.match(host, /Interlocked\.CompareExchange\(ref timedOut, 0, 0\) != 0/);
  assert.doesNotMatch(host, /bool timedOut = false/);
+});
+
+test('own voice pins a local node.exe executable for every speech child process', () => {
+ const launcher = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(launcher, /Get-Command node\.exe -CommandType Application -ErrorAction SilentlyContinue/);
+ assert.match(launcher, /\$nodeExe = \[IO\.Path\]::GetFullPath\(\[string\]\$nodeCommand\.Source\)/);
+ assert.match(launcher, /GetFileName\(\$nodeExe\) -ine 'node\.exe'/);
+ assert.match(launcher, /DriveType -notin @\(\[IO\.DriveType\]::Fixed, \[IO\.DriveType\]::Removable\)/);
+ assert.match(launcher, /\[string\]\$pdfExe,\[string\]\$nodeExe\)/);
+ assert.match(host, /private readonly string _nodeExecutable/);
+ assert.match(host, /_nodeExecutable = nodeExecutable/);
+ assert.match(host, /new ProcessStartInfo\(_nodeExecutable,/);
+ assert.match(host, /public static void Run\(string\[\] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable, string nodeExecutable\)/);
+ assert.doesNotMatch(host, /new ProcessStartInfo\("node",/);
 });
