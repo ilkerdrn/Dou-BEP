@@ -176,3 +176,23 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 85 | DOCX yükleme sırasında bozuk ZIP veya erişim hatası | Uygulama kapanmadan genel hata gösterir, dosya yolunu ifşa etmez | Bekliyor |
 
 **Ürün kabulü:** Bu 15 manuel Windows senaryosu henüz tamamlanmadı. DOCX metin çıkarma, tam Word erişilebilirlik nesne modeli veya PDF desteği olarak sunulmaz. Gerçek kullanıcı/cihaz kabulü tamamlanmadan PR #8 birleştirilmez.
+
+## Sprint 11 — isteğe bağlı, yerel PDF metni çıkarma
+
+| No | Senaryo | Beklenen davranış | Durum |
+|---|---|---|---|
+| 86 | Güvenilir `pdftotext.exe` yapılandırılmadan PDF seçimi | PDF destekleniyormuş gibi gösterilmez; genel ve erişilebilir açıklama verilir | Bekliyor |
+| 87 | Başlangıçta `-PdfTextExecutable` ile yerel araç yolu | PATH'ten otomatik araç çağrılmaz; yalnız belirtilen `pdftotext.exe` kullanılır | Bekliyor |
+| 88 | UNC, eşlenmiş ağ sürücüsü veya reparse/junction dosyası | PDF ve dönüştürücü yolunun yerel sürücü sınırı doğrulanır, uygunsuz yol reddedilir | Bekliyor |
+| 89 | Dosya uzantısı `.pdf` ancak başlığı `%PDF-` değil | Alt süreç başlatılmadan reddedilir | Bekliyor |
+| 90 | Sentetik, metin katmanlı 1 sayfalık PDF | Yalnız bellek içi çıkarım ile uygun paragraflar ve cümleler ileri/geri okunabilir | Bekliyor |
+| 91 | PDF 12 sayfadan uzun | En fazla ilk 12 sayfa ele alınır; tüm belge okunmuş gibi gösterilmez | Bekliyor |
+| 92 | 8 MiB üstü PDF veya 128 KiB üstü düz metin | Dönüşüm ve belge yükleme sınır dışıysa genel hata döner | Bekliyor |
+| 93 | Çok yavaş veya yanıt vermeyen dönüştürücü | 10 saniye watchdog ile alt süreç öldürülür; arayüz serbest kalır | Bekliyor |
+| 94 | PDF aracı başarısız çıkış kodu veya bozuk UTF-8 üretir | Çıktı seslendirilmez, dosya yolu ve hata ayrıntıları gösterilmez | Bekliyor |
+| 95 | Yeni belge açma sırasında eski PDF işlemi bitiyor | Eski sonuç yeni belgeyi değiştiremez; arka plan işlemi sınırlı süre içinde kapanır | Bekliyor |
+| 96 | Açık belgeyi kapatıp gecikmiş PDF sonucunu bekleme | Kapatılan belge eski sonuç tarafından yeniden açılmaz | Bekliyor |
+| 97 | Taranmış PDF veya parola korumalı PDF | OCR veya kısıt bypass uygulanmaz; okunabilir metin yoksa reddedilir | Bekliyor |
+| 98 | Gerçek PDF sağlayıcısı güvenlik/erişilebilirlik değerlendirmesi | Yerel üçüncü taraf dönüştürücünün kurulum ve çalışma güvenliği ayrı doğrulanır | Bekliyor |
+
+**İzin sınırı:** Bunlar manuel Windows kabul senaryolarıdır; kod düzeyinde tanımlanmaları tamamlandıkları anlamına gelmez. Yeni PDF yolu yalnız isteğe bağlıdır; güvenilir araç ve gerçek kullanıcı testi yapılana kadar öğrenci/sınav belgelerinde kullanılmamalıdır.
