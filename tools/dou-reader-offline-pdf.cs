@@ -119,6 +119,8 @@ namespace DouBepReader
                     });
                     using (var output = new MemoryStream())
                     {
+                        try
+                        {
                         var buffer = new byte[8192];
                         int read;
                         while ((read = child.StandardOutput.BaseStream.Read(
@@ -140,9 +142,20 @@ namespace DouBepReader
                         if (child.ExitCode != 0)
                             throw new InvalidDataException("PDF metni çıkarılamadı.");
                         cancellation.ThrowIfCancellationRequested();
+                        // Decode directly from the owned RAM buffer, avoiding
+                        // a second full-size mutable copy from ToArray().
                         string text = new UTF8Encoding(false, true).GetString(
-                            output.ToArray()).TrimStart('\uFEFF');
+                            output.GetBuffer(), 0, checked((int)output.Length))
+                            .TrimStart('\uFEFF');
                         return ReaderOfflineDocument.FromPdfText(text);
+                        }
+                        finally
+                        {
+                            // Best effort zeroing; managed immutable string copies
+                            // cannot be securely erased from .NET memory.
+                            byte[] bytes = output.GetBuffer();
+                            Array.Clear(bytes, 0, bytes.Length);
+                        }
                     }
                     }
                 }
