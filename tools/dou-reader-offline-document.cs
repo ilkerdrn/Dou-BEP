@@ -216,8 +216,8 @@ namespace DouBepReader
                     var xml = zip.CreateEntry("word/document.xml", CompressionLevel.Optimal);
                     using (var writer = new StreamWriter(xml.Open(), new UTF8Encoding(false)))
                         writer.Write("<!DOCTYPE w:document [<!ENTITY x 'secret'>]>" +
-                            "<w:document xmlns:w=\\"" + WordNamespace +
-                            "\\"><w:body><w:p><w:r><w:t>&x;</w:t></w:r></w:p></w:body></w:document>");
+                            "<w:document xmlns:w=\"" + WordNamespace +
+                            "\"><w:body><w:p><w:r><w:t>&x;</w:t></w:r></w:p></w:body></w:document>");
                 }
                 unsafeArchive.Position = 0;
                 bool rejectedDtd = false;
