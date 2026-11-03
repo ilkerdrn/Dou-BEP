@@ -31,7 +31,7 @@ $nodePath = $node.Source
 if ($LASTEXITCODE -ne 0) { throw 'DOU Reader Node testleri basarisiz.' }
 
 Write-Host '[2/2] Windows UIA C# derleme ve ses sozlesmesi self-test' -ForegroundColor Cyan
-& powershell.exe -NoProfile -STA -File $reader -Check -PdfTextExecutable $PdfTextExecutable
+& powershell.exe -NoProfile -STA -File $reader -Check -OwnVoice -PdfTextExecutable $PdfTextExecutable
 if ($LASTEXITCODE -ne 0) { throw 'DOU Reader Windows derleme veya self-test basarisiz.' }
 
 Write-Host 'DOU Reader on-kabul basarili: Node + C# testleri gecti.' -ForegroundColor Green
