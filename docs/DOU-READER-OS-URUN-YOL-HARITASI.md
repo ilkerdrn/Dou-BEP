@@ -159,3 +159,15 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Node regresyon kaynak denetimleri ve Windows `-Check` C# sözleşme öz testi eklendi.
 
 **Önemli doğrulama ayrımı:** Kaynak düzeyi kontroller ve arşivde SHA eşleşen ses çekirdeğinin 9/9 Node testi, güncel C# Windows derlemesi, gerçek erişilebilirlik hizmeti veya duyulur/doğal Türkçe sesi kanıtlamaz. Son derleme, kullanıcı odağı, küçük ekran, metin değişimi, durdurma ve geri gezinme kabulü hâlâ beklemektedir. Bu özellik tam Word/PDF metin okuması değildir.
+
+## Sprint 10 — çevrimdışı TXT / Word DOCX içe aktarma (kodlandı, Windows kabulü bekliyor)
+
+- `ReaderOfflineDocument`, kullanıcı Windows dosya seçicisinden **açıkça** yerel bir `.txt` veya `.docx` seçtiğinde çalışır. Ağ paylaşımı ve ağ sürücüsü reddedilir. `.txt` yalnız **UTF-8** kabul eder; DOCX ZIP paketinin yalnız `word/document.xml` metin düğümleri ayrıştırılır.
+- `System.IO.Compression.ZipArchive` ve güvenli `System.Xml.XmlReader` ile ek paket indirmeden çalışması hedeflenir. XML DTD ve harici çözücü kapalıdır; belge içindeki makro, JavaScript, gömülü nesne, görsel, ilişki ve uzaktaki kaynağa erişilmez.
+- Dosya sınırları: DOCX paketinde en çok **8 MiB**, TXT'de en çok **128 KiB**, açılan `word/document.xml` en çok **1 MiB**, XML sıkıştırma oranı en çok **100×**, en çok **1.000 ZIP öğesi**, en çok **200 okunabilir paragraf / 32.000 karakter**, her paragraf en çok **850 karakter**. Sınırı aşan belge sessizce kesilmez; reddedilir.
+- Yeni Windows kontrolleri: **Belge seç ve aç**, **Belgeyi kapat**, **Önceki / sonraki paragraf**, **Önceki / sonraki belge cümlesi**. İçerik yalnız işlem belleğinde tutulur; konuşma hâlâ mevcut yerel DOU ses yolu/SAPI tercihiyle, açık kullanıcı komutuyla başlar. Kapatıldığında uygulamadaki belge referansları bırakılır. İşletim sistemi veya çöp toplayıcının belleği anında sıfırladığı iddia edilmez.
+- `ReaderOfflineDocument.SelfTest()` sahte verilerle bellekte DOCX ZIP üretip okur; bozuk UTF-8, geçersiz karakter, aşırı uzun paragraf, UNC ağ yolu ve DTD içeren XML gibi reddetme senaryolarını kapsar. Başlatıcı `-Check`, `System.IO.Compression` ve `System.Xml` referanslarını ekler.
+- `tools/dou-reader-offline-fixture.txt` tamamen anonim Türkçe örnek metindir; gerçek öğrencinin verileriyle test yapılmaz. Ana Reader UIA odak/gezinme katmanı ve mevcut kısayollar korunmuştur.
+- Arayüz, alt kısımdaki yeni belge kontrollerinin kaydırılarak erişilmesi için `AutoScrollMinSize = 760×1130` olarak genişletildi.
+
+**Henüz yok / dürüst ürün sınırı:** Eski `.doc` biçimi, PDF ayrıştırma, taranmış PDF OCR, DOCX tablo satır-sütun semantiği, görsel açıklamaları, dipnotlar, değişiklik takibi, denklem nesnelerinin tam anlamlı konuşması ve her belgede doğal Türkçe telaffuz bu sprintte **yapılmadı**. Kullanıcı yalnız metin parçalarını okutur. PDF için doğrulanmış çevrimdışı metin çıkarma kütüphanesi ve ayrılmış güvenli işlem gerekecek. Son C# sürümü gerçek Windows 11 üzerinde henüz derlenmedi veya kabul edilmedi; PR #8 ana dala alınmaz.
