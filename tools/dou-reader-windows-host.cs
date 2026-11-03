@@ -363,6 +363,132 @@ namespace DouBepReader
                 "Yerel Türkçe ses hazır. Hedef uygulamaya geçip Ctrl+Alt+R kullanın.");
         }
 
+        // Import only after an explicit user file-picker choice. The original
+        // source path and document text are never shown in status or written to log.
+        private void OpenOfflineDocument()
+        {
+            using (var picker = new OpenFileDialog {
+                Title = "Yerel belge seçin (yalnız TXT veya DOCX)",
+                Filter = "Güvenli metin belgeleri (*.txt;*.docx)|*.txt;*.docx",
+                Multiselect = false,
+                CheckFileExists = true,
+                CheckPathExists = true,
+                RestoreDirectory = true,
+                DereferenceLinks = true
+            })
+            {
+                if (picker.ShowDialog(this) != DialogResult.OK) return;
+                try
+                {
+                    ReaderImportedDocument selected = ReaderOfflineDocument.Import(picker.FileName);
+                    StopSpeech();
+                    _imported = selected;
+                    _importedParagraph = -1;
+                    _importedSentence = -1;
+                    SetStatus(selected.Format + " belgesi belleğe alındı. " +
+                        selected.Paragraphs.Count + " paragraf. Sonraki paragraf ile başlayın.");
+                }
+                catch (Exception ex)
+                {
+                    // Preserve the previously loaded document on a failed attempt.
+                    // Never put exception text or the path in an accessible status.
+                    if (!(ex is IOException) && !(ex is UnauthorizedAccessException) &&
+                        !(ex is NotSupportedException) && !(ex is System.Xml.XmlException) &&
+                        !(ex is ArgumentException))
+                        throw;
+                    SetStatus("Dosya açılamadı: desteklenmeyen, erişilemeyen veya güvenli sınırları aşan belge.");
+                }
+            }
+        }
+
+        private void CloseOfflineDocument()
+        {
+            StopSpeech();
+            _imported = null;
+            _importedParagraph = -1;
+            _importedSentence = -1;
+            SetStatus("Yerel belge kapatıldı; Reader belge referanslarını bıraktı.");
+        }
+
+        private bool SpeakOfflineText(string text)
+        {
+            string prepared;
+            try { prepared = TurkishMathPronunciation.Prepare(text); }
+            catch (Exception) { SetStatus("Belge metni seslendirme sınırları dışında."); return false; }
+            if (ReaderSpeechContract.Split(prepared) == null)
+            {
+                StopSpeech();
+                SetStatus("Belge metni deneysel Türkçe ses motoru sınırları dışında.");
+                return false;
+            }
+            if (_ownVoice)
+            {
+                SpeakOwnVoice(text, 0); // explicit file choice, no target process
+                return true;
+            }
+            if (_turkishVoice == null)
+            {
+                StopSpeech();
+                SetStatus("Çevrimdışı Türkçe SAPI sesi yok; belge okunmadı.");
+                return false;
+            }
+            StopSpeech();
+            _speaker.Rate = _rateControl.Value;
+            _speaker.SpeakAsync(prepared);
+            return true;
+        }
+
+        private void ReadOfflineParagraph(int direction)
+        {
+            if (_imported == null)
+            {
+                SetStatus("Önce TXT veya DOCX belgesi seçin.");
+                return;
+            }
+            int next = _importedParagraph < 0 ?
+                (direction > 0 ? 0 : _imported.Paragraphs.Count - 1) :
+                _importedParagraph + direction;
+            if (next < 0 || next >= _imported.Paragraphs.Count)
+            {
+                StopSpeech();
+                SetStatus(direction > 0 ? "Belgenin sonuna gelindi." : "Belgenin başına gelindi.");
+                return;
+            }
+            if (!SpeakOfflineText(_imported.Paragraphs[next])) return;
+            _importedParagraph = next;
+            _importedSentence = -1;
+            SetStatus("Yerel belge: paragraf " + (next + 1) + " / " +
+                _imported.Paragraphs.Count + " okunuyor.");
+        }
+
+        private void ReadOfflineSentence(int direction)
+        {
+            if (_imported == null || _importedParagraph < 0)
+            {
+                SetStatus("Önce belgeyi açıp bir paragraf seçin.");
+                return;
+            }
+            var sentences = ReaderSentenceContract.Plan(_imported.Paragraphs[_importedParagraph]);
+            if (sentences == null)
+            {
+                StopSpeech();
+                SetStatus("Seçili paragraf cümle gezinmesi için desteklenmiyor.");
+                return;
+            }
+            int next = _importedSentence < 0 ?
+                (direction > 0 ? 0 : sentences.Count - 1) : _importedSentence + direction;
+            if (next < 0 || next >= sentences.Count)
+            {
+                StopSpeech();
+                SetStatus(direction > 0 ? "Paragraftaki son cümle." : "Paragraftaki ilk cümle.");
+                return;
+            }
+            if (!SpeakOfflineText(sentences[next])) return;
+            _importedSentence = next;
+            SetStatus("Belge paragraf " + (_importedParagraph + 1) +
+                ", cümle " + (next + 1) + " / " + sentences.Count + " okunuyor.");
+        }
+
         private void SetStatus(string message) { _status.Text = message; }
 
         protected override void OnHandleCreated(EventArgs e)
