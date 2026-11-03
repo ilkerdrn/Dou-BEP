@@ -1582,9 +1582,16 @@ namespace DouBepReader
                 lock (_audioLock)
                 {
                     if (ReferenceEquals(_audioProcess, proc)) _audioProcess = null;
-                    if (ReferenceEquals(_audioPlayer, player)) _audioPlayer = null;
+                    // SoundPlayer.Stop may affect the shared wave output. Never let
+                    // a stale generation's cleanup interrupt a new player.Play().
+                    // Play() and Stop() must share this lock throughout teardown.
+                    if (player != null && ReferenceEquals(_audioPlayer, player))
+                    {
+                        try { player.Stop(); } catch (Exception) { }
+                        _audioPlayer = null;
+                    }
                 }
-                if (player != null) { try { player.Stop(); } catch (Exception) { } player.Dispose(); }
+                if (player != null) player.Dispose();
                 if (audioStream != null) audioStream.Dispose();
                 if (pcmWav != null) Array.Clear(pcmWav, 0, pcmWav.Length);
                 if (stream != null) stream.Dispose();
