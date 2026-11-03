@@ -204,3 +204,14 @@ powershell.exe -NoProfile -STA -File $reader -OwnVoice -PdfTextExecutable $pdfTo
 - Erişilebilir durum mesajı PDF içe aktarmada açıkça **“yalnız ilk en fazla 12 sayfanın metni”** der; belge tamamı okunmuş izlenimi verilmez.
 
 **Durum:** Değişiklikler PR #8 geliştirme dalında; Windows PowerShell 5.1 ile son C# derlemesi, converter iptal senaryosu ve gerçek klavye/ses erişilebilirliği henüz test edilmedi. Gerçek öğrenci veya sınav verilerinde kullanılmamalıdır. Bu sprint yeni özellik eklemekten çok daha önceki iptal/gizlilik açıklarını daraltmaya yöneliktir.
+
+## Sprint 13 — ses, PDF zaman aşımı ve DOCX gizli içerik sağlamlaştırması (kodlandı; Windows kabulü bekliyor)
+
+- **Eski oynatıcının yeni sesi kesmesi engellendi:** `PlayOwnVoice` sonlandırma yolu artık `SoundPlayer.Stop()` çağrısını sadece aynı oynatıcı hâlâ aktifse ve `_audioLock` altında gerçekleştiriyor. Böylece daha sonra başlayan oynatıcının eski üretim temizliğiyle durdurulması riski azaltılıyor.
+- **PDF bekleme durumu atomik:** `ReaderOfflinePdf` alt süreç zaman aşımı bilgisi iki iş parçacığı arasında `Interlocked.Exchange/CompareExchange` ile paylaşılıyor; düz `bool` alanındaki görünürlük yarışı kaldırıldı.
+- **Belge iptal nesnesi yaşam döngüsü:** tamamlanan asenkron belge yüklemesinin `CancellationTokenSource` referansı, ancak doğru yükleme kuşağı eşleşiyorsa UI iş parçacığında temizleniyor. Kapatma, yeni seçim ve eski sonuçları reddetme hâlâ kuşak kontrolüyle çalışıyor.
+- **Sınav güvenliği için DOCX reddetme:** DOCX içinde açık `w:vanish`, `w:webHidden`, `w:specVanish`, `w:del`, `w:ins`, `w:moveFrom`, `w:moveTo`, `w:altChunk` işaretleri görüldüğünde belge **sessizce kısaltılmıyor veya gizli metin seslendirilmiyor**, tüm belge reddediliyor. Öz test, bellekte oluşturulmuş izlenen-değişiklik DOCX örneğini reddetmeyi kapsıyor. **Haricî stil dosyasıyla tanımlanmış her türlü gizli içerik bu pilot tarafından tespit edilemeyebilir; sınav içerikleri için tam garanti verilmez.**
+- **Ham ses baytları temizliği:** Node JSON giriş baytları yazımdan sonra, WAV dizisi ve `MemoryStream` içindeki tampon başarı/hata sonunda mümkün olduğunca sıfırlanıyor. Değiştirilemeyen .NET `string` örneklerinin, işletim sistemi bellek sayfalarının veya disk takasının sıfırlandığı iddia edilmez.
+- Node regresyonları; aktif oynatıcı kimliği, atomik PDF watchdog, DOCX korumalı işaretleri, iptal referansı ve ses tamponu temizliğini içeriyor.
+
+**Hâlâ açık zorunlu doğrulamalar:** Windows PowerShell 5.1 altında son C# derlemesi, gerçek `pdftotext.exe` iptalinde process-list gözlemi, birkaç hızlı cümle/Stop/Play komutunda ses bütünlüğü, yüksek kontrast ve ekran okuyucu kullanıcı kabulü. Yerel Poppler süreci sandbox değildir. Bu paket üretim/gizli öğrenci verileriyle denenmemeli ve PR #8 kabul olmadan `main` dalına birleştirilmemelidir.
