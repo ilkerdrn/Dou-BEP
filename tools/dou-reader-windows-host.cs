@@ -83,6 +83,7 @@ namespace DouBepReader
         private ReaderImportedDocument _imported;
         private readonly string _pdfTextExecutable;
         private int _documentImportGeneration;
+        private CancellationTokenSource _documentImportCancellation;
         private int _importedParagraph = -1;
         private int _importedSentence = -1;
         // Only a short, bounded utterance is kept in RAM during playback or pause.
@@ -369,6 +370,20 @@ namespace DouBepReader
 
         // Import only after an explicit user file-picker choice. The original
         // source path and document text are never shown in status or written to log.
+        private void CancelPendingDocumentImport()
+        {
+            // UI-thread only: cancel the active PDF worker and invalidate any
+            // already posted callbacks from older imports. Workers own CTS disposal.
+            Interlocked.Increment(ref _documentImportGeneration);
+            var pending = _documentImportCancellation;
+            _documentImportCancellation = null;
+            if (pending != null)
+            {
+                try { pending.Cancel(); }
+                catch (ObjectDisposedException) { }
+            }
+        }
+
         private void OpenOfflineDocument()
         {
             string path;
@@ -393,7 +408,10 @@ namespace DouBepReader
                 SetStatus("PDF için güvenilir yerel pdftotext.exe yolu başlangıçta belirtilmeli.");
                 return;
             }
-            int generation = Interlocked.Increment(ref _documentImportGeneration);
+            CancelPendingDocumentImport();
+            var cancellation = new CancellationTokenSource();
+            _documentImportCancellation = cancellation;
+            int generation = Interlocked.CompareExchange(ref _documentImportGeneration, 0, 0);
             SetStatus("Yerel belge bellekte hazırlanıyor. İşlem sırasında düğmeler kullanılabilir.");
             // Archive parsing and PDF conversion never block the WinForms UI.
             Task.Run(() =>
@@ -403,10 +421,13 @@ namespace DouBepReader
                 {
                     result = String.Equals(Path.GetExtension(path), ".pdf",
                         StringComparison.OrdinalIgnoreCase) ?
-                        ReaderOfflinePdf.Import(path, _pdfTextExecutable) :
+                        ReaderOfflinePdf.Import(path, _pdfTextExecutable, cancellation.Token) :
                         ReaderOfflineDocument.Import(path);
+                    cancellation.Token.ThrowIfCancellationRequested();
                 }
+                catch (OperationCanceledException) { }
                 catch (Exception) { /* Never surface source paths or document text. */ }
+                finally { cancellation.Dispose(); }
 
                 try
                 {
@@ -435,7 +456,7 @@ namespace DouBepReader
 
         private void CloseOfflineDocument()
         {
-            Interlocked.Increment(ref _documentImportGeneration);
+            CancelPendingDocumentImport();
             StopSpeech();
             _imported = null;
             _importedParagraph = -1;
@@ -1594,7 +1615,7 @@ namespace DouBepReader
             foreach (int id in _registeredHotkeys) UnregisterHotKey(Handle, id);
             _registeredHotkeys.Clear();
             StopSpeech();
-            Interlocked.Increment(ref _documentImportGeneration);
+            CancelPendingDocumentImport();
             _imported = null;
             _importedParagraph = -1;
             _importedSentence = -1;
