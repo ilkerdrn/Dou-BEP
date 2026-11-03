@@ -32,21 +32,41 @@ namespace DouBepReader
         public const int MaxTotalCharacters = 32000;
         private const string WordNamespace = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
-        public static ReaderImportedDocument Import(string path)
+        // Shared by TXT/DOCX/PDF: no implicit UNC or mapped-network reads.
+        internal static string RequireLocalFile(string path, long maxSize)
         {
-            if (String.IsNullOrWhiteSpace(path)) throw new InvalidDataException("Dosya seçilmedi.");
-            // An explicit local-only mode must not fetch UNC or mapped network
-            // files even when a Windows file picker can browse them.
+            if (String.IsNullOrWhiteSpace(path))
+                throw new InvalidDataException("Dosya seçilmedi.");
             string fullPath = Path.GetFullPath(path);
             if (fullPath.StartsWith(@"\\", StringComparison.Ordinal) ||
                 fullPath.StartsWith("//", StringComparison.Ordinal))
-                throw new NotSupportedException("Ağ üzerindeki belge bu modda okunmaz.");
-            var root = Path.GetPathRoot(fullPath);
+                throw new NotSupportedException("Ağ dosyası desteklenmiyor.");
+            string root = Path.GetPathRoot(fullPath);
             if (String.IsNullOrWhiteSpace(root))
                 throw new NotSupportedException("Yerel sürücü belirlenemedi.");
             DriveType kind = new DriveInfo(root).DriveType;
             if (kind != DriveType.Fixed && kind != DriveType.Removable)
-                throw new NotSupportedException("Yalnız yerel veya çıkarılabilir sürücü.");
+                throw new NotSupportedException("Yerel sürücü gereklidir.");
+            var info = new FileInfo(fullPath);
+            if (!info.Exists || info.Length == 0 || info.Length > maxSize)
+                throw new InvalidDataException("Dosya güvenli boyut sınırı dışında.");
+            // Reparse points include symlinks and junctions. Refuse rather than
+            // following an apparently local path into a network resource.
+            var item = info as FileSystemInfo;
+            while (item != null)
+            {
+                if ((item.Attributes & FileAttributes.ReparsePoint) != 0)
+                    throw new NotSupportedException("Bağlantı veya junction dosyası desteklenmiyor.");
+                var parent = (item as FileInfo) != null ?
+                    ((FileInfo)item).Directory : ((DirectoryInfo)item).Parent;
+                item = parent;
+            }
+            return fullPath;
+        }
+
+        public static ReaderImportedDocument Import(string path)
+        {
+            string fullPath = RequireLocalFile(path, MaxFileBytes);
             var info = new FileInfo(fullPath);
             if (!info.Exists || info.Length == 0 || info.Length > MaxFileBytes)
                 throw new InvalidDataException("Belge güvenli boyut sınırı dışında.");
@@ -140,6 +160,16 @@ namespace DouBepReader
                     return Build("DOCX", paragraphs);
                 }
             }
+        }
+
+        // Used solely after a bounded, trusted local PDF text converter succeeds.
+        internal static ReaderImportedDocument FromPdfText(string text)
+        {
+            if (String.IsNullOrWhiteSpace(text) || text.Length > MaxTotalCharacters + 4096)
+                throw new InvalidDataException("PDF metin boyutu güvenli sınırın dışında.");
+            if (text.IndexOf('\0') >= 0)
+                throw new InvalidDataException("PDF metninde desteklenmeyen veri var.");
+            return Build("PDF", Regex.Split(text, @"\r\n|\n|\r"));
         }
 
         private static ReaderImportedDocument Build(string format, IEnumerable<string> source)
