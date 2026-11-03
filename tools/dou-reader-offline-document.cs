@@ -233,6 +233,21 @@ namespace DouBepReader
         // Self-tests use in-memory fixtures only: no reading user files or writing test data.
         public static void SelfTest()
         {
+            // The cancellation contract must fail before accessing a real path.
+            using (var cancelled = new CancellationTokenSource())
+            {
+                cancelled.Cancel();
+                bool stopped = false;
+                try { Import(@"C:\not-a-real-document.docx", cancelled.Token); }
+                catch (OperationCanceledException) { stopped = true; }
+                if (!stopped)
+                    throw new InvalidOperationException("Cancelled file import was admitted.");
+                stopped = false;
+                try { Build("TXT", new[] { "Merhaba." }, cancelled.Token); }
+                catch (OperationCanceledException) { stopped = true; }
+                if (!stopped)
+                    throw new InvalidOperationException("Cancelled document builder was admitted.");
+            }
             var doc = Build("TXT", new[] { "Merhaba dünya.", "İkinci paragraf!" });
             if (doc.Paragraphs.Count != 2 || doc.Paragraphs[1] != "İkinci paragraf!")
                 throw new InvalidOperationException("Paragraph plan failed.");
