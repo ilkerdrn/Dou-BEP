@@ -178,6 +178,18 @@ namespace DouBepReader
             try { Build("TXT", new[] { "Hassas@example.com" }); }
             catch (InvalidDataException) { rejected = true; }
             if (!rejected) throw new InvalidOperationException("Unsafe paragraph accepted.");
+            bool oversizedRejected = false;
+            try { Build("TXT", new[] { new string('a', MaxParagraphCharacters + 1) }); }
+            catch (InvalidDataException) { oversizedRejected = true; }
+            if (!oversizedRejected) throw new InvalidOperationException("Overlong text admitted.");
+            bool invalidUtf8Rejected = false;
+            try { using (var invalid = new MemoryStream(new byte[] { 0xC3, 0x28 })) ReadText(invalid); }
+            catch (DecoderFallbackException) { invalidUtf8Rejected = true; }
+            if (!invalidUtf8Rejected) throw new InvalidOperationException("Invalid UTF-8 admitted.");
+            bool networkRejected = false;
+            try { Import(@"\\offline-test.invalid\share\example.docx"); }
+            catch (NotSupportedException) { networkRejected = true; }
+            if (!networkRejected) throw new InvalidOperationException("UNC path admitted.");
             using (var memory = new MemoryStream())
             {
                 using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, true))
@@ -195,6 +207,24 @@ namespace DouBepReader
                 if (fromDocx.Format != "DOCX" || fromDocx.Paragraphs.Count != 2 ||
                     fromDocx.Paragraphs[0] != "Merhaba dünya.")
                     throw new InvalidOperationException("Offline DOCX parsing failed.");
+            }
+            // A DTD-containing DOCX must not resolve entities or external resources.
+            using (var unsafeArchive = new MemoryStream())
+            {
+                using (var zip = new ZipArchive(unsafeArchive, ZipArchiveMode.Create, true))
+                {
+                    var xml = zip.CreateEntry("word/document.xml", CompressionLevel.Optimal);
+                    using (var writer = new StreamWriter(xml.Open(), new UTF8Encoding(false)))
+                        writer.Write("<!DOCTYPE w:document [<!ENTITY x 'secret'>]>" +
+                            "<w:document xmlns:w=\\"" + WordNamespace +
+                            "\\"><w:body><w:p><w:r><w:t>&x;</w:t></w:r></w:p></w:body></w:document>");
+                }
+                unsafeArchive.Position = 0;
+                bool rejectedDtd = false;
+                try { ReadDocx(unsafeArchive); }
+                catch (XmlException) { rejectedDtd = true; }
+                if (!rejectedDtd)
+                    throw new InvalidOperationException("DOCX DTD was accepted.");
             }
         }
     }
