@@ -392,7 +392,9 @@ namespace DouBepReader
                 {
                     // Preserve the previously loaded document on a failed attempt.
                     // Never put exception text or the path in an accessible status.
-                    if (!(ex is IOException) && !(ex is UnauthorizedAccessException) &&
+                    if (!(ex is IOException) && !(ex is InvalidDataException) &&
+                        !(ex is UnauthorizedAccessException) &&
+                        !(ex is System.Security.SecurityException) &&
                         !(ex is NotSupportedException) && !(ex is System.Xml.XmlException) &&
                         !(ex is ArgumentException))
                         throw;
