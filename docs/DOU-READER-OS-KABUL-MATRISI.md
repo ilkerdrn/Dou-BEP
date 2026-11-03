@@ -208,3 +208,15 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 103 | 12 sayfadan uzun PDF'nin içe aktarımı | Durum metni tüm PDF'nin değil **yalnız ilk en fazla 12 sayfanın metninin** hazırlandığını açıkça söyler | Bekliyor |
 
 **Not:** Önceki kaynak ve statik kontrollerin geçmesi, Windows'ta süreçlerin gerçekten kapandığı anlamına gelmez. Gerçek cihazda işlem listesi, klavye, duyulur ses ve kaynak tüketimi ayrıca incelenmelidir.
+
+## Sprint 13 — sürüm öncesi kritik kapılar (mevcut 103 senaryoya ek kontrol)
+
+Bu kontrol listesi yeni özellik kapsamı açmak yerine ürün kapanışındaki **engelleyici** hataları hedefler. Aşağıdaki koşullar sağlanmadan PR birleştirilmez.
+
+- [ ] Windows PowerShell 5.1 `-Check` gerçek C# derlemesi ve sekiz sözleşmenin öz testleri hatasız tamamlandı.
+- [ ] Peş peşe gelen DOU ses taleplerinde eski parçanın temizlenmesi yeni parçayı kesmedi; durdur/duraklat/devam davranışı işitsel olarak denetlendi.
+- [ ] PDF dönüştürücüsü 10 saniyelik zaman aşımında, belge kapatıldığında ve yeni dosya seçildiğinde gerçekten kapandı; geride `pdftotext.exe` alt süreci kalmadı.
+- [ ] DOCX `w:ins`, `w:del`, `w:vanish` ve `w:altChunk` ile sentetik güvenlik örnekleri reddedildi; desteklenmeyen gizli stil senaryoları belgelendi.
+- [ ] Belgede gerçek öğrenci/sınav verisi olmadan anonim TXT/DOCX/PDF üzerinde klavye, Tab sırası, yüksek kontrast, %200 DPI ve duyulur Türkçe ses testleri geçti.
+
+**Kaynak kontrolü cihaz kabulü değildir.** Gerçek Windows ve engelli kullanıcı senaryoları hâlâ bekliyor.
