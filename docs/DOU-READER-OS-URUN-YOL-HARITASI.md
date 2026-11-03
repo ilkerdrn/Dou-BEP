@@ -234,3 +234,14 @@ Bu çalışma, Sprint 13'te belirlenen **derleme ve çalışma güvenilirliği**
 ### Kalan bloklayıcılar
 
 Windows 11 / Windows PowerShell 5.1 üzerinde `tools/dou-reader-acceptance.ps1` gerçek çalıştırma sonucu, `Add-Type` derlemesi, `pdftotext.exe` alt süreç iptali, kendi Türkçe sesinin hoparlörde duyulması, yüksek DPI ve erişilebilirlik kullanıcı kabulü **henüz yoktur**. Daha önceki pilot kaynaklara, DOU BEP `main` dalına, öğrenci verilerine veya üretim veritabanına dokunulmadı. PR #8 bu şartlar tamamlanmadan birleştirilmemelidir.
+
+## Sprint 15 — OwnVoice çalıştırılabilir dosyasını sabitleme ve gerçek Windows ön-deneme kapısı (kodlandı, Windows kabulü bekliyor)
+
+Bu turdaki odak, **Windows'ta gerçek ses bağlantısının kurulma güvenilirliği** ve ön kontrolün yalnız dosya varlığını değil, çalışabilirliğini doğrulamasıdır.
+
+- Windows PowerShell 5.1 başlatıcısı, `-OwnVoice` modunda `Get-Command node.exe -CommandType Application` ile yürütülebilir dosyayı **bir kez** çözümler; yalnız mevcut, yerel sabit/çıkarılabilir sürücüdeki `node.exe` yoluna izin verir. Bu tam yol `ReaderWindow` ve `Program.Run` üzerinden ses üretimine iletilir. Ses parçası başına tekrar `PATH` üzerinden farklı bir `node` aranmaz. Bu, kurulan Node ikilisinin bütünlüğünün kriptografik olarak kanıtlandığı veya sistemde başka hiçbir Node sürümü bulunmadığı anlamına gelmez.
+- Yeni `tools/dou-reader-ownvoice-probe.cs`, **yalnız sentetik `Merhaba dünya` metnini** yerel Node köprüsüne JSON/stdin ile verir ve **WAV çıktısını stdout üzerinden RAM'de** toplar. C# `ReaderSpeechContract.IsPcmWav` ile 22.050 Hz / tek kanal / 16-bit biçimini, 3 MB çıktı sınırını, çıkış kodunu ve 15 saniyelik süreç zaman aşımını denetler. Ses aygıtında oynatma, kullanıcı belgesi, dosya yazımı veya internet isteği yapmaz.
+- `tools/dou-reader-windows.ps1 -Check -OwnVoice`, tüm C# kaynaklarını derleyip öz testlerden sonra bu **sentetik Node→WAV uçtan uca sessiz ön-denemeyi** çalıştıracak şekilde güncellendi. `tools/dou-reader-acceptance.ps1` zaten `-Check -OwnVoice` çağırır; dolayısıyla bu kontrolü kapsar. DOU SAPI modu ayrı kalır.
+- Reader Node regresyon testine sabit Node yolu ve sessiz WAV ön-deneme sözleşmesinin kaynak kontrolleri eklendi.
+
+**Doğrulama sınırı:** Bu sprintte GitHub kaynakları üzerinde statik kaynak kontrolleri eşleşti, ancak **yeni `ReaderOwnVoiceProbe` henüz Windows PowerShell 5.1 altında çalıştırılmadı**. Bu nedenle C# derlemesinin ve gerçek cihazda Node→WAV üretiminin başarılı olduğunu iddia etmiyoruz. Başarılı bir sessiz WAV ön-denemesi bile hoparlör çıkışı, ses anlaşılırlığı, NVDA sürücü entegrasyonu, gizlilik sınırları ve görme engelli kullanıcı kabulünün yerine geçmez. PR #8 bu kapılar tamamlanmadan birleştirilmeyecektir.
