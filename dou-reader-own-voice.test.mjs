@@ -612,3 +612,13 @@ test('DOCX hidden exam text and unreconciled revisions fail closed', () => {
  assert.match(importer, /Tracked DOCX revisions were admitted/);
  assert.match(importer, /Gizli, izlenen değişiklik veya alternatif DOCX içeriği desteklenmiyor/);
 });
+
+test('own voice clears mutable JSON and PCM buffers on success or exception', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /Array\.Clear\(input, 0, input\.Length\)/);
+ assert.match(cs, /Array\.Clear\(pcmWav, 0, pcmWav\.Length\)/);
+ assert.match(cs, /byte\[\] buffer = stream\.GetBuffer\(\)/);
+ assert.match(cs, /Array\.Clear\(buffer, 0, buffer\.Length\)/);
+ assert.match(cs, /if \(audioStream != null\) audioStream\.Dispose\(\)/);
+ assert.match(cs, /if \(stream != null\)\s*\{/);
+});
