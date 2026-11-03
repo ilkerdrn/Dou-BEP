@@ -81,6 +81,8 @@ namespace DouBepReader
         private int _sentenceTextHash;
         private int _sentenceTextLength;
         private ReaderImportedDocument _imported;
+        private readonly string _pdfTextExecutable;
+        private int _documentImportGeneration;
         private int _importedParagraph = -1;
         private int _importedSentence = -1;
         // Only a short, bounded utterance is kept in RAM during playback or pause.
@@ -101,10 +103,11 @@ namespace DouBepReader
         }
         private OwnVoiceSession _speechSession;
 
-        public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath)
+        public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable)
         {
             _ownVoice = ownVoice;
             _bridgePath = bridgePath;
+            _pdfTextExecutable = pdfTextExecutable;
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 800;
@@ -293,13 +296,13 @@ namespace DouBepReader
             Controls.Add(previousSentence);
             Controls.Add(nextSentence);
             var fileLabel = new Label {
-                Text = "ÇEVRİMDIŞI BELGE OKUMA  /  TXT VE DOCX",
+                Text = "ÇEVRİMDIŞI BELGE OKUMA  /  TXT, DOCX VE PDF*",
                 Left = 26, Top = 833, Width = 690, Height = 24,
                 ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
             };
             var openFile = new Button {
                 Text = "Belge seç ve aç", Left = 26, Top = 870, Width = 219, Height = 48,
-                AccessibleName = "Yerel UTF-8 TXT veya DOCX dosyası seç",
+                AccessibleName = "Yerel UTF-8 TXT, DOCX veya yapılandırılmış PDF dosyası seç",
                 AccessibleDescription = "Dosya kullanıcı tarafından seçilir; metin cihaz dışına gönderilmez.",
                 TabIndex = 14, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
             };
@@ -367,9 +370,10 @@ namespace DouBepReader
         // source path and document text are never shown in status or written to log.
         private void OpenOfflineDocument()
         {
+            string path;
             using (var picker = new OpenFileDialog {
-                Title = "Yerel belge seçin (yalnız TXT veya DOCX)",
-                Filter = "Güvenli metin belgeleri (*.txt;*.docx)|*.txt;*.docx",
+                Title = "Yerel belge seçin (TXT / DOCX / yapılandırılmış PDF)",
+                Filter = "Yerel belgeler (*.txt;*.docx;*.pdf)|*.txt;*.docx;*.pdf",
                 Multiselect = false,
                 CheckFileExists = true,
                 CheckPathExists = true,
@@ -378,33 +382,59 @@ namespace DouBepReader
             })
             {
                 if (picker.ShowDialog(this) != DialogResult.OK) return;
+                path = picker.FileName;
+            }
+            // The PDF tool is opt-in, never discovered on PATH or downloaded.
+            if (String.Equals(Path.GetExtension(path), ".pdf",
+                StringComparison.OrdinalIgnoreCase) &&
+                String.IsNullOrWhiteSpace(_pdfTextExecutable))
+            {
+                SetStatus("PDF için güvenilir yerel pdftotext.exe yolu başlangıçta belirtilmeli.");
+                return;
+            }
+            int generation = Interlocked.Increment(ref _documentImportGeneration);
+            SetStatus("Yerel belge bellekte hazırlanıyor. İşlem sırasında düğmeler kullanılabilir.");
+            // Archive parsing and PDF conversion never block the WinForms UI.
+            Task.Run(() =>
+            {
+                ReaderImportedDocument result = null;
                 try
                 {
-                    ReaderImportedDocument selected = ReaderOfflineDocument.Import(picker.FileName);
-                    StopSpeech();
-                    _imported = selected;
-                    _importedParagraph = -1;
-                    _importedSentence = -1;
-                    SetStatus(selected.Format + " belgesi belleğe alındı. " +
-                        selected.Paragraphs.Count + " paragraf. Sonraki paragraf ile başlayın.");
+                    result = String.Equals(Path.GetExtension(path), ".pdf",
+                        StringComparison.OrdinalIgnoreCase) ?
+                        ReaderOfflinePdf.Import(path, _pdfTextExecutable) :
+                        ReaderOfflineDocument.Import(path);
                 }
-                catch (Exception ex)
+                catch (Exception) { /* Never surface source paths or document text. */ }
+
+                try
                 {
-                    // Preserve the previously loaded document on a failed attempt.
-                    // Never put exception text or the path in an accessible status.
-                    if (!(ex is IOException) && !(ex is InvalidDataException) &&
-                        !(ex is UnauthorizedAccessException) &&
-                        !(ex is System.Security.SecurityException) &&
-                        !(ex is NotSupportedException) && !(ex is System.Xml.XmlException) &&
-                        !(ex is ArgumentException))
-                        throw;
-                    SetStatus("Dosya açılamadı: desteklenmeyen, erişilemeyen veya güvenli sınırları aşan belge.");
+                    if (IsDisposed || !IsHandleCreated) return;
+                    BeginInvoke((MethodInvoker)delegate
+                    {
+                        if (IsDisposed || Interlocked.CompareExchange(
+                            ref _documentImportGeneration, 0, 0) != generation) return;
+                        if (result == null)
+                        {
+                            SetStatus("Belge açılamadı: biçim, erişim veya güvenlik sınırı.");
+                            return;
+                        }
+                        StopSpeech();
+                        _imported = result;
+                        _importedParagraph = -1;
+                        _importedSentence = -1;
+                        SetStatus(result.Format + " belgesi hazır. " +
+                            result.Paragraphs.Count + " paragraf. Sonraki paragraf ile başlayın.");
+                    });
                 }
-            }
+                catch (InvalidOperationException) { }
+                catch (ObjectDisposedException) { }
+            });
         }
 
         private void CloseOfflineDocument()
         {
+            Interlocked.Increment(ref _documentImportGeneration);
             StopSpeech();
             _imported = null;
             _importedParagraph = -1;
@@ -1563,6 +1593,7 @@ namespace DouBepReader
             foreach (int id in _registeredHotkeys) UnregisterHotKey(Handle, id);
             _registeredHotkeys.Clear();
             StopSpeech();
+            Interlocked.Increment(ref _documentImportGeneration);
             _imported = null;
             _importedParagraph = -1;
             _importedSentence = -1;
@@ -1600,11 +1631,11 @@ namespace DouBepReader
     public static class Program
     {
         [STAThread]
-        public static void Run(string[] allowedProcesses, bool ownVoice, string bridgePath)
+        public static void Run(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new ReaderWindow(allowedProcesses, ownVoice, bridgePath)) Application.Run(form);
+            using (var form = new ReaderWindow(allowedProcesses, ownVoice, bridgePath, pdfTextExecutable)) Application.Run(form);
         }
     }
 }
