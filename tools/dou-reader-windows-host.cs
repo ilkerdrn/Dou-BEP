@@ -296,14 +296,15 @@ namespace DouBepReader
             Controls.Add(previousSentence);
             Controls.Add(nextSentence);
             var fileLabel = new Label {
-                Text = "ÇEVRİMDIŞI BELGE OKUMA  /  TXT, DOCX VE PDF*",
+                Text = "ÇEVRİMDIŞI BELGE OKUMA  /  TXT, DOCX VE İSTEĞE BAĞLI PDF",
+                AccessibleName = "Çevrimdışı belge okuma: TXT, DOCX, yalnız yerel dönüştürücü ayarlıysa PDF",
                 Left = 26, Top = 833, Width = 690, Height = 24,
                 ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
             };
             var openFile = new Button {
                 Text = "Belge seç ve aç", Left = 26, Top = 870, Width = 219, Height = 48,
                 AccessibleName = "Yerel UTF-8 TXT, DOCX veya yapılandırılmış PDF dosyası seç",
-                AccessibleDescription = "Dosya kullanıcı tarafından seçilir; metin cihaz dışına gönderilmez.",
+                AccessibleDescription = "Dosya seçimi elle yapılır; PDF yalnız güvenilir yerel pdftotext aracı ayarlanmışsa açılır.",
                 TabIndex = 14, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
             };
             openFile.Click += delegate { OpenOfflineDocument(); };
