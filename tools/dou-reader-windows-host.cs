@@ -422,7 +422,7 @@ namespace DouBepReader
                     result = String.Equals(Path.GetExtension(path), ".pdf",
                         StringComparison.OrdinalIgnoreCase) ?
                         ReaderOfflinePdf.Import(path, _pdfTextExecutable, cancellation.Token) :
-                        ReaderOfflineDocument.Import(path);
+                        ReaderOfflineDocument.Import(path, cancellation.Token);
                     cancellation.Token.ThrowIfCancellationRequested();
                 }
                 catch (OperationCanceledException) { }
