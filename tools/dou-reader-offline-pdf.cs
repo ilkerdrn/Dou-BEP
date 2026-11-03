@@ -155,6 +155,15 @@ namespace DouBepReader
 
         public static void SelfTest()
         {
+            using (var cancelled = new CancellationTokenSource())
+            {
+                cancelled.Cancel();
+                bool stopped = false;
+                try { Import("irrelevant.pdf", "irrelevant.exe", cancelled.Token); }
+                catch (OperationCanceledException) { stopped = true; }
+                if (!stopped)
+                    throw new InvalidOperationException("Cancelled PDF process request admitted.");
+            }
             if (!HasPdfSignature(new byte[] { 37, 80, 68, 70, 45 }) ||
                 HasPdfSignature(new byte[] { 80, 68, 70, 45, 32 }) ||
                 HasPdfSignature(null))
