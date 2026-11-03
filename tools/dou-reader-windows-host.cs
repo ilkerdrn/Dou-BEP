@@ -1509,7 +1509,7 @@ namespace DouBepReader
 
                 // The watchdog also covers blocked stdout reads. Cancellation kills the
                 // subprocess; no unbounded output file or blocking UI-thread wait.
-                bool timedOut = false;
+                int timedOut = 0;
                 var child = proc;
                 var watchdog = Task.Run(() =>
                 {
@@ -1517,7 +1517,7 @@ namespace DouBepReader
                     {
                         if (!child.WaitForExit(15000))
                         {
-                            timedOut = true;
+                            Interlocked.Exchange(ref timedOut, 1);
                             child.Kill();
                         }
                     }
@@ -1539,7 +1539,9 @@ namespace DouBepReader
                     }
                     stream.Write(buffer, 0, read);
                 }
-                if (!watchdog.Wait(16000) || timedOut || !proc.HasExited)
+                if (!watchdog.Wait(16000) ||
+                    Interlocked.CompareExchange(ref timedOut, 0, 0) != 0 ||
+                    !proc.HasExited)
                 {
                     AudioStatus(generation, "Ses motoru zaman aşımına uğradı.");
                     return false;
