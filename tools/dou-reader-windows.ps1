@@ -62,6 +62,7 @@ try {
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
+    Add-Type -AssemblyName 'System.Core' -ErrorAction Stop
     Add-Type -AssemblyName 'System.IO.Compression' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Xml' -ErrorAction Stop
     foreach ($assemblyName in $referenceNames) {
@@ -84,9 +85,9 @@ try {
     [DouBepReader.ReaderOfflinePdf]::SelfTest()
     $pdfExe = [DouBepReader.ReaderOfflinePdf]::ValidateExecutable($PdfTextExecutable)
     $localTr = 0
-    if ($Check -or -not $OwnVoice) {
-        # SAPI is inspected only for legacy SAPI mode or diagnostics.
-        # -OwnVoice must never instantiate a Windows speech synthesizer.
+    if (-not $OwnVoice) {
+        # OwnVoice mode and its -Check must not instantiate Windows SAPI.
+        # Diagnostics only enumerate SAPI when the user selected SAPI mode.
         $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
         try {
             $localTr = @($speaker.GetInstalledVoices() | Where-Object {
@@ -95,8 +96,20 @@ try {
         } finally { $speaker.Dispose() }
     }
     if ($Check) {
-        Write-Host ('DOU Reader teknik on denetim: UIA, ses sozlesmesi ve Windows Forms yuklendi; yerel Turkce SAPI sesi: ' + $localTr)
-        if ($localTr -eq 0) { Write-Warning 'Yerel Turkce ses yok. Okuyucu otomatik uzaktaki sese gecmez.' }
+        if ($OwnVoice) {
+            $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
+            if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
+                throw 'OwnVoice teknik kontrolu: Node.js bulunamadi.'
+            }
+            if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) {
+                throw 'OwnVoice teknik kontrolu: yerel ses koprusu bulunamadi.'
+            }
+            Write-Host 'DOU Reader teknik on denetim: C# UIA/WinForms ve kendi yerel ses koprusu mevcut (SAPI kurulumu gerekmiyor).'
+        }
+        else {
+            Write-Host ('DOU Reader teknik on denetim: C# UIA/WinForms ve yerel SAPI sesi: ' + $localTr)
+            if ($localTr -eq 0) { Write-Warning 'Yerel Turkce SAPI sesi yok. Otomatik uzaktaki sese gecilmez.' }
+        }
         return
     }
     Write-Host 'DOU Reader OS pilot: metin ag servisine gonderilmez; WAV RAM icinde tutulur.'
