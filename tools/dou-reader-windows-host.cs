@@ -82,6 +82,7 @@ namespace DouBepReader
         private int _sentenceTextLength;
         private ReaderImportedDocument _imported;
         private readonly string _pdfTextExecutable;
+        private readonly string _nodeExecutable;
         private int _documentImportGeneration;
         private CancellationTokenSource _documentImportCancellation;
         private int _importedParagraph = -1;
@@ -104,11 +105,12 @@ namespace DouBepReader
         }
         private OwnVoiceSession _speechSession;
 
-        public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable)
+        public ReaderWindow(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable, string nodeExecutable)
         {
             _ownVoice = ownVoice;
             _bridgePath = bridgePath;
             _pdfTextExecutable = pdfTextExecutable;
+            _nodeExecutable = nodeExecutable;
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader OS — Yerel Türkçe ekran okuyucu pilotu";
             Width = 800;
@@ -1481,7 +1483,7 @@ namespace DouBepReader
             byte[] pcmWav = null;
             try
             {
-                var start = new ProcessStartInfo("node", "\"" + _bridgePath + "\"")
+                var start = new ProcessStartInfo(_nodeExecutable, "\"" + _bridgePath + "\"")
                 {
                     UseShellExecute = false, CreateNoWindow = true,
                     RedirectStandardInput = true, RedirectStandardOutput = true,
@@ -1687,11 +1689,11 @@ namespace DouBepReader
     public static class Program
     {
         [STAThread]
-        public static void Run(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable)
+        public static void Run(string[] allowedProcesses, bool ownVoice, string bridgePath, string pdfTextExecutable, string nodeExecutable)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new ReaderWindow(allowedProcesses, ownVoice, bridgePath, pdfTextExecutable)) Application.Run(form);
+            using (var form = new ReaderWindow(allowedProcesses, ownVoice, bridgePath, pdfTextExecutable, nodeExecutable)) Application.Run(form);
         }
     }
 }
