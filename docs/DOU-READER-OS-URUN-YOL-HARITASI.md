@@ -171,3 +171,25 @@ Windows SAPI 0 Türkçe ses bildirilmiş; OwnVoice bunu kullanmıyor ama ses oyn
 - Arayüz, alt kısımdaki yeni belge kontrollerinin kaydırılarak erişilmesi için `AutoScrollMinSize = 760×1130` olarak genişletildi.
 
 **Henüz yok / dürüst ürün sınırı:** Eski `.doc` biçimi, PDF ayrıştırma, taranmış PDF OCR, DOCX tablo satır-sütun semantiği, görsel açıklamaları, dipnotlar, değişiklik takibi, denklem nesnelerinin tam anlamlı konuşması ve her belgede doğal Türkçe telaffuz bu sprintte **yapılmadı**. Kullanıcı yalnız metin parçalarını okutur. PDF için doğrulanmış çevrimdışı metin çıkarma kütüphanesi ve ayrılmış güvenli işlem gerekecek. Son C# sürümü gerçek Windows 11 üzerinde henüz derlenmedi veya kabul edilmedi; PR #8 ana dala alınmaz.
+
+## Sprint 11 — isteğe bağlı çevrimdışı PDF metin çıkarma (kodlandı, Windows kabulü bekliyor)
+
+Bu sprint, Sprint 10'da desteklenmeyen PDF biçimi için **koşullu** bir düz metin çıkarma yolu ekler. **Varsayılan kurulum PDF açamaz.** PDF özelliğinin kullanılabilmesi için kullanıcı ayrıca güvenilir, kendi bilgisayarındaki `pdftotext.exe` dosyasının tam yolunu başlangıçta `-PdfTextExecutable` ile sağlamalıdır. DOU Reader bunu indirmez, PATH'te aramaz veya uzak API'ye belge göndermez. Bağımsız yerel Poppler aracı bir üçüncü taraf işlemidir; uygulama onun güvenliğini kanıtlamaz veya sandbox'lamaz.
+
+- `ReaderOfflinePdf`: yalnız `.pdf` uzantısı, **ilk 5 baytta `%PDF-` imzası**, yerel sabit/çıkarılabilir sürücü, bağlantı/junction reddi, en çok **8 MiB** dosya ve **12 sayfa**.
+- Kendi metin ayrıştırıcımız yok. Yerel `pdftotext.exe` `-f 1 -l 12 -enc UTF-8 -eol unix -nopgbrk -q <yerel-pdf> -` seçenekleriyle çalışır; çıktı **dosyaya yazılmaz, yalnız stdout→RAM** üzerinden en çok **128 KiB** alınır. Alt sürecin **10 sn** watchdog zaman aşımı ve başarısız çıkış kodu durumlarında genel hata döner. Dönüştürücü aracı kendisi işlem sırasında ayrı güvenlik sınırları/yerel geçici veri uygulayabilir; DOU bunu garanti edemez.
+- PDF'den çıkarılan metin `ReaderOfflineDocument.FromPdfText` üzerinden **32.000 karakter / 200 paragraf / paragraf başına 850 karakter** gibi aynı sıkı Türkçe ses filtrelerinden geçer. PDF'deki görseller, tablo geometrisi, form alanları, ekler, OCR ve gerçek semantik sıra korunmuş sayılmaz. Metin yoksa veya filtreye uymuyorsa PDF tamamen reddedilir.
+- Dosya seçme işlemi tüm TXT/DOCX/PDF biçimleri için artık UI iş parçacığı dışında yürütülür. Bir belge açma girişiminden sonra yeni belge seçilirse veya açık belge kapatılırsa **eski arka plan sonucunun arayüze yazılması engellenir**. Başlatılmış dönüştürücü işlemi eski sonuç bırakılmış olsa da kendi **10 sn** zaman aşımına kadar çalışabilir; gerçek iptal token'ı henüz yoktur.
+- `tools/dou-reader-windows.ps1` yeni PDF sözleşmesini derleme/öz teste dahil eder. İsteğe bağlı parametre `-PdfTextExecutable` ve `tools/dou-reader-acceptance.ps1` parametresi eklendi. PDF aracı yapılandırılmadan `-Check` C# sözleşme testini yürütür; gerçek PDF dönüşümü çalıştırılmaz.
+- PDF programı herhangi bir kaynaktan otomatik kurulmuyor. Araç adı ve yerel dosya sınırı kontrol edilse de çalıştırılabilir dosyanın tedarik zinciri bütünlüğü veya zararlı PDF karşısındaki dayanıklılığı bu sprintte bağımsız olarak denetlenmedi.
+
+### İsteğe bağlı manuel çalıştırma örneği
+
+```powershell
+# Yalnız önceden güvenilir bir yerel Poppler kurulumu varsa:
+$reader = 'D:\Projects\DOU-READER-WINDOWS-TEST\tools\dou-reader-windows.ps1'
+$pdfTool = 'C:\Poppler\Library\bin\pdftotext.exe'
+powershell.exe -NoProfile -STA -File $reader -OwnVoice -PdfTextExecutable $pdfTool
+```
+
+**Kesin açık kapılar:** Son kaynak Windows 11/Windows PowerShell 5.1 altında henüz derlenmedi ve gerçek PDF dönüşüm testi yapılmadı. Parola korumalı, taranmış veya karmaşık düzenli PDF'ler; büyük belgeler; PDF ekleri/etiketleri; ekran okuyucu kullanıcısının doğrulaması ayrıca ele alınmalı. Untrusted PDF'nin bir üçüncü taraf dönüştürücüde işlenmesi yeni bir saldırı yüzeyi oluşturur. Öğrenci verisi ve gerçek sınav içerikleriyle pilot kabul öncesi test yapılmaz; PR #8 bu koşullar sağlanmadan birleştirilmez.
