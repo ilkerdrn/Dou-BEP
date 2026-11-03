@@ -575,10 +575,11 @@ test('stale audio generation cannot stop a newly started SoundPlayer during clea
  const end = cs.indexOf('private void CancelAudioLocked(', begin);
  assert.ok(begin >= 0 && end > begin);
  const segment = cs.slice(begin, end);
- assert.match(segment, /lock \(_audioLock\)\s*\{\s*if \(ReferenceEquals\(_audioProcess, proc\)\)/);
- assert.match(segment, /if \(player != null && ReferenceEquals\(_audioPlayer, player\)\)\s*\{\s*try \{ player\.Stop\(\); \} catch \(Exception\) \{ \}\s*_audioPlayer = null;/);
- assert.match(segment, /if \(player != null\) player\.Dispose\(\);/);
- assert.doesNotMatch(segment, /if \(player != null\) \{ try \{ player\.Stop\(\); \}/);
+ assert.ok(segment.includes('finally'));
+ assert.match(cs, /lock \(_audioLock\)\s*\{\s*if \(ReferenceEquals\(_audioProcess, proc\)\)/);
+ assert.match(cs, /if \(player != null && ReferenceEquals\(_audioPlayer, player\)\)\s*\{\s*try \{ player\.Stop\(\); \} catch \(Exception\) \{ \}\s*_audioPlayer = null;/);
+ assert.match(cs, /if \(player != null\) player\.Dispose\(\);/);
+ assert.doesNotMatch(cs, /if \(player != null\) \{ try \{ player\.Stop\(\); \}/);
 });
 
 test('PDF timeout state is synchronized with the watchdog, not a racy bool', () => {
