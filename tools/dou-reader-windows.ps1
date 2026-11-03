@@ -85,6 +85,28 @@ try {
     [DouBepReader.ReaderOfflineDocument]::SelfTest()
     [DouBepReader.ReaderOfflinePdf]::SelfTest()
     $pdfExe = [DouBepReader.ReaderOfflinePdf]::ValidateExecutable($PdfTextExecutable)
+    $nodeExe = ''
+    if ($OwnVoice) {
+        # Resolve the executable once. Subsequent utterances must never repeat
+        # a potentially different PATH search for "node".
+        $nodeCommand = Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+        if ($null -eq $nodeCommand) { throw 'OwnVoice: Node.js calistirilabilir dosyasi bulunamadi.' }
+        $nodeExe = [IO.Path]::GetFullPath([string]$nodeCommand.Source)
+        if ([IO.Path]::GetFileName($nodeExe) -ine 'node.exe' -or
+            -not (Test-Path -LiteralPath $nodeExe -PathType Leaf) -or
+            $nodeExe.StartsWith('\\')) {
+            throw 'OwnVoice: guvenilir yerel Node.js calistirilabilir dosyasi gerekli.'
+        }
+        $nodeRoot = [IO.Path]::GetPathRoot($nodeExe)
+        if ([IO.DriveInfo]::new($nodeRoot).DriveType -notin @([IO.DriveType]::Fixed, [IO.DriveType]::Removable)) {
+            throw 'OwnVoice: ag surucusundeki Node.js desteklenmez.'
+        }
+        $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
+        if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) {
+            throw 'OwnVoice: yerel ses koprusu bulunamadi.'
+        }
+    }
     $localTr = 0
     if (-not $OwnVoice) {
         # OwnVoice mode and its -Check must not instantiate Windows SAPI.
@@ -98,14 +120,7 @@ try {
     }
     if ($Check) {
         if ($OwnVoice) {
-            $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
-            if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-                throw 'OwnVoice teknik kontrolu: Node.js bulunamadi.'
-            }
-            if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) {
-                throw 'OwnVoice teknik kontrolu: yerel ses koprusu bulunamadi.'
-            }
-            Write-Host 'DOU Reader teknik on denetim: C# UIA/WinForms ve kendi yerel ses koprusu mevcut (SAPI kurulumu gerekmiyor).'
+            Write-Host 'DOU Reader teknik on denetim: C# UIA/WinForms, sabit Node.js yolu ve yerel ses koprusu mevcut (SAPI kurulumu gerekmiyor).'
         }
         else {
             Write-Host ('DOU Reader teknik on denetim: C# UIA/WinForms ve yerel SAPI sesi: ' + $localTr)
@@ -115,13 +130,10 @@ try {
     }
     Write-Host 'DOU Reader OS pilot: metin ag servisine gonderilmez; WAV RAM icinde tutulur.'
     Write-Host ('Izin verilen uygulamalar: ' + ($AllowedProcesses -join ', '))
-    $bridge = Join-Path $PSScriptRoot 'dou-speech-nvda-stdio.mjs'
     if ($OwnVoice) {
-        if (-not (Get-Command node -ErrorAction SilentlyContinue)) { throw 'DOU yerel ses icin Node.js gereklidir.' }
-        if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) { throw 'DOU yerel ses koprusu bulunamadi.' }
-        Write-Host 'Ses: DOU yerel Turkce motor (deneysel); SAPI fallback kapali.'
+        Write-Host 'Ses: DOU yerel Turkce motor (deneysel); Node yolu baslangicta sabitlendi, SAPI fallback kapali.'
     }
-    [DouBepReader.Program]::Run([string[]]$AllowedProcesses,[bool]$OwnVoice,[string]$bridge,[string]$pdfExe)
+    [DouBepReader.Program]::Run([string[]]$AllowedProcesses,[bool]$OwnVoice,[string]$bridge,[string]$pdfExe,[string]$nodeExe)
 } catch {
     throw ('DOU Reader baslatilamadi. Windows PowerShell 5.1, .NET Framework UIA ve yerel ses ayarlarini kontrol edin. ' + $_.Exception.Message)
 }
