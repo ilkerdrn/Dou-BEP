@@ -43,6 +43,7 @@ $tableHeaderContract = Join-Path $PSScriptRoot 'dou-reader-table-header-contract
 $sentenceContract = Join-Path $PSScriptRoot 'dou-reader-sentence-contract.cs'
 $offlineDocument = Join-Path $PSScriptRoot 'dou-reader-offline-document.cs'
 $offlinePdf = Join-Path $PSScriptRoot 'dou-reader-offline-pdf.cs'
+$ownVoiceProbe = Join-Path $PSScriptRoot 'dou-reader-ownvoice-probe.cs'
 if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $documentContract -PathType Leaf)) { throw 'Okuyucu belge sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $structureContract -PathType Leaf)) { throw 'Okuyucu yapi sozlesmesi bulunamadi.' }
@@ -51,6 +52,7 @@ if (-not (Test-Path -LiteralPath $tableHeaderContract -PathType Leaf)) { throw '
 if (-not (Test-Path -LiteralPath $sentenceContract -PathType Leaf)) { throw 'Okuyucu cumle sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $offlineDocument -PathType Leaf)) { throw 'Okuyucu cevrimdisi belge modulu bulunamadi.' }
 if (-not (Test-Path -LiteralPath $offlinePdf -PathType Leaf)) { throw 'Okuyucu cevrimdisi PDF modulu bulunamadi.' }
+if (-not (Test-Path -LiteralPath $ownVoiceProbe -PathType Leaf)) { throw 'Okuyucu OwnVoice on deneme modulu bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
@@ -75,7 +77,7 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlineDocument)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlinePdf))) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlineDocument)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlinePdf)) + [Environment]::NewLine + ([IO.File]::ReadAllText($ownVoiceProbe))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
     [DouBepReader.ReaderDocumentContract]::SelfTest()
     [DouBepReader.ReaderStructureContract]::SelfTest()
@@ -120,7 +122,9 @@ try {
     }
     if ($Check) {
         if ($OwnVoice) {
-            Write-Host 'DOU Reader teknik on denetim: C# UIA/WinForms, sabit Node.js yolu ve yerel ses koprusu mevcut (SAPI kurulumu gerekmiyor).'
+            # Actual silent synthesis, not only path existence. WAV stays in RAM.
+            [DouBepReader.ReaderOwnVoiceProbe]::Verify([string]$nodeExe, [string]$bridge)
+            Write-Host 'DOU Reader teknik on denetim: C# derlendi, yerel Node.js koprusu sentetik Turkce PCM WAV uretti (SAPI gerekmiyor).'
         }
         else {
             Write-Host ('DOU Reader teknik on denetim: C# UIA/WinForms ve yerel SAPI sesi: ' + $localTr)
