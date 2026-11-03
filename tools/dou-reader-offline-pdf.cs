@@ -9,6 +9,7 @@ namespace DouBepReader
     using System.IO;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Threading;
 
     public static class ReaderOfflinePdf
     {
@@ -54,6 +55,13 @@ namespace DouBepReader
 
         public static ReaderImportedDocument Import(string pdfPath, string converterPath)
         {
+            return Import(pdfPath, converterPath, CancellationToken.None);
+        }
+
+        public static ReaderImportedDocument Import(string pdfPath, string converterPath,
+            CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
             if (String.IsNullOrWhiteSpace(converterPath))
                 throw new NotSupportedException("PDF için onaylanmış yerel pdftotext.exe yapılandırılmamış.");
             string exe = ValidateExecutable(converterPath);
@@ -62,6 +70,7 @@ namespace DouBepReader
                 StringComparison.OrdinalIgnoreCase))
                 throw new NotSupportedException("Yalnız PDF dosyası kabul edilir.");
             VerifyPdfSignature(input);
+            cancellation.ThrowIfCancellationRequested();
             // Windows disallows double quotes in actual filenames. Explicitly
             // reject them anyway so the command line cannot be redirected.
             if (input.IndexOf('"') >= 0 || exe.IndexOf('"') >= 0)
@@ -79,7 +88,20 @@ namespace DouBepReader
             {
                 try
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     child.Start();
+                    // A cancelled import must terminate the converter, not merely
+                    // ignore its eventual UI result. Registration closes after the
+                    // stream is consumed, with the Process still alive.
+                    using (cancellation.Register(() =>
+                    {
+                        try { if (!child.HasExited) child.Kill(); }
+                        catch (InvalidOperationException) { }
+                        catch (ObjectDisposedException) { }
+                        catch (System.ComponentModel.Win32Exception) { }
+                    }))
+                    {
+                    cancellation.ThrowIfCancellationRequested();
                     bool timedOut = false;
                     var watchdog = Task.Run(() =>
                     {
@@ -102,6 +124,7 @@ namespace DouBepReader
                         while ((read = child.StandardOutput.BaseStream.Read(
                             buffer, 0, buffer.Length)) > 0)
                         {
+                            cancellation.ThrowIfCancellationRequested();
                             if (output.Length + read > MaxOutputBytes)
                             {
                                 try { child.Kill(); } catch (Exception) { }
@@ -109,14 +132,17 @@ namespace DouBepReader
                             }
                             output.Write(buffer, 0, read);
                         }
+                        cancellation.ThrowIfCancellationRequested();
                         if (!watchdog.Wait(ProcessTimeoutMilliseconds + 1500) ||
                             timedOut || !child.HasExited)
                             throw new InvalidDataException("Yerel PDF metin çıkarımı zaman aşımına uğradı.");
                         if (child.ExitCode != 0)
                             throw new InvalidDataException("PDF metni çıkarılamadı.");
+                        cancellation.ThrowIfCancellationRequested();
                         string text = new UTF8Encoding(false, true).GetString(
                             output.ToArray()).TrimStart('\uFEFF');
                         return ReaderOfflineDocument.FromPdfText(text);
+                    }
                     }
                 }
                 finally
