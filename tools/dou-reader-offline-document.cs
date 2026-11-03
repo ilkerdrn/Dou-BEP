@@ -35,7 +35,19 @@ namespace DouBepReader
         public static ReaderImportedDocument Import(string path)
         {
             if (String.IsNullOrWhiteSpace(path)) throw new InvalidDataException("Dosya seçilmedi.");
-            var info = new FileInfo(path);
+            // An explicit local-only mode must not fetch UNC or mapped network
+            // files even when a Windows file picker can browse them.
+            string fullPath = Path.GetFullPath(path);
+            if (fullPath.StartsWith(@"\\", StringComparison.Ordinal) ||
+                fullPath.StartsWith("//", StringComparison.Ordinal))
+                throw new NotSupportedException("Ağ üzerindeki belge bu modda okunmaz.");
+            var root = Path.GetPathRoot(fullPath);
+            if (String.IsNullOrWhiteSpace(root))
+                throw new NotSupportedException("Yerel sürücü belirlenemedi.");
+            DriveType kind = new DriveInfo(root).DriveType;
+            if (kind != DriveType.Fixed && kind != DriveType.Removable)
+                throw new NotSupportedException("Yalnız yerel veya çıkarılabilir sürücü.");
+            var info = new FileInfo(fullPath);
             if (!info.Exists || info.Length == 0 || info.Length > MaxFileBytes)
                 throw new InvalidDataException("Belge güvenli boyut sınırı dışında.");
             string extension = Path.GetExtension(info.Name).ToLowerInvariant();
