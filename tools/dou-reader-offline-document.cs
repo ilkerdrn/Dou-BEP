@@ -113,9 +113,18 @@ namespace DouBepReader
                         throw new InvalidDataException("TXT boyutu güvenli sınırı aşıyor.");
                     buffer.Write(chunk, 0, read);
                 }
-                string text = new UTF8Encoding(false, true).GetString(buffer.ToArray()).TrimStart('\uFEFF');
-                cancellation.ThrowIfCancellationRequested();
-                return Build("TXT", Regex.Split(text, @"\r\n|\n|\r"), cancellation);
+                // Avoid ToArray() duplicating the entire private document.
+                // Clear the mutable byte buffer after UTF-8 decoding, even if
+                // paragraph validation or cancellation rejects the text.
+                byte[] bytes = buffer.GetBuffer();
+                try
+                {
+                    string text = new UTF8Encoding(false, true).GetString(
+                        bytes, 0, checked((int)buffer.Length)).TrimStart('\uFEFF');
+                    cancellation.ThrowIfCancellationRequested();
+                    return Build("TXT", Regex.Split(text, @"\r\n|\n|\r"), cancellation);
+                }
+                finally { Array.Clear(bytes, 0, bytes.Length); }
             }
         }
 
