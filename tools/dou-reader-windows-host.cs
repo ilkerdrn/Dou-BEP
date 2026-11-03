@@ -80,6 +80,9 @@ namespace DouBepReader
         private int _sentencePid;
         private int _sentenceTextHash;
         private int _sentenceTextLength;
+        private ReaderImportedDocument _imported;
+        private int _importedParagraph = -1;
+        private int _importedSentence = -1;
         // Only a short, bounded utterance is kept in RAM during playback or pause.
         // Stop, new reading, and window close clear the pending session.
         private sealed class OwnVoiceSession
@@ -110,7 +113,7 @@ namespace DouBepReader
             // Small laptops should scroll instead of moving bottom-anchored
             // playback controls over sentence or structure buttons.
             AutoScroll = true;
-            AutoScrollMinSize = new Size(760, 855);
+            AutoScrollMinSize = new Size(760, 1130);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             Font = new Font("Segoe UI", 10.0f);
@@ -289,6 +292,56 @@ namespace DouBepReader
             Controls.Add(sentenceLabel);
             Controls.Add(previousSentence);
             Controls.Add(nextSentence);
+            var fileLabel = new Label {
+                Text = "ÇEVRİMDIŞI BELGE OKUMA  /  TXT VE DOCX",
+                Left = 26, Top = 833, Width = 690, Height = 24,
+                ForeColor = accent, Font = new Font("Segoe UI", 9.0f, FontStyle.Bold)
+            };
+            var openFile = new Button {
+                Text = "Belge seç ve aç", Left = 26, Top = 870, Width = 219, Height = 48,
+                AccessibleName = "Yerel UTF-8 TXT veya DOCX dosyası seç",
+                AccessibleDescription = "Dosya kullanıcı tarafından seçilir; metin cihaz dışına gönderilmez.",
+                TabIndex = 14, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            openFile.Click += delegate { OpenOfflineDocument(); };
+            var closeFile = new Button {
+                Text = "Belgeyi kapat", Left = 261, Top = 870, Width = 219, Height = 48,
+                AccessibleName = "Yüklenen belgeyi kapat ve metin referanslarını bırak",
+                TabIndex = 15, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            closeFile.Click += delegate { CloseOfflineDocument(); };
+            var prevParagraph = new Button {
+                Text = "Önceki paragraf", Left = 26, Top = 927, Width = 219, Height = 48,
+                AccessibleName = "Yerel belgedeki önceki paragrafı oku",
+                TabIndex = 16, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            prevParagraph.Click += delegate { ReadOfflineParagraph(-1); };
+            var nextParagraph = new Button {
+                Text = "Sonraki paragraf", Left = 261, Top = 927, Width = 219, Height = 48,
+                AccessibleName = "Yerel belgedeki sonraki paragrafı oku",
+                TabIndex = 17, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            nextParagraph.Click += delegate { ReadOfflineParagraph(1); };
+            var prevFileSentence = new Button {
+                Text = "Önceki belge cümlesi", Left = 26, Top = 985, Width = 219, Height = 48,
+                AccessibleName = "Yerel belgedeki önceki cümleyi oku",
+                TabIndex = 18, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            prevFileSentence.Click += delegate { ReadOfflineSentence(-1); };
+            var nextFileSentence = new Button {
+                Text = "Sonraki belge cümlesi", Left = 261, Top = 985, Width = 219, Height = 48,
+                AccessibleName = "Yerel belgedeki sonraki cümleyi oku",
+                TabIndex = 19, FlatStyle = FlatStyle.Flat, ForeColor = ink, BackColor = surface
+            };
+            nextFileSentence.Click += delegate { ReadOfflineSentence(1); };
+            foreach (Button action in new[] { openFile, closeFile, prevParagraph,
+                nextParagraph, prevFileSentence, nextFileSentence })
+            {
+                action.FlatAppearance.BorderSize = 1;
+                action.FlatAppearance.BorderColor = accent;
+                Controls.Add(action);
+            }
+            Controls.Add(fileLabel);
             Controls.Add(overline); Controls.Add(heading); Controls.Add(subtitle); Controls.Add(sectionButton);
             Controls.Add(help); Controls.Add(statusLabel); Controls.Add(_status);
             Controls.Add(voiceTest); Controls.Add(pause); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
@@ -1382,6 +1435,9 @@ namespace DouBepReader
             foreach (int id in _registeredHotkeys) UnregisterHotKey(Handle, id);
             _registeredHotkeys.Clear();
             StopSpeech();
+            _imported = null;
+            _importedParagraph = -1;
+            _importedSentence = -1;
             if (_speaker != null) _speaker.Dispose();
             base.OnFormClosed(e);
         }
