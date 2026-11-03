@@ -626,7 +626,9 @@ test('own voice clears mutable JSON and PCM buffers on success or exception', ()
 test('OwnVoice preflight checks bridge without instantiating Windows SAPI', () => {
  const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
  const acceptance = readFileSync(new URL('./tools/dou-reader-acceptance.ps1', import.meta.url), 'utf8');
+ assert.match(ps, /Add-Type -AssemblyName 'System' -ErrorAction Stop/);
  assert.match(ps, /Add-Type -AssemblyName 'System.Core'/);
+ assert.match(ps, /\$referenceNames = @\('System','System.Core'/);
  assert.match(ps, /if \(-not \$OwnVoice\)/);
  assert.match(ps, /if \(\$Check\) \{\s*if \(\$OwnVoice\)/);
  assert.match(ps, /Get-Command node -ErrorAction SilentlyContinue/);
