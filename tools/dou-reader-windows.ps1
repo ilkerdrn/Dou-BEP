@@ -40,16 +40,18 @@ $structureContract = Join-Path $PSScriptRoot 'dou-reader-structure-contract.cs'
 $tableContextContract = Join-Path $PSScriptRoot 'dou-reader-table-context-contract.cs'
 $tableHeaderContract = Join-Path $PSScriptRoot 'dou-reader-table-header-contract.cs'
 $sentenceContract = Join-Path $PSScriptRoot 'dou-reader-sentence-contract.cs'
+$offlineDocument = Join-Path $PSScriptRoot 'dou-reader-offline-document.cs'
 if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $documentContract -PathType Leaf)) { throw 'Okuyucu belge sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $structureContract -PathType Leaf)) { throw 'Okuyucu yapi sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $tableContextContract -PathType Leaf)) { throw 'Okuyucu tablo baglami sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $tableHeaderContract -PathType Leaf)) { throw 'Okuyucu tablo baslik sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $sentenceContract -PathType Leaf)) { throw 'Okuyucu cumle sozlesmesi bulunamadi.' }
+if (-not (Test-Path -LiteralPath $offlineDocument -PathType Leaf)) { throw 'Okuyucu cevrimdisi belge modulu bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
-$referenceNames = @('System.Windows.Forms','System.Drawing','UIAutomationClient','UIAutomationTypes','System.Speech','System.Core')
+$referenceNames = @('System.Windows.Forms','System.Drawing','UIAutomationClient','UIAutomationTypes','System.Speech','System.Core','System.IO.Compression','System.Xml')
 $refs = @()
 try {
     Add-Type -AssemblyName 'System.Windows.Forms' -ErrorAction Stop
@@ -57,6 +59,8 @@ try {
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
+    Add-Type -AssemblyName 'System.IO.Compression' -ErrorAction Stop
+    Add-Type -AssemblyName 'System.Xml' -ErrorAction Stop
     foreach ($assemblyName in $referenceNames) {
         $assembly = [AppDomain]::CurrentDomain.GetAssemblies() |
             Where-Object { $_.GetName().Name -eq $assemblyName -and -not $_.IsDynamic } |
@@ -66,13 +70,14 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract))) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlineDocument))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
     [DouBepReader.ReaderDocumentContract]::SelfTest()
     [DouBepReader.ReaderStructureContract]::SelfTest()
     [DouBepReader.ReaderTableContextContract]::SelfTest()
     [DouBepReader.ReaderTableHeaderContract]::SelfTest()
     [DouBepReader.ReaderSentenceContract]::SelfTest()
+    [DouBepReader.ReaderOfflineDocument]::SelfTest()
     $localTr = 0
     if ($Check -or -not $OwnVoice) {
         # SAPI is inspected only for legacy SAPI mode or diagnostics.
