@@ -1497,8 +1497,15 @@ namespace DouBepReader
                 var escaped = text.Replace("\\", "\\\\").Replace("\"", "\\\"")
                                   .Replace("\n", " ").Replace("\r", " ");
                 byte[] input = Encoding.UTF8.GetBytes("{\"text\":\"" + escaped + "\",\"acousticModel\":\"legacy\",\"rate\":" + rate.ToString("0.00", CultureInfo.InvariantCulture) + "}");
-                proc.StandardInput.BaseStream.Write(input, 0, input.Length);
-                proc.StandardInput.Close();
+                try
+                {
+                    proc.StandardInput.BaseStream.Write(input, 0, input.Length);
+                    proc.StandardInput.Close();
+                }
+                finally
+                {
+                    Array.Clear(input, 0, input.Length);
+                }
 
                 // The watchdog also covers blocked stdout reads. Cancellation kills the
                 // subprocess; no unbounded output file or blocking UI-thread wait.
@@ -1598,7 +1605,18 @@ namespace DouBepReader
                 if (player != null) player.Dispose();
                 if (audioStream != null) audioStream.Dispose();
                 if (pcmWav != null) Array.Clear(pcmWav, 0, pcmWav.Length);
-                if (stream != null) stream.Dispose();
+                if (stream != null)
+                {
+                    // MemoryStream() owns an exposable in-memory WAV buffer.
+                    // Clear it too; zeroing one ToArray() copy isn't sufficient.
+                    try
+                    {
+                        byte[] buffer = stream.GetBuffer();
+                        Array.Clear(buffer, 0, buffer.Length);
+                    }
+                    catch (UnauthorizedAccessException) { }
+                    stream.Dispose();
+                }
                 if (proc != null)
                 {
                     try { if (!proc.HasExited) proc.Kill(); } catch (Exception) { }
