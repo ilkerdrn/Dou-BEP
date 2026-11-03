@@ -92,6 +92,7 @@ namespace DouBepReader
                             }
                         }
                         catch (InvalidOperationException) { }
+                        catch (ObjectDisposedException) { }
                         catch (System.ComponentModel.Win32Exception) { }
                     });
                     using (var output = new MemoryStream())
