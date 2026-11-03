@@ -47,11 +47,10 @@ namespace DouBepReader
             DriveType kind = new DriveInfo(root).DriveType;
             if (kind != DriveType.Fixed && kind != DriveType.Removable)
                 throw new NotSupportedException("Yerel sürücü gereklidir.");
+            // Inspect link metadata before asking the target for its length.
+            // Reparse points include symlinks and junctions; do not follow them
+            // to a network location when validating a supposedly local file.
             var info = new FileInfo(fullPath);
-            if (!info.Exists || info.Length == 0 || info.Length > maxSize)
-                throw new InvalidDataException("Dosya güvenli boyut sınırı dışında.");
-            // Reparse points include symlinks and junctions. Refuse rather than
-            // following an apparently local path into a network resource.
             var item = info as FileSystemInfo;
             while (item != null)
             {
@@ -61,6 +60,8 @@ namespace DouBepReader
                     ((FileInfo)item).Directory : ((DirectoryInfo)item).Parent;
                 item = parent;
             }
+            if (!info.Exists || info.Length == 0 || info.Length > maxSize)
+                throw new InvalidDataException("Dosya güvenli boyut sınırı dışında.");
             return fullPath;
         }
 
