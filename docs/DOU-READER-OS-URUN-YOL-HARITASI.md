@@ -215,3 +215,22 @@ powershell.exe -NoProfile -STA -File $reader -OwnVoice -PdfTextExecutable $pdfTo
 - Node regresyonları; aktif oynatıcı kimliği, atomik PDF watchdog, DOCX korumalı işaretleri, iptal referansı ve ses tamponu temizliğini içeriyor.
 
 **Hâlâ açık zorunlu doğrulamalar:** Windows PowerShell 5.1 altında son C# derlemesi, gerçek `pdftotext.exe` iptalinde process-list gözlemi, birkaç hızlı cümle/Stop/Play komutunda ses bütünlüğü, yüksek kontrast ve ekran okuyucu kullanıcı kabulü. Yerel Poppler süreci sandbox değildir. Bu paket üretim/gizli öğrenci verileriyle denenmemeli ve PR #8 kabul olmadan `main` dalına birleştirilmemelidir.
+
+## Sprint 14 — gerçek Node doğrulaması ve Windows derleme hazırlığı (kodlandı, Windows kabulü bekliyor)
+
+Bu çalışma, Sprint 13'te belirlenen **derleme ve çalışma güvenilirliği** engellerini küçültmeye odaklandı. Yeni kullanıcı özelliği eklenmedi.
+
+- **OwnVoice C# ön denetimi artık SAPI kurulumundan bağımsız:** `-Check -OwnVoice` yolunda `SpeechSynthesizer` oluşturulmaz; Node.js ve yerel `tools/dou-speech-nvda-stdio.mjs` köprüsünün varlığı kontrol edilir. Normal SAPI modu değişmeden korunur. Windows PowerShell `Add-Type` derlemesine `System` ve `System.Core` referansları açıkça eklendi.
+- **Ses watchdog yarışını düzelttik:** ses üretim alt süreci için `timedOut` artık `Interlocked` ile eşzamanlanıyor. Önceden eklenen oynatıcı kilidi ve kuyruk iptali korunuyor.
+- **Belge byte dizisi kopyaları azaltıldı:** TXT çözümlenirken `MemoryStream.GetBuffer` doğrudan kullanılıyor; PDF stdout metni de geçici `ToArray` kopyası oluşturmadan çözülüyor. Kullanılan değiştirilebilir geçici byte dizileri `finally` içinde sıfırlanmaya çalışılıyor. `string` örnekleri, üçüncü taraf PDF süreci ve işletim sistemi belleği için sıfırlama garantisi **yok**.
+- **Windows kabul betiği genişledi:** `tools/dou-reader-acceptance.ps1` artık `dou-speech-free-text.test.mjs`, `dou-speech-nvda-bridge.test.mjs` ve `dou-reader-own-voice.test.mjs` paketlerini koşulsuz çalıştırır; ardından `-Check -OwnVoice` ile gerçek C# derlemesi ve sözleşme öz testlerini denetleyecek şekilde hazırlandı.
+
+### Bu turda gerçekten çalıştırılan testler
+
+- Linux Node.js 22 ortamında, GitHub dosyalarının SHA-1 Git blob kimliğiyle birebir eşleştiği doğrulanan `dou-speech-free-text.mjs` ve `dou-speech-free-text.test.mjs` ile **9/9 gerçek Node testi PASS**.
+- SHA doğrulanmış güncel `tools/dou-speech-nvda-stdio.mjs` köprüsü ve aynı yerel ses motoruyla **2 ayrı Türkçe WAV üretimi + 1 mahremiyet/red kontrolü PASS**. Bu üç kontrol tam `dou-speech-nvda-bridge.test.mjs` paketinin çalıştırılması değildir.
+- C# ve PowerShell kaynak dosyalarına karşı güncellenmiş statik regresyon kontrolleri denetlendi. **Statik eşleşmeler C# derleyicisi veya gerçek Windows testinin yerine geçmez.**
+
+### Kalan bloklayıcılar
+
+Windows 11 / Windows PowerShell 5.1 üzerinde `tools/dou-reader-acceptance.ps1` gerçek çalıştırma sonucu, `Add-Type` derlemesi, `pdftotext.exe` alt süreç iptali, kendi Türkçe sesinin hoparlörde duyulması, yüksek DPI ve erişilebilirlik kullanıcı kabulü **henüz yoktur**. Daha önceki pilot kaynaklara, DOU BEP `main` dalına, öğrenci verilerine veya üretim veritabanına dokunulmadı. PR #8 bu şartlar tamamlanmadan birleştirilmemelidir.
