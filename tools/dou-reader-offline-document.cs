@@ -162,6 +162,17 @@ namespace DouBepReader
                     cancellation.ThrowIfCancellationRequested();
                     var ns = new XmlNamespaceManager(xml.NameTable);
                     ns.AddNamespace("w", WordNamespace);
+                    // Exam/assessment files can contain unreconciled edits or
+                    // hidden answer keys. The text-only pilot cannot safely
+                    // decide which version should be spoken. Fail closed.
+                    const string unsafeWordMarkup =
+                        "//w:body//w:vanish | //w:body//w:webHidden | " +
+                        "//w:body//w:specVanish | //w:body//w:del | " +
+                        "//w:body//w:ins | //w:body//w:moveFrom | " +
+                        "//w:body//w:moveTo | //w:body//w:altChunk";
+                    if (xml.SelectSingleNode(unsafeWordMarkup, ns) != null)
+                        throw new InvalidDataException(
+                            "Gizli, izlenen değişiklik veya alternatif DOCX içeriği desteklenmiyor.");
                     var nodes = xml.SelectNodes("//w:body//w:p", ns);
                     if (nodes == null || nodes.Count > MaxParagraphs + 150)
                         throw new InvalidDataException("DOCX paragraf sayısı güvenli sınırı aşıyor.");
@@ -286,6 +297,25 @@ namespace DouBepReader
                 if (fromDocx.Format != "DOCX" || fromDocx.Paragraphs.Count != 2 ||
                     fromDocx.Paragraphs[0] != "Merhaba dünya.")
                     throw new InvalidOperationException("Offline DOCX parsing failed.");
+            }
+            using (var revisions = new MemoryStream())
+            {
+                using (var zip = new ZipArchive(revisions, ZipArchiveMode.Create, true))
+                {
+                    var xmlPart = zip.CreateEntry("word/document.xml", CompressionLevel.Optimal);
+                    using (var writer = new StreamWriter(xmlPart.Open(), new UTF8Encoding(false)))
+                    {
+                        writer.Write("<w:document xmlns:w=\"" + WordNamespace +
+                            "\"><w:body><w:p><w:ins><w:r><w:t>Gizli yanıt.</w:t>" +
+                            "</w:r></w:ins></w:p></w:body></w:document>");
+                    }
+                }
+                revisions.Position = 0;
+                bool rejectedChanges = false;
+                try { ReadDocx(revisions); }
+                catch (InvalidDataException) { rejectedChanges = true; }
+                if (!rejectedChanges)
+                    throw new InvalidOperationException("Tracked DOCX revisions were admitted.");
             }
             // A DTD-containing DOCX must not resolve entities or external resources.
             using (var unsafeArchive = new MemoryStream())
