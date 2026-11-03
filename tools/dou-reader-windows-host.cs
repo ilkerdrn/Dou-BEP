@@ -445,7 +445,10 @@ namespace DouBepReader
                         _imported = result;
                         _importedParagraph = -1;
                         _importedSentence = -1;
-                        SetStatus(result.Format + " belgesi hazır. " +
+                        string scope = String.Equals(result.Format, "PDF",
+                            StringComparison.Ordinal) ?
+                            "PDF (yalnız ilk en fazla 12 sayfanın metni)" : result.Format;
+                        SetStatus(scope + " belgesi hazır. " +
                             result.Paragraphs.Count + " paragraf. Sonraki paragraf ile başlayın.");
                     });
                 }
