@@ -534,7 +534,7 @@ test('Windows acceptance can pass a trusted local PDF executable without downloa
  const acceptance = readFileSync(new URL('./tools/dou-reader-acceptance.ps1', import.meta.url), 'utf8');
  const launcher = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
  assert.match(acceptance, /\[string\]\$PdfTextExecutable = ''/);
- assert.match(acceptance, /-Check -PdfTextExecutable \$PdfTextExecutable/);
+ assert.match(acceptance, /-Check -OwnVoice -PdfTextExecutable \$PdfTextExecutable/);
  assert.match(acceptance, /-OwnVoice -AllowedProcesses \$AllowedProcess -PdfTextExecutable \$PdfTextExecutable/);
  assert.match(launcher, /ReaderOfflinePdf\]::ValidateExecutable\(\$PdfTextExecutable\)/);
  assert.match(launcher, /ReaderOfflinePdf\]::SelfTest\(\)/);
@@ -621,4 +621,37 @@ test('own voice clears mutable JSON and PCM buffers on success or exception', ()
  assert.match(cs, /Array\.Clear\(buffer, 0, buffer\.Length\)/);
  assert.match(cs, /if \(audioStream != null\) audioStream\.Dispose\(\)/);
  assert.match(cs, /if \(stream != null\)\s*\{/);
+});
+
+test('OwnVoice preflight checks bridge without instantiating Windows SAPI', () => {
+ const ps = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ const acceptance = readFileSync(new URL('./tools/dou-reader-acceptance.ps1', import.meta.url), 'utf8');
+ assert.match(ps, /Add-Type -AssemblyName 'System.Core'/);
+ assert.match(ps, /if \(-not \$OwnVoice\)/);
+ assert.match(ps, /if \(\$Check\) \{\s*if \(\$OwnVoice\)/);
+ assert.match(ps, /Get-Command node -ErrorAction SilentlyContinue/);
+ assert.match(ps, /Test-Path -LiteralPath \$bridge -PathType Leaf/);
+ assert.match(acceptance, /-Check -OwnVoice -PdfTextExecutable \$PdfTextExecutable/);
+ assert.doesNotMatch(ps, /if \(\$Check -or -not \$OwnVoice\)/);
+});
+
+test('offline decoder uses one bounded byte buffer and clears it after parsing', () => {
+ const txt = readFileSync(new URL('./tools/dou-reader-offline-document.cs', import.meta.url), 'utf8');
+ const pdf = readFileSync(new URL('./tools/dou-reader-offline-pdf.cs', import.meta.url), 'utf8');
+ assert.match(txt, /byte\[\] bytes = buffer\.GetBuffer\(\)/);
+ assert.match(txt, /bytes, 0, checked\(\(int\)buffer\.Length\)/);
+ assert.match(txt, /finally \{ Array\.Clear\(bytes, 0, bytes\.Length\); \}/);
+ assert.doesNotMatch(txt, /GetString\(buffer\.ToArray\(\)\)/);
+ assert.match(pdf, /output\.GetBuffer\(\), 0, checked\(\(int\)output\.Length\)/);
+ assert.match(pdf, /byte\[\] bytes = output\.GetBuffer\(\)/);
+ assert.match(pdf, /Array\.Clear\(bytes, 0, bytes\.Length\)/);
+ assert.doesNotMatch(pdf, /output\.ToArray\(\)/);
+});
+
+test('own speech watchdog publishes timeout using Interlocked', () => {
+ const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(host, /int timedOut = 0/);
+ assert.match(host, /Interlocked\.Exchange\(ref timedOut, 1\)/);
+ assert.match(host, /Interlocked\.CompareExchange\(ref timedOut, 0, 0\) != 0/);
+ assert.doesNotMatch(host, /bool timedOut = false/);
 });
