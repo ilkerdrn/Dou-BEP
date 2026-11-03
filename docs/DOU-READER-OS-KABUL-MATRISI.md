@@ -154,3 +154,25 @@ Bu özellik **tüm belgeyi** veya Not Defteri'ne girilmiş düzenlenebilir metni
 | 70 | Ses durdurma / konuşma sırasında cümle değiştirme | Eski ses iptal edilir, sıradaki cümleye geçerken kuyruk karışmaz | Bekliyor |
 
 **Not:** Bu senaryoların tümü Windows kullanıcı kabulünü bekliyor. Sentetik sayfadaki sahte parola kontrolü gerçek hesap bilgisi içermez. Metin okuma yalnız açıkça seçilmiş statik erişilebilir düğümle sınırlıdır; PDF/Word belgesinin gövde metnini veya düzenlenebilir Not Defteri içeriğini okumaz.
+
+## Sprint 10 — çevrimdışı TXT ve DOCX belge okuma
+
+| No | Windows kabul senaryosu | Beklenen davranış | Durum |
+|---|---|---|---|
+| 71 | Yerel `tools/dou-reader-offline-fixture.txt` dosyasını seçmek | İçeriği önizleme/log olmadan belleğe alır, paragraf sayısını bildirir | Bekliyor |
+| 72 | Yerel Türkçe UTF-8 TXT'de ileri/geri paragraf | Cümleler yerine doğru paragraf sırasını seslendirir, baş ve son sınırında durur | Bekliyor |
+| 73 | Seçili belge paragrafında ileri/geri cümle | Mevcut `ReaderSentenceContract` kurallarını uygular, ses kuyruğu karışmaz | Bekliyor |
+| 74 | DOCX içinde iki paragraf, Türkçe karakter ve tablo hücresi metni | `word/document.xml` içindeki `w:t` metinlerini kullanıcı komutuyla okur | Bekliyor |
+| 75 | DOCX içinde resim, harici ilişki, makro veya bağlantı | Harici kaynağa erişmez, makro çalıştırmaz; yalnız desteklenen metni alır | Bekliyor |
+| 76 | DOCX XML'de DTD / varlık kullanımı | XML ayrıştırma güvenle reddedilir; harici varlık çözümleme yapılmaz | Bekliyor |
+| 77 | Aşırı büyük DOCX/TXT, sıkıştırma bombası veya 200 üzeri paragraf | Belge tam olarak reddedilir; sessiz kesme olmaz | Bekliyor |
+| 78 | Ağ paylaşımı veya eşlenmiş ağ sürücüsündeki belge | Çevrimdışı dosya modu okumayı reddeder | Bekliyor |
+| 79 | Geçersiz UTF-8, destek dışı karakter veya 850 karakter üzeri paragraf | Genel hata gösterilir, dosya yolu veya gizli metin durum alanına yazılmaz | Bekliyor |
+| 80 | Dosya seçme penceresinde iptal veya hatalı belge | Önceki belge seçimi ve okuma konumu gereksiz yere değiştirilmez | Bekliyor |
+| 81 | Belgeyi kapat ve ardından önceki/sonraki düğmeleri | Önceki metne erişilemez, ses kesilir, bellekteki uygulama referansları bırakılır | Bekliyor |
+| 82 | PDF veya eski `.doc` dosyası | Destekleniyormuş gibi açılmaz; biçimin desteklenmediği açıkça anlaşılır | Bekliyor |
+| 83 | DOU yerel Türkçe sesi olmayan SAPI seçeneği | Uzaktaki konuşma servisine kendiliğinden geçmez | Bekliyor |
+| 84 | Küçük dizüstü / yüksek kontrast / klavye ile Tab gezinmesi | Kaydırılabilir panel üzerinden tüm belge komutları erişilebilir | Bekliyor |
+| 85 | DOCX yükleme sırasında bozuk ZIP veya erişim hatası | Uygulama kapanmadan genel hata gösterir, dosya yolunu ifşa etmez | Bekliyor |
+
+**Ürün kabulü:** Bu 15 manuel Windows senaryosu henüz tamamlanmadı. DOCX metin çıkarma, tam Word erişilebilirlik nesne modeli veya PDF desteği olarak sunulmaz. Gerçek kullanıcı/cihaz kabulü tamamlanmadan PR #8 birleştirilmez.
