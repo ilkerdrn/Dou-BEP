@@ -220,3 +220,12 @@ Bu kontrol listesi yeni özellik kapsamı açmak yerine ürün kapanışındaki 
 - [ ] Belgede gerçek öğrenci/sınav verisi olmadan anonim TXT/DOCX/PDF üzerinde klavye, Tab sırası, yüksek kontrast, %200 DPI ve duyulur Türkçe ses testleri geçti.
 
 **Kaynak kontrolü cihaz kabulü değildir.** Gerçek Windows ve engelli kullanıcı senaryoları hâlâ bekliyor.
+
+## Sprint 15 — derleme ve sessiz WAV ön-deneme kapısı
+
+Bu bölüm mevcut 103 Windows senaryosunun yerine geçmez; ürün yayınını engelleyen iki doğrulamayı netleştirir.
+
+- [ ] Windows 11 üzerinde `powershell.exe -NoProfile -STA -File tools\dou-reader-windows.ps1 -Check -OwnVoice` çalıştırıldığında C# derlemesi ve **gerçek Node.exe → yerel köprü → geçerli PCM WAV** denemesi hata vermeden tamamlanır; test WAV'ı RAM dışında bırakılmaz ve hoparlöre gönderilmez.
+- [ ] Windows'ta kurulu Node.js birden fazla sürüm/PATH girdisiyle kullanıldığında ön kontrolde belirlenen **aynı tam `node.exe` yolu** bütün ses parçalarında kullanılır; başarısız, UNC/ağ yolu veya uygun olmayan çalıştırılabilir dosyada anlaşılır hata alınır.
+
+**Not:** Bu iki test henüz çalıştırılmadı. Sentetik ses üretimi başarılı olsa da ses cihazı, yüksek DPI, ekran okuyucu uyumu, kullanıcı görüşmeleri ve PDF alt süreç kabulü hâlâ zorunludur.
