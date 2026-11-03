@@ -193,3 +193,14 @@ powershell.exe -NoProfile -STA -File $reader -OwnVoice -PdfTextExecutable $pdfTo
 ```
 
 **Kesin açık kapılar:** Son kaynak Windows 11/Windows PowerShell 5.1 altında henüz derlenmedi ve gerçek PDF dönüşüm testi yapılmadı. Parola korumalı, taranmış veya karmaşık düzenli PDF'ler; büyük belgeler; PDF ekleri/etiketleri; ekran okuyucu kullanıcısının doğrulaması ayrıca ele alınmalı. Untrusted PDF'nin bir üçüncü taraf dönüştürücüde işlenmesi yeni bir saldırı yüzeyi oluşturur. Öğrenci verisi ve gerçek sınav içerikleriyle pilot kabul öncesi test yapılmaz; PR #8 bu koşullar sağlanmadan birleştirilmez.
+
+## Sprint 12 — gerçek belge iptali ve PDF işlem yaşam döngüsü (kodlandı, Windows kabulü bekliyor)
+
+- `CancelPendingDocumentImport()` artık yalnız eski asenkron sonucu yok saymakla kalmıyor. Önceki ithalat işine ait `CancellationTokenSource` iptal ediliyor; kullanıcı başka belge seçtiğinde, **Belgeyi kapat** kullandığında ve Reader penceresi kapandığında aynı kural uygulanıyor.
+- PDF modülü `ReaderOfflinePdf.Import(path, converter, CancellationToken)` çağrısını destekler. Alt süreç başladıktan sonra token iptal edilirse kayıtlı iptal geri çağrısı `pdftotext.exe` işlemini öldürmeye çalışır. Okuma döngüsü ve dönüşüm sonucu, iptal edilmiş bir isteği kabul etmez. **Bu, Windows'ta %100 garantili zorla sonlandırma veya sandbox değildir:** işletim sistemi/uygulama hatası altında kaynak/işlem davranışını gerçek Windows testi belirleyecek.
+- TXT ve DOCX okuyucuları da aynı token'ı kabul eder. TXT parça okuması, DOCX paragraf ve metin öğesi döngüleri ile sonuç derlemesi iptali kontrol eder. Tek seferlik sınırlı XML yükleme işlemi sırasında anında kesme garantisi yoktur; sonraki kontrol noktasında durur.
+- Daha önceki kuşak/sıra numarası kontrolü korunmuştur: eski sonuç yeni belgeyi veya kapatılan belgeyi yeniden etkinleştiremez. Token'ın sahibi olan arka plan işi kendi `CancellationTokenSource` nesnesini işler bitince bırakır; iptal çağrısındaki `ObjectDisposedException` güvenli biçimde ele alınır.
+- C# `SelfTest()` içinde önceden iptal edilmiş TXT/DOCX/PDF istekleri gerçek bir kullanıcı dosyasına bakmadan reddedilir. Node kaynak regresyonu güncellendi.
+- Erişilebilir durum mesajı PDF içe aktarmada açıkça **“yalnız ilk en fazla 12 sayfanın metni”** der; belge tamamı okunmuş izlenimi verilmez.
+
+**Durum:** Değişiklikler PR #8 geliştirme dalında; Windows PowerShell 5.1 ile son C# derlemesi, converter iptal senaryosu ve gerçek klavye/ses erişilebilirliği henüz test edilmedi. Gerçek öğrenci veya sınav verilerinde kullanılmamalıdır. Bu sprint yeni özellik eklemekten çok daha önceki iptal/gizlilik açıklarını daraltmaya yöneliktir.
