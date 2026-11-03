@@ -562,4 +562,9 @@ test('all offline imports support cancellation and PDF process is killed on clos
  assert.match(pdf, /using \(cancellation\.Register\(\(\) =>/);
  assert.match(pdf, /if \(!child\.HasExited\) child\.Kill\(\)/);
  assert.match(pdf, /cancellation\.ThrowIfCancellationRequested\(\)/);
+ assert.match(pdf, /Cancelled PDF process request admitted/);
+ assert.match(importer, /Cancelled file import was admitted/);
+ assert.match(importer, /Cancelled document builder was admitted/);
+ assert.match(host, /string scope = String\.Equals\(result\.Format, "PDF"/);
+ assert.match(host, /"PDF \(yalnız ilk en fazla 12 sayfanın metni\)"/);
 });
