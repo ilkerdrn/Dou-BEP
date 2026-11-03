@@ -409,3 +409,64 @@ test('UIA acceptance fixture is offline, anonymous and exposes semantic headings
  assert.doesNotMatch(html, /<script\b/i);
  assert.doesNotMatch(html, /https?:\/\//i);
 });
+
+test('offline TXT and DOCX importer has strict size, XML, network, and content boundaries', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-offline-document.cs', import.meta.url), 'utf8');
+ const launcher = readFileSync(new URL('./tools/dou-reader-windows.ps1', import.meta.url), 'utf8');
+ assert.match(cs, /public static class ReaderOfflineDocument/);
+ assert.match(cs, /MaxFileBytes = 8 \* 1024 \* 1024/);
+ assert.match(cs, /MaxTextFileBytes = 128 \* 1024/);
+ assert.match(cs, /MaxDocumentXmlBytes = 1024 \* 1024/);
+ assert.match(cs, /MaxParagraphs = 200/);
+ assert.match(cs, /MaxTotalCharacters = 32000/);
+ assert.match(cs, /new UTF8Encoding\(false, true\)/);
+ assert.match(cs, /DtdProcessing = DtdProcessing\.Prohibit/);
+ assert.match(cs, /XmlResolver = null/);
+ assert.match(cs, /documentEntry\.CompressedLength \* 100L/);
+ assert.match(cs, /"word\/document\.xml"/);
+ assert.match(cs, /XPath|SelectNodes\("\/\/w:body\/\/w:p", ns\)/);
+ assert.match(cs, /ReaderSpeechContract\.Split\(normalized\) == null/);
+ assert.match(cs, /kind != DriveType\.Fixed && kind != DriveType\.Removable/);
+ assert.match(cs, /UNC path admitted/);
+ assert.match(cs, /Invalid UTF-8 admitted/);
+ assert.match(cs, /DOCX DTD was accepted/);
+ assert.match(cs, /Offline DOCX parsing failed/);
+ assert.match(launcher, /ReadAllText\(\$offlineDocument\)/);
+ assert.match(launcher, /ReaderOfflineDocument\]::SelfTest\(\)/);
+ assert.match(launcher, /'System\.IO\.Compression'/);
+ assert.match(launcher, /'System\.Xml'/);
+});
+
+test('explicit offline document UI has paragraph and sentence buttons without exposing paths', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /private ReaderImportedDocument _imported/);
+ assert.match(cs, /private void OpenOfflineDocument\(\)/);
+ assert.match(cs, /new OpenFileDialog/);
+ assert.match(cs, /Filter = "Güvenli metin belgeleri/);
+ assert.match(cs, /ReaderOfflineDocument\.Import\(picker\.FileName\)/);
+ assert.match(cs, /private void CloseOfflineDocument\(\)/);
+ assert.match(cs, /_imported = null/);
+ assert.match(cs, /private void ReadOfflineParagraph\(int direction\)/);
+ assert.match(cs, /private void ReadOfflineSentence\(int direction\)/);
+ assert.match(cs, /ReaderSentenceContract\.Plan\(_imported\.Paragraphs\[_importedParagraph\]\)/);
+ assert.match(cs, /SpeakOwnVoice\(text, 0\)/);
+ assert.match(cs, /_imported\.Paragraphs\.Count/);
+ assert.match(cs, /AutoScrollMinSize = new Size\(760, 1130\)/);
+ assert.match(cs, /OpenOfflineDocument\(\);/);
+ assert.match(cs, /ReadOfflineParagraph\(1\);/);
+ assert.match(cs, /ReadOfflineSentence\(-1\);/);
+ assert.match(cs, /catch \(Exception ex\)/);
+ assert.match(cs, /ex is InvalidDataException/);
+ assert.doesNotMatch(cs, /SetStatus\([^;]*picker\.FileName/);
+ assert.doesNotMatch(cs, /File\.WriteAllText|File\.WriteAllBytes/);
+});
+
+test('offline TXT fixture contains only anonymous bounded paragraphs', () => {
+ const fixture = readFileSync(new URL('./tools/dou-reader-offline-fixture.txt', import.meta.url), 'utf8');
+ assert.match(fixture, /Merhaba dünya/);
+ assert.match(fixture, /2\.5/);
+ assert.match(fixture, /gerçek öğrenci bilgisi/);
+ assert.ok(fixture.length < 2048);
+ assert.doesNotMatch(fixture, /https?:\/\//);
+ assert.doesNotMatch(fixture, /@/);
+});
