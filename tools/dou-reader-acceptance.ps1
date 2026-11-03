@@ -11,12 +11,16 @@ Set-StrictMode -Version Latest
 
 $root = Split-Path -Parent $PSScriptRoot
 $js = Join-Path $root 'dou-reader-own-voice.test.mjs'
+$freeTextTests = Join-Path $root 'dou-speech-free-text.test.mjs'
+$bridgeTests = Join-Path $root 'dou-speech-nvda-bridge.test.mjs'
 $reader = Join-Path $PSScriptRoot 'dou-reader-windows.ps1'
 
 if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
     throw 'DOU Reader kabul testi Windows gerektirir.'
 }
 if (-not (Test-Path -LiteralPath $js -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $freeTextTests -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $bridgeTests -PathType Leaf) -or
     -not (Test-Path -LiteralPath $reader -PathType Leaf)) {
     throw 'Kabul testi kaynak dosyalari eksik.'
 }
@@ -25,9 +29,10 @@ if ($null -eq $node) {
     throw 'Node.js bulunamadi. Yalniz yerel motor test edilebilir.'
 }
 
-Write-Host '[1/2] Yerel Turkce WAV / guvenlik / kaynak regresyon testleri' -ForegroundColor Cyan
+Write-Host '[1/2] Yerel Turkce motor / NVDA koprusu / Reader kaynak regresyon testleri' -ForegroundColor Cyan
 $nodePath = $node.Source
-& $nodePath --test $js
+# Keep all three suites explicit. A missing or failing suite must fail preflight.
+& $nodePath --test $freeTextTests $bridgeTests $js
 if ($LASTEXITCODE -ne 0) { throw 'DOU Reader Node testleri basarisiz.' }
 
 Write-Host '[2/2] Windows UIA C# derleme ve ses sozlesmesi self-test' -ForegroundColor Cyan
