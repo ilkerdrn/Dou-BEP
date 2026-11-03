@@ -30,6 +30,28 @@ namespace DouBepReader
             return fullPath;
         }
 
+        // Intentional conservative PDF acceptance: the PDF signature must start
+        // at byte zero. Some unusual PDFs have a leading preamble; this pilot
+        // rejects them instead of guessing or processing arbitrary renamed files.
+        public static bool HasPdfSignature(byte[] prefix)
+        {
+            return prefix != null && prefix.Length >= 5 &&
+                prefix[0] == (byte)'%' && prefix[1] == (byte)'P' &&
+                prefix[2] == (byte)'D' && prefix[3] == (byte)'F' &&
+                prefix[4] == (byte)'-';
+        }
+
+        private static void VerifyPdfSignature(string path)
+        {
+            using (var file = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                var prefix = new byte[5];
+                if (file.Read(prefix, 0, prefix.Length) != prefix.Length ||
+                    !HasPdfSignature(prefix))
+                    throw new InvalidDataException("PDF imzası tanınmadı.");
+            }
+        }
+
         public static ReaderImportedDocument Import(string pdfPath, string converterPath)
         {
             if (String.IsNullOrWhiteSpace(converterPath))
@@ -39,6 +61,7 @@ namespace DouBepReader
             if (!String.Equals(Path.GetExtension(input), ".pdf",
                 StringComparison.OrdinalIgnoreCase))
                 throw new NotSupportedException("Yalnız PDF dosyası kabul edilir.");
+            VerifyPdfSignature(input);
             // Windows disallows double quotes in actual filenames. Explicitly
             // reject them anyway so the command line cannot be redirected.
             if (input.IndexOf('"') >= 0 || exe.IndexOf('"') >= 0)
@@ -105,6 +128,10 @@ namespace DouBepReader
 
         public static void SelfTest()
         {
+            if (!HasPdfSignature(new byte[] { 37, 80, 68, 70, 45 }) ||
+                HasPdfSignature(new byte[] { 80, 68, 70, 45, 32 }) ||
+                HasPdfSignature(null))
+                throw new InvalidOperationException("PDF header contract failed.");
             if (ValidateExecutable(null) != null ||
                 ValidateExecutable("") != null ||
                 MaxInputBytes != 8 * 1024 * 1024 ||
