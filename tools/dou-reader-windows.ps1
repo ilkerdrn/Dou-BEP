@@ -6,11 +6,12 @@ param(
     [string[]]$AllowedProcesses = @('msedge', 'chrome', 'firefox', 'notepad'),
     [switch]$Check,
     [switch]$OwnVoice,
+    [string]$PdfTextExecutable = '',
     [switch]$Help
 )
 $ErrorActionPreference = 'Stop'
 if ($Help) {
-    Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-OwnVoice] [-AllowedProcesses chrome,msedge,notepad]'
+    Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-OwnVoice] [-PdfTextExecutable C:\\Poppler\\pdftotext.exe] [-AllowedProcesses chrome,msedge,notepad]'
     Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: sonraki metin | Ctrl+Alt+Shift+D: bolum | Ctrl+Alt+Shift+L/T/C: liste/tablo/hucre | Ctrl+Alt+Shift+P: paragraf | Ctrl+Alt+Shift+Sol/Sag: cumle | Ctrl+Alt+P: duraklat/devam | Ctrl+Alt+X: durdur.'
     return
 }
@@ -41,6 +42,7 @@ $tableContextContract = Join-Path $PSScriptRoot 'dou-reader-table-context-contra
 $tableHeaderContract = Join-Path $PSScriptRoot 'dou-reader-table-header-contract.cs'
 $sentenceContract = Join-Path $PSScriptRoot 'dou-reader-sentence-contract.cs'
 $offlineDocument = Join-Path $PSScriptRoot 'dou-reader-offline-document.cs'
+$offlinePdf = Join-Path $PSScriptRoot 'dou-reader-offline-pdf.cs'
 if (-not (Test-Path -LiteralPath $contract -PathType Leaf)) { throw 'Okuyucu ses sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $documentContract -PathType Leaf)) { throw 'Okuyucu belge sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $structureContract -PathType Leaf)) { throw 'Okuyucu yapi sozlesmesi bulunamadi.' }
@@ -48,6 +50,7 @@ if (-not (Test-Path -LiteralPath $tableContextContract -PathType Leaf)) { throw 
 if (-not (Test-Path -LiteralPath $tableHeaderContract -PathType Leaf)) { throw 'Okuyucu tablo baslik sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $sentenceContract -PathType Leaf)) { throw 'Okuyucu cumle sozlesmesi bulunamadi.' }
 if (-not (Test-Path -LiteralPath $offlineDocument -PathType Leaf)) { throw 'Okuyucu cevrimdisi belge modulu bulunamadi.' }
+if (-not (Test-Path -LiteralPath $offlinePdf -PathType Leaf)) { throw 'Okuyucu cevrimdisi PDF modulu bulunamadi.' }
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
 # Add-Type -ReferencedAssemblies requires resolvable metadata paths on Windows PowerShell 5.1.
 # Assembly names alone do not reliably resolve UIAutomationClient.dll across .NET installs.
@@ -70,7 +73,7 @@ try {
         }
         $refs += $assembly.Location
     }
-    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlineDocument))) -ReferencedAssemblies $refs -ErrorAction Stop
+    Add-Type -TypeDefinition (([IO.File]::ReadAllText($source)) + [Environment]::NewLine + ([IO.File]::ReadAllText($contract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($documentContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($structureContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableContextContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($tableHeaderContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($sentenceContract)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlineDocument)) + [Environment]::NewLine + ([IO.File]::ReadAllText($offlinePdf))) -ReferencedAssemblies $refs -ErrorAction Stop
     [DouBepReader.ReaderSpeechContract]::SelfTest()
     [DouBepReader.ReaderDocumentContract]::SelfTest()
     [DouBepReader.ReaderStructureContract]::SelfTest()
@@ -78,6 +81,8 @@ try {
     [DouBepReader.ReaderTableHeaderContract]::SelfTest()
     [DouBepReader.ReaderSentenceContract]::SelfTest()
     [DouBepReader.ReaderOfflineDocument]::SelfTest()
+    [DouBepReader.ReaderOfflinePdf]::SelfTest()
+    $pdfExe = [DouBepReader.ReaderOfflinePdf]::ValidateExecutable($PdfTextExecutable)
     $localTr = 0
     if ($Check -or -not $OwnVoice) {
         # SAPI is inspected only for legacy SAPI mode or diagnostics.
@@ -102,7 +107,7 @@ try {
         if (-not (Test-Path -LiteralPath $bridge -PathType Leaf)) { throw 'DOU yerel ses koprusu bulunamadi.' }
         Write-Host 'Ses: DOU yerel Turkce motor (deneysel); SAPI fallback kapali.'
     }
-    [DouBepReader.Program]::Run([string[]]$AllowedProcesses,[bool]$OwnVoice,[string]$bridge)
+    [DouBepReader.Program]::Run([string[]]$AllowedProcesses,[bool]$OwnVoice,[string]$bridge,[string]$pdfExe)
 } catch {
     throw ('DOU Reader baslatilamadi. Windows PowerShell 5.1, .NET Framework UIA ve yerel ses ayarlarini kontrol edin. ' + $_.Exception.Message)
 }
