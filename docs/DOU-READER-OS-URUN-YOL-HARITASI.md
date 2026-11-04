@@ -257,3 +257,15 @@ Bu turdaki odak, **Windows'ta gerçek ses bağlantısının kurulma güvenilirli
 - `dou-reader-own-voice.test.mjs` içindeki yeni kaynak regresyonları; süreç kimliğinin yeniden doğrulanması, ses işçisi hata temizliği ve ses yokken konumun korunması davranışlarını izliyor.
 
 **Test sınırı:** Kod ve statik kaynak kontrolleri olumlu. Bu turda gerçek Windows/.NET derlemesi, işlem PID yeniden kullanım simülasyonu, ses cihazı ve ekran okuyucu kabulü yapılmadı. Bireysel Windows UIA sağlayıcı çağrıları veya `Process.StartTime` bilgisine erişim başarısız olursa sistem güvenli biçimde okumayı reddeder. `main` ve BEP üretim verileri değiştirilmez.
+
+## Sprint 17 — hızlı ses komutları ve gezinme konumu tutarlılığı (kodlandı; Windows kabulü bekliyor)
+
+- **Ses oturumu güvenliğine devam:** Açık UIA kaynağıyla başlayan çok parçalı ses için uygulama süreç kimliği (PID + başlama zamanı) her parça öncesinde ve duraklatmadan dönüşte denetleniyor. Sürecin kapanması veya PID'nin yeni bir uygulamada kullanılması, o oturumun kalan parçalarını güvenli şekilde durduruyor.
+- **İşçi hata izolasyonu:** `RunSession` içinde beklenmedik istisna, yalnız güncel ve duraklatılmamış oturum eşleşiyorsa kuyruk temizliği ve erişilebilir hata bildirimi yapıyor; yeni kullanıcı komutuyla başlamış ses bu eski hata yüzünden iptal edilmiyor.
+- **Ses kabulü ile okuma ilerlemesi ayrıldı:** `SpeakOwnVoice` artık isteğin ses kuyruğuna kabul edilip edilmediğini `bool` ile bildiriyor. Cümle, statik bölüm ve açık belge okuma konumu **kabulden sonra** güncelleniyor. Uygulama yetkisi, metin filtresi veya mevcut sesin yokluğu nedeniyle reddedilmiş istek, metni okunmuş kabul etmiyor. Ses üretimi arka planda sonradan başarısız olursa otomatik konum geri alma garantisi verilmez.
+- **Kısa ömürlü süreç tanıtıcıları:** Duraklatılmış okumanın kaynak kimliği kontrolünde geçici `Process` tanıtıcısı artık `using` ile bırakılıyor.
+- **Geçici PCM kopyaları:** Ses motorunun stdout okumak için kullandığı 16 KiB değiştirilebilir ara tampon `finally` içinde sıfırlanıyor; ayrıca önceki WAV/JSON belleği sıfırlama önlemleri korunuyor. Yönetilen `string`, ses sürücüsü veya işletim sistemi swap alanının anında silindiği iddia edilmez.
+- **Kullanıcı açıklaması:** Yerel belge seçme uyarısı TXT, DOCX ve isteğe bağlı PDF biçimlerini doğru gösteriyor.
+- `dou-reader-own-voice.test.mjs` kaynak regresyonlarına süreç kimliği, cursor transaction, işçi hata izolasyonu ve ara PCM tampon temizliği kontrolleri eklendi.
+
+**Kabul sınırı:** Bu turda güncel GitHub kaynaklarına karşı **47 tanımlı test vakasındaki 460 statik regex kontrolü** eşleşti; C# dosyaları Windows PowerShell 5.1 ile derlenmedi ve tam Node paketi çalıştırılmadı. Gerçek hızlı durdur/başlat, hoparlör sesi, duraklat/devam, PDF süreç kapanması ve erişilebilirlik kullanıcı kabulü yapılmadan PR #8 birleştirilmez. DOU BEP üretim verileri değiştirilmedi.
