@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Help) {
     Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-AllowedProcesses chrome,msedge,notepad]'
-    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: belge metni | Ctrl+Alt+P: duraklat/devam et | Ctrl+Alt+C: ardisik oku (en fazla 20 oge) | Ctrl+Alt+X: durdur.'
+    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: belge metni | Ctrl+Alt+P: duraklat/devam et | Ctrl+Alt+C: ardisik oku (20 oge) | Ctrl+Alt+Q: sonraki soru | Ctrl+Alt+O: sonraki secenek | Ctrl+Alt+X: durdur.'
     return
 }
 if ($env:OS -eq 'Linux' -or [Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
