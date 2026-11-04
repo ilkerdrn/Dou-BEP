@@ -709,6 +709,7 @@ test('multi-chunk OwnVoice rejects exited or PID-reused UIA sources while retain
  assert.match(cs, /if \(_audioGeneration != generation \|\|\s*!ReferenceEquals\(_speechSession, session\)\) return/);
  assert.match(cs, /_speechSession = null;\s*\+\+_audioGeneration;\s*CancelAudioLocked\(\)/);
  assert.match(cs, /process\.StartTime\.ToUniversalTime\(\)\.Ticks !=\s*session\.SourceProcessStartUtcTicks/);
+ assert.match(cs, /using \(var process = Process\.GetProcessById\(session\.SourceProcessId\)\)/);
 });
 
 test('missing local voice does not consume an unread sentence or static section', () => {
