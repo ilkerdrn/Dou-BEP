@@ -181,7 +181,7 @@ namespace DouBepReader
 
         // Always obey UIA IsPassword, never request ValuePattern/TextPattern, and
         // never read contents of edit controls. Even unmarked form fields are skipped.
-        private static string AccessibleName(AutomationElement element)
+        private new static string AccessibleName(AutomationElement element)
         {
             if (element == null) return null;
             if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
