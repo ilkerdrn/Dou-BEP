@@ -780,3 +780,17 @@ test('active playback rechecks UIA process identity and interrupts a closed sour
  assert.match(host, /if \(!IsSessionSourceCurrent\(session\)\)\s*\{\s*CancelSessionAfterSourceLoss\(session, generation\);\s*return false;/);
  assert.match(host, /if \(session\.SourceProcessId == 0\) return true/);
 });
+
+test('stress suite is mandatory in isolated Windows acceptance and uses only synthetic offline payloads', () => {
+ const acceptance = readFileSync(new URL('./tools/dou-reader-acceptance.ps1', import.meta.url), 'utf8');
+ const stress = readFileSync(new URL('./dou-reader-bridge-stress.test.mjs', import.meta.url), 'utf8');
+ assert.match(acceptance, /\$stressTests = Join-Path \$root 'dou-reader-bridge-stress\.test\.mjs'/);
+ assert.match(acceptance, /-not \(Test-Path -LiteralPath \$stressTests -PathType Leaf\)/);
+ assert.match(acceptance, /--test \$freeTextTests \$bridgeTests \$stressTests \$js/);
+ assert.match(stress, /twelve consecutive isolated utterances generate valid bounded PCM WAV/);
+ assert.match(stress, /repeated rejected requests emit neither WAV nor user text/);
+ assert.match(stress, /interrupting a bridge child closes it without hanging/);
+ assert.match(stress, /const bridge=fileURLToPath/);
+ assert.match(stress, /child\.kill\(\)/);
+ assert.doesNotMatch(stress, /File\.writeFile|writeFileSync|fetch\(|https?:\/\//);
+});
