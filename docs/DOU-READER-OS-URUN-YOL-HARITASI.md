@@ -245,3 +245,15 @@ Bu turdaki odak, **Windows'ta gerçek ses bağlantısının kurulma güvenilirli
 - Reader Node regresyon testine sabit Node yolu ve sessiz WAV ön-deneme sözleşmesinin kaynak kontrolleri eklendi.
 
 **Doğrulama sınırı:** Bu sprintte GitHub kaynakları üzerinde statik kaynak kontrolleri eşleşti, ancak **yeni `ReaderOwnVoiceProbe` henüz Windows PowerShell 5.1 altında çalıştırılmadı**. Bu nedenle C# derlemesinin ve gerçek cihazda Node→WAV üretiminin başarılı olduğunu iddia etmiyoruz. Başarılı bir sessiz WAV ön-denemesi bile hoparlör çıkışı, ses anlaşılırlığı, NVDA sürücü entegrasyonu, gizlilik sınırları ve görme engelli kullanıcı kabulünün yerine geçmez. PR #8 bu kapılar tamamlanmadan birleştirilmeyecektir.
+
+## Sprint 16 — uzun konuşmada kaynak kimliği, işçi hata izolasyonu ve okuma konumunun korunması
+
+**Kodlandı; Windows'ta çalıştırma kabulü hâlâ bekliyor.**
+
+- Uzun ses oturumlarında yalnız süreç PID'si artık yeterli sayılmıyor. İlk ses talebinde kaynak uygulamanın **PID + süreç başlama zamanı (UTC ticks)** kaydediliyor; kaynak adı izin listesinde doğrulanıyor. Her bir sonraki WAV parçasından önce uygulamanın hâlâ aynı süreç olduğu denetleniyor. Uygulama kapanmışsa, izin dışına çıkmışsa veya Windows PID'yi başka işleme vermişse yalnız **o oturumun bekleyen parçaları** temizleniyor; yeni başlatılmış ses oturumu etkilenmiyor.
+- Duraklatılmış uygulama kaynaklı sesi devam ettirmeden önce de aynı başlama zamanı tekrar denetleniyor. Kullanıcının açıkça açtığı TXT/DOCX/PDF belge okuması, uygulama odağına bağlı olmadığı için **SourceProcessId=0** yoluyla ayrı kalıyor.
+- Beklenmedik `RunSession` işçi istisnaları artık aktif üretim/oturum eşleşmesiyle korunmuş genel hata yoluna giriyor. Eskimiş veya bilinçli duraklatılmış oturum yüzünden daha yeni bir okuma isteği iptal edilmiyor.
+- Yerel Türkçe SAPI sesi yoksa cümle gezinmesi ve kısa bölüm okuması **duyulmayan metni okunmuş sayıp konum ilerletmiyor**. Kullanıcı sonraki denemesinde aynı metinden başlıyor.
+- `dou-reader-own-voice.test.mjs` içindeki yeni kaynak regresyonları; süreç kimliğinin yeniden doğrulanması, ses işçisi hata temizliği ve ses yokken konumun korunması davranışlarını izliyor.
+
+**Test sınırı:** Kod ve statik kaynak kontrolleri olumlu. Bu turda gerçek Windows/.NET derlemesi, işlem PID yeniden kullanım simülasyonu, ses cihazı ve ekran okuyucu kabulü yapılmadı. Bireysel Windows UIA sağlayıcı çağrıları veya `Process.StartTime` bilgisine erişim başarısız olursa sistem güvenli biçimde okumayı reddeder. `main` ve BEP üretim verileri değiştirilmez.
