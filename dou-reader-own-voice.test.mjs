@@ -64,7 +64,7 @@ test('reader uses bounded nonpersisted WAV pipeline with opt-in activation', () 
 
 test('pause/resume retains only bounded utterances and invalidates old requests', () => {
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- assert.match(cs, /new OwnVoiceSession\(chunks, rate, sourceProcessId\)/);
+ assert.match(cs, /new OwnVoiceSession\(chunks, rate, sourceProcessId, sourceStartTicks\)/);
  assert.match(cs, /session\.NextIndex = index \+ 1/);
  assert.match(cs, /session\.Paused = true/);
  assert.match(cs, /session\.Paused = false/);
@@ -693,4 +693,20 @@ test('Windows OwnVoice preflight synthesizes a synthetic PCM WAV in RAM and neve
  assert.match(probe, /Array\.Clear\(wav, 0, wav\.Length\)/);
  assert.match(probe, /Array\.Clear\(bytes, 0, bytes\.Length\)/);
  assert.doesNotMatch(probe, /SoundPlayer|File\.Write|HttpClient|WebClient/);
+});
+
+test('multi-chunk OwnVoice rejects exited or PID-reused UIA sources while retaining explicit file mode', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(cs, /internal readonly long SourceProcessStartUtcTicks/);
+ assert.match(cs, /sourceStartTicks = source\.StartTime\.ToUniversalTime\(\)\.Ticks/);
+ assert.match(cs, /new OwnVoiceSession\(chunks, rate, sourceProcessId, sourceStartTicks\)/);
+ assert.match(cs, /private bool IsSessionSourceCurrent\(OwnVoiceSession session\)/);
+ assert.match(cs, /if \(session\.SourceProcessId == 0\) return true/);
+ assert.match(cs, /session\.SourceProcessStartUtcTicks <= 0/);
+ assert.match(cs, /_allowed\.Contains\(source\.ProcessName\)/);
+ assert.match(cs, /source\.StartTime\.ToUniversalTime\(\)\.Ticks ==\s*session\.SourceProcessStartUtcTicks/);
+ assert.match(cs, /if \(!IsSessionSourceCurrent\(session\)\)/);
+ assert.match(cs, /if \(_audioGeneration != generation \|\|\s*!ReferenceEquals\(_speechSession, session\)\) return/);
+ assert.match(cs, /_speechSession = null;\s*\+\+_audioGeneration;\s*CancelAudioLocked\(\)/);
+ assert.match(cs, /process\.StartTime\.ToUniversalTime\(\)\.Ticks !=\s*session\.SourceProcessStartUtcTicks/);
 });
