@@ -740,3 +740,26 @@ test('unexpected OwnVoice worker errors clear only active generation, preserving
  assert.match(worker, /_speechSession = null;\s*\+\+_audioGeneration;\s*CancelAudioLocked\(\);\s*failureGeneration = _audioGeneration/);
  assert.match(worker, /AudioStatus\(failureGeneration,\s*"Ses oturumu beklenmeyen hata/);
 });
+
+test('voice enqueue reports acceptance before sentence section and document cursors commit', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const a = cs.indexOf('private void ReadSentence(');
+ const b = cs.indexOf('private void ReadStaticTextSection(', a);
+ const c = cs.indexOf('private void TraverseStructure(', b);
+ const sentence = cs.slice(a, b);
+ const section = cs.slice(b, c);
+ assert.match(cs, /private bool SpeakOwnVoice\(string text, int sourceProcessId\)/);
+ assert.match(cs, /private bool SpeakOfflineText\(string text\)/);
+ assert.match(cs, /return SpeakOwnVoice\(text, 0\)/);
+ assert.match(sentence, /if \(!SpeakOwnVoice\(sentence, _scopeProcessId\)\) return/);
+ assert.ok(sentence.indexOf('if (!SpeakOwnVoice(sentence, _scopeProcessId)) return;') <
+   sentence.indexOf('_sentenceIndex = index;'));
+ assert.match(section, /if \(!SpeakOwnVoice\(sentence, _scopeProcessId\)\)/);
+ assert.ok(section.indexOf('if (!SpeakOwnVoice(sentence, _scopeProcessId))') <
+   section.indexOf('_cursor = lastIncluded;'));
+ const bodyStart = cs.indexOf('private bool SpeakOwnVoice(');
+ const bodyEnd = cs.indexOf('private bool IsSessionSourceCurrent(', bodyStart);
+ const body = cs.slice(bodyStart, bodyEnd);
+ assert.match(body, /return false;/);
+ assert.match(body, /RunSession\(session, generation\);\s*return true;/);
+});
