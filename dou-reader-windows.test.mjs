@@ -184,3 +184,26 @@ test('Production pronunciation receives a Windows compilation and synthetic beha
  assert.match(smoke,/Overlong input was not rejected/);
  assert.doesNotMatch(smoke,/Invoke-WebRequest|Invoke-RestMethod|Start-Transcript|Get-Clipboard|Set-Clipboard/);
 });
+
+test('Reader exam navigation is opt-in and read-only, bounded to current application',()=>{
+ assert.match(cs,/HOTKEY_EXAM_QUESTION = 112/);
+ assert.match(cs,/HOTKEY_EXAM_OPTION = 113/);
+ assert.match(cs,/HOTKEY_EXAM_QUESTION, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.Q/);
+ assert.match(cs,/HOTKEY_EXAM_OPTION, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.O/);
+ assert.match(cs,/case HOTKEY_EXAM_QUESTION: TraverseExam\(true\)/);
+ assert.match(cs,/case HOTKEY_EXAM_OPTION: TraverseExam\(false\)/);
+ assert.match(cs,/private void TraverseExam\(bool question\)/);
+ assert.match(cs,/private static bool IsExamQuestion/);
+ assert.match(cs,/private static bool IsExamOption/);
+ assert.match(cs,/ControlType\.RadioButton \|\| type == ControlType\.CheckBox/);
+ const body=cs.split('private void TraverseExam(bool question)')[1].split('// Pause/resume only')[0];
+ assert.match(body,/StopSpeech\(\);/);
+ assert.match(body,/!Allowed\(focusedNow\)/);
+ assert.match(body,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(body,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(body,/i < MAX_TRAVERSAL/);
+ assert.match(body,/AccessibleName\(candidate\)/);
+ assert.doesNotMatch(body,/SetFocus\(|GetCurrentPattern\(|Select\(|Toggle\(|Invoke\(|SendKeys|SendInput/);
+ assert.match(ps,/Ctrl\+Alt\+Q: sonraki soru/);
+ assert.match(ps,/Ctrl\+Alt\+O: sonraki secenek/);
+});
