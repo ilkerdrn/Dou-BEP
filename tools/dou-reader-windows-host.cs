@@ -82,8 +82,7 @@ namespace DouBepReader
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
             var pause = new Button { Text = "Duraklat / devam et", Left = 187, Top = 350, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
             pause.Click += delegate { TogglePause(); };
-            var continuous = new Button { Text = "Ardışık oku", Left = 352, Top = 350, Width = 146, Height = 30, AccessibleName = "DOU Reader ardışık okumayı başlat" };
-            continuous.Click += delegate { StartContinuous(); };
+            var continuous = new Label { Text = "Hedef uygulamada Ctrl+Alt+C ile ardışık oku", Left = 346, Top = 345, Width = 155, Height = 45, AccessibleName = "Ardışık okuma kısayolu Ctrl Alt C" };
             var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 395, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
             _rateControl = new TrackBar { Left = 22, Top = 421, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
