@@ -726,3 +726,16 @@ test('missing local voice does not consume an unread sentence or static section'
  assert.ok(section.indexOf('if (!_ownVoice && _turkishVoice == null)') <
      section.indexOf('_cursor = lastIncluded;'));
 });
+
+test('unexpected OwnVoice worker errors clear only active generation, preserving paused or superseding sessions', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const start = cs.indexOf('private void RunSession(');
+ const end = cs.indexOf('private void TogglePause()', start);
+ assert.ok(start >= 0 && end > start);
+ const worker = cs.slice(start, end);
+ assert.match(worker, /Task\.Run\(\(\) =>\s*\{\s*try\s*\{/);
+ assert.match(worker, /catch \(Exception\)\s*\{\s*int failureGeneration/);
+ assert.match(worker, /if \(_audioGeneration != generation \|\| session\.Paused \|\|\s*!ReferenceEquals\(_speechSession, session\)\) return/);
+ assert.match(worker, /_speechSession = null;\s*\+\+_audioGeneration;\s*CancelAudioLocked\(\);\s*failureGeneration = _audioGeneration/);
+ assert.match(worker, /AudioStatus\(failureGeneration,\s*"Ses oturumu beklenmeyen hata/);
+});
