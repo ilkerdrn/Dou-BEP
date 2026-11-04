@@ -1,4 +1,4 @@
-# DOU Reader pronunciation smoke: compile the production C# normalizer without UI or audio.
+﻿# DOU Reader pronunciation smoke: compile the production C# normalizer without UI or audio.
 # Windows PowerShell 5.1 only. Synthetic exam examples; no student data.
 [CmdletBinding()]
 param()
