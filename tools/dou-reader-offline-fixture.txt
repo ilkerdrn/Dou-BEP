@@ -1,0 +1,9 @@
+Merhaba dünya. Bu çevrimdışı bir okuma örneğidir. Hazır mısınız?
+
+Birinci paragrafın iki cümlesi var. İkinci cümle de güvenli şekilde okunur.
+
+İkinci bölümde liste ve tablo sonuçlarının metin okuması denenir.
+
+Matematik örneği olarak 2.5 sayısını okuyun. Bu bir ondalık sayıdır.
+
+Bu dosyada gerçek öğrenci bilgisi, parola veya sınav verisi yoktur.
