@@ -129,3 +129,26 @@ test('Reader bounded continuous mode requires explicit Ctrl+Alt+C and current al
  const body = cs.split('private void SpeakContinuousNext(bool includeCurrent)')[1].split('private void OnSpeechCompleted')[0];
  assert.doesNotMatch(body,/GetCurrentPattern\(|SetFocus\(|SendKeys|File\.|HttpClient|Clipboard\./);
 });
+
+test('Reader never adopts disallowed process as the navigation scope',()=>{
+ const allowedBody=cs.split('private bool Allowed(AutomationElement element)')[1].split('private static string AccessibleName')[0];
+ assert.match(allowedBody,/if \(!_allowed\.Contains\(name\)\) return false;/);
+ assert.match(allowedBody,/_scopeProcessId = pid;/);
+ assert.ok(allowedBody.indexOf('if (!_allowed.Contains(name)) return false;') < allowedBody.indexOf('_scopeProcessId = pid;'));
+});
+
+test('Each explicit navigation cancels any previous continuous read before UIA evaluation',()=>{
+ for (const signature of [
+  'private void ReadFocused()',
+  'private void Traverse(int direction)',
+  'private void TraverseStructure(int direction, bool headingOnly)',
+  'private void TraverseRole(ControlType role, string label)'
+ ]) {
+  const start=cs.indexOf(signature);
+  assert.ok(start>=0,signature);
+  const prefix=cs.slice(start+signature.length,start+signature.length+110);
+  assert.match(prefix,/StopSpeech\(\);\s*try/);
+ }
+ assert.match(cs,/private void StopSpeech\(\)[\s\S]*?_continuous = false;/);
+ assert.match(cs,/e\.Prompt != _activePrompt/);
+});
