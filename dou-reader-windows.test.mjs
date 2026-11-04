@@ -237,7 +237,7 @@ test('Reader speech completion routes only the active approved utterance',()=>{
  assert.match(complete,/e\.Prompt != _activePrompt/);
  assert.match(complete,/if \(_examReading\) SpeakExamNext\(\)/);
  assert.match(complete,/else if \(_continuous\) SpeakContinuousNext\(false\)/);
- assert.match(cs,/private void StopSpeech\(\)\s*\{\s*_examReading = false;\s*_continuous = false;/);
+ assert.match(cs,/private void StopSpeech\(\)\s*\{\s*StopSyntheticDemo\(\);\s*_examReading = false;\s*_continuous = false;/);
 });
 
 test('Reader Windows acceptance runs source regressions, real C# compilation and synthetic pronunciation',()=>{
