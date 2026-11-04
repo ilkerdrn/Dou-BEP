@@ -250,3 +250,14 @@ Bu bölüm mevcut 103 Windows senaryosunun yerine geçmez; ürün yayınını en
 - [ ] 16 KiB stdout ara WAV tamponunun sıfırlanması kaynak/süreç sınırlarıyla birlikte Windows hata ve normal tamamlama yolunda doğrulanır.
 
 Bunlar bekleyen Windows kabul koşullarıdır; statik kaynak eşleşmesi cihaz kabulü değildir.
+
+## Sprint 18 — aktif WAV iptali ve Node stres kontrolü
+
+- [ ] İzinli UIA uygulaması aktif WAV çalınırken kapatıldığında Reader mevcut parçayı da durdurur; son parçayı beklemez. Ölçülen tepki gecikmesi/olası Windows Process sağlayıcı gecikmesi raporlanır.
+- [ ] Sentez (Node) devam ederken kaynak uygulama kapanırsa eski WAV **hiç başlamaz**; yeni ses isteği etkilenmez.
+- [ ] Yeni bir UIA kaynak aynı PID'yi alırsa eski oturumun mevcut sesinden sonra/aktif sesindeyken okuma sürmez.
+- [ ] Açıkça yüklenmiş TXT/DOCX/PDF için uygulama odağından bağımsız, kullanıcının komut verdiği ses okuması çalışır.
+- [ ] `dou-reader-bridge-stress.test.mjs` Windows'ta 12/12 geçerli PCM üretimini, 12/12 gizlilik reddini ve alt sürecin sonlanmasını doğrular.
+- [ ] `tools/dou-reader-acceptance.ps1` artık dört Node test dosyasını ve gerçek `-Check -OwnVoice` C# ön-denemesini aynı çalışmada yürütür.
+
+**Durum:** İlk beş dosyanın GitHub SHA eşleşmesiyle Linux Node ortamında 20/20 test geçti. Windows cihaz ve ses/kullanıcı kabul maddeleri hâlâ bekliyor.
