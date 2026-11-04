@@ -269,3 +269,20 @@ Bu turdaki odak, **Windows'ta gerçek ses bağlantısının kurulma güvenilirli
 - `dou-reader-own-voice.test.mjs` kaynak regresyonlarına süreç kimliği, cursor transaction, işçi hata izolasyonu ve ara PCM tampon temizliği kontrolleri eklendi.
 
 **Kabul sınırı:** Bu turda güncel GitHub kaynaklarına karşı **47 tanımlı test vakasındaki 460 statik regex kontrolü** eşleşti; C# dosyaları Windows PowerShell 5.1 ile derlenmedi ve tam Node paketi çalıştırılmadı. Gerçek hızlı durdur/başlat, hoparlör sesi, duraklat/devam, PDF süreç kapanması ve erişilebilirlik kullanıcı kabulü yapılmadan PR #8 birleştirilmez. DOU BEP üretim verileri değiştirilmedi.
+
+## Sprint 18 — aktif ses kesme ve gerçek Node köprü stres testi
+
+**Feature dalına kodlandı; Windows C# ve işitsel kabul hâlâ bekliyor.**
+
+- Önceki sprintlerde UIA kaynağı **parçalar arasında** doğrulanıyordu. Artık `PlayOwnVoice`, kaynak uygulamanın PID + başlama zamanını **WAV sentezi bittikten sonra**, **oynatma başlamadan hemen önce** ve **aktif oynatım sırasında yaklaşık 250 ms aralıklarla** yeniden denetler. Uygulama kapanmışsa/aynı PID başka sürece geçmişse yalnız ilgili ses nesli güvenle iptal edilmeye çalışılır. Yerel dosya okuma (`SourceProcessId == 0`) kaynak uygulama kontrolünden muaftır.
+- Ortak `CancelSessionAfterSourceLoss`, nesil ve oturum nesnesini kilit altında doğrulayarak eski işçinin yeni sesi kesmesini engeller. Çalışma anındaki kaynak sorguları ses kilidi dışında yapılır; Windows Process sağlayıcısının gecikmesi arayüzdeki durdurma kilidini tutmaz.
+- Yeni `dou-reader-bridge-stress.test.mjs`: 12 art arda sentetik Türkçe istekten geçerli sınırlı PCM WAV, 12 geçersiz istekte çıktı/metin sızıntısı olmaması ve 1 alt süreci öldürme/sonlanma testi. Ağ, kullanıcı belgesi veya gerçek öğrenci verisi kullanılmaz.
+- `tools/dou-reader-acceptance.ps1` Windows kabulünde **dört Node test dosyasını** zorunlu olarak çalıştıracak şekilde güncellendi: Türkçe ses çekirdeği, NVDA köprüsü, yeni stres testi ve Reader regresyonları. Node yürütülebiliri `node.exe` olarak çözülür.
+
+### Gerçekten çalıştırılmış testlerin kanıtı
+
+- GitHub'daki mevcut feature dalındaki beş dosya ile yereldeki sınama kopyalarının **Git blob SHA değerleri eşleştirildi**: `dou-speech-free-text.mjs`, `dou-speech-free-text.test.mjs`, `tools/dou-speech-nvda-stdio.mjs`, `dou-speech-nvda-bridge.test.mjs`, `dou-reader-bridge-stress.test.mjs`.
+- İzole Linux Node.js v22.16.0 üzerinde `node --test dou-speech-free-text.test.mjs dou-speech-nvda-bridge.test.mjs dou-reader-bridge-stress.test.mjs` komutu **20/20 PASS**. Yeni stres paketinde **3/3 PASS**; 12 WAV üretimi, 12 gizlilik reddi ve alt süreç kesintisi kontrol edildi.
+- Güncel `dou-reader-own-voice.test.mjs` kaynak dosyasındaki **49 tanımlı test vakasına ait 480/480 kaynak regex beklentisi** repo içeriğiyle eşleşti. Bu, 49 Node testinin eksiksiz koşulduğu anlamına gelmez.
+
+**Kritik açık kapılar:** Güncel Windows Forms/.NET Framework C# kodu bu oturumda gerçek Windows PowerShell 5.1 ile derlenmedi; `SoundPlayer` aygıtında ses duyulmadı; uygulamanın aktif WAV sırasında kapatılması ve 250 ms polling gecikmesi Windows'ta ölçülmedi; yüksek DPI, NVDA sürücüsü ve kullanıcı kabulü yapılmadı. Yerel Node stres testi bu Windows kontrollerinin yerini tutmaz. PR #8 yayınlanıp `main` dalına alınmamalı.
