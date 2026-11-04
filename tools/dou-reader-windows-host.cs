@@ -1409,6 +1409,8 @@ namespace DouBepReader
         {
             Task.Run(() =>
             {
+                try
+                {
                 for (;;)
                 {
                     string chunk;
@@ -1465,6 +1467,24 @@ namespace DouBepReader
                     }
                 }
                 AudioStatus(generation, "Tüm ses parçalarının oynatımı tamamlandı.");
+                }
+                catch (Exception)
+                {
+                    int failureGeneration;
+                    lock (_audioLock)
+                    {
+                        // Never tear down a later user's request. A deliberately
+                        // paused session remains resumable, not a failed session.
+                        if (_audioGeneration != generation || session.Paused ||
+                            !ReferenceEquals(_speechSession, session)) return;
+                        _speechSession = null;
+                        ++_audioGeneration;
+                        CancelAudioLocked();
+                        failureGeneration = _audioGeneration;
+                    }
+                    AudioStatus(failureGeneration,
+                        "Ses oturumu beklenmeyen hata nedeniyle güvenli şekilde durduruldu.");
+                }
             });
         }
 
