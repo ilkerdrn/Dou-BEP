@@ -94,13 +94,16 @@ namespace DouBepReader
             internal readonly List<string> Chunks;
             internal readonly double Rate;
             internal readonly int SourceProcessId;
+            internal readonly long SourceProcessStartUtcTicks;
             internal int NextIndex;
             internal bool Paused;
-            internal OwnVoiceSession(List<string> chunks, double rate, int sourceProcessId)
+            internal OwnVoiceSession(List<string> chunks, double rate,
+                int sourceProcessId, long sourceProcessStartUtcTicks)
             {
                 Chunks = chunks;
                 Rate = rate;
                 SourceProcessId = sourceProcessId;
+                SourceProcessStartUtcTicks = sourceProcessStartUtcTicks;
             }
         }
         private OwnVoiceSession _speechSession;
@@ -1336,7 +1339,27 @@ namespace DouBepReader
             }
             // Always snapshot the speed on the UI thread.
             double rate = 1.0 + (_rateControl.Value * 0.08);
-            var session = new OwnVoiceSession(chunks, rate, sourceProcessId);
+            // Pin the actual source process instance, not just its PID.
+            // Windows may reuse a PID for another process after the source exits.
+            long sourceStartTicks = 0;
+            if (sourceProcessId > 0)
+            {
+                try
+                {
+                    using (var source = Process.GetProcessById(sourceProcessId))
+                    {
+                        if (source.HasExited || !_allowed.Contains(source.ProcessName))
+                            throw new InvalidOperationException("Source process not allowed.");
+                        sourceStartTicks = source.StartTime.ToUniversalTime().Ticks;
+                    }
+                }
+                catch (Exception)
+                {
+                    SetStatus("Kaynak uygulamanın kimliği doğrulanamadı; ses başlatılmadı.");
+                    return;
+                }
+            }
+            var session = new OwnVoiceSession(chunks, rate, sourceProcessId, sourceStartTicks);
             int generation;
             lock (_audioLock)
             {
@@ -1345,6 +1368,25 @@ namespace DouBepReader
             }
             SetStatus("DOU yerel ses hazırlanıyor...");
             RunSession(session, generation);
+        }
+
+        // Confirm process NAME and creation time for every queued chunk.
+        // PID alone is insufficient because Windows reuses process identifiers.
+        // File-based explicit reading uses SourceProcessId == 0 and is exempt.
+        private bool IsSessionSourceCurrent(OwnVoiceSession session)
+        {
+            if (session.SourceProcessId == 0) return true;
+            if (session.SourceProcessId < 0 || session.SourceProcessStartUtcTicks <= 0)
+                return false;
+            try
+            {
+                using (var source = Process.GetProcessById(session.SourceProcessId))
+                    return !source.HasExited &&
+                        _allowed.Contains(source.ProcessName) &&
+                        source.StartTime.ToUniversalTime().Ticks ==
+                            session.SourceProcessStartUtcTicks;
+            }
+            catch (Exception) { return false; }
         }
 
         private void RunSession(OwnVoiceSession session, int generation)
@@ -1366,6 +1408,25 @@ namespace DouBepReader
                             break;
                         }
                         chunk = session.Chunks[index];
+                    }
+                    // Authorization is rechecked before EVERY new chunk.
+                    // When a source exits (or its PID is reused), stop and clear
+                    // only this session; never cancel an unrelated newer request.
+                    if (!IsSessionSourceCurrent(session))
+                    {
+                        int cancelledGeneration;
+                        lock (_audioLock)
+                        {
+                            if (_audioGeneration != generation ||
+                                !ReferenceEquals(_speechSession, session)) return;
+                            _speechSession = null;
+                            ++_audioGeneration;
+                            CancelAudioLocked();
+                            cancelledGeneration = _audioGeneration;
+                        }
+                        AudioStatus(cancelledGeneration,
+                            "Kaynak uygulama değişti veya kapandı; bekleyen ses silindi.");
+                        return;
                     }
                     AudioStatus(generation, "Okunuyor: parça " + (index + 1) + " / " + session.Chunks.Count);
                     if (!PlayOwnVoice(chunk, generation, session.Rate))
@@ -1412,8 +1473,10 @@ namespace DouBepReader
                     try
                     {
                         var process = Process.GetProcessById(session.SourceProcessId);
-                        if (process.HasExited || !_allowed.Contains(process.ProcessName))
-                            throw new InvalidOperationException("Application no longer allowed");
+                        if (process.HasExited || !_allowed.Contains(process.ProcessName) ||
+                            process.StartTime.ToUniversalTime().Ticks !=
+                                session.SourceProcessStartUtcTicks)
+                            throw new InvalidOperationException("Application identity changed");
                         // Pressing the window button explicitly authorizes resuming the
                         // already vetted, bounded label. A global hotkey requires target focus.
                         if (!ContainsFocus)
