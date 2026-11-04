@@ -34,6 +34,9 @@ namespace DouBepReader
         private const int HOTKEY_CONTINUOUS = 111;
         private const int HOTKEY_EXAM_QUESTION = 112;
         private const int HOTKEY_EXAM_OPTION = 113;
+        private const int HOTKEY_EXAM_FLOW = 114;
+        private const int MAX_EXAM_OPTIONS = 6;
+        private const int MAX_EXAM_STEM_ITEMS = 3;
         private const int MAX_CONTINUOUS_ITEMS = 20;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
@@ -42,7 +45,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_CONTINUOUS, HOTKEY_EXAM_QUESTION, HOTKEY_EXAM_OPTION };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME, HOTKEY_CONTINUOUS, HOTKEY_EXAM_QUESTION, HOTKEY_EXAM_OPTION, HOTKEY_EXAM_FLOW };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -60,14 +63,18 @@ namespace DouBepReader
         private bool _continuous;
         private int _continuousItems;
         private Prompt _activePrompt;
+        private bool _examReading;
+        private int _examOptions;
+        private int _examStemItems;
+        private int _examSteps;
 
         public ReaderWindow(string[] allowedProcesses)
         {
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader — Windows erişilebilirlik pilotu";
             Width = 530;
-            Height = 545;
-            MinimumSize = new Size(480, 535);
+            Height = 565;
+            MinimumSize = new Size(480, 555);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             BackColor = Color.White;
@@ -76,17 +83,17 @@ namespace DouBepReader
 
             var heading = new Label { Text = "DOU Reader | Sadece isteğe bağlı okuma", Left = 22, Top = 18, Width = 470, Height = 32, Font = new Font("Segoe UI", 13.0f, FontStyle.Bold) };
             var help = new Label {
-                Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nCtrl+Alt+P  Duraklat / devam et\r\nCtrl+Alt+C  Ardışık okumayı başlat\r\nCtrl+Alt+Q  Sonraki sınav sorusu\r\nCtrl+Alt+O  Sonraki cevap seçeneği\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
-                Left = 22, Top = 55, Width = 480, Height = 269, AutoSize = false
+                Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nCtrl+Alt+P  Duraklat / devam et\r\nCtrl+Alt+C  Ardışık okumayı başlat\r\nCtrl+Alt+Q  Sonraki sınav sorusu\r\nCtrl+Alt+O  Sonraki cevap seçeneği\r\nCtrl+Alt+E  Soruyu ve şıkları sırayla oku\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
+                Left = 22, Top = 55, Width = 480, Height = 289, AutoSize = false
             };
-            _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 333, Width = 466, Height = 38, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
-            var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 391, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
+            _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 353, Width = 466, Height = 38, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
+            var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 411, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
-            var pause = new Button { Text = "Duraklat / devam et", Left = 187, Top = 391, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
+            var pause = new Button { Text = "Duraklat / devam et", Left = 187, Top = 411, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
             pause.Click += delegate { TogglePause(); };
-            var continuous = new Label { Text = "Hedef uygulamada Ctrl+Alt+C ile ardışık oku", Left = 346, Top = 386, Width = 155, Height = 45, AccessibleName = "Ardışık okuma kısayolu Ctrl Alt C" };
-            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 436, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
-            _rateControl = new TrackBar { Left = 22, Top = 462, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
+            var continuous = new Label { Text = "Hedef uygulamada Ctrl+Alt+C ile ardışık oku", Left = 346, Top = 406, Width = 155, Height = 45, AccessibleName = "Ardışık okuma kısayolu Ctrl Alt C" };
+            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 456, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
+            _rateControl = new TrackBar { Left = 22, Top = 482, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
             Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(pause); Controls.Add(continuous); Controls.Add(rateLabel); Controls.Add(_rateControl);
             _speaker = new SpeechSynthesizer();
@@ -119,7 +126,8 @@ namespace DouBepReader
                 Tuple.Create(HOTKEY_PAUSE_RESUME, MOD_CONTROL | MOD_ALT, (uint)Keys.P),
                 Tuple.Create(HOTKEY_CONTINUOUS, MOD_CONTROL | MOD_ALT, (uint)Keys.C),
                 Tuple.Create(HOTKEY_EXAM_QUESTION, MOD_CONTROL | MOD_ALT, (uint)Keys.Q),
-                Tuple.Create(HOTKEY_EXAM_OPTION, MOD_CONTROL | MOD_ALT, (uint)Keys.O)
+                Tuple.Create(HOTKEY_EXAM_OPTION, MOD_CONTROL | MOD_ALT, (uint)Keys.O),
+                Tuple.Create(HOTKEY_EXAM_FLOW, MOD_CONTROL | MOD_ALT, (uint)Keys.E)
             };
             foreach (var key in combinations)
             {
@@ -153,6 +161,7 @@ namespace DouBepReader
                     case HOTKEY_CONTINUOUS: StartContinuous(); break;
                     case HOTKEY_EXAM_QUESTION: TraverseExam(true); break;
                     case HOTKEY_EXAM_OPTION: TraverseExam(false); break;
+                    case HOTKEY_EXAM_FLOW: StartExamFlow(); break;
                 }
                 return;
             }
@@ -500,6 +509,87 @@ namespace DouBepReader
             catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Ardışık okuma güvenli biçimde durduruldu."); }
         }
 
+        // Explicit, bounded one-question reading. No answer changes or content logging.
+        // The provider must expose a "Soru N" label and accessible option controls.
+        private void StartExamFlow()
+        {
+            StopSpeech();
+            if (_turkishVoice == null) { SetStatus("Yerel Türkçe ses bulunamadı."); return; }
+            try
+            {
+                var focusedNow = AutomationElement.FocusedElement;
+                if (!Allowed(focusedNow)) { _cursor = null; SetStatus("İzinli sınav ekranına odaklanın."); return; }
+                var candidate = focusedNow;
+                bool found = false;
+                for (int i = 0; i < MAX_TRAVERSAL; i++)
+                {
+                    if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
+                    string text = AccessibleName(candidate);
+                    if (text != null && IsExamQuestion(candidate, text)) { found = true; break; }
+                    candidate = Step(candidate, 1);
+                }
+                if (!found) { _cursor = null; SetStatus("Numaralandırılmış soru etiketi bulunamadı."); return; }
+                _cursor = candidate;
+                _examReading = true;
+                _examOptions = 0;
+                _examStemItems = 0;
+                _examSteps = 0;
+                SpeakExamElement(candidate);
+            }
+            catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Soru okuma başlatılamadı."); }
+        }
+
+        private void SpeakExamElement(AutomationElement element)
+        {
+            string text = AccessibleName(element);
+            if (text == null) { StopSpeech(); SetStatus("Okunamayan sınav öğesi."); return; }
+            _speaker.Rate = _rateControl.Value;
+            _activePrompt = _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(text));
+            SetStatus("Soru okuma: " + _examStemItems + " metin, " + _examOptions + " seçenek.");
+        }
+
+        private void SpeakExamNext()
+        {
+            if (!_examReading) return;
+            try
+            {
+                var focusedNow = AutomationElement.FocusedElement;
+                if (focusedNow == null || focusedNow.Current.ProcessId != _scopeProcessId || !Allowed(focusedNow))
+                {
+                    StopSpeech(); _cursor = null;
+                    SetStatus("Uygulama odağı değişti; soru okuma durduruldu.");
+                    return;
+                }
+                var candidate = _cursor;
+                while (_examSteps < MAX_TRAVERSAL)
+                {
+                    _examSteps++;
+                    candidate = Step(candidate, 1);
+                    if (candidate == null || candidate.Current.ProcessId != _scopeProcessId) break;
+                    string text = AccessibleName(candidate);
+                    if (text == null) continue;
+                    if (IsExamQuestion(candidate, text)) break; // Never enter the next question.
+                    if (IsExamOption(candidate))
+                    {
+                        if (_examOptions >= MAX_EXAM_OPTIONS) break;
+                        _examOptions++;
+                    }
+                    else if (_examOptions == 0 && candidate.Current.ControlType == ControlType.Text &&
+                             _examStemItems < MAX_EXAM_STEM_ITEMS)
+                    {
+                        _examStemItems++;
+                    }
+                    else continue;
+                    _cursor = candidate;
+                    SpeakExamElement(candidate);
+                    return;
+                }
+                StopSpeech();
+                SetStatus("Soru okuma tamamlandı veya güvenli öğe sınırına ulaşıldı.");
+            }
+            catch (Exception) { StopSpeech(); _cursor = null; SetStatus("Soru okuma durduruldu."); }
+        }
+
         private void OnSpeechCompleted(object sender, SpeakCompletedEventArgs e)
         {
             // SAPI callback can arrive on a worker thread. Never touch UIA there.
@@ -508,9 +598,10 @@ namespace DouBepReader
             {
                 BeginInvoke((MethodInvoker)delegate
                 {
-                    if (!_continuous || e.Cancelled || e.Error != null || e.Prompt != _activePrompt) return;
+                    if (e.Cancelled || e.Error != null || e.Prompt != _activePrompt) return;
                     _activePrompt = null;
-                    SpeakContinuousNext(false);
+                    if (_examReading) SpeakExamNext();
+                    else if (_continuous) SpeakContinuousNext(false);
                 });
             }
             catch (InvalidOperationException) { /* window closing */ }
@@ -518,6 +609,7 @@ namespace DouBepReader
 
         private void StopSpeech()
         {
+            _examReading = false;
             _continuous = false;
             _activePrompt = null;
             try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { /* no content */ }
