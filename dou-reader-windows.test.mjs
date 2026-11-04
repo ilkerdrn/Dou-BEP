@@ -239,3 +239,16 @@ test('Reader speech completion routes only the active approved utterance',()=>{
  assert.match(complete,/else if \(_continuous\) SpeakContinuousNext\(false\)/);
  assert.match(cs,/private void StopSpeech\(\)\s*\{\s*_examReading = false;\s*_continuous = false;/);
 });
+
+test('Reader Windows acceptance runs source regressions, real C# compilation and synthetic pronunciation',()=>{
+ const gate=readFileSync(new URL('./tools/dou-reader-windows-acceptance.ps1',import.meta.url),'utf8');
+ assert.match(pkg.scripts['reader:acceptance:windows'],/powershell\.exe -NoProfile -STA/);
+ assert.match(gate,/node\.exe/);
+ assert.match(gate,/'--test' 'dou-reader-windows\.test\.mjs'/);
+ assert.match(gate,/dou-reader-pronunciation-check\.ps1/);
+ assert.match(gate,/dou-reader-windows\.ps1'\) -Check/);
+ assert.match(gate,/\$LASTEXITCODE -ne 0/);
+ assert.match(gate,/GetApartmentState\(\) -ne 'STA'/);
+ assert.match(gate,/gerçek ses\/erişilebilirlik kullanıcısı kabulü değildir/);
+ assert.doesNotMatch(gate,/npm install|npm ci|Invoke-WebRequest|Invoke-RestMethod|Remove-Item|Set-Content|Start-Transcript/);
+});
