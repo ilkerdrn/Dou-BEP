@@ -617,6 +617,8 @@ test('own voice clears mutable JSON and PCM buffers on success or exception', ()
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
  assert.match(cs, /Array\.Clear\(input, 0, input\.Length\)/);
  assert.match(cs, /Array\.Clear\(pcmWav, 0, pcmWav\.Length\)/);
+ assert.match(cs, /stdoutBuffer = new byte\[16384\]/);
+ assert.match(cs, /Array\.Clear\(stdoutBuffer, 0, stdoutBuffer\.Length\)/);
  assert.match(cs, /byte\[\] buffer = stream\.GetBuffer\(\)/);
  assert.match(cs, /Array\.Clear\(buffer, 0, buffer\.Length\)/);
  assert.match(cs, /if \(audioStream != null\) audioStream\.Dispose\(\)/);
