@@ -710,3 +710,19 @@ test('multi-chunk OwnVoice rejects exited or PID-reused UIA sources while retain
  assert.match(cs, /_speechSession = null;\s*\+\+_audioGeneration;\s*CancelAudioLocked\(\)/);
  assert.match(cs, /process\.StartTime\.ToUniversalTime\(\)\.Ticks !=\s*session\.SourceProcessStartUtcTicks/);
 });
+
+test('missing local voice does not consume an unread sentence or static section', () => {
+ const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ const sentenceStart = cs.indexOf('private void ReadSentence(');
+ const sectionStart = cs.indexOf('private void ReadStaticTextSection(', sentenceStart);
+ const sentence = cs.slice(sentenceStart, sectionStart);
+ const sectionEnd = cs.indexOf('private void TraverseStructure(', sectionStart);
+ const section = cs.slice(sectionStart, sectionEnd);
+ assert.ok(sentenceStart >= 0 && sectionStart > sentenceStart && sectionEnd > sectionStart);
+ assert.match(sentence, /if \(!_ownVoice && _turkishVoice == null\)\s*\{\s*StopSpeech\(\);\s*SetStatus\("Türkçe yerel ses bulunamadı; cümle konumu değiştirilmedi\."\);\s*return;/);
+ assert.ok(sentence.indexOf('if (!_ownVoice && _turkishVoice == null)') <
+     sentence.indexOf('_sentenceIndex = index;'));
+ assert.match(section, /if \(!_ownVoice && _turkishVoice == null\)\s*\{\s*StopSpeech\(\);\s*_advanceAfterSection = continueAfterPrevious;\s*SetStatus\("Türkçe ses bulunamadı; bölüm konumu değiştirilmedi\."\);\s*return;/);
+ assert.ok(section.indexOf('if (!_ownVoice && _turkishVoice == null)') <
+     section.indexOf('_cursor = lastIncluded;'));
+});
