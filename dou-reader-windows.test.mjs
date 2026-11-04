@@ -266,6 +266,15 @@ test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student c
  assert.match(cs,/StopSyntheticDemo\(\);\s*_examReading = false;/);
  assert.match(cs,/new SoundPlayer\(_syntheticDemoStream\)/);
  assert.match(cs,/byte\[\] wav = Convert\.FromBase64String\(base64\)/);
+ assert.match(cs,/Task\.Run\(\(\) => GenerateSyntheticDemoWav\(_syntheticDemoScript\)\)/);
+ assert.match(cs,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(cs,/version != _syntheticDemoVersion/);
+ assert.match(cs,/process\.WaitForExit\(10000\)/);
+ assert.match(cs,/process\.BeginOutputReadLine\(\)/);
+ assert.match(cs,/encoded\.Length \+ args\.Data\.Length > 1400000/);
+ assert.match(cs,/BitConverter\.ToUInt32\(wav, 40\) != wav\.Length - 44/);
+ assert.match(cs,/BitConverter\.ToUInt16\(wav, 34\) != 16/);
+
  assert.match(cs,/wav\.Length > 1048576/);
  assert.match(ps,/dou-speech-reader-demo\.mjs/);
  const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
@@ -289,4 +298,13 @@ test('Fixed DOU Speech bridge emits actual bounded PCM mono WAV without acceptin
  assert.equal(wav.readUInt32LE(40)+44,wav.length);
  assert.ok(wav.readUInt32LE(40)>0);
  assert.throws(()=>execFileSync(process.execPath,[script,'secret'],{encoding:'utf8',timeout:10000,stdio:['ignore','pipe','pipe']}),/Command failed/);
+});
+
+test('Synthetic preview does not synchronously block Windows UI on child output',()=>{
+ const body=cs.split('private void PlaySyntheticDemo()')[1].split('private static byte[] GenerateSyntheticDemoWav')[0];
+ assert.doesNotMatch(body,/StandardOutput\.ReadToEnd\(|WaitForExit\(|process\.Start\(/);
+ assert.match(body,/Task\.Run\(/);
+ assert.match(body,/version != _syntheticDemoVersion/);
+ const stop=cs.split('private void StopSyntheticDemo()')[1].split('private void StopSpeech()')[0];
+ assert.match(stop,/_syntheticDemoVersion\+\+/);
 });

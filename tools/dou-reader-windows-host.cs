@@ -12,6 +12,8 @@ using System.Media;
 using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Automation;
 using System.Windows.Forms;
 
@@ -63,6 +65,7 @@ namespace DouBepReader
         private readonly string _syntheticDemoScript;
         private MemoryStream _syntheticDemoStream;
         private SoundPlayer _syntheticDemoPlayer;
+        private int _syntheticDemoVersion;
         private AutomationElement _cursor;
         private int _scopeProcessId;
         private bool _continuous;
@@ -620,54 +623,101 @@ namespace DouBepReader
         private void PlaySyntheticDemo()
         {
             StopSpeech();
-            try
+            if (String.IsNullOrWhiteSpace(_syntheticDemoScript) || !new FileInfo(_syntheticDemoScript).Exists)
             {
-                if (String.IsNullOrWhiteSpace(_syntheticDemoScript) || !new FileInfo(_syntheticDemoScript).Exists)
+                SetStatus("Yerel deneysel DOU Speech deneme dosyası bulunamadı.");
+                return;
+            }
+            int version = _syntheticDemoVersion;
+            SetStatus("Yerel sentetik WAV örneği hazırlanıyor. Sesi durdur ile iptal edebilirsiniz.");
+            // Do not block the UI thread while starting Node or waiting for stdout.
+            Task.Run(() => GenerateSyntheticDemoWav(_syntheticDemoScript))
+                .ContinueWith(task =>
                 {
-                    SetStatus("Yerel deneysel DOU Speech deneme dosyası bulunamadı.");
-                    return;
-                }
-                var info = new ProcessStartInfo
-                {
-                    FileName = "node.exe",
-                    Arguments = "\"" + _syntheticDemoScript + "\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true
-                };
-                string base64;
-                using (var process = Process.Start(info))
-                {
-                    if (process == null) throw new InvalidOperationException("Node başlatılamadı.");
-                    base64 = process.StandardOutput.ReadToEnd();
-                    if (!process.WaitForExit(10000) || process.ExitCode != 0)
+                    if (IsDisposed || !IsHandleCreated) return;
+                    try
                     {
-                        try { if (!process.HasExited) process.Kill(); } catch (InvalidOperationException) { }
-                        throw new InvalidOperationException("Sentetik örnek üretilemedi.");
+                        BeginInvoke((MethodInvoker)delegate
+                        {
+                            if (version != _syntheticDemoVersion || IsDisposed) return;
+                            if (task.IsFaulted || task.IsCanceled)
+                            {
+                                SetStatus("Yerel sentetik ses denemesi üretilemedi.");
+                                return;
+                            }
+                            try
+                            {
+                                _syntheticDemoStream = new MemoryStream(task.Result, false);
+                                _syntheticDemoPlayer = new SoundPlayer(_syntheticDemoStream);
+                                _syntheticDemoPlayer.Load();
+                                _syntheticDemoPlayer.Play();
+                                SetStatus("Deneysel robotik ses çalınıyor. Sınav için doğrulanmadı.");
+                            }
+                            catch (Exception)
+                            {
+                                StopSyntheticDemo();
+                                SetStatus("Sentetik ses örneği çalınamadı.");
+                            }
+                        });
                     }
-                }
-                if (base64.Length > 1400000) throw new InvalidOperationException("Ses örneği boyut sınırı aşıldı.");
-                byte[] wav = Convert.FromBase64String(base64);
-                if (wav.Length > 1048576 || wav.Length < 44 ||
-                    System.Text.Encoding.ASCII.GetString(wav, 0, 4) != "RIFF" ||
-                    System.Text.Encoding.ASCII.GetString(wav, 8, 4) != "WAVE")
-                    throw new InvalidOperationException("Geçersiz deneme WAV verisi.");
-                StopSyntheticDemo();
-                _syntheticDemoStream = new MemoryStream(wav, false);
-                _syntheticDemoPlayer = new SoundPlayer(_syntheticDemoStream);
-                _syntheticDemoPlayer.Load();
-                _syntheticDemoPlayer.Play();
-                SetStatus("Deneysel robotik ses çalınıyor. Bu ses sınavlarda kullanım için doğrulanmadı.");
-            }
-            catch (Exception)
+                    catch (InvalidOperationException) { /* Window closing. */ }
+                });
+        }
+
+        private static byte[] GenerateSyntheticDemoWav(string scriptPath)
+        {
+            var info = new ProcessStartInfo
             {
-                StopSyntheticDemo();
-                SetStatus("Yerel sentetik ses denemesi çalınamadı. Node ve ses aygıtını kontrol edin.");
+                FileName = "node.exe",
+                Arguments = "\"" + scriptPath + "\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true
+            };
+            var encoded = new StringBuilder();
+            bool exceeded = false;
+            using (var process = new Process { StartInfo = info })
+            {
+                process.OutputDataReceived += (sender, args) =>
+                {
+                    if (args.Data == null) return;
+                    lock (encoded)
+                    {
+                        if (encoded.Length + args.Data.Length > 1400000) exceeded = true;
+                        else encoded.Append(args.Data);
+                    }
+                };
+                if (!process.Start()) throw new InvalidOperationException("Node cannot start.");
+                process.BeginOutputReadLine();
+                if (!process.WaitForExit(10000))
+                {
+                    try { process.Kill(); } catch (InvalidOperationException) { }
+                    throw new InvalidOperationException("Synthetic voice timeout.");
+                }
+                process.WaitForExit(); // Drain the redirected output event after process exit.
+                if (process.ExitCode != 0 || exceeded) throw new InvalidOperationException("Synthetic voice failed.");
             }
+            string base64;
+            lock (encoded) base64 = encoded.ToString();
+            byte[] wav = Convert.FromBase64String(base64);
+            if (wav.Length < 44 || wav.Length > 1048576 ||
+                Encoding.ASCII.GetString(wav, 0, 4) != "RIFF" ||
+                Encoding.ASCII.GetString(wav, 8, 4) != "WAVE" ||
+                Encoding.ASCII.GetString(wav, 12, 4) != "fmt " ||
+                Encoding.ASCII.GetString(wav, 36, 4) != "data" ||
+                BitConverter.ToUInt32(wav, 4) != wav.Length - 8 ||
+                BitConverter.ToUInt32(wav, 40) != wav.Length - 44 ||
+                BitConverter.ToUInt16(wav, 20) != 1 ||
+                BitConverter.ToUInt16(wav, 22) != 1 ||
+                BitConverter.ToUInt32(wav, 24) != 22050 ||
+                BitConverter.ToUInt16(wav, 34) != 16)
+                throw new InvalidOperationException("Invalid experimental PCM WAV.");
+            return wav;
         }
 
         private void StopSyntheticDemo()
         {
+            _syntheticDemoVersion++;
             if (_syntheticDemoPlayer != null)
             {
                 try { _syntheticDemoPlayer.Stop(); } catch (Exception) { }
