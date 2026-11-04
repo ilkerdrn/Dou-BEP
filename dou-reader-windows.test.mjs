@@ -94,3 +94,18 @@ test('v2.44 next/previous heading and text navigation keep process and step limi
  assert.match(cs,/!Allowed\(focusedNow\)/);
  assert.match(ps,/Ctrl\+Alt\+Shift\+H/);
 });
+
+test('Reader pause/resume is local, opt-in and does not request fresh UIA content',()=>{
+ assert.match(cs,/HOTKEY_PAUSE_RESUME = 110/);
+ assert.match(cs,/Tuple\.Create\(HOTKEY_PAUSE_RESUME, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.P\)/);
+ assert.match(cs,/case HOTKEY_PAUSE_RESUME: TogglePause\(\); break;/);
+ assert.match(cs,/private void TogglePause\(\)/);
+ assert.match(cs,/_speaker\.Pause\(\)/);
+ assert.match(cs,/_speaker\.Resume\(\)/);
+ assert.match(cs,/SynthesizerState\.Speaking/);
+ assert.match(cs,/SynthesizerState\.Paused/);
+ assert.match(cs,/AccessibleName = "DOU Reader sesini duraklat veya devam ettir"/);
+ assert.match(ps,/Ctrl\+Alt\+P: duraklat\/devam et/);
+ const implementation = cs.split('private void TogglePause()')[1].split('private void StopSpeech()')[0];
+ assert.doesNotMatch(implementation,/AutomationElement|GetCurrentPattern|Process\.GetProcessById|SpeakAsync\(/);
+});

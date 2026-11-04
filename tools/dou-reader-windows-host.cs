@@ -30,6 +30,7 @@ namespace DouBepReader
         private const int HOTKEY_HEADING_NEXT = 107;
         private const int HOTKEY_HEADING_PREVIOUS = 108;
         private const int HOTKEY_DOCUMENT_TEXT = 109;
+        private const int HOTKEY_PAUSE_RESUME = 110;
         // Microsoft UIA property identifiers; retrieved read-only from providers.
         private const int UIA_ARIA_ROLE = 30101;
         private const int UIA_HEADING_LEVEL = 30173;
@@ -37,7 +38,7 @@ namespace DouBepReader
         private static readonly AutomationProperty HeadingLevelProperty = AutomationProperty.LookupById(UIA_HEADING_LEVEL);
         private const int MAX_TRAVERSAL = 350;
         private const int MAX_SPEECH_CHARACTERS = 850;
-        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT };
+        private static readonly int[] Ids = { HOTKEY_READ, HOTKEY_NEXT, HOTKEY_PREVIOUS, HOTKEY_STOP, HOTKEY_LINK, HOTKEY_BUTTON, HOTKEY_HEADING_NEXT, HOTKEY_HEADING_PREVIOUS, HOTKEY_DOCUMENT_TEXT, HOTKEY_PAUSE_RESUME };
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern bool RegisterHotKey(IntPtr handle, int id, uint modifiers, uint key);
@@ -68,16 +69,18 @@ namespace DouBepReader
 
             var heading = new Label { Text = "DOU Reader | Sadece isteğe bağlı okuma", Left = 22, Top = 18, Width = 470, Height = 32, Font = new Font("Segoe UI", 13.0f, FontStyle.Bold) };
             var help = new Label {
-                Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
-                Left = 22, Top = 55, Width = 480, Height = 192, AutoSize = false
+                Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nCtrl+Alt+P  Duraklat / devam et\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
+                Left = 22, Top = 55, Width = 480, Height = 212, AutoSize = false
             };
             _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 252, Width = 466, Height = 49, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
             var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 349, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
+            var pause = new Button { Text = "Duraklat / devam et", Left = 22, Top = 315, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
+            pause.Click += delegate { TogglePause(); };
             var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 190, Top = 322, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
             _rateControl = new TrackBar { Left = 185, Top = 342, Width = 265, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
-            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(pause); Controls.Add(rateLabel); Controls.Add(_rateControl);
             _speaker = new SpeechSynthesizer();
             _speaker.Rate = 0;
             _turkishVoice = _speaker.GetInstalledVoices().Where(v => v.Enabled && v.VoiceInfo != null && v.VoiceInfo.Culture != null &&
@@ -103,7 +106,8 @@ namespace DouBepReader
                 Tuple.Create(HOTKEY_BUTTON, MOD_CONTROL | MOD_ALT, (uint)Keys.B),
                 Tuple.Create(HOTKEY_HEADING_NEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.H),
                 Tuple.Create(HOTKEY_HEADING_PREVIOUS, MOD_CONTROL | MOD_ALT | MOD_SHIFT, (uint)Keys.H),
-                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D)
+                Tuple.Create(HOTKEY_DOCUMENT_TEXT, MOD_CONTROL | MOD_ALT, (uint)Keys.D),
+                Tuple.Create(HOTKEY_PAUSE_RESUME, MOD_CONTROL | MOD_ALT, (uint)Keys.P)
             };
             foreach (var key in combinations)
             {
@@ -133,6 +137,7 @@ namespace DouBepReader
                     case HOTKEY_HEADING_NEXT: TraverseStructure(1, true); break;
                     case HOTKEY_HEADING_PREVIOUS: TraverseStructure(-1, true); break;
                     case HOTKEY_DOCUMENT_TEXT: TraverseStructure(1, false); break;
+                    case HOTKEY_PAUSE_RESUME: TogglePause(); break;
                 }
                 return;
             }
@@ -342,6 +347,27 @@ namespace DouBepReader
                 _cursor = null;
                 SetStatus("Rol gezinmesi durduruldu. Ctrl+Alt+R ile yeniden başlayın.");
             }
+        }
+
+        // Pause/resume only the already-approved utterance. Never read a new UIA element here.
+        private void TogglePause()
+        {
+            if (_turkishVoice == null) { SetStatus("Yerel Türkçe ses bulunamadı."); return; }
+            try
+            {
+                if (_speaker.State == SynthesizerState.Speaking)
+                {
+                    _speaker.Pause();
+                    SetStatus("Seslendirme duraklatıldı. Ctrl+Alt+P ile devam edin.");
+                }
+                else if (_speaker.State == SynthesizerState.Paused)
+                {
+                    _speaker.Resume();
+                    SetStatus("Seslendirme devam ediyor.");
+                }
+                else SetStatus("Duraklatılacak etkin bir seslendirme yok.");
+            }
+            catch (InvalidOperationException) { SetStatus("Seslendirme durumu değişti. Tekrar deneyin."); }
         }
 
         private void StopSpeech() { try { _speaker.SpeakAsyncCancelAll(); } catch (Exception) { /* no content */ } }
