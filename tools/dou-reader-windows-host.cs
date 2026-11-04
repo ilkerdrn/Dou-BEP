@@ -505,7 +505,7 @@ namespace DouBepReader
         {
             if (_imported == null)
             {
-                SetStatus("Önce TXT veya DOCX belgesi seçin.");
+                SetStatus("Önce TXT, DOCX veya PDF belgesi seçin.");
                 return;
             }
             int next = _importedParagraph < 0 ?
@@ -1584,6 +1584,7 @@ namespace DouBepReader
             MemoryStream stream = null;
             MemoryStream audioStream = null;
             byte[] pcmWav = null;
+            byte[] stdoutBuffer = null;
             try
             {
                 var start = new ProcessStartInfo(_nodeExecutable, "\"" + _bridgePath + "\"")
@@ -1631,9 +1632,10 @@ namespace DouBepReader
                     catch (System.ComponentModel.Win32Exception) { }
                 });
                 stream = new MemoryStream();
-                var buffer = new byte[16384];
+                stdoutBuffer = new byte[16384];
                 int read;
-                while ((read = proc.StandardOutput.BaseStream.Read(buffer, 0, buffer.Length)) > 0)
+                while ((read = proc.StandardOutput.BaseStream.Read(
+                    stdoutBuffer, 0, stdoutBuffer.Length)) > 0)
                 {
                     lock (_audioLock) if (_audioGeneration != generation) return false;
                     if (stream.Length + read > ReaderSpeechContract.MaxAudioBytes)
@@ -1642,7 +1644,7 @@ namespace DouBepReader
                         AudioStatus(generation, "Ses boyutu güvenlik sınırını aştı.");
                         return false;
                     }
-                    stream.Write(buffer, 0, read);
+                    stream.Write(stdoutBuffer, 0, read);
                 }
                 if (!watchdog.Wait(16000) ||
                     Interlocked.CompareExchange(ref timedOut, 0, 0) != 0 ||
@@ -1712,6 +1714,7 @@ namespace DouBepReader
                 if (player != null) player.Dispose();
                 if (audioStream != null) audioStream.Dispose();
                 if (pcmWav != null) Array.Clear(pcmWav, 0, pcmWav.Length);
+                if (stdoutBuffer != null) Array.Clear(stdoutBuffer, 0, stdoutBuffer.Length);
                 if (stream != null)
                 {
                     // MemoryStream() owns an exposable in-memory WAV buffer.
