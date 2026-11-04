@@ -252,3 +252,21 @@ test('Reader Windows acceptance runs source regressions, real C# compilation and
  assert.match(gate,/gerçek ses\/erişilebilirlik kullanıcısı kabulü değildir/);
  assert.doesNotMatch(gate,/npm install|npm ci|Invoke-WebRequest|Invoke-RestMethod|Remove-Item|Set-Content|Start-Transcript/);
 });
+
+test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student content',()=>{
+ const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
+ assert.match(demo,/synthesizeTurkishPreview\('Merhaba dünya'\)/);
+ assert.match(demo,/process\.argv\.length !== 2/);
+ assert.match(demo,/Buffer\.from\(wav\)\.toString\('base64'\)/);
+ assert.match(cs,/private void PlaySyntheticDemo\(\)/);
+ assert.match(cs,/demo\.Click \+= delegate \{ PlaySyntheticDemo\(\); \}/);
+ assert.match(cs,/private void StopSyntheticDemo\(\)/);
+ assert.match(cs,/StopSyntheticDemo\(\);\s*_examReading = false;/);
+ assert.match(cs,/new SoundPlayer\(_syntheticDemoStream\)/);
+ assert.match(cs,/byte\[\] wav = Convert\.FromBase64String\(base64\)/);
+ assert.match(cs,/wav\.Length > 1048576/);
+ assert.match(ps,/dou-speech-reader-demo\.mjs/);
+ const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
+ assert.doesNotMatch(body,/AutomationElement|AccessibleName\(|ReadFocused\(|TextPattern|ValuePattern|Clipboard\./);
+ assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|student|examText/);
+});
