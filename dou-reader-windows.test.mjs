@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {inspectSpeechWaveform} from './dou-speech-quality.mjs';
 const ps=readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url),'utf8');
 const cs=readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url),'utf8');
 const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
@@ -307,4 +308,34 @@ test('Synthetic preview does not synchronously block Windows UI on child output'
  assert.match(body,/version != _syntheticDemoVersion/);
  const stop=cs.split('private void StopSyntheticDemo()')[1].split('private void StopSpeech()')[0];
  assert.match(stop,/_syntheticDemoVersion\+\+/);
+});
+
+test('Fixed offline DOU Speech demo passes objective waveform safety thresholds',()=>{
+ const demo=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[demo],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ const wav=Buffer.from(encoded,'base64');
+ const stats=inspectSpeechWaveform(wav);
+ assert.equal(stats.sampleRate,22050);
+ assert.ok(stats.durationSeconds>0.1 && stats.durationSeconds<=16,'bounded output duration');
+ assert.ok(stats.rms>0 && stats.rms<1,'non-silent normalized RMS');
+ assert.ok(stats.peak>0 && stats.peak<1,'non-silent unclipped peak');
+ assert.equal(stats.clippedSamples,0,'no clipped PCM samples');
+ assert.ok(stats.activeRatio>0 && stats.activeRatio<=1,'non-zero active signal ratio');
+ assert.ok(stats.maxStep>=0 && stats.maxStep<1,'bounded adjacent sample jump');
+ assert.equal(stats.objectiveOnly,true);
+ assert.equal(stats.validatedIntelligibility,false);
+});
+test('Objective-only DOU Speech gate rejects corrupted PCM headers and silent demo files',()=>{
+ const demo=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[demo],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ const wav=Buffer.from(encoded,'base64');
+ const mutated=Buffer.from(wav);
+ mutated.writeUInt32LE(1234,40);
+ assert.throws(()=>inspectSpeechWaveform(mutated),RangeError);
+ const silence=Buffer.from(wav);
+ silence.fill(0,44);
+ const stats=inspectSpeechWaveform(silence);
+ assert.equal(stats.rms,0);
+ assert.equal(stats.activeRatio,0);
+ assert.ok(!(stats.rms>0 && stats.activeRatio>0),'silent data must not pass signal gate');
 });
