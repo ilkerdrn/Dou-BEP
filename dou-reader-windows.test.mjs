@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const ps=readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url),'utf8');
 const cs=readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url),'utf8');
 const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
@@ -269,4 +271,22 @@ test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student c
  const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
  assert.doesNotMatch(body,/AutomationElement|AccessibleName\(|ReadFocused\(|TextPattern|ValuePattern|Clipboard\./);
  assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|examText/);
+});
+
+test('Fixed DOU Speech bridge emits actual bounded PCM mono WAV without accepting text input',()=>{
+ const script=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[script],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ assert.match(encoded,/^[A-Za-z0-9+/]+={0,2}$/);
+ const wav=Buffer.from(encoded,'base64');
+ assert.ok(wav.length>=44 && wav.length<=1048576);
+ assert.equal(wav.toString('ascii',0,4),'RIFF');
+ assert.equal(wav.toString('ascii',8,12),'WAVE');
+ assert.equal(wav.toString('ascii',12,16),'fmt ');
+ assert.equal(wav.readUInt16LE(20),1);
+ assert.equal(wav.readUInt16LE(22),1);
+ assert.equal(wav.readUInt32LE(24),22050);
+ assert.equal(wav.toString('ascii',36,40),'data');
+ assert.equal(wav.readUInt32LE(40)+44,wav.length);
+ assert.ok(wav.readUInt32LE(40)>0);
+ assert.throws(()=>execFileSync(process.execPath,[script,'secret'],{encoding:'utf8',timeout:10000,stdio:['ignore','pipe','pipe']}),/Command failed/);
 });
