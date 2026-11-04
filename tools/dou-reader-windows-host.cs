@@ -885,6 +885,14 @@ namespace DouBepReader
                     SetStatus("Cümle, deneysel ses motorunun güvenli sınırlarını aşıyor.");
                     return;
                 }
+                // A failed or absent local voice must not consume the user's
+                // sentence position. A later voice-enabled attempt can retry it.
+                if (!_ownVoice && _turkishVoice == null)
+                {
+                    StopSpeech();
+                    SetStatus("Türkçe yerel ses bulunamadı; cümle konumu değiştirilmedi.");
+                    return;
+                }
                 StopSpeech();
                 _sentenceAnchor = _cursor;
                 _sentencePid = _scopeProcessId;
@@ -975,6 +983,14 @@ namespace DouBepReader
                     StopSpeech();
                     _advanceAfterSection = continueAfterPrevious;
                     SetStatus("Bu bölgede daha fazla erişilebilir statik metin bulunamadı.");
+                    return;
+                }
+                // Do not consume an unread section when no voice is available.
+                if (!_ownVoice && _turkishVoice == null)
+                {
+                    StopSpeech();
+                    _advanceAfterSection = continueAfterPrevious;
+                    SetStatus("Türkçe ses bulunamadı; bölüm konumu değiştirilmedi.");
                     return;
                 }
                 _cursor = lastIncluded;
