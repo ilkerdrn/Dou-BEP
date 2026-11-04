@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 const ps=readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url),'utf8');
 const cs=readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url),'utf8');
 const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
@@ -237,7 +239,7 @@ test('Reader speech completion routes only the active approved utterance',()=>{
  assert.match(complete,/e\.Prompt != _activePrompt/);
  assert.match(complete,/if \(_examReading\) SpeakExamNext\(\)/);
  assert.match(complete,/else if \(_continuous\) SpeakContinuousNext\(false\)/);
- assert.match(cs,/private void StopSpeech\(\)\s*\{\s*_examReading = false;\s*_continuous = false;/);
+ assert.match(cs,/private void StopSpeech\(\)\s*\{\s*StopSyntheticDemo\(\);\s*_examReading = false;\s*_continuous = false;/);
 });
 
 test('Reader Windows acceptance runs source regressions, real C# compilation and synthetic pronunciation',()=>{
@@ -251,4 +253,40 @@ test('Reader Windows acceptance runs source regressions, real C# compilation and
  assert.match(gate,/GetApartmentState\(\) -ne 'STA'/);
  assert.match(gate,/gerçek ses\/erişilebilirlik kullanıcısı kabulü değildir/);
  assert.doesNotMatch(gate,/npm install|npm ci|Invoke-WebRequest|Invoke-RestMethod|Remove-Item|Set-Content|Start-Transcript/);
+});
+
+test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student content',()=>{
+ const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
+ assert.match(demo,/synthesizeTurkishPreview\('Merhaba dünya'\)/);
+ assert.match(demo,/process\.argv\.length !== 2/);
+ assert.match(demo,/Buffer\.from\(wav\)\.toString\('base64'\)/);
+ assert.match(cs,/private void PlaySyntheticDemo\(\)/);
+ assert.match(cs,/demo\.Click \+= delegate \{ PlaySyntheticDemo\(\); \}/);
+ assert.match(cs,/private void StopSyntheticDemo\(\)/);
+ assert.match(cs,/StopSyntheticDemo\(\);\s*_examReading = false;/);
+ assert.match(cs,/new SoundPlayer\(_syntheticDemoStream\)/);
+ assert.match(cs,/byte\[\] wav = Convert\.FromBase64String\(base64\)/);
+ assert.match(cs,/wav\.Length > 1048576/);
+ assert.match(ps,/dou-speech-reader-demo\.mjs/);
+ const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
+ assert.doesNotMatch(body,/AutomationElement|AccessibleName\(|ReadFocused\(|TextPattern|ValuePattern|Clipboard\./);
+ assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|examText/);
+});
+
+test('Fixed DOU Speech bridge emits actual bounded PCM mono WAV without accepting text input',()=>{
+ const script=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[script],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ assert.match(encoded,/^[A-Za-z0-9+/]+={0,2}$/);
+ const wav=Buffer.from(encoded,'base64');
+ assert.ok(wav.length>=44 && wav.length<=1048576);
+ assert.equal(wav.toString('ascii',0,4),'RIFF');
+ assert.equal(wav.toString('ascii',8,12),'WAVE');
+ assert.equal(wav.toString('ascii',12,16),'fmt ');
+ assert.equal(wav.readUInt16LE(20),1);
+ assert.equal(wav.readUInt16LE(22),1);
+ assert.equal(wav.readUInt32LE(24),22050);
+ assert.equal(wav.toString('ascii',36,40),'data');
+ assert.equal(wav.readUInt32LE(40)+44,wav.length);
+ assert.ok(wav.readUInt32LE(40)>0);
+ assert.throws(()=>execFileSync(process.execPath,[script,'secret'],{encoding:'utf8',timeout:10000,stdio:['ignore','pipe','pipe']}),/Command failed/);
 });
