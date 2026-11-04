@@ -488,10 +488,7 @@ namespace DouBepReader
                 return false;
             }
             if (_ownVoice)
-            {
-                SpeakOwnVoice(text, 0); // explicit file choice, no target process
-                return true;
-            }
+                return SpeakOwnVoice(text, 0); // accepted queue, no target process
             if (_turkishVoice == null)
             {
                 StopSpeech();
@@ -893,21 +890,24 @@ namespace DouBepReader
                     SetStatus("Türkçe yerel ses bulunamadı; cümle konumu değiştirilmedi.");
                     return;
                 }
-                StopSpeech();
+                // Only commit the cursor after the synthesizer ACCEPTS the
+                // request. Authentication/text rejections must remain retryable.
+                if (_ownVoice)
+                {
+                    if (!SpeakOwnVoice(sentence, _scopeProcessId)) return;
+                }
+                else
+                {
+                    StopSpeech();
+                    _speaker.Rate = _rateControl.Value;
+                    _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(sentence));
+                    SetStatus("Cümle okunuyor: " + (index + 1) + " / " + sentences.Count);
+                }
                 _sentenceAnchor = _cursor;
                 _sentencePid = _scopeProcessId;
                 _sentenceTextHash = raw.GetHashCode();
                 _sentenceTextLength = raw.Length;
                 _sentenceIndex = index;
-                if (_ownVoice)
-                    SpeakOwnVoice(sentence, _scopeProcessId);
-                else if (_turkishVoice != null)
-                {
-                    _speaker.Rate = _rateControl.Value;
-                    _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(sentence));
-                    SetStatus("Cümle okunuyor: " + (index + 1) + " / " + sentences.Count);
-                }
-                else SetStatus("Türkçe yerel ses bulunamadı; içerik okunmadı.");
             }
             catch (Exception)
             {
@@ -993,26 +993,27 @@ namespace DouBepReader
                     SetStatus("Türkçe ses bulunamadı; bölüm konumu değiştirilmedi.");
                     return;
                 }
-                _cursor = lastIncluded;
-                // Every subsequent explicit section request starts after the last
-                // read node, but a separate navigation command resets this marker.
-                _advanceAfterSection = true;
+                // Commit section position only after the local voice accepted
+                // the request; a refused source or invalid text is still unread.
                 if (_ownVoice)
                 {
-                    SpeakOwnVoice(sentence, _scopeProcessId);
+                    if (!SpeakOwnVoice(sentence, _scopeProcessId))
+                    {
+                        _advanceAfterSection = continueAfterPrevious;
+                        return;
+                    }
                 }
-                else if (_turkishVoice != null)
+                else
                 {
                     StopSpeech();
                     _speaker.Rate = _rateControl.Value;
                     _speaker.SpeakAsync(TurkishMathPronunciation.Prepare(sentence));
                     SetStatus("İzinli alanda statik metinler okunuyor; bölüm sınırlandırıldı.");
                 }
-                else
-                {
-                    StopSpeech();
-                    SetStatus("Türkçe ses bulunamadı; okumaya başlanmadı.");
-                }
+                _cursor = lastIncluded;
+                // Every subsequent explicit section request starts after the last
+                // read node, but a separate navigation command resets this marker.
+                _advanceAfterSection = true;
             }
             catch (Exception)
             {
@@ -1341,17 +1342,17 @@ namespace DouBepReader
         // Explicit opt-in own-engine playback. No cloud, speech cache, or student content logging.
         // Generation and process cancellation prevent stale audio after stop or new navigation.
         // Text planning and WAV validation share the testable ReaderSpeechContract.
-        private void SpeakOwnVoice(string text, int sourceProcessId)
+        private bool SpeakOwnVoice(string text, int sourceProcessId)
         {
             StopSpeech();
             string safe;
             try { safe = TurkishMathPronunciation.Prepare(text); }
-            catch (Exception) { SetStatus("Metin yerel ses için uygun değil."); return; }
+            catch (Exception) { SetStatus("Metin yerel ses için uygun değil."); return false; }
             var chunks = ReaderSpeechContract.Split(safe);
             if (chunks == null)
             {
                 SetStatus("Metin çok uzun veya deneysel Türkçe motor tarafından desteklenmiyor.");
-                return;
+                return false;
             }
             // Always snapshot the speed on the UI thread.
             double rate = 1.0 + (_rateControl.Value * 0.08);
@@ -1372,7 +1373,7 @@ namespace DouBepReader
                 catch (Exception)
                 {
                     SetStatus("Kaynak uygulamanın kimliği doğrulanamadı; ses başlatılmadı.");
-                    return;
+                    return false;
                 }
             }
             var session = new OwnVoiceSession(chunks, rate, sourceProcessId, sourceStartTicks);
@@ -1384,6 +1385,7 @@ namespace DouBepReader
             }
             SetStatus("DOU yerel ses hazırlanıyor...");
             RunSession(session, generation);
+            return true;
         }
 
         // Confirm process NAME and creation time for every queued chunk.
