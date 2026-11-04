@@ -114,7 +114,7 @@ test('Reader bounded continuous mode requires explicit Ctrl+Alt+C and current al
  assert.match(cs,/HOTKEY_CONTINUOUS = 111/);
  assert.match(cs,/MAX_CONTINUOUS_ITEMS = 20/);
  assert.match(cs,/case HOTKEY_CONTINUOUS: StartContinuous\(\); break;/);
- assert.match(cs,/continuous\.Click \+= delegate \{ StartContinuous\(\); \}/);
+ assert.match(cs,/Hedef uygulamada Ctrl\+Alt\+C ile ardışık oku/);
  assert.match(cs,/private void StartContinuous\(\)/);
  assert.match(cs,/if \(!Allowed\(focusedNow\)\)/);
  assert.match(cs,/private void SpeakContinuousNext\(bool includeCurrent\)/);
