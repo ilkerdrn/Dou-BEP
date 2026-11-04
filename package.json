@@ -44,7 +44,8 @@
     "speech:cadence-audit": "node tools/dou-speech-cadence-audit.mjs",
     "speech:continuity-audit": "node tools/dou-speech-continuity-audit.mjs",
     "exam:closure": "node tools/exam-closure-smoke.mjs",
-    "reader:pronunciation:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pronunciation-check.ps1"
+    "reader:pronunciation:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pronunciation-check.ps1",
+    "reader:acceptance:windows": "powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/dou-reader-windows-acceptance.ps1"
   },
   "engines": {
     "node": ">=22.13"
