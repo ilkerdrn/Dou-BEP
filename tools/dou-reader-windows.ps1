@@ -67,7 +67,8 @@ try {
     }
     Write-Host 'DOU Reader v2.44: uygulama icinde metin tutulmaz ve hicbir sunucuya gonderilmez.'
     Write-Host ('Izin verilen uygulamalar: ' + ($AllowedProcesses -join ', '))
-    [DouBepReader.Program]::Run([string[]]$AllowedProcesses)
+    $demoScript = Join-Path $PSScriptRoot 'dou-speech-reader-demo.mjs'
+    [DouBepReader.Program]::Run([string[]]$AllowedProcesses, [string]$demoScript)
 } catch {
     throw ('DOU Reader baslatilamadi. Windows PowerShell 5.1, .NET Framework UIA ve yerel ses ayarlarini kontrol edin. ' + $_.Exception.Message)
 }
