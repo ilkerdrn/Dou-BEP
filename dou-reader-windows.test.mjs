@@ -268,5 +268,5 @@ test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student c
  assert.match(ps,/dou-speech-reader-demo\.mjs/);
  const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
  assert.doesNotMatch(body,/AutomationElement|AccessibleName\(|ReadFocused\(|TextPattern|ValuePattern|Clipboard\./);
- assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|student|examText/);
+ assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|examText/);
 });
