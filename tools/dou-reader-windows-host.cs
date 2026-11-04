@@ -475,14 +475,16 @@ namespace DouBepReader
         }
     }
 
-    // Small, auditable Turkish maths pronunciation layer. Not a TTS/acoustic engine.
-    // Preserve numbers and ambiguous URLs/dates. Refuse overlong text instead of silently truncating.
+    // This is a deterministic text normalization layer, NOT a Turkish TTS engine.
+    // Never normalize inside URLs or email addresses. All data stays in memory.
     public static class TurkishMathPronunciation
     {
-        public static string Prepare(string text)
+        private static readonly Regex ProtectedToken = new Regex(
+            @"(?:https?://|www\.)[^\s]+|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+        private static string NormalizeMath(string text)
         {
-            if (text == null) return "";
-            if (text.Length > 950) throw new ArgumentOutOfRangeException("text");
             text = Regex.Replace(text, @"([A-Za-zÇĞİÖŞÜçğıöşü0-9])\^(2|3)(?![0-9])",
                 match => match.Groups[1].Value + (match.Groups[2].Value == "2" ? " kare" : " küp"));
             text = text.Replace("!=", " eşit değil ").Replace(">=", " büyük veya eşit ")
@@ -494,10 +496,30 @@ namespace DouBepReader
                 .Replace("π", " pi ").Replace("α", " alfa ").Replace("β", " beta ").Replace("θ", " teta ")
                 .Replace("∫", " integral ").Replace("∂", " kısmi türev ").Replace("∈", " elemanıdır ").Replace("∉", " elemanı değildir ")
                 .Replace("∩", " kesişim ").Replace("∪", " birleşim ").Replace("→", " yönünde ok ").Replace("↔", " çift yönlü ok ")
-                .Replace("∞", " sonsuz ")
-                .Replace("∑", " toplam ").Replace("²", " kare ")
-                .Replace("³", " küp ").Replace("−", " eksi ");
-            return Regex.Replace(text, @"[ \t]{2,}", " ").Trim();
+                .Replace("∞", " sonsuz ").Replace("∑", " toplam ").Replace("∏", " çarpım ")
+                .Replace("∀", " her ").Replace("∃", " vardır ").Replace("∅", " boş küme ")
+                .Replace("∝", " orantılıdır ").Replace("∠", " açı ").Replace("∆", " delta ")
+                .Replace("½", " bir bölü iki ").Replace("¼", " bir bölü dört ").Replace("¾", " üç bölü dört ")
+                .Replace("²", " kare ").Replace("³", " küp ").Replace("−", " eksi ");
+            return Regex.Replace(text, @"[ \t]{2,}", " ");
+        }
+
+        public static string Prepare(string text)
+        {
+            if (text == null) return "";
+            if (text.Length > 950) throw new ArgumentOutOfRangeException("text");
+            var tokens = ProtectedToken.Matches(text);
+            if (tokens.Count == 0) return NormalizeMath(text).Trim();
+            var result = new System.Text.StringBuilder();
+            int position = 0;
+            foreach (Match token in tokens)
+            {
+                result.Append(NormalizeMath(text.Substring(position, token.Index - position)));
+                result.Append(token.Value);
+                position = token.Index + token.Length;
+            }
+            result.Append(NormalizeMath(text.Substring(position)));
+            return Regex.Replace(result.ToString(), @"[ \t]{2,}", " ").Trim();
         }
     }
 
