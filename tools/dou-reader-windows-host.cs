@@ -622,7 +622,7 @@ namespace DouBepReader
             StopSpeech();
             try
             {
-                if (String.IsNullOrWhiteSpace(_syntheticDemoScript) || !System.IO.File.Exists(_syntheticDemoScript))
+                if (String.IsNullOrWhiteSpace(_syntheticDemoScript) || !new FileInfo(_syntheticDemoScript).Exists)
                 {
                     SetStatus("Yerel deneysel DOU Speech deneme dosyası bulunamadı.");
                     return;
