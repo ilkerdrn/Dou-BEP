@@ -1508,11 +1508,13 @@ namespace DouBepReader
                 {
                     try
                     {
-                        var process = Process.GetProcessById(session.SourceProcessId);
-                        if (process.HasExited || !_allowed.Contains(process.ProcessName) ||
-                            process.StartTime.ToUniversalTime().Ticks !=
-                                session.SourceProcessStartUtcTicks)
-                            throw new InvalidOperationException("Application identity changed");
+                        using (var process = Process.GetProcessById(session.SourceProcessId))
+                        {
+                            if (process.HasExited || !_allowed.Contains(process.ProcessName) ||
+                                process.StartTime.ToUniversalTime().Ticks !=
+                                    session.SourceProcessStartUtcTicks)
+                                throw new InvalidOperationException("Application identity changed");
+                        }
                         // Pressing the window button explicitly authorizes resuming the
                         // already vetted, bounded label. A global hotkey requires target focus.
                         if (!ContainsFocus)
