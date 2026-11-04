@@ -1407,6 +1407,25 @@ namespace DouBepReader
             catch (Exception) { return false; }
         }
 
+        // Stop ONLY the currently active source-bound request. The identity
+        // check itself happens outside the audio lock to avoid provider stalls
+        // blocking the UI's Stop/Pause controls.
+        private void CancelSessionAfterSourceLoss(OwnVoiceSession session, int generation)
+        {
+            int cancelledGeneration;
+            lock (_audioLock)
+            {
+                if (_audioGeneration != generation ||
+                    !ReferenceEquals(_speechSession, session)) return;
+                _speechSession = null;
+                ++_audioGeneration;
+                CancelAudioLocked();
+                cancelledGeneration = _audioGeneration;
+            }
+            AudioStatus(cancelledGeneration,
+                "Kaynak uygulama değişti veya kapandı; ses güvenle durduruldu.");
+        }
+
         private void RunSession(OwnVoiceSession session, int generation)
         {
             Task.Run(() =>
@@ -1434,22 +1453,11 @@ namespace DouBepReader
                     // only this session; never cancel an unrelated newer request.
                     if (!IsSessionSourceCurrent(session))
                     {
-                        int cancelledGeneration;
-                        lock (_audioLock)
-                        {
-                            if (_audioGeneration != generation ||
-                                !ReferenceEquals(_speechSession, session)) return;
-                            _speechSession = null;
-                            ++_audioGeneration;
-                            CancelAudioLocked();
-                            cancelledGeneration = _audioGeneration;
-                        }
-                        AudioStatus(cancelledGeneration,
-                            "Kaynak uygulama değişti veya kapandı; bekleyen ses silindi.");
+                        CancelSessionAfterSourceLoss(session, generation);
                         return;
                     }
                     AudioStatus(generation, "Okunuyor: parça " + (index + 1) + " / " + session.Chunks.Count);
-                    if (!PlayOwnVoice(chunk, generation, session.Rate))
+                    if (!PlayOwnVoice(chunk, generation, session.Rate, session))
                     {
                         lock (_audioLock)
                         {
@@ -1577,7 +1585,7 @@ namespace DouBepReader
 
         // No WAV files are written to disk: bounded stdout -> memory -> SoundPlayer.
         // One generation represents a single user request including every chunk.
-        private bool PlayOwnVoice(string text, int generation, double rate)
+        private bool PlayOwnVoice(string text, int generation, double rate, OwnVoiceSession session)
         {
             Process proc = null;
             SoundPlayer player = null;
@@ -1658,6 +1666,13 @@ namespace DouBepReader
                     AudioStatus(generation, "Türkçe ses motoru bu metni üretemedi.");
                     return false;
                 }
+                // The source may exit during the (up to 15 second) synthesis.
+                // Never play audio from an application that is already gone.
+                if (!IsSessionSourceCurrent(session))
+                {
+                    CancelSessionAfterSourceLoss(session, generation);
+                    return false;
+                }
                 pcmWav = stream.ToArray();
                 if (!ReaderSpeechContract.IsPcmWav(pcmWav))
                 {
@@ -1672,6 +1687,11 @@ namespace DouBepReader
                     _audioPlayer = player;
                 }
                 player.Load();
+                if (!IsSessionSourceCurrent(session))
+                {
+                    CancelSessionAfterSourceLoss(session, generation);
+                    return false;
+                }
                 // Start asynchronous playback while holding the same lock as StopSpeech().
                 // This closes the race where Stop() ran immediately BEFORE PlaySync().
                 lock (_audioLock)
@@ -1684,10 +1704,23 @@ namespace DouBepReader
                 // Wait for playback duration without blocking UI or holding the audio lock.
                 long durationMs = (long)Math.Ceiling((pcmWav.Length - 44) * 1000.0 / 44100.0) + 200;
                 var clock = Stopwatch.StartNew();
+                long nextSourceCheckMs = 250;
                 while (clock.ElapsedMilliseconds < durationMs)
                 {
                     lock (_audioLock)
                         if (_audioGeneration != generation || IsDisposed) return false;
+                    // Recheck every 250ms, not every 25ms, to avoid overloading
+                    // Windows Process/UIA providers during long playback.
+                    if (session.SourceProcessId > 0 &&
+                        clock.ElapsedMilliseconds >= nextSourceCheckMs)
+                    {
+                        nextSourceCheckMs = clock.ElapsedMilliseconds + 250;
+                        if (!IsSessionSourceCurrent(session))
+                        {
+                            CancelSessionAfterSourceLoss(session, generation);
+                            return false;
+                        }
+                    }
                     Thread.Sleep(25);
                 }
                 lock (_audioLock) return _audioGeneration == generation && !IsDisposed;
