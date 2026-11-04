@@ -324,7 +324,7 @@ test('table headers come only from actual bounded UIA TableItemPattern associate
 
 test('failed own-voice chunk clears only the active session, deliberate pause survives', () => {
  const cs = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
- assert.match(cs, /if \(!PlayOwnVoice\(chunk, generation, session\.Rate\)\)/);
+ assert.match(cs, /if \(!PlayOwnVoice\(chunk, generation, session\.Rate, session\)\)/);
  assert.match(cs, /if \(_audioGeneration == generation && !session\.Paused &&/);
  assert.match(cs, /ReferenceEquals\(_speechSession, session\)\)/);
  assert.match(cs, /_speechSession = null/);
@@ -764,4 +764,19 @@ test('voice enqueue reports acceptance before sentence section and document curs
  const body = cs.slice(bodyStart, bodyEnd);
  assert.match(body, /return false;/);
  assert.match(body, /RunSession\(session, generation\);\s*return true;/);
+});
+
+test('active playback rechecks UIA process identity and interrupts a closed source within a bounded poll interval', () => {
+ const host = readFileSync(new URL('./tools/dou-reader-windows-host.cs', import.meta.url), 'utf8');
+ assert.match(host, /private bool PlayOwnVoice\(string text, int generation, double rate, OwnVoiceSession session\)/);
+ assert.match(host, /if \(!PlayOwnVoice\(chunk, generation, session\.Rate, session\)\)/);
+ assert.match(host, /private void CancelSessionAfterSourceLoss\(OwnVoiceSession session, int generation\)/);
+ assert.match(host, /_audioGeneration != generation \|\|\s*!ReferenceEquals\(_speechSession, session\)/);
+ assert.match(host, /CancelSessionAfterSourceLoss\(session, generation\)/);
+ assert.match(host, /if \(!IsSessionSourceCurrent\(session\)\)\s*\{\s*CancelSessionAfterSourceLoss\(session, generation\);\s*return false;/);
+ assert.match(host, /long nextSourceCheckMs = 250/);
+ assert.match(host, /session\.SourceProcessId > 0 &&\s*clock\.ElapsedMilliseconds >= nextSourceCheckMs/);
+ assert.match(host, /nextSourceCheckMs = clock\.ElapsedMilliseconds \+ 250/);
+ assert.match(host, /if \(!IsSessionSourceCurrent\(session\)\)\s*\{\s*CancelSessionAfterSourceLoss\(session, generation\);\s*return false;/);
+ assert.match(host, /if \(session\.SourceProcessId == 0\) return true/);
 });
