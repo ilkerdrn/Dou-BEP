@@ -64,8 +64,8 @@ namespace DouBepReader
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
             Text = "DOU Reader — Windows erişilebilirlik pilotu";
             Width = 530;
-            Height = 432;
-            MinimumSize = new Size(480, 415);
+            Height = 505;
+            MinimumSize = new Size(480, 495);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             BackColor = Color.White;
@@ -77,15 +77,15 @@ namespace DouBepReader
                 Text = "Hedef uygulamaya geçip kısayollara basın:\r\nCtrl+Alt+R  Odaklanılan öğeyi oku\r\nCtrl+Alt+↓ / Ctrl+Alt+↑  Sonraki / önceki erişilebilir öğe\r\nCtrl+Alt+L / B  Sonraki bağlantı / düğme\r\nCtrl+Alt+H / Ctrl+Alt+Shift+H  Sonraki / önceki başlık\r\nCtrl+Alt+D  Sonraki belge metni\r\nCtrl+Alt+X  Seslendirmeyi durdur\r\nCtrl+Alt+P  Duraklat / devam et\r\nCtrl+Alt+C  Ardışık okumayı başlat\r\nSadece izin verilen uygulamalar. Giriş/şifre değerleri okunmaz.",
                 Left = 22, Top = 55, Width = 480, Height = 228, AutoSize = false
             };
-            _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 252, Width = 466, Height = 49, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
-            var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 349, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
+            _status = new Label { Text = "Ses başlatılıyor.", Left = 22, Top = 292, Width = 466, Height = 38, AccessibleName = "Okuyucu durumu", AutoEllipsis = true };
+            var stop = new Button { Text = "Sesi durdur", Left = 22, Top = 350, Width = 146, Height = 30, AccessibleName = "DOU Reader seslendirmesini durdur" };
             stop.Click += delegate { StopSpeech(); SetStatus("Seslendirme durduruldu."); };
-            var pause = new Button { Text = "Duraklat / devam et", Left = 22, Top = 315, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
+            var pause = new Button { Text = "Duraklat / devam et", Left = 187, Top = 350, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
             pause.Click += delegate { TogglePause(); };
-            var continuous = new Button { Text = "Ardışık oku", Left = 190, Top = 291, Width = 146, Height = 30, AccessibleName = "DOU Reader ardışık okumayı başlat" };
+            var continuous = new Button { Text = "Ardışık oku", Left = 352, Top = 350, Width = 146, Height = 30, AccessibleName = "DOU Reader ardışık okumayı başlat" };
             continuous.Click += delegate { StartContinuous(); };
-            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 190, Top = 322, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
-            _rateControl = new TrackBar { Left = 185, Top = 342, Width = 265, Minimum = -3, Maximum = 3, Value = 0,
+            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 395, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
+            _rateControl = new TrackBar { Left = 22, Top = 421, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
             Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(pause); Controls.Add(continuous); Controls.Add(rateLabel); Controls.Add(_rateControl);
             _speaker = new SpeechSynthesizer();
