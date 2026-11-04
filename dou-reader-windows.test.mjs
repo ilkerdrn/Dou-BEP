@@ -106,7 +106,7 @@ test('Reader pause/resume is local, opt-in and does not request fresh UIA conten
  assert.match(cs,/SynthesizerState\.Paused/);
  assert.match(cs,/AccessibleName = "DOU Reader sesini duraklat veya devam ettir"/);
  assert.match(ps,/Ctrl\+Alt\+P: duraklat\/devam et/);
- const implementation = cs.split('private void TogglePause()')[1].split('private void StopSpeech()')[0];
+ const implementation = cs.split('private void TogglePause()')[1].split('private void StartContinuous()')[0];
  assert.doesNotMatch(implementation,/AutomationElement|GetCurrentPattern|Process\.GetProcessById|SpeakAsync\(/);
 });
 
@@ -151,4 +151,24 @@ test('Each explicit navigation cancels any previous continuous read before UIA e
  }
  assert.match(cs,/private void StopSpeech\(\)[\s\S]*?_continuous = false;/);
  assert.match(cs,/e\.Prompt != _activePrompt/);
+});
+
+test('Exam pronunciation expands bounded math vocabulary without changing protected tokens',()=>{
+ assert.match(cs,/class TurkishMathPronunciation/);
+ assert.match(cs,/private static string NormalizeMath\(string text\)/);
+ assert.match(cs,/ProtectedToken\.Matches\(text\)/);
+ assert.match(cs,/result\.Append\(token\.Value\)/);
+ assert.match(cs,/NormalizeMath\(text\.Substring\(position, token\.Index - position\)\)/);
+ assert.match(cs,/if \(text\.Length > 950\) throw new ArgumentOutOfRangeException/);
+ for(const expression of ['"∏", " çarpım "','"∀", " her "','"∃", " vardır "','"∅", " boş küme "','"∠", " açı "','"½", " bir bölü iki "','"¾", " üç bölü dört "']){
+  assert.ok(cs.includes(expression),expression);
+ }
+ assert.doesNotMatch(cs,/HttpClient|WebClient|Clipboard\.|SetFocus\(|SpeechRecognition/);
+});
+
+test('Pause regression scope ends at the next method, not the entire continuous reader',()=>{
+ const pause=cs.split('private void TogglePause()')[1].split('private void StartContinuous()')[0];
+ assert.match(pause,/_speaker\.Pause\(\)/);
+ assert.match(pause,/_speaker\.Resume\(\)/);
+ assert.doesNotMatch(pause,/AutomationElement|SpeakContinuousNext|SpeakAsync\(/);
 });
