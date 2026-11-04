@@ -172,3 +172,15 @@ test('Pause regression scope ends at the next method, not the entire continuous 
  assert.match(pause,/_speaker\.Resume\(\)/);
  assert.doesNotMatch(pause,/AutomationElement|SpeakContinuousNext|SpeakAsync\(/);
 });
+
+test('Production pronunciation receives a Windows compilation and synthetic behavior smoke gate',()=>{
+ const smoke=readFileSync(new URL('./tools/dou-reader-pronunciation-check.ps1',import.meta.url),'utf8');
+ assert.match(pkg.scripts['reader:pronunciation:check'],/powershell\.exe -NoProfile/);
+ assert.match(smoke,/Add-Type -TypeDefinition \$unit/);
+ assert.match(smoke,/public static class TurkishMathPronunciation/);
+ assert.match(smoke,/\[DouBepReader\.TurkishMathPronunciation\]::Prepare/);
+ assert.match(smoke,/expected = 'www\.example\.com\/a\^2\?x=½'/);
+ assert.match(smoke,/expected = '04\.11\.2026 12:30'/);
+ assert.match(smoke,/Overlong input was not rejected/);
+ assert.doesNotMatch(smoke,/Invoke-WebRequest|Invoke-RestMethod|Start-Transcript|Get-Clipboard|Set-Clipboard/);
+});
