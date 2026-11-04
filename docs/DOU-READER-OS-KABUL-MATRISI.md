@@ -229,3 +229,13 @@ Bu bölüm mevcut 103 Windows senaryosunun yerine geçmez; ürün yayınını en
 - [ ] Windows'ta kurulu Node.js birden fazla sürüm/PATH girdisiyle kullanıldığında ön kontrolde belirlenen **aynı tam `node.exe` yolu** bütün ses parçalarında kullanılır; başarısız, UNC/ağ yolu veya uygun olmayan çalıştırılabilir dosyada anlaşılır hata alınır.
 
 **Not:** Bu iki test henüz çalıştırılmadı. Sentetik ses üretimi başarılı olsa da ses cihazı, yüksek DPI, ekran okuyucu uyumu, kullanıcı görüşmeleri ve PDF alt süreç kabulü hâlâ zorunludur.
+
+## Sprint 16 — uzun sesli okumada yayın engelleyici kontroller
+
+- [ ] 850 karaktere kadar, 2–8 ses parçasına bölünen anonim metin, kendi yerel motorumuzda sırasını koruyarak okunur ve son parça tamamlanınca kuyruk boşalır.
+- [ ] UIA kaynak uygulaması ilk parça sürerken kapatılır veya yerine aynı PID'yi kullanan yeni bir süreç açılırsa sonraki parça **okunmaz**; daha yeni bağımsız okuma oturumu etkilenmez.
+- [ ] İzinli kaynak değişmişken duraklatılmış ses devam ettirilmeye çalışıldığında oturum reddedilir; kullanıcıya özel içerik gösterilmez.
+- [ ] Türkçe SAPI sesi bulunmadığında cümle ve kısa bölüm düğmeleri okuma konumunu ilerletmez; sonraki başarılı seslendirmede aynı noktadan başlanır.
+- [ ] Sentetik bir ses işçisi istisnası, eski nesil veya duraklatılmış oturumu yeni sesin üzerine yazmadan temizlenir.
+
+**Bu senaryolar kodlanmış regresyon ve Windows kabul hedefleridir; henüz Windows'ta fiilen geçilmiş senaryolar değildir.**
