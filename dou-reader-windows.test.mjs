@@ -207,3 +207,35 @@ test('Reader exam navigation is opt-in and read-only, bounded to current applica
  assert.match(ps,/Ctrl\+Alt\+Q: sonraki soru/);
  assert.match(ps,/Ctrl\+Alt\+O: sonraki secenek/);
 });
+
+test('Reader question-flow is opt-in, bounded, and never crosses to the next question',()=>{
+ assert.match(cs,/HOTKEY_EXAM_FLOW = 114/);
+ assert.match(cs,/HOTKEY_EXAM_FLOW, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.E/);
+ assert.match(cs,/case HOTKEY_EXAM_FLOW: StartExamFlow\(\); break;/);
+ assert.match(cs,/MAX_EXAM_OPTIONS = 6/);
+ assert.match(cs,/MAX_EXAM_STEM_ITEMS = 3/);
+ const start=cs.split('private void StartExamFlow()')[1].split('private void SpeakExamElement')[0];
+ assert.match(start,/StopSpeech\(\)/);
+ assert.match(start,/if \(!Allowed\(focusedNow\)\)/);
+ assert.match(start,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(start,/IsExamQuestion\(candidate, text\)/);
+ assert.match(start,/_examReading = true/);
+ const next=cs.split('private void SpeakExamNext()')[1].split('private void OnSpeechCompleted')[0];
+ assert.match(next,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(next,/!Allowed\(focusedNow\)/);
+ assert.match(next,/_examSteps < MAX_TRAVERSAL/);
+ assert.match(next,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(next,/if \(IsExamQuestion\(candidate, text\)\) break/);
+ assert.match(next,/_examOptions >= MAX_EXAM_OPTIONS/);
+ assert.match(next,/_examStemItems < MAX_EXAM_STEM_ITEMS/);
+ assert.doesNotMatch(next,/SetFocus\(|GetCurrentPattern\(|SendInput|SendKeys|\.Invoke\(|\.Select\(|\.Toggle\(|Clipboard\.|HttpClient/);
+ assert.match(ps,/Ctrl\+Alt\+E: soru ve siklari oku/);
+});
+test('Reader speech completion routes only the active approved utterance',()=>{
+ const complete=cs.split('private void OnSpeechCompleted(object sender, SpeakCompletedEventArgs e)')[1].split('private void StopSpeech()')[0];
+ assert.match(complete,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(complete,/e\.Prompt != _activePrompt/);
+ assert.match(complete,/if \(_examReading\) SpeakExamNext\(\)/);
+ assert.match(complete,/else if \(_continuous\) SpeakContinuousNext\(false\)/);
+ assert.match(cs,/private void StopSpeech\(\)\s*\{\s*_examReading = false;\s*_continuous = false;/);
+});
