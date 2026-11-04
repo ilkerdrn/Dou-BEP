@@ -158,9 +158,10 @@ namespace DouBepReader
             if (element == null) return false;
             int pid = element.Current.ProcessId;
             if (pid <= 0 || pid == Process.GetCurrentProcess().Id) return false;
-            _scopeProcessId = pid;
             var name = Process.GetProcessById(pid).ProcessName;
-            return _allowed.Contains(name);
+            if (!_allowed.Contains(name)) return false;
+            _scopeProcessId = pid;
+            return true;
         }
 
         // Always obey UIA IsPassword, never request ValuePattern/TextPattern, and
@@ -194,6 +195,7 @@ namespace DouBepReader
 
         private void ReadFocused()
         {
+            StopSpeech();
             try
             {
                 var element = AutomationElement.FocusedElement;
@@ -234,6 +236,7 @@ namespace DouBepReader
 
         private void Traverse(int direction)
         {
+            StopSpeech();
             try
             {
                 if (_cursor == null) { SetStatus("Önce Ctrl+Alt+R ile hedef uygulamanın bir öğesini seçin."); return; }
@@ -299,6 +302,7 @@ namespace DouBepReader
         // Does not inject keystrokes, activate controls, or move keyboard focus.
         private void TraverseStructure(int direction, bool headingOnly)
         {
+            StopSpeech();
             try
             {
                 if (_cursor == null) { SetStatus("Önce Ctrl+Alt+R ile hedef uygulamayı seçin."); return; }
@@ -331,6 +335,7 @@ namespace DouBepReader
         // only explicit Hyperlink and Button controls are supported in this release.
         private void TraverseRole(ControlType role, string label)
         {
+            StopSpeech();
             try
             {
                 if (_cursor == null) { SetStatus("Önce Ctrl+Alt+R ile hedef uygulamayı seçin."); return; }
