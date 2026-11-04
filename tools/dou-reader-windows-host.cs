@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.IO;
+using System.Media;
 using System.Runtime.InteropServices;
 using System.Speech.Synthesis;
 using System.Text.RegularExpressions;
@@ -58,6 +60,9 @@ namespace DouBepReader
         private readonly SpeechSynthesizer _speaker;
         private readonly TrackBar _rateControl;
         private readonly string _turkishVoice;
+        private readonly string _syntheticDemoScript;
+        private MemoryStream _syntheticDemoStream;
+        private SoundPlayer _syntheticDemoPlayer;
         private AutomationElement _cursor;
         private int _scopeProcessId;
         private bool _continuous;
@@ -68,13 +73,14 @@ namespace DouBepReader
         private int _examStemItems;
         private int _examSteps;
 
-        public ReaderWindow(string[] allowedProcesses)
+        public ReaderWindow(string[] allowedProcesses, string syntheticDemoScript)
         {
             _allowed = new HashSet<string>(allowedProcesses.Select(x => x.ToLowerInvariant()), StringComparer.OrdinalIgnoreCase);
+            _syntheticDemoScript = syntheticDemoScript;
             Text = "DOU Reader — Windows erişilebilirlik pilotu";
             Width = 530;
-            Height = 565;
-            MinimumSize = new Size(480, 555);
+            Height = 615;
+            MinimumSize = new Size(480, 605);
             StartPosition = FormStartPosition.CenterScreen;
             FormBorderStyle = FormBorderStyle.Sizable;
             BackColor = Color.White;
@@ -92,10 +98,12 @@ namespace DouBepReader
             var pause = new Button { Text = "Duraklat / devam et", Left = 187, Top = 411, Width = 146, Height = 30, AccessibleName = "DOU Reader sesini duraklat veya devam ettir" };
             pause.Click += delegate { TogglePause(); };
             var continuous = new Label { Text = "Hedef uygulamada Ctrl+Alt+C ile ardışık oku", Left = 346, Top = 406, Width = 155, Height = 45, AccessibleName = "Ardışık okuma kısayolu Ctrl Alt C" };
-            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 456, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
-            _rateControl = new TrackBar { Left = 22, Top = 482, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
+            var demo = new Button { Text = "DOU Speech: sentetik ses denemesi", Left = 22, Top = 454, Width = 380, Height = 34, AccessibleName = "Sabit sentetik Türkçe ses örneğini çal" };
+            demo.Click += delegate { PlaySyntheticDemo(); };
+            var rateLabel = new Label { Text = "Konuşma hızı (-3 ... +3)", Left = 22, Top = 501, Width = 252, Height = 23, AccessibleName = "Konuşma hızı" };
+            _rateControl = new TrackBar { Left = 22, Top = 527, Width = 440, Minimum = -3, Maximum = 3, Value = 0,
                 TickFrequency = 1, SmallChange = 1, LargeChange = 1, AccessibleName = "Türkçe konuşma hızı" };
-            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(pause); Controls.Add(continuous); Controls.Add(rateLabel); Controls.Add(_rateControl);
+            Controls.Add(heading); Controls.Add(help); Controls.Add(_status); Controls.Add(stop); Controls.Add(pause); Controls.Add(continuous); Controls.Add(demo); Controls.Add(rateLabel); Controls.Add(_rateControl);
             _speaker = new SpeechSynthesizer();
             _speaker.SpeakCompleted += OnSpeechCompleted;
             _speaker.Rate = 0;
@@ -607,8 +615,75 @@ namespace DouBepReader
             catch (InvalidOperationException) { /* window closing */ }
         }
 
+        // Explicit synthetic-only acoustic preview: the fixed sample never takes
+        // an AutomationElement, text input, student data, or exam content.
+        private void PlaySyntheticDemo()
+        {
+            StopSpeech();
+            try
+            {
+                if (String.IsNullOrWhiteSpace(_syntheticDemoScript) || !System.IO.File.Exists(_syntheticDemoScript))
+                {
+                    SetStatus("Yerel deneysel DOU Speech deneme dosyası bulunamadı.");
+                    return;
+                }
+                var info = new ProcessStartInfo
+                {
+                    FileName = "node.exe",
+                    Arguments = "\"" + _syntheticDemoScript + "\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true
+                };
+                string base64;
+                using (var process = Process.Start(info))
+                {
+                    if (process == null) throw new InvalidOperationException("Node başlatılamadı.");
+                    base64 = process.StandardOutput.ReadToEnd();
+                    if (!process.WaitForExit(10000) || process.ExitCode != 0)
+                    {
+                        try { if (!process.HasExited) process.Kill(); } catch (InvalidOperationException) { }
+                        throw new InvalidOperationException("Sentetik örnek üretilemedi.");
+                    }
+                }
+                if (base64.Length > 1400000) throw new InvalidOperationException("Ses örneği boyut sınırı aşıldı.");
+                byte[] wav = Convert.FromBase64String(base64);
+                if (wav.Length > 1048576 || wav.Length < 44 ||
+                    System.Text.Encoding.ASCII.GetString(wav, 0, 4) != "RIFF" ||
+                    System.Text.Encoding.ASCII.GetString(wav, 8, 4) != "WAVE")
+                    throw new InvalidOperationException("Geçersiz deneme WAV verisi.");
+                StopSyntheticDemo();
+                _syntheticDemoStream = new MemoryStream(wav, false);
+                _syntheticDemoPlayer = new SoundPlayer(_syntheticDemoStream);
+                _syntheticDemoPlayer.Load();
+                _syntheticDemoPlayer.Play();
+                SetStatus("Deneysel robotik ses çalınıyor. Bu ses sınavlarda kullanım için doğrulanmadı.");
+            }
+            catch (Exception)
+            {
+                StopSyntheticDemo();
+                SetStatus("Yerel sentetik ses denemesi çalınamadı. Node ve ses aygıtını kontrol edin.");
+            }
+        }
+
+        private void StopSyntheticDemo()
+        {
+            if (_syntheticDemoPlayer != null)
+            {
+                try { _syntheticDemoPlayer.Stop(); } catch (Exception) { }
+                _syntheticDemoPlayer.Dispose();
+                _syntheticDemoPlayer = null;
+            }
+            if (_syntheticDemoStream != null)
+            {
+                _syntheticDemoStream.Dispose();
+                _syntheticDemoStream = null;
+            }
+        }
+
         private void StopSpeech()
         {
+            StopSyntheticDemo();
             _examReading = false;
             _continuous = false;
             _activePrompt = null;
@@ -676,11 +751,11 @@ namespace DouBepReader
     public static class Program
     {
         [STAThread]
-        public static void Run(string[] allowedProcesses)
+        public static void Run(string[] allowedProcesses, string syntheticDemoScript)
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            using (var form = new ReaderWindow(allowedProcesses)) Application.Run(form);
+            using (var form = new ReaderWindow(allowedProcesses, syntheticDemoScript)) Application.Run(form);
         }
     }
 }
