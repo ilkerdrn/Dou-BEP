@@ -239,3 +239,14 @@ Bu bölüm mevcut 103 Windows senaryosunun yerine geçmez; ürün yayınını en
 - [ ] Sentetik bir ses işçisi istisnası, eski nesil veya duraklatılmış oturumu yeni sesin üzerine yazmadan temizlenir.
 
 **Bu senaryolar kodlanmış regresyon ve Windows kabul hedefleridir; henüz Windows'ta fiilen geçilmiş senaryolar değildir.**
+
+## Sprint 17 — ses kabulü ve hızlı komut güvenilirliği
+
+- [ ] İzinli tarayıcıda 2–8 parçalı ses sürerken tarayıcı kapandığında, **sonraki parça başlamaz** ve kalan metin kuyruğu temizlenir.
+- [ ] Duraklatılmış okumada aynı PID'yi kullanan farklı süreç başladığında **devam reddedilir**; kaynak özel metin görünmez.
+- [ ] Geçersiz metin, kaynak kimliği kaybı veya yerel ses yokluğu durumunda **sonraki cümle/bölüm** konumu ilerlemez; kullanıcı aynı öğeyi yeniden deneyebilir.
+- [ ] Yerel TXT/DOCX/PDF belgesinde reddedilen konuşma isteği paragraf/cümle dizinini ilerletmez.
+- [ ] Hızlı **Başlat → Durdur → Başlat → Duraklat → Devam** dizisinde önceki işçinin hatası yeni ses oturumunu kapatmaz.
+- [ ] 16 KiB stdout ara WAV tamponunun sıfırlanması kaynak/süreç sınırlarıyla birlikte Windows hata ve normal tamamlama yolunda doğrulanır.
+
+Bunlar bekleyen Windows kabul koşullarıdır; statik kaynak eşleşmesi cihaz kabulü değildir.
