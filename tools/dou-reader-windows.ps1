@@ -34,13 +34,25 @@ foreach ($name in $AllowedProcesses) {
 }
 $source = Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
-$refs = @('System.Windows.Forms.dll','System.Drawing.dll','UIAutomationClient.dll','UIAutomationTypes.dll','System.Speech.dll','System.Core.dll')
 try {
     Add-Type -AssemblyName 'System.Windows.Forms' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Drawing' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
+    # Resolve the assemblies actually loaded by Windows. Bare DLL names are not
+    # sufficient for Add-Type on fresh GitHub-hosted Windows machines.
+    $refs = @(
+        [System.Windows.Forms.Form].Assembly.Location
+        [System.Drawing.Color].Assembly.Location
+        [System.Windows.Automation.AutomationElement].Assembly.Location
+        [System.Windows.Automation.ControlType].Assembly.Location
+        [System.Speech.Synthesis.SpeechSynthesizer].Assembly.Location
+        [System.Linq.Enumerable].Assembly.Location
+    ) | Select-Object -Unique
+    if (@($refs | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }).Count -gt 0) {
+        throw 'Windows .NET bagimliliklarinin tam yollari bulunamadi.'
+    }
     Add-Type -TypeDefinition ([IO.File]::ReadAllText($source)) -ReferencedAssemblies $refs -ErrorAction Stop
     $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
     try {
