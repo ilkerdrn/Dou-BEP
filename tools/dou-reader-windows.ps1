@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 if ($Help) {
     Write-Host 'DOU Reader: powershell.exe -NoProfile -STA -File .\tools\dou-reader-windows.ps1 [-Check] [-AllowedProcesses chrome,msedge,notepad]'
-    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: belge metni | Ctrl+Alt+X: durdur.'
+    Write-Host 'Ctrl+Alt+R: odaklanan ogeyi oku | Ctrl+Alt+Down/Up: siradaki/onceki | Ctrl+Alt+L/B: baglanti/dugme | Ctrl+Alt+H: baslik | Ctrl+Alt+Shift+H: onceki baslik | Ctrl+Alt+D: belge metni | Ctrl+Alt+P: duraklat/devam et | Ctrl+Alt+C: ardisik oku (20 oge) | Ctrl+Alt+Q: sonraki soru | Ctrl+Alt+O: sonraki secenek | Ctrl+Alt+E: soru ve siklari oku | Ctrl+Alt+X: durdur.'
     return
 }
 if ($env:OS -eq 'Linux' -or [Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT) {
@@ -34,13 +34,25 @@ foreach ($name in $AllowedProcesses) {
 }
 $source = Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'
 if (-not (Test-Path -LiteralPath $source -PathType Leaf)) { throw 'Okuyucu kaynak dosyasi bulunamadi.' }
-$refs = @('System.Windows.Forms.dll','System.Drawing.dll','UIAutomationClient.dll','UIAutomationTypes.dll','System.Speech.dll','System.Core.dll')
 try {
     Add-Type -AssemblyName 'System.Windows.Forms' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Drawing' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationClient' -ErrorAction Stop
     Add-Type -AssemblyName 'UIAutomationTypes' -ErrorAction Stop
     Add-Type -AssemblyName 'System.Speech' -ErrorAction Stop
+    # Resolve the assemblies actually loaded by Windows. Bare DLL names are not
+    # sufficient for Add-Type on fresh GitHub-hosted Windows machines.
+    $refs = @(
+        [System.Windows.Forms.Form].Assembly.Location
+        [System.Drawing.Color].Assembly.Location
+        [System.Windows.Automation.AutomationElement].Assembly.Location
+        [System.Windows.Automation.ControlType].Assembly.Location
+        [System.Speech.Synthesis.SpeechSynthesizer].Assembly.Location
+        [System.Linq.Enumerable].Assembly.Location
+    ) | Select-Object -Unique
+    if (@($refs | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }).Count -gt 0) {
+        throw 'Windows .NET bagimliliklarinin tam yollari bulunamadi.'
+    }
     Add-Type -TypeDefinition ([IO.File]::ReadAllText($source)) -ReferencedAssemblies $refs -ErrorAction Stop
     $speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer
     try {

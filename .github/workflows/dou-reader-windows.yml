@@ -1,0 +1,37 @@
+name: DOU Reader Windows acceptance
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dou-reader-windows.yml'
+      - 'tools/dou-reader-windows*.ps1'
+      - 'tools/dou-reader-windows-host.cs'
+      - 'tools/dou-reader-pronunciation-check.ps1'
+      - 'dou-reader-windows.test.mjs'
+      - 'package.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dou-reader-windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  reader-windows:
+    runs-on: windows-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up supported Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run local-only Reader acceptance
+        shell: pwsh
+        run: |
+          & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tools\dou-reader-windows-acceptance.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
