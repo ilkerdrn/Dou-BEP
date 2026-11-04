@@ -109,3 +109,23 @@ test('Reader pause/resume is local, opt-in and does not request fresh UIA conten
  const implementation = cs.split('private void TogglePause()')[1].split('private void StopSpeech()')[0];
  assert.doesNotMatch(implementation,/AutomationElement|GetCurrentPattern|Process\.GetProcessById|SpeakAsync\(/);
 });
+
+test('Reader bounded continuous mode requires explicit Ctrl+Alt+C and current allowlisted focus',()=>{
+ assert.match(cs,/HOTKEY_CONTINUOUS = 111/);
+ assert.match(cs,/MAX_CONTINUOUS_ITEMS = 20/);
+ assert.match(cs,/case HOTKEY_CONTINUOUS: StartContinuous\(\); break;/);
+ assert.match(cs,/Hedef uygulamada Ctrl\+Alt\+C ile ardışık oku/);
+ assert.match(cs,/private void StartContinuous\(\)/);
+ assert.match(cs,/if \(!Allowed\(focusedNow\)\)/);
+ assert.match(cs,/private void SpeakContinuousNext\(bool includeCurrent\)/);
+ assert.match(cs,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs,/AccessibleName\(candidate\)/);
+ assert.match(cs,/_continuousItems >= MAX_CONTINUOUS_ITEMS/);
+ assert.match(cs,/e\.Prompt != _activePrompt/);
+ assert.match(cs,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(cs,/SpeakCompleted -= OnSpeechCompleted/);
+ assert.match(ps,/Ctrl\+Alt\+C: ardisik oku/);
+ const body = cs.split('private void SpeakContinuousNext(bool includeCurrent)')[1].split('private void OnSpeechCompleted')[0];
+ assert.doesNotMatch(body,/GetCurrentPattern\(|SetFocus\(|SendKeys|File\.|HttpClient|Clipboard\./);
+});
