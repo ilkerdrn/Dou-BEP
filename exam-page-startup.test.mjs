@@ -91,3 +91,17 @@ test('Login-only compact layout preserves the signed-in dashboard hero',()=>{
  assert.match(css,/:has\(#login-view:not\(\[hidden\]\)\) \.portal-content > \.portal-hero\{\s*display:none!important/s);
  assert.match(css,/#login-view\.portal-login-card\{[^}]*max-width:1180px!important/s);
 });
+
+test('Institutional navigation is gated by verified session and reappears after login',()=>{
+ const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('./institution.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ assert.match(html,/<body class="institution-page" data-portal-auth="checking">/);
+ assert.match(js,/document\.body\.dataset\.portalAuth=signedIn\?'authenticated':'guest'/);
+ assert.match(js,/navigation\.inert=!signedIn/);
+ assert.match(js,/const signedIn=active&&!restricted/);
+ assert.match(css,/\[data-portal-auth="checking"\]/);
+ assert.match(css,/\[data-portal-auth="guest"\]/);
+ assert.match(css,/\.dou-nav\{\s*display:none!important/s);
+ assert.match(css,/\.portal-shell\{\s*grid-template-columns:minmax\(0,1fr\)!important/s);
+});
