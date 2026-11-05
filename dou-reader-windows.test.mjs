@@ -4,6 +4,8 @@ import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {inspectSpeechWaveform} from './dou-speech-quality.mjs';
+import {synthesizeTurkishPreview,synthesizeTurkishArticulationPreview} from './dou-speech-waveform.mjs';
+import {compareFixedPhonemePairs} from './dou-speech-phoneme-diagnostics.mjs';
 const ps=readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url),'utf8');
 const cs=readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url),'utf8');
 const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
@@ -258,7 +260,7 @@ test('Reader Windows acceptance runs source regressions, real C# compilation and
 
 test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student content',()=>{
  const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
- assert.match(demo,/synthesizeTurkishPreview\('Merhaba dünya'\)/);
+ assert.match(demo,/synthesizeTurkishArticulationPreview\('Merhaba dünya'\)/);
  assert.match(demo,/process\.argv\.length !== 2/);
  assert.match(demo,/Buffer\.from\(wav\)\.toString\('base64'\)/);
  assert.match(cs,/private void PlaySyntheticDemo\(\)/);
@@ -338,4 +340,28 @@ test('Objective-only DOU Speech gate rejects corrupted PCM headers and silent de
  assert.equal(stats.rms,0);
  assert.equal(stats.activeRatio,0);
  assert.ok(!(stats.rms>0 && stats.activeRatio>0),'silent data must not pass signal gate');
+});
+
+test('Reader fixed local preview uses the consonant-differentiated acoustic model',()=>{
+ const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
+ assert.match(demo,/synthesizeTurkishArticulationPreview\('Merhaba dünya'\)/);
+ assert.doesNotMatch(demo,/synthesizeTurkishPreview\('Merhaba dünya'\)/);
+ const diagnostics=compareFixedPhonemePairs();
+ assert.equal(diagnostics.syntheticOnly,true);
+ assert.equal(diagnostics.pairCount,4);
+ assert.equal(diagnostics.validatesHumanIdentification,false);
+ assert.equal(diagnostics.validatesTurkishPronunciation,false);
+ for(const entry of diagnostics.contrasts){
+  assert.ok(entry.meanAbsoluteWaveformDifference>0,entry.pairId);
+  assert.ok(entry.maximumAbsoluteDifference>0,entry.pairId);
+  assert.equal(entry.clippedSamples,0,entry.pairId);
+ }
+});
+test('Articulation lab contrasts phonemes collapsed by the original toy model',()=>{
+ const baseA=synthesizeTurkishPreview('Sasa').wav;
+ const baseB=synthesizeTurkishPreview('Şaşa').wav;
+ assert.deepEqual(baseA,baseB,'baseline collapses s and ş into the same wave');
+ const upgradedA=synthesizeTurkishArticulationPreview('Sasa').wav;
+ const upgradedB=synthesizeTurkishArticulationPreview('Şaşa').wav;
+ assert.notDeepEqual(upgradedA,upgradedB,'articulation preview differentiates s and ş');
 });
