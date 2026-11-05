@@ -1,0 +1,119 @@
+/* DOU BEP v2.82 — visual layer for institutional workspace and exam authoring.
+   Deliberately scoped: no form behavior, nav events, hidden state or data changes. */
+:root {
+ --dou-v3-ink:#192438; --dou-v3-muted:#637185; --dou-v3-border:#e3e9f1;
+ --dou-v3-accent:#9a2144; --dou-v3-accent-strong:#7e1735;
+ --dou-v3-bg:#f4f6fa; --dou-v3-focus:#d83e67;
+ --dou-v3-shadow:0 10px 34px rgba(25,40,63,.055);
+}
+body.institution-page{background:var(--dou-v3-bg)!important;color:var(--dou-v3-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+body.institution-page .portal-main{min-width:0;background:radial-gradient(ellipse 65% 32% at 94% 0%,#f8eaf0 0%,transparent 77%),var(--dou-v3-bg)}
+body.institution-page .portal-topbar{min-height:72px!important;padding:13px clamp(18px,3vw,44px)!important;background:#ffffffef!important;border-bottom:1px solid var(--dou-v3-border)!important}
+body.institution-page .portal-topbar strong{font-size:17px!important;color:#1b2941!important;font-weight:760}
+body.institution-page .portal-topbar>div>span{color:#7c5261;letter-spacing:.12em;font-weight:800;font-size:10px}
+body.institution-page .portal-pill{background:#f6f9fc!important;color:#486178!important;border:1px solid #e1eaf3!important;white-space:normal}
+body.institution-page .portal-content{max-width:1550px!important;margin-inline:auto!important;padding:24px clamp(16px,3vw,44px) 70px!important}
+body.institution-page .dou-nav{background:linear-gradient(176deg,#152035 0%,#1c263b 55%,#2c2035 100%)!important;border-right:1px solid #25344b!important}
+body.institution-page .dou-nav-brand{padding-block:23px 20px!important}
+body.institution-page .dou-brand-mark{background:linear-gradient(145deg,#b92f58,#8e1b43)!important;box-shadow:0 8px 26px #81183c3a!important}
+body.institution-page .dou-nav .dou-nav-link.portal-menu{border-radius:11px!important;min-height:43px!important;padding-inline:12px!important;font-size:12.7px!important}
+body.institution-page .dou-nav .dou-nav-link:hover{background:#ffffff13!important;border-color:#ffffff14!important}
+body.institution-page .dou-nav .dou-nav-link.current,
+body.institution-page .dou-nav .dou-nav-link[aria-current="page"]{background:#b8366130!important;border-color:#da6d9250!important;box-shadow:inset 3px 0 0 #f17ca2!important}
+body.institution-page .dou-nav .dou-create{min-height:48px!important;border-radius:12px!important;background:linear-gradient(115deg,#b52a55,#8b2146)!important;font-size:13px!important;box-shadow:0 10px 25px #120d2533!important}
+body.institution-page .portal-hero{background:linear-gradient(115deg,#17253e 0%,#43253e 55%,#942a4b 100%)!important;border:1px solid #ffffff1a!important;border-radius:20px!important;box-shadow:0 16px 42px #3323371c!important}
+body.institution-page .portal-hero h1{font-size:clamp(25px,3vw,37px)!important;letter-spacing:-.045em!important}
+body.institution-page .portal-hero p{font-size:14px!important;line-height:1.7!important}
+body.institution-page .portal-card,
+body.institution-page .portal-login-card{background:#fff!important;border:1px solid var(--dou-v3-border)!important;border-radius:17px!important;box-shadow:var(--dou-v3-shadow)!important}
+body.institution-page .portal-card-head{gap:12px!important;align-items:center!important}
+body.institution-page .portal-card h3{color:#1b2941!important;font-weight:760!important}
+body.institution-page .portal-mini-label{letter-spacing:.105em!important;font-size:10px!important;font-weight:800!important;color:#8d4864!important}
+body.institution-page .portal-btn.primary{background:#9e2247!important;border:1px solid #9e2247!important;color:#fff!important;box-shadow:0 5px 15px #9e22471d!important}
+body.institution-page .portal-btn.primary:hover{background:var(--dou-v3-accent-strong)!important;border-color:var(--dou-v3-accent-strong)!important}
+body.institution-page .portal-btn.secondary{background:#fff!important;border:1px solid #d9e2ed!important;color:#30455d!important}
+body.institution-page .portal-btn.secondary:hover{background:#f7f9fc!important;border-color:#b6c7d8!important}
+body.institution-page :is(button,a,input,textarea,select,summary):focus-visible,
+body.institution-page .dou-nav :is(button,a,input):focus-visible{outline:3px solid var(--dou-v3-focus)!important;outline-offset:3px!important}
+body.institution-page .portal-form :is(input,select,textarea),
+body.institution-page .exam-grid :is(input,select,textarea),
+body.institution-page .exam-list-controls :is(input,select){
+ border:1px solid #d6dfeb!important;border-radius:11px!important;background:#fff!important;color:#22344c!important;
+ padding:11px 12px!important;min-height:43px!important;line-height:1.45!important;box-shadow:0 1px 2px #24364d08!important;
+}
+body.institution-page :is(.portal-form,.exam-grid) textarea{min-height:82px!important;resize:vertical}
+body.institution-page :is(.portal-form,.exam-grid) :is(input,select,textarea):focus{
+ border-color:#bc5073!important;box-shadow:0 0 0 3px #bd31551c!important
+}
+body.institution-page .portal-form label,
+body.institution-page .exam-grid label{font-weight:650;color:#33465f}
+body.institution-page .portal-login-card{overflow:hidden}
+body.institution-page .login-intro{background:linear-gradient(145deg,#182941 0%,#4e2743 100%)!important}
+body.institution-page .login-form-panel{background:#fff!important}
+body.institution-page #login-form input{font-size:14px!important;min-height:48px!important}
+body.institution-page .dashboard-welcome{border:1px solid #e4eaf2!important;border-radius:17px!important;background:linear-gradient(125deg,#fff,#f9f4f7)!important}
+body.institution-page .dashboard-welcome h2{color:#1a2a42!important;font-size:clamp(20px,2vw,29px)!important}
+body.institution-page .dashboard-shortcut{background:#fff!important;border:1px solid #e0e8f1!important;border-radius:16px!important;box-shadow:0 7px 22px #24364a09!important;min-width:0}
+body.institution-page .dashboard-shortcut:hover{border-color:#c99aa9!important;box-shadow:0 14px 29px #4a2b3616!important}
+body.institution-page .dashboard-shortcut strong{font-size:14px!important;color:#203047!important}
+body.institution-page .dashboard-shortcut small{line-height:1.5!important;color:#66758a!important}
+body.institution-page .portal-kpis{gap:12px!important}
+body.institution-page .portal-kpis>div{border:1px solid #e2e8f0!important;border-radius:15px!important;background:#fff!important;box-shadow:0 4px 15px #30405708!important}
+body.institution-page .portal-kpis strong{color:#222f47!important}
+body.institution-page .workflow-nav{background:#fff!important;border:1px solid #e1e8f1!important;border-radius:15px!important;box-shadow:var(--dou-v3-shadow)!important}
+body.institution-page .workflow-step{border-radius:10px!important;min-height:39px!important}
+body.institution-page .workflow-step.active,
+body.institution-page .workflow-step[aria-current="step"]{background:#fff0f5!important;color:#8a1f42!important;border-color:#e3b4c5!important}
+body.institution-page .exam-grid{grid-template-columns:minmax(255px,.58fr) minmax(0,1.65fr)!important;gap:18px!important}
+body.institution-page .exam-grid>.portal-card{min-width:0}
+body.institution-page .exam-list-controls{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(125px,.56fr)!important;gap:10px!important}
+body.institution-page .exam-list-controls label{min-width:0}
+body.institution-page .exam-question{background:linear-gradient(180deg,#fff,#fdfdff)!important;border:1px solid #dee7f0!important;border-left:4px solid #ad2d56!important;border-radius:14px!important;box-shadow:0 6px 16px #1c2a3d0a!important;overflow-wrap:anywhere}
+body.institution-page .exam-q-head{gap:12px;align-items:center}
+body.institution-page .editor-ribbon{background:#f2f6fc!important;border:1px solid #dce6f2!important;color:#344d67!important}
+body.institution-page .exam-autosave-panel{background:#f8fbff!important;border:1px solid #dfebf5!important}
+body.institution-page .editor-command{background:#fafbfe!important;border:1px solid #dee7f1!important}
+body.institution-page .exam-subheading{border-bottom:1px solid #ebedf2!important;padding-bottom:8px!important}
+body.institution-page :is(.portal-help,.exam-quality,.exam-coverage){overflow-wrap:anywhere}
+body.institution-page [hidden]{display:none!important}
+@media(max-width:1200px){
+ body.institution-page .exam-grid{grid-template-columns:1fr!important}
+ body.institution-page .exam-grid>section:first-child{position:static!important;max-height:none!important;overflow:visible!important}
+}
+@media(max-width:1080px){
+ body.institution-page .dou-nav{position:sticky!important;top:0!important;height:auto!important;max-height:none!important;padding:0 15px!important;width:100%!important}
+ body.institution-page .dou-nav .dou-nav-sections,
+ body.institution-page .dou-nav .dou-nav-actions,
+ body.institution-page .dou-nav .dou-nav-bottom{display:none!important}
+ body.institution-page .dou-nav.dou-nav-open .dou-nav-sections{display:block!important;max-height:65vh;overflow-y:auto}
+ body.institution-page .dou-nav.dou-nav-open .dou-nav-actions,
+ body.institution-page .dou-nav.dou-nav-open .dou-nav-bottom{display:block!important}
+ body.institution-page .dou-nav-brand{padding:10px 4px!important;min-height:62px!important}
+ body.institution-page .portal-content{padding:20px 16px 54px!important}
+}
+@media(max-width:680px){
+ body.institution-page .portal-topbar{padding:12px 16px!important;min-height:65px!important}
+ body.institution-page .portal-topbar strong{font-size:14px!important}
+ body.institution-page .portal-hero{padding:23px 20px!important}
+ body.institution-page .portal-card{padding:17px!important}
+ body.institution-page .exam-list-controls{grid-template-columns:1fr!important}
+ body.institution-page .exam-toolbar{display:flex;flex-wrap:wrap;gap:8px}
+ body.institution-page .exam-toolbar .portal-btn{flex:1 1 auto}
+ body.institution-page .dashboard-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.institution-page .dashboard-shortcut{min-height:150px!important}
+ body.institution-page .portal-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.institution-page .exam-grid .exam-two{grid-template-columns:1fr!important}
+}
+@media(max-width:420px){
+ body.institution-page .dashboard-shortcuts,
+ body.institution-page .portal-kpis{grid-template-columns:1fr!important}
+ body.institution-page .portal-topbar .portal-pill{font-size:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.institution-page *,body.institution-page *::before,body.institution-page *::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}
+}
+@media print{
+ body.institution-page .dou-nav{display:none!important}
+ body.institution-page .portal-main{background:#fff!important}
+ body.institution-page .portal-card{box-shadow:none!important}
+}
