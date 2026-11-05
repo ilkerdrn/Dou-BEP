@@ -214,3 +214,28 @@ body.institution-page #login-view #login-form .portal-btn.primary{min-height:48p
  body.institution-page #login-view .login-intro{min-height:0}
  body.institution-page #login-view .login-highlights{margin-top:18px!important}
 }
+
+/* Session-gated institutional shell. Not an authorization mechanism:
+   server endpoints still enforce roles, sessions, CSRF and tenant boundaries. */
+body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) .portal-shell{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) .dou-nav{
+ display:none!important;
+}
+body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) .portal-topbar{
+ display:none!important;
+}
+body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) .portal-content{
+ max-width:1240px!important;
+ margin-inline:auto!important;
+ padding-top:clamp(26px,6vh,66px)!important;
+}
+body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) #login-view.portal-login-card{
+ max-width:1120px!important;
+}
+@media(max-width:760px){
+ body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"]) .portal-content{
+  padding:18px 14px 42px!important;
+ }
+}
