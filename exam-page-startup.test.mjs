@@ -64,3 +64,20 @@ test('Late editor startup recovers from 8-second warning without requiring reloa
  assert.equal(elements.get('exam-loading').hidden,true);
  assert.equal(observerDisconnected,true);
 });
+
+test('Dark institution login hero overrides legacy dark typography with readable light text',()=>{
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const login=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ assert.match(login,/id="login-view" class="portal-login-card"/);
+ for(const selector of [
+  '#login-view .login-intro h2',
+  '#login-view .login-intro > p',
+  '#login-view .login-highlights strong',
+  '#login-view .login-highlights small',
+  '#login-view .login-intro-footer'
+ ])assert.ok(css.includes(selector),'Missing accessible login contrast override '+selector);
+ assert.match(css,/#login-view \.login-intro h2\{[^}]*color:#ffffff!important/s);
+ assert.match(css,/#login-view \.login-intro > p\{[^}]*color:#e3e9f5!important/s);
+ assert.match(css,/#login-view \.login-highlights strong\{[^}]*color:#ffffff!important/s);
+ assert.match(css,/#login-view \.login-highlights small\{[^}]*color:#d1dcee!important/s);
+});
