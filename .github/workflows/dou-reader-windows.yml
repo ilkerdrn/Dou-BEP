@@ -19,6 +19,8 @@ on:
       - 'exam-page-startup.test.mjs'
       - 'institutional-exams.html'
       - 'institutional-exams.mjs'
+      - 'admin-design-v3.css'
+      - 'institution.html'
       - 'admin-navigation.js'
       - 'package.json'
   workflow_dispatch:
