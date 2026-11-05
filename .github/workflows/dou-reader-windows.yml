@@ -9,6 +9,11 @@ on:
       - 'dou-reader-windows.test.mjs'
       - 'dou-speech-phoneme-ui.mjs'
       - 'dou-speech-phoneme-ui-race.test.mjs'
+      - 'dou-speech-phoneme-study.mjs'
+      - 'dou-speech-phoneme-study.test.mjs'
+      - 'dou-speech-phoneme-diagnostics.mjs'
+      - 'dou-speech-phoneme-diagnostics.test.mjs'
+      - 'tools/exam-closure-smoke.mjs'
       - 'package.json'
   workflow_dispatch:
 
@@ -36,4 +41,14 @@ jobs:
         shell: pwsh
         run: |
           & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tools\dou-reader-windows-acceptance.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run local phoneme study and diagnostic regression tests
+        shell: pwsh
+        run: |
+          node --test dou-speech-phoneme-study.test.mjs dou-speech-phoneme-diagnostics.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Exercise anonymous isolated exam approval and ZIP delivery
+        shell: pwsh
+        run: |
+          node tools/exam-closure-smoke.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
