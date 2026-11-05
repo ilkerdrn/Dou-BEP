@@ -16,7 +16,7 @@ function display(){
  const trial=session.trials[index],done=trial.choice!==null;
  $('phoneme-progress').textContent=`Örnek ${index+1} / ${TRIAL_COUNT}`;
  for(let i=0;i<2;i++){
-  const b=$('phoneme-choice-'+i);b.textContent=trial.options[i];b.disabled=done||!trial.played;
+  const b=$('phoneme-choice-'+i);b.textContent=trial.options[i];b.disabled=done||!trial.played||active!==null;
  }
  $('phoneme-play').disabled=done||active!==null;$('phoneme-next').disabled=!done||index===TRIAL_COUNT-1;
  const aggregate=summarizePhonemeSession(session);
@@ -98,4 +98,12 @@ $('phoneme-export').addEventListener('click',()=>{
  try{a.href=url;a.download='dou-speech-fonem-toplam.json';a.click();status('Yalnız toplu ve kimliksiz sonuç özeti indirildi.');}
  finally{setTimeout(()=>URL.revokeObjectURL(url),1500);}
 });
-window.addEventListener('pagehide',stop);display();
+window.addEventListener('pagehide',stop);
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&active){
+  stop();
+  status('Sekme gizlendi; ses durduruldu. Yeniden dinlemek için Sesi dinle seçin.');
+  display();
+ }
+});
+display();
