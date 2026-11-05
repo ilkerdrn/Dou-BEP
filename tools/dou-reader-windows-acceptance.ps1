@@ -21,6 +21,7 @@ if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne 'STA') {
 $root = Split-Path -Parent $PSScriptRoot
 $paths = @(
     (Join-Path $root 'dou-reader-windows.test.mjs'),
+    (Join-Path $root 'dou-speech-phoneme-ui-race.test.mjs'),
     (Join-Path $PSScriptRoot 'dou-reader-windows.ps1'),
     (Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'),
     (Join-Path $PSScriptRoot 'dou-reader-pronunciation-check.ps1')
@@ -44,7 +45,7 @@ if ($major -lt 22 -or ($major -eq 22 -and $minor -lt 13)) {
 Push-Location $root
 try {
     Write-Host '[1/3] DOU Reader Node regresyonları'
-    & $node.Source '--test' 'dou-reader-windows.test.mjs'
+    & $node.Source '--test' 'dou-reader-windows.test.mjs' 'dou-speech-phoneme-ui-race.test.mjs'
     if ($LASTEXITCODE -ne 0) { throw 'Reader Node regresyonları başarısız.' }
 
     Write-Host '[2/3] Üretim C# telaffuz sınıfı ve sentetik örnekler'

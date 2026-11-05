@@ -7,6 +7,8 @@ on:
       - 'tools/dou-reader-windows-host.cs'
       - 'tools/dou-reader-pronunciation-check.ps1'
       - 'dou-reader-windows.test.mjs'
+      - 'dou-speech-phoneme-ui.mjs'
+      - 'dou-speech-phoneme-ui-race.test.mjs'
       - 'package.json'
   workflow_dispatch:
 
