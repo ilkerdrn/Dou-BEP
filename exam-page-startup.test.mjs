@@ -9,6 +9,16 @@ test('Exam preparation editor has its DOM targets and same-origin script assets'
  const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
  const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
  const server=readFileSync(new URL('./server.mjs',import.meta.url),'utf8');
+ const style=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const login=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ assert.match(html,/<link rel="stylesheet" href="\/admin-design-v3\.css">/);
+ assert.match(login,/<link rel="stylesheet" href="\/admin-design-v3\.css">/);
+ assert.match(server,/['"]\/admin-design-v3\.css['"]\s*:\s*\[['"]admin-design-v3\.css['"]/);
+ assert.match(style,/@media\(max-width:1080px\)/);
+ assert.match(style, /:focus-visible/);
+ assert.match(style, /prefers-reduced-motion/);
+ assert.match(style, /\[hidden\]/);
+ 
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(ids.length,new Set(ids).size,'No duplicate editor element IDs');
  for(const [,id] of editor.matchAll(/\$\('([^']+)'\)/g))
