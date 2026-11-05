@@ -81,3 +81,13 @@ test('Dark institution login hero overrides legacy dark typography with readable
  assert.match(css,/#login-view \.login-highlights strong\{[^}]*color:#ffffff!important/s);
  assert.match(css,/#login-view \.login-highlights small\{[^}]*color:#d1dcee!important/s);
 });
+
+test('Login-only compact layout preserves the signed-in dashboard hero',()=>{
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ assert.match(html,/class="portal-content"><div class="portal-hero"/);
+ assert.match(html,/id="login-view" class="portal-login-card"/);
+ assert.ok(css.includes('body.institution-page:has(#login-view:not([hidden])) .portal-content > .portal-hero'));
+ assert.match(css,/:has\(#login-view:not\(\[hidden\]\)\) \.portal-content > \.portal-hero\{\s*display:none!important/s);
+ assert.match(css,/#login-view\.portal-login-card\{[^}]*max-width:1180px!important/s);
+});
