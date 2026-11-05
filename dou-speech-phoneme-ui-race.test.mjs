@@ -12,7 +12,10 @@ test('Blind listening: stale completion/error after Stop cannot unlock the next 
    click(){return this.listeners.get('click')?.();},
    focus(){},append(){}
  });
+ const documentEvents=new Map();
  globalThis.document={
+   hidden:false,
+   addEventListener(type,fn){documentEvents.set(type,fn);},
    getElementById(id){if(!elements.has(id))elements.set(id,makeElement());return elements.get(id);},
    createElement(){return makeElement();}
  };
@@ -61,6 +64,22 @@ test('Blind listening: stale completion/error after Stop cannot unlock the next 
  assert.equal(c0().disabled,false);
  assert.equal(c1().disabled,false);
  assert.equal(elements.get('phoneme-play').disabled,false);
+ // Replay after a completed first listen must temporarily lock choices.
+ const replay=play();
+ assert.equal(sounds.length,3);
+ assert.equal(c0().disabled,true);
+ assert.equal(c1().disabled,true);
+ // Leaving the browser tab stops the current sound and invalidates its events.
+ document.hidden=true;
+ documentEvents.get('visibilitychange')();
+ assert.equal(sounds[2].stopped,true);
+ assert.equal(elements.get('phoneme-play').disabled,false);
+ sounds[2].emit('ended');
+ sounds[2].reject(new Error('tab hidden'));
+ await replay;
+ assert.equal(c0().disabled,false);
+ assert.equal(c1().disabled,false);
+ document.hidden=false;
  await c0().click();
  assert.equal(c0().disabled,true);
  assert.equal(elements.get('phoneme-next').disabled,false);
