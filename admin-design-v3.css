@@ -179,3 +179,38 @@ body.institution-page #login-view .login-form-copy{color:#526783!important}
  body.institution-page #login-view .login-intro{padding:28px!important}
  body.institution-page #login-view .login-intro h2{font-size:clamp(27px,7vw,36px)!important}
 }
+
+/* Login-only visual hierarchy: avoid repeating the same pitch in a giant banner.
+   After authentication, the dashboard hero remains visible as before. */
+body.institution-page:has(#login-view:not([hidden])) .portal-content > .portal-hero{
+ display:none!important;
+}
+body.institution-page:has(#login-view:not([hidden])) .portal-content{
+ padding-top:clamp(24px,4vh,46px)!important;
+}
+body.institution-page #login-view.portal-login-card{
+ max-width:1180px!important;
+ margin-inline:auto!important;
+ min-height:0!important;
+}
+body.institution-page #login-view .login-intro,
+body.institution-page #login-view .login-form-panel{
+ padding:clamp(29px,3.2vw,46px)!important;
+}
+body.institution-page #login-view .login-intro{min-height:450px}
+body.institution-page #login-view .login-highlights{margin-top:24px!important}
+body.institution-page #login-view .login-highlights > div{padding-block:5px}
+body.institution-page #login-view .login-form-panel{
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+}
+body.institution-page #login-view .login-form-panel h3{font-size:clamp(24px,2.1vw,30px)!important}
+body.institution-page #login-view .login-form-panel :is(label,input,button){font-size:13px!important}
+body.institution-page #login-view #login-form .portal-btn.primary{min-height:48px!important}
+@media(max-width:760px){
+ body.institution-page #login-view .login-intro,
+ body.institution-page #login-view .login-form-panel{padding:24px!important}
+ body.institution-page #login-view .login-intro{min-height:0}
+ body.institution-page #login-view .login-highlights{margin-top:18px!important}
+}
