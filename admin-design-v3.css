@@ -117,3 +117,65 @@ body.institution-page [hidden]{display:none!important}
  body.institution-page .portal-main{background:#fff!important}
  body.institution-page .portal-card{box-shadow:none!important}
 }
+
+
+/* Screenshot acceptance fix: the legacy admin sheet forces DARK text onto a
+   newly dark login hero via !important. Keep explicit contrast on every label. */
+body.institution-page #login-view .login-intro{
+ color:#f6f8ff!important;
+ background:linear-gradient(148deg,#15263f 0%,#29273f 56%,#46283f 100%)!important;
+ border-right:1px solid #ffffff20!important;
+}
+body.institution-page #login-view .login-intro h2{
+ color:#ffffff!important;
+ font-size:clamp(30px,2.8vw,42px)!important;
+ letter-spacing:-.05em!important;
+ line-height:1.18!important;
+ text-wrap:balance;
+}
+body.institution-page #login-view .login-intro h2 span{color:#ff789d!important}
+body.institution-page #login-view .login-intro > p{
+ color:#e3e9f5!important;
+ font-size:14px!important;
+ line-height:1.75!important;
+ max-width:46ch;
+}
+body.institution-page #login-view .login-intro .portal-mini-label{color:#ffa9c2!important}
+body.institution-page #login-view .login-highlights{gap:13px!important}
+body.institution-page #login-view .login-highlights > div{
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:8px 0;
+}
+body.institution-page #login-view .login-highlights strong{
+ display:block;
+ color:#ffffff!important;
+ font-size:13px!important;
+ line-height:1.5!important;
+}
+body.institution-page #login-view .login-highlights small{
+ display:block;
+ color:#d1dcee!important;
+ font-size:12px!important;
+ line-height:1.5!important;
+}
+body.institution-page #login-view .login-feature-icon{
+ color:#9a2144!important;
+ background:#fff!important;
+ border:1px solid #f5dce6!important;
+ flex:0 0 35px;
+}
+body.institution-page #login-view .login-intro-footer{
+ color:#c6d3e6!important;
+ font-size:10px!important;
+ line-height:1.7!important;
+ letter-spacing:.055em!important;
+}
+body.institution-page #login-view .login-intro-footer span{color:#ff789d!important}
+body.institution-page #login-view .login-form-panel h3{color:#192438!important}
+body.institution-page #login-view .login-form-copy{color:#526783!important}
+@media(max-width:760px){
+ body.institution-page #login-view .login-intro{padding:28px!important}
+ body.institution-page #login-view .login-intro h2{font-size:clamp(27px,7vw,36px)!important}
+}
