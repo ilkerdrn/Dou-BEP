@@ -15,6 +15,11 @@ on:
       - 'dou-speech-phoneme-diagnostics.test.mjs'
       - 'tools/exam-closure-smoke.mjs'
       - 'tools/acceptance-pilot.mjs'
+      - 'exam-page-health.js'
+      - 'exam-page-startup.test.mjs'
+      - 'institutional-exams.html'
+      - 'institutional-exams.mjs'
+      - 'admin-navigation.js'
       - 'package.json'
   workflow_dispatch:
 
@@ -42,6 +47,11 @@ jobs:
         shell: pwsh
         run: |
           & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tools\dou-reader-windows-acceptance.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test exam editor startup and DOM assets
+        shell: pwsh
+        run: |
+          node --test exam-page-startup.test.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run local phoneme study and diagnostic regression tests
         shell: pwsh
