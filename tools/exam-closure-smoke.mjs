@@ -41,6 +41,11 @@ try{
   inspect(response.headers.get('content-security-policy')?.includes("default-src 'none'")&&
    response.headers.get('x-frame-options')==='DENY','Tarayıcı güvenlik başlıkları '+page.path);
  }
+ const visual=await fetch(base+'/admin-design-v3.css',{signal:AbortSignal.timeout(10000)});
+ const stylesheet=await visual.text();
+ inspect(visual.status===200&&visual.headers.get('content-type')?.includes('text/css')&&
+  stylesheet.includes('--dou-v3-accent')&&stylesheet.includes('prefers-reduced-motion'),
+  'Yerel tasarım CSS dosyası ve mobil/erişilebilirlik kuralları');
  for(const asset of ['/institution.mjs','/institutional-exams.mjs','/exam-page-health.js','/admin-navigation.js','/workflow-ui.mjs']){
   const response=await fetch(base+asset,{signal:AbortSignal.timeout(10000)});
   const source=await response.text();
