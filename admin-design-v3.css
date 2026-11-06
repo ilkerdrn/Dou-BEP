@@ -261,3 +261,63 @@ body.institution-page[data-exam-auth="guest"] #exam-login-required{
  display:block;
  padding:clamp(24px,4vw,45px)!important;
 }
+
+/* Exam authoring focus mode: a reversible layout switch, never data mutation. */
+body.institution-page #exam-workspace .workflow-nav{
+ display:flex!important;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:10px;
+ position:sticky;
+ top:0;
+ z-index:18;
+}
+body.institution-page #exam-workspace .workflow-nav .workflow-caption{flex:1 1 220px}
+body.institution-page #exam-workspace .workflow-nav .workflow-steps{
+ order:3;
+ flex:1 0 100%;
+ min-width:0;
+}
+body.institution-page #exam-workspace .exam-focus-toggle{
+ margin-left:auto;
+ min-height:38px;
+ white-space:nowrap;
+}
+body.institution-page #exam-workspace .exam-focus-toggle[aria-pressed="true"]{
+ border-color:#a82d53!important;
+ color:#922145!important;
+ background:#fff0f5!important;
+}
+body.institution-page #exam-workspace.exam-focus-mode .exam-grid{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page #exam-workspace.exam-focus-mode .exam-grid>section:first-child{
+ display:none!important;
+}
+body.institution-page #exam-workspace.exam-focus-mode #exam-editor-card{
+ max-width:1050px;
+ width:100%;
+ margin-inline:auto;
+}
+body.institution-page #exam-workspace [data-workflow-target],
+body.institution-page #exam-workspace #exam-goal-section,
+body.institution-page #exam-workspace #exam-library-section,
+body.institution-page #exam-workspace #exam-question-section,
+body.institution-page #exam-workspace #exam-output-section{
+ scroll-margin-top:135px;
+}
+@media(max-width:1080px){
+ body.institution-page #exam-workspace .workflow-nav{top:64px}
+}
+@media(max-width:760px){
+ body.institution-page #exam-workspace .workflow-nav{position:static;gap:7px}
+ body.institution-page #exam-workspace .workflow-nav .workflow-steps{
+  display:flex;
+  overflow-x:auto;
+  flex-wrap:nowrap;
+  padding-bottom:4px;
+ }
+ body.institution-page #exam-workspace .workflow-nav .workflow-step{
+  flex:0 0 auto;
+ }
+}
