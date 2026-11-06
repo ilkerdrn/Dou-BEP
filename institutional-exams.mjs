@@ -504,13 +504,17 @@ $('exam-questions').addEventListener('change',ev=>{
  const index=Number(ev.target.dataset.qindex);
  if(!Number.isInteger(index)||index<0)return;
  draw();
- const card=$('exam-questions').querySelector(`.exam-question[data-qindex="${index}"]`);
- const target=card?.querySelector(`[data-qkey="${key}"]`);
- if(target){
-  const advanced=target.closest('.exam-question-advanced');
-  if(advanced)advanced.open=true;
+ // The question disclosure is reconstructed by a MutationObserver. Restore
+ // focus after its microtask has wrapped optional fields, then reveal details.
+ queueMicrotask(()=>{
+  const card=$('exam-questions').querySelector(`.exam-question[data-qindex="${index}"]`);
+  const target=card?.querySelector(`[data-qkey="${key}"]`);
+  if(!target)return;
+  for(let parent=target.parentElement;parent;parent=parent.parentElement){
+   if(parent.tagName==='DETAILS')parent.open=true;
+  }
   target.focus({preventScroll:true});
- }
+ });
 });
 $('exam-adjustments').addEventListener('change',ev=>{if(ev.target.dataset.adapt){applyInput(ev.target);draw();}});
 $('exam-questions').addEventListener('change',ev=>{
