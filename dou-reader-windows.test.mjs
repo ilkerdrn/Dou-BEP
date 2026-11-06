@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {inspectSpeechWaveform} from './dou-speech-quality.mjs';
+import {synthesizeTurkishPreview,synthesizeTurkishArticulationPreview} from './dou-speech-waveform.mjs';
+import {compareFixedPhonemePairs} from './dou-speech-phoneme-diagnostics.mjs';
 const ps=readFileSync(new URL('./tools/dou-reader-windows.ps1',import.meta.url),'utf8');
 const cs=readFileSync(new URL('./tools/dou-reader-windows-host.cs',import.meta.url),'utf8');
 const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
@@ -93,4 +98,270 @@ test('v2.44 next/previous heading and text navigation keep process and step limi
  assert.match(cs,/candidate\.Current\.ProcessId != _scopeProcessId/);
  assert.match(cs,/!Allowed\(focusedNow\)/);
  assert.match(ps,/Ctrl\+Alt\+Shift\+H/);
+});
+
+test('Reader pause/resume is local, opt-in and does not request fresh UIA content',()=>{
+ assert.match(cs,/HOTKEY_PAUSE_RESUME = 110/);
+ assert.match(cs,/Tuple\.Create\(HOTKEY_PAUSE_RESUME, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.P\)/);
+ assert.match(cs,/case HOTKEY_PAUSE_RESUME: TogglePause\(\); break;/);
+ assert.match(cs,/private void TogglePause\(\)/);
+ assert.match(cs,/_speaker\.Pause\(\)/);
+ assert.match(cs,/_speaker\.Resume\(\)/);
+ assert.match(cs,/SynthesizerState\.Speaking/);
+ assert.match(cs,/SynthesizerState\.Paused/);
+ assert.match(cs,/AccessibleName = "DOU Reader sesini duraklat veya devam ettir"/);
+ assert.match(ps,/Ctrl\+Alt\+P: duraklat\/devam et/);
+ const implementation = cs.split('private void TogglePause()')[1].split('private void StartContinuous()')[0];
+ assert.doesNotMatch(implementation,/AutomationElement|GetCurrentPattern|Process\.GetProcessById|SpeakAsync\(/);
+});
+
+test('Reader bounded continuous mode requires explicit Ctrl+Alt+C and current allowlisted focus',()=>{
+ assert.match(cs,/HOTKEY_CONTINUOUS = 111/);
+ assert.match(cs,/MAX_CONTINUOUS_ITEMS = 20/);
+ assert.match(cs,/case HOTKEY_CONTINUOUS: StartContinuous\(\); break;/);
+ assert.match(cs,/Hedef uygulamada Ctrl\+Alt\+C ile ardışık oku/);
+ assert.match(cs,/private void StartContinuous\(\)/);
+ assert.match(cs,/if \(!Allowed\(focusedNow\)\)/);
+ assert.match(cs,/private void SpeakContinuousNext\(bool includeCurrent\)/);
+ assert.match(cs,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(cs,/AccessibleName\(candidate\)/);
+ assert.match(cs,/_continuousItems >= MAX_CONTINUOUS_ITEMS/);
+ assert.match(cs,/e\.Prompt != _activePrompt/);
+ assert.match(cs,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(cs,/SpeakCompleted -= OnSpeechCompleted/);
+ assert.match(ps,/Ctrl\+Alt\+C: ardisik oku/);
+ const body = cs.split('private void SpeakContinuousNext(bool includeCurrent)')[1].split('private void OnSpeechCompleted')[0];
+ assert.doesNotMatch(body,/GetCurrentPattern\(|SetFocus\(|SendKeys|File\.|HttpClient|Clipboard\./);
+});
+
+test('Reader never adopts disallowed process as the navigation scope',()=>{
+ const allowedBody=cs.split('private bool Allowed(AutomationElement element)')[1].split('private static string AccessibleName')[0];
+ assert.match(allowedBody,/if \(!_allowed\.Contains\(name\)\) return false;/);
+ assert.match(allowedBody,/_scopeProcessId = pid;/);
+ assert.ok(allowedBody.indexOf('if (!_allowed.Contains(name)) return false;') < allowedBody.indexOf('_scopeProcessId = pid;'));
+});
+
+test('Each explicit navigation cancels any previous continuous read before UIA evaluation',()=>{
+ for (const signature of [
+  'private void ReadFocused()',
+  'private void Traverse(int direction)',
+  'private void TraverseStructure(int direction, bool headingOnly)',
+  'private void TraverseRole(ControlType role, string label)'
+ ]) {
+  const start=cs.indexOf(signature);
+  assert.ok(start>=0,signature);
+  const prefix=cs.slice(start+signature.length,start+signature.length+110);
+  assert.match(prefix,/StopSpeech\(\);\s*try/);
+ }
+ assert.match(cs,/private void StopSpeech\(\)[\s\S]*?_continuous = false;/);
+ assert.match(cs,/e\.Prompt != _activePrompt/);
+});
+
+test('Exam pronunciation expands bounded math vocabulary without changing protected tokens',()=>{
+ assert.match(cs,/class TurkishMathPronunciation/);
+ assert.match(cs,/private static string NormalizeMath\(string text\)/);
+ assert.match(cs,/ProtectedToken\.Matches\(text\)/);
+ assert.match(cs,/result\.Append\(token\.Value\)/);
+ assert.match(cs,/NormalizeMath\(text\.Substring\(position, token\.Index - position\)\)/);
+ assert.match(cs,/if \(text\.Length > 950\) throw new ArgumentOutOfRangeException/);
+ for(const expression of ['"∏", " çarpım "','"∀", " her "','"∃", " vardır "','"∅", " boş küme "','"∠", " açı "','"½", " bir bölü iki "','"¾", " üç bölü dört "']){
+  assert.ok(cs.includes(expression),expression);
+ }
+ assert.doesNotMatch(cs,/HttpClient|WebClient|Clipboard\.|SetFocus\(|SpeechRecognition/);
+});
+
+test('Pause regression scope ends at the next method, not the entire continuous reader',()=>{
+ const pause=cs.split('private void TogglePause()')[1].split('private void StartContinuous()')[0];
+ assert.match(pause,/_speaker\.Pause\(\)/);
+ assert.match(pause,/_speaker\.Resume\(\)/);
+ assert.doesNotMatch(pause,/AutomationElement|SpeakContinuousNext|SpeakAsync\(/);
+});
+
+test('Production pronunciation receives a Windows compilation and synthetic behavior smoke gate',()=>{
+ const smoke=readFileSync(new URL('./tools/dou-reader-pronunciation-check.ps1',import.meta.url),'utf8');
+ assert.match(pkg.scripts['reader:pronunciation:check'],/powershell\.exe -NoProfile/);
+ assert.match(smoke,/Add-Type -TypeDefinition \$unit/);
+ assert.match(smoke,/public static class TurkishMathPronunciation/);
+ assert.match(smoke,/\[DouBepReader\.TurkishMathPronunciation\]::Prepare/);
+ assert.match(smoke,/expected = 'www\.example\.com\/a\^2\?x=½'/);
+ assert.match(smoke,/expected = '04\.11\.2026 12:30'/);
+ assert.match(smoke,/Overlong input was not rejected/);
+ assert.doesNotMatch(smoke,/Invoke-WebRequest|Invoke-RestMethod|Start-Transcript|Get-Clipboard|Set-Clipboard/);
+});
+
+test('Reader exam navigation is opt-in and read-only, bounded to current application',()=>{
+ assert.match(cs,/HOTKEY_EXAM_QUESTION = 112/);
+ assert.match(cs,/HOTKEY_EXAM_OPTION = 113/);
+ assert.match(cs,/HOTKEY_EXAM_QUESTION, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.Q/);
+ assert.match(cs,/HOTKEY_EXAM_OPTION, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.O/);
+ assert.match(cs,/case HOTKEY_EXAM_QUESTION: TraverseExam\(true\)/);
+ assert.match(cs,/case HOTKEY_EXAM_OPTION: TraverseExam\(false\)/);
+ assert.match(cs,/private void TraverseExam\(bool question\)/);
+ assert.match(cs,/private static bool IsExamQuestion/);
+ assert.match(cs,/private static bool IsExamOption/);
+ assert.match(cs,/ControlType\.RadioButton \|\| type == ControlType\.CheckBox/);
+ const body=cs.split('private void TraverseExam(bool question)')[1].split('// Pause/resume only')[0];
+ assert.match(body,/StopSpeech\(\);/);
+ assert.match(body,/!Allowed\(focusedNow\)/);
+ assert.match(body,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(body,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(body,/i < MAX_TRAVERSAL/);
+ assert.match(body,/AccessibleName\(candidate\)/);
+ assert.doesNotMatch(body,/SetFocus\(|GetCurrentPattern\(|Select\(|Toggle\(|Invoke\(|SendKeys|SendInput/);
+ assert.match(ps,/Ctrl\+Alt\+Q: sonraki soru/);
+ assert.match(ps,/Ctrl\+Alt\+O: sonraki secenek/);
+});
+
+test('Reader question-flow is opt-in, bounded, and never crosses to the next question',()=>{
+ assert.match(cs,/HOTKEY_EXAM_FLOW = 114/);
+ assert.match(cs,/HOTKEY_EXAM_FLOW, MOD_CONTROL \| MOD_ALT, \(uint\)Keys\.E/);
+ assert.match(cs,/case HOTKEY_EXAM_FLOW: StartExamFlow\(\); break;/);
+ assert.match(cs,/MAX_EXAM_OPTIONS = 6/);
+ assert.match(cs,/MAX_EXAM_STEM_ITEMS = 3/);
+ const start=cs.split('private void StartExamFlow()')[1].split('private void SpeakExamElement')[0];
+ assert.match(start,/StopSpeech\(\)/);
+ assert.match(start,/if \(!Allowed\(focusedNow\)\)/);
+ assert.match(start,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(start,/IsExamQuestion\(candidate, text\)/);
+ assert.match(start,/_examReading = true/);
+ const next=cs.split('private void SpeakExamNext()')[1].split('private void OnSpeechCompleted')[0];
+ assert.match(next,/focusedNow\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(next,/!Allowed\(focusedNow\)/);
+ assert.match(next,/_examSteps < MAX_TRAVERSAL/);
+ assert.match(next,/candidate\.Current\.ProcessId != _scopeProcessId/);
+ assert.match(next,/if \(IsExamQuestion\(candidate, text\)\) break/);
+ assert.match(next,/_examOptions >= MAX_EXAM_OPTIONS/);
+ assert.match(next,/_examStemItems < MAX_EXAM_STEM_ITEMS/);
+ assert.doesNotMatch(next,/SetFocus\(|GetCurrentPattern\(|SendInput|SendKeys|\.Invoke\(|\.Select\(|\.Toggle\(|Clipboard\.|HttpClient/);
+ assert.match(ps,/Ctrl\+Alt\+E: soru ve siklari oku/);
+});
+test('Reader speech completion routes only the active approved utterance',()=>{
+ const complete=cs.split('private void OnSpeechCompleted(object sender, SpeakCompletedEventArgs e)')[1].split('private void StopSpeech()')[0];
+ assert.match(complete,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(complete,/e\.Prompt != _activePrompt/);
+ assert.match(complete,/if \(_examReading\) SpeakExamNext\(\)/);
+ assert.match(complete,/else if \(_continuous\) SpeakContinuousNext\(false\)/);
+ assert.match(cs,/private void StopSpeech\(\)\s*\{\s*StopSyntheticDemo\(\);\s*_examReading = false;\s*_continuous = false;/);
+});
+
+test('Reader Windows acceptance runs source regressions, real C# compilation and synthetic pronunciation',()=>{
+ const gate=readFileSync(new URL('./tools/dou-reader-windows-acceptance.ps1',import.meta.url),'utf8');
+ assert.match(pkg.scripts['reader:acceptance:windows'],/powershell\.exe -NoProfile -STA/);
+ assert.match(gate,/node\.exe/);
+ assert.match(gate,/'--test' 'dou-reader-windows\.test\.mjs'/);
+ assert.match(gate,/dou-reader-pronunciation-check\.ps1/);
+ assert.match(gate,/dou-reader-windows\.ps1'\) -Check/);
+ assert.match(gate,/\$LASTEXITCODE -ne 0/);
+ assert.match(gate,/GetApartmentState\(\) -ne 'STA'/);
+ assert.match(gate,/gerçek ses\/erişilebilirlik kullanıcısı kabulü değildir/);
+ assert.doesNotMatch(gate,/npm install|npm ci|Invoke-WebRequest|Invoke-RestMethod|Remove-Item|Set-Content|Start-Transcript/);
+});
+
+test('Synthetic DOU Speech preview is opt-in and cannot ingest exam or student content',()=>{
+ const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
+ assert.match(demo,/synthesizeTurkishArticulationPreview\('Merhaba dünya'\)/);
+ assert.match(demo,/process\.argv\.length !== 2/);
+ assert.match(demo,/Buffer\.from\(wav\)\.toString\('base64'\)/);
+ assert.match(cs,/private void PlaySyntheticDemo\(\)/);
+ assert.match(cs,/demo\.Click \+= delegate \{ PlaySyntheticDemo\(\); \}/);
+ assert.match(cs,/private void StopSyntheticDemo\(\)/);
+ assert.match(cs,/StopSyntheticDemo\(\);\s*_examReading = false;/);
+ assert.match(cs,/new SoundPlayer\(_syntheticDemoStream\)/);
+ assert.match(cs,/byte\[\] wav = Convert\.FromBase64String\(base64\)/);
+ assert.match(cs,/Task\.Run\(\(\) => GenerateSyntheticDemoWav\(_syntheticDemoScript\)\)/);
+ assert.match(cs,/BeginInvoke\(\(MethodInvoker\)delegate/);
+ assert.match(cs,/version != _syntheticDemoVersion/);
+ assert.match(cs,/process\.WaitForExit\(10000\)/);
+ assert.match(cs,/process\.BeginOutputReadLine\(\)/);
+ assert.match(cs,/encoded\.Length \+ args\.Data\.Length > 1400000/);
+ assert.match(cs,/BitConverter\.ToUInt32\(wav, 40\) != wav\.Length - 44/);
+ assert.match(cs,/BitConverter\.ToUInt16\(wav, 34\) != 16/);
+
+ assert.match(cs,/wav\.Length > 1048576/);
+ assert.match(ps,/dou-speech-reader-demo\.mjs/);
+ const body=cs.split('private void PlaySyntheticDemo()')[1].split('private void StopSyntheticDemo()')[0];
+ assert.doesNotMatch(body,/AutomationElement|AccessibleName\(|ReadFocused\(|TextPattern|ValuePattern|Clipboard\./);
+ assert.doesNotMatch(demo,/process\.stdin|readFile|writeFile|fetch\(|https?:\/\/|examText/);
+});
+
+test('Fixed DOU Speech bridge emits actual bounded PCM mono WAV without accepting text input',()=>{
+ const script=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[script],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ assert.match(encoded,/^[A-Za-z0-9+/]+={0,2}$/);
+ const wav=Buffer.from(encoded,'base64');
+ assert.ok(wav.length>=44 && wav.length<=1048576);
+ assert.equal(wav.toString('ascii',0,4),'RIFF');
+ assert.equal(wav.toString('ascii',8,12),'WAVE');
+ assert.equal(wav.toString('ascii',12,16),'fmt ');
+ assert.equal(wav.readUInt16LE(20),1);
+ assert.equal(wav.readUInt16LE(22),1);
+ assert.equal(wav.readUInt32LE(24),22050);
+ assert.equal(wav.toString('ascii',36,40),'data');
+ assert.equal(wav.readUInt32LE(40)+44,wav.length);
+ assert.ok(wav.readUInt32LE(40)>0);
+ assert.throws(()=>execFileSync(process.execPath,[script,'secret'],{encoding:'utf8',timeout:10000,stdio:['ignore','pipe','pipe']}),/Command failed/);
+});
+
+test('Synthetic preview does not synchronously block Windows UI on child output',()=>{
+ const body=cs.split('private void PlaySyntheticDemo()')[1].split('private static byte[] GenerateSyntheticDemoWav')[0];
+ assert.doesNotMatch(body,/StandardOutput\.ReadToEnd\(|WaitForExit\(|process\.Start\(/);
+ assert.match(body,/Task\.Run\(/);
+ assert.match(body,/version != _syntheticDemoVersion/);
+ const stop=cs.split('private void StopSyntheticDemo()')[1].split('private void StopSpeech()')[0];
+ assert.match(stop,/_syntheticDemoVersion\+\+/);
+});
+
+test('Fixed offline DOU Speech demo passes objective waveform safety thresholds',()=>{
+ const demo=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[demo],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ const wav=Buffer.from(encoded,'base64');
+ const stats=inspectSpeechWaveform(wav);
+ assert.equal(stats.sampleRate,22050);
+ assert.ok(stats.durationSeconds>0.1 && stats.durationSeconds<=16,'bounded output duration');
+ assert.ok(stats.rms>0 && stats.rms<1,'non-silent normalized RMS');
+ assert.ok(stats.peak>0 && stats.peak<1,'non-silent unclipped peak');
+ assert.equal(stats.clippedSamples,0,'no clipped PCM samples');
+ assert.ok(stats.activeRatio>0 && stats.activeRatio<=1,'non-zero active signal ratio');
+ assert.ok(stats.maxStep>=0 && stats.maxStep<1,'bounded adjacent sample jump');
+ assert.equal(stats.objectiveOnly,true);
+ assert.equal(stats.validatedIntelligibility,false);
+});
+test('Objective-only DOU Speech gate rejects corrupted PCM headers and silent demo files',()=>{
+ const demo=fileURLToPath(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url));
+ const encoded=execFileSync(process.execPath,[demo],{encoding:'utf8',maxBuffer:1500000,timeout:10000});
+ const wav=Buffer.from(encoded,'base64');
+ const mutated=Buffer.from(wav);
+ mutated.writeUInt32LE(1234,40);
+ assert.throws(()=>inspectSpeechWaveform(mutated),RangeError);
+ const silence=Buffer.from(wav);
+ silence.fill(0,44);
+ const stats=inspectSpeechWaveform(silence);
+ assert.equal(stats.rms,0);
+ assert.equal(stats.activeRatio,0);
+ assert.ok(!(stats.rms>0 && stats.activeRatio>0),'silent data must not pass signal gate');
+});
+
+test('Reader fixed local preview uses the consonant-differentiated acoustic model',()=>{
+ const demo=readFileSync(new URL('./tools/dou-speech-reader-demo.mjs',import.meta.url),'utf8');
+ assert.match(demo,/synthesizeTurkishArticulationPreview\('Merhaba dünya'\)/);
+ assert.doesNotMatch(demo,/synthesizeTurkishPreview\('Merhaba dünya'\)/);
+ const diagnostics=compareFixedPhonemePairs();
+ assert.equal(diagnostics.syntheticOnly,true);
+ assert.equal(diagnostics.pairCount,4);
+ assert.equal(diagnostics.validatesHumanIdentification,false);
+ assert.equal(diagnostics.validatesTurkishPronunciation,false);
+ for(const entry of diagnostics.contrasts){
+  assert.ok(entry.meanAbsoluteWaveformDifference>0,entry.pairId);
+  assert.ok(entry.maximumAbsoluteDifference>0,entry.pairId);
+  assert.equal(entry.clippedSamples,0,entry.pairId);
+ }
+});
+test('Articulation lab contrasts phonemes collapsed by the original toy model',()=>{
+ const baseA=synthesizeTurkishPreview('Sasa').wav;
+ const baseB=synthesizeTurkishPreview('Şaşa').wav;
+ assert.deepEqual(baseA,baseB,'baseline collapses s and ş into the same wave');
+ const upgradedA=synthesizeTurkishArticulationPreview('Sasa').wav;
+ const upgradedB=synthesizeTurkishArticulationPreview('Şaşa').wav;
+ assert.notDeepEqual(upgradedA,upgradedB,'articulation preview differentiates s and ş');
 });

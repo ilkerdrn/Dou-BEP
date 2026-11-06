@@ -27,6 +27,31 @@ try{
  const {createServer}=await import('../server.mjs');
  server=createServer();await new Promise((ok,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',ok);});
  const base=`http://127.0.0.1:${port}`;
+ // Check that the browser-facing entry points and their essential assets are
+ // actually served by the same ephemeral app instance, not merely present in Git.
+ const publicPages=[
+  {path:'/kurum',markers:['id="login-view"','/admin-navigation.js']},
+  {path:'/kurumsal-sinav',markers:['id="exam-loading"','/institutional-exams.mjs','/exam-page-health.js']}
+ ];
+ for(const page of publicPages){
+  const response=await fetch(base+page.path,{signal:AbortSignal.timeout(10000)});
+  const html=await response.text();
+  inspect(response.status===200&&response.headers.get('content-type')?.startsWith('text/html'),'Tarayıcı giriş rotası '+page.path);
+  inspect(page.markers.every(marker=>html.includes(marker)),'Sayfa iskeleti ve giriş dosyaları '+page.path);
+  inspect(response.headers.get('content-security-policy')?.includes("default-src 'none'")&&
+   response.headers.get('x-frame-options')==='DENY','Tarayıcı güvenlik başlıkları '+page.path);
+ }
+ const visual=await fetch(base+'/admin-design-v3.css',{signal:AbortSignal.timeout(10000)});
+ const stylesheet=await visual.text();
+ inspect(visual.status===200&&visual.headers.get('content-type')?.includes('text/css')&&
+  stylesheet.includes('--dou-v3-accent')&&stylesheet.includes('prefers-reduced-motion'),
+  'Yerel tasarım CSS dosyası ve mobil/erişilebilirlik kuralları');
+ for(const asset of ['/institution.mjs','/institutional-exams.mjs','/exam-page-health.js','/admin-navigation.js','/workflow-ui.mjs']){
+  const response=await fetch(base+asset,{signal:AbortSignal.timeout(10000)});
+  const source=await response.text();
+  inspect(response.status===200&&response.headers.get('content-type')?.includes('javascript')&&
+   source.length>30,'Tarayıcı modülü HTTP erişimi '+asset);
+ }
  async function api(path,{method='GET',body,session,csrf}={}){
   const response=await fetch(base+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(session?{Cookie:session}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(14000)});
   return response;
