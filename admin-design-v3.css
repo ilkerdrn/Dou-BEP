@@ -833,3 +833,15 @@ body.institution-page #exam-workspace #workflow-announcement{
  white-space:nowrap!important;
  border:0!important;
 }
+
+/* Keep single and batch question creation equally reachable on narrow screens. */
+body.institution-page #exam-workspace .exam-question-add-actions{
+ display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;
+}
+body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{
+ min-height:40px;white-space:normal;
+}
+@media(max-width:480px){
+ body.institution-page #exam-workspace .exam-question-add-actions{width:100%}
+ body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{flex:1 1 130px;min-width:0}
+}
