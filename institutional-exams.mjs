@@ -84,10 +84,10 @@ const examSelection=createExamSelection({
   autosave.reset();state.approvalHistory=null;state.current=r.item;state.exam=normalizeExam(r.item.exam);
   state.needArea='';state.supportDraft=[...(state.exam.supportPlan?.selected||[])];
   state.domainDraft=state.exam.supportPlan?.domain||'general';state.dirty=false;
-  $('exam-confirm').checked=false;draw();showAutosave('saved');await loadHistory();
+  $('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('saved');await loadHistory();
  }
 });
-function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;draw();showAutosave('new');}
+function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
 const field=(key,label,value,tag='input',extra='')=>`<label>${esc(label)}${tag==='textarea'?`<textarea data-field="${key}" rows="${extra||3}">${esc(value)}</textarea>`:`<input data-field="${key}" value="${esc(value)}" ${extra}>`}</label>`;
 function renderQuality(x){
  const report=reviewExam(x),issues=report.issues;
@@ -99,17 +99,27 @@ function renderPreflight(){
  const x=state.exam;if(!x)return;
  const report=getExamPreflight(x,{saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'});
  const body=$('exam-preflight-body');if(!body)return;
- body.innerHTML=`<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
+ const nextStage=report.stages.find(step=>!step.done);
+ const nextAction=nextStage
+  ?`<div class="preflight-next-action"><div><span class="portal-mini-label">SIRADAKİ ADIM</span><strong>${esc(nextStage.title)}</strong><p>${esc(nextStage.detail)}</p></div><button type="button" class="portal-btn primary" data-preflight-jump="${nextStage.target}">Bu aşamayı aç</button></div>`
+  :'<div class="preflight-next-action preflight-all-checked"><strong>Hazırlık aşamaları tamamlandı.</strong><p>Son değerlendirme ve kurum onayı öğretmenin sorumluluğundadır.</p></div>';
+ body.innerHTML=`${nextAction}<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
 }
 $('exam-preflight-body').addEventListener('click',event=>{
  const btn=event.target.closest('[data-preflight-jump]');if(!btn)return;
  const id=btn.dataset.preflightJump;
  if(!['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'].includes(id))return;
  const target=document.getElementById(id);if(!target)return;
+ // A collapsed details panel makes scroll/focus appear broken.
+ // Reveal ancestors before visiting; never change the draft or its approval.
+ for(let parent=target.parentElement;parent;parent=parent.parentElement){
+  if(parent.tagName==='DETAILS')parent.open=true;
+ }
  target.scrollIntoView({behavior:'auto',block:'start'});
  // Scrolling alone leaves keyboard/screen-reader focus on the old tile.
  const focusTarget=target.querySelector('h2,h3,h4')||target;
- focusTarget.setAttribute('tabindex','-1');focusTarget.focus({preventScroll:true});
+ focusTarget.setAttribute('tabindex','-1');
+ focusTarget.focus({preventScroll:true});
 });
 $('exam-preflight-export').addEventListener('click',()=>{
  if(!state.exam)return;
@@ -488,7 +498,24 @@ $('exam-questions').addEventListener('click',event=>{const b=event.target.closes
 $('exam-main-fields').addEventListener('input' ,ev=>{if(ev.target.dataset.field)applyInput(ev.target);});
 $('exam-questions').addEventListener('input',ev=>{if(ev.target.dataset.qkey||ev.target.dataset.access)applyInput(ev.target);});
 $('exam-questions').addEventListener('change',ev=>{if(ev.target.dataset.access)applyInput(ev.target);});
-$('exam-questions').addEventListener('change',ev=>{if(['type','visualMode'].includes(ev.target.dataset.qkey)){draw();}});
+$('exam-questions').addEventListener('change',ev=>{
+ const key=ev.target.dataset.qkey;
+ if(!['type','visualMode'].includes(key))return;
+ const index=Number(ev.target.dataset.qindex);
+ if(!Number.isInteger(index)||index<0)return;
+ draw();
+ // The question disclosure is reconstructed by a MutationObserver. Restore
+ // focus after its microtask has wrapped optional fields, then reveal details.
+ queueMicrotask(()=>{
+  const card=$('exam-questions').querySelector(`.exam-question[data-qindex="${index}"]`);
+  const target=card?.querySelector(`[data-qkey="${key}"]`);
+  if(!target)return;
+  for(let parent=target.parentElement;parent;parent=parent.parentElement){
+   if(parent.tagName==='DETAILS')parent.open=true;
+  }
+  target.focus({preventScroll:true});
+ });
+});
 $('exam-adjustments').addEventListener('change',ev=>{if(ev.target.dataset.adapt){applyInput(ev.target);draw();}});
 $('exam-questions').addEventListener('change',ev=>{
  if(ev.target.dataset.sourceReview===undefined||!has('exam.edit'))return;
@@ -496,8 +523,32 @@ $('exam-questions').addEventListener('change',ev=>{
  q.provenance.reviewed=ev.target.checked===true;touch();renderQuality(state.exam);
  notice(q.provenance.reviewed?'Kaynak belgeyle karşılaştırma onayı taslağa eklendi. Soru düzenlenirse onay düşer.':'Kaynak belge kontrol onayı geri alındı.');
 });
-$('exam-questions').addEventListener('click',ev=>{const btn=ev.target.closest('[data-delete]');if(!btn||!has('exam.edit'))return;state.exam.questions.splice(Number(btn.dataset.delete),1);touch();draw();});
-$('exam-add-question').addEventListener('click',()=>{if(!has('exam.edit'))return;state.exam.questions.push(starterQuestion('choice'));touch();draw();});
+$('exam-questions').addEventListener('click',ev=>{
+ const btn=ev.target.closest('[data-delete]');
+ if(!btn||!has('exam.edit')||state.busy)return;
+ const index=Number(btn.dataset.delete);
+ if(!Number.isInteger(index)||index<0||index>=state.exam.questions.length)return;
+ if(!confirm(`Soru ${index+1} kaldırılacak ve taslak değişecek. Devam etmek istiyor musunuz?`))return;
+ $('exam-questions').dispatchEvent(new CustomEvent('exam-question-removed',{detail:{index}}));
+ state.exam.questions.splice(index,1);touch();draw();
+ const cards=$('exam-questions').querySelectorAll('.exam-question');
+ const target=cards[Math.min(index,cards.length-1)]?.querySelector('[data-qkey="prompt"]')||$('exam-add-question');
+ target.focus({preventScroll:true});
+ notice('Soru kaldırıldı. Değişiklikler yeniden kaydedilecektir.');
+});
+function appendBlankQuestions(count){
+ if(!has('exam.edit')||state.busy||!state.exam)return;
+ if(!Number.isSafeInteger(count)||count<1||count>10)return;
+ const firstNewIndex=state.exam.questions.length;
+ for(let i=0;i<count;i++)state.exam.questions.push(starterQuestion('choice'));
+ // One draft invalidation and one redraw, even when adding 10 cards.
+ touch();draw();
+ const field=$('exam-questions').querySelector(`.exam-question[data-qindex="${firstNewIndex}"] [data-qkey="prompt"]`);
+ field?.focus({preventScroll:true});
+ if(count>1)notice(count+' boş soru eklendi. Soruların metnini, kazanımlarını ve yanıtlarını öğretmen olarak tamamlayın.');
+}
+$('exam-add-question').addEventListener('click',()=>appendBlankQuestions(1));
+$('exam-add-ten-questions').addEventListener('click',()=>appendBlankQuestions(10));
 $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
  if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
@@ -671,9 +722,22 @@ $('exam-audio-mp3').addEventListener('click',async()=>{
  }catch(err){notice(err.message,true);}finally{state.busy=false;draw();}
 });
 $('exam-print').addEventListener('click',async()=>{const w=window.open('','_blank');if(!w)return notice('Açılır pencereye izin verin.',true);try{const exam=await getApproved();w.document.open();w.document.write(printableHtml(exam,false));w.document.close();w.focus();setTimeout(()=>w.print(),240);notice('A4 çıktı yalnızca sunucudaki onaylı sürümden üretildi.');}catch(err){w.close();notice(err.message,true);}});
-(async function init(){try{const s=await api('/session');if(!s.authenticated){$('exam-login-required').hidden=false;document.documentElement.dataset.examAppReady='login';return;}state.actor=s.member;state.csrf=s.csrf;
+(async function init(){try{const s=await api('/session');if(!s.authenticated||s.mfaSetupRequired===true){
+  document.body.dataset.examAuth='guest';
+  const navigation=document.querySelector('.dou-nav');
+  if(navigation)navigation.inert=true;
+  $('exam-login-required').hidden=false;
+  if(s.mfaSetupRequired===true){
+   const prompt=$('exam-login-required').querySelector('p');
+   if(prompt)prompt.textContent='Kurum politikasina gore once iki asamali dogrulamayi kurumsal panelde tamamlamalisiniz. Sinav editoru bu asamada acilmaz.';
+  }
+  document.documentElement.dataset.examAppReady='login';
+  return;
+ }state.actor=s.member;state.csrf=s.csrf;
+ document.body.dataset.examAuth='authenticated';
+ const navigation=document.querySelector('.dou-nav');if(navigation)navigation.inert=false;
  $('exam-workspace').hidden=false;$('exam-actor').textContent=s.member.email;$('exam-tenant').textContent=`${s.member.tenantId} · ${s.member.role}`;
  $('exam-new').hidden=!has('exam.edit');$('exam-add-question').hidden=!has('exam.edit');$('exam-confirm').disabled=!has('exam.approve');
  await refreshList();draft();await refreshLibrary();{const requested=new URLSearchParams(location.search).get('exam');if(requested&&/^[a-f0-9-]{36}$/.test(requested)){try{await openExam(requested);}catch(err){notice('Sınav açılmadı: '+err.message,true);}}}try{const capability=await api('/audio-capability');state.mp3Available=capability.mp3===true;}catch{state.mp3Available=false;}draw();if(!has('exam.edit')&&state.exams.length){await openExam(state.exams[0].id);}else if(!has('exam.edit')){state.dirty=false;draw();}
  document.documentElement.dataset.examAppReady='ready';
- }catch(err){notice(err.message,true);$('exam-login-required').hidden=!!state.actor;document.documentElement.dataset.examAppReady='error';}})();
+ }catch(err){document.body.dataset.examAuth='guest';const navigation=document.querySelector('.dou-nav');if(navigation)navigation.inert=true;notice(err.message,true);$('exam-workspace').hidden=true;$('exam-login-required').hidden=false;document.documentElement.dataset.examAppReady='error';}})();

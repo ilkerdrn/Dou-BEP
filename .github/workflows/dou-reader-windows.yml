@@ -9,6 +9,24 @@ on:
       - 'dou-reader-windows.test.mjs'
       - 'dou-speech-phoneme-ui.mjs'
       - 'dou-speech-phoneme-ui-race.test.mjs'
+      - 'dou-speech-phoneme-study.mjs'
+      - 'dou-speech-phoneme-study.test.mjs'
+      - 'dou-speech-phoneme-diagnostics.mjs'
+      - 'dou-speech-phoneme-diagnostics.test.mjs'
+      - 'tools/exam-closure-smoke.mjs'
+      - 'tools/acceptance-pilot.mjs'
+      - 'tools/browser-ui-acceptance.mjs'
+      - 'autosave-manager.mjs'
+      - 'autosave-manager.test.mjs'
+      - 'exam-page-health.js'
+      - 'exam-page-startup.test.mjs'
+      - 'institutional-exams.html'
+      - 'institutional-exams.mjs'
+      - 'admin-design-v3.css'
+      - 'institution.html'
+      - 'admin-navigation.js'
+      - 'workflow-ui.mjs'
+      - 'institution.mjs'
       - 'package.json'
   workflow_dispatch:
 
@@ -36,4 +54,39 @@ jobs:
         shell: pwsh
         run: |
           & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tools\dou-reader-windows-acceptance.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test exam editor startup and DOM assets
+        shell: pwsh
+        run: |
+          node --test exam-page-startup.test.mjs autosave-manager.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify login and exam workbench in real Edge browser (isolated fixture)
+        shell: pwsh
+        env:
+          BEP_UI_CAPTURE_DIR: ${{ runner.temp }}/dou-bep-visuals
+        run: |
+          npm run ui:browser
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload synthetic visual acceptance screenshots
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dou-bep-anonymous-visual-review
+          path: ${{ runner.temp }}/dou-bep-visuals/*.png
+          if-no-files-found: error
+          retention-days: 3
+      - name: Run local phoneme study and diagnostic regression tests
+        shell: pwsh
+        run: |
+          node --test dou-speech-phoneme-study.test.mjs dou-speech-phoneme-diagnostics.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Exercise anonymous isolated exam approval and ZIP delivery
+        shell: pwsh
+        run: |
+          node tools/exam-closure-smoke.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Check anonymous institutional acceptance (temp database, no reports)
+        shell: pwsh
+        run: |
+          node --input-type=module -e "import {runAcceptancePilot} from './tools/acceptance-pilot.mjs'; const r=await runAcceptancePilot({reportFile:null}); console.log('Anonymous pilot: '+r.passed+'/'+r.checks.length); if(r.failed || r.passed!==r.checks.length || r.isolatedDatabase!==true || r.productionReady!==false)process.exitCode=1;"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

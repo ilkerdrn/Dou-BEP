@@ -1,5 +1,10 @@
 /** Same-origin local pilot UI. Never persists passwords/tokens in JS storage. */
 const $=id=>document.getElementById(id);
+// Put the teacher's primary actions before the optional security settings.
+// The existing MFA node, IDs and event listeners are preserved. Required MFA
+// stays accessible when the regular workspace is hidden by authentication.
+const teacherWorkspace=$('workspace-view'),mfaPanel=$('mfa-panel');
+if(teacherWorkspace&&mfaPanel)teacherWorkspace.after(mfaPanel);
 const state={csrf:null,actor:null,kind:'exam',mfaChallenge:null,mfaSetupRequired:false,mfaPolicyRequired:false};
 const escape=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function feedback(message,error=false){$('portal-message').textContent=message;$('portal-message').className=error?'portal-error':'portal-success';}
@@ -8,7 +13,14 @@ async function api(path,{method='GET',body}={}){
  const result=await r.json();if(!r.ok)throw Error(result.message||result.error||`Sunucu hatası ${r.status}`);return result;
 }
 function actorView(){
- const active=!!state.actor,restricted=active&&state.mfaSetupRequired;$('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
+ const active=!!state.actor,restricted=active&&state.mfaSetupRequired;
+ // Keep navigation inaccessible until the institutional session is confirmed.
+ // CSS hides the full menu immediately on first paint; the DOM state follows auth.
+ const signedIn=active&&!restricted;
+ document.body.dataset.portalAuth=signedIn?'authenticated':'guest';
+ const navigation=document.querySelector('.dou-nav');
+ if(navigation)navigation.inert=!signedIn;
+ $('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
  $('sessions-panel').hidden=!active||restricted;$('mfa-panel').hidden=!active;
  $('mfa-restricted-note').hidden=!restricted;$('mfa-restricted-logout').hidden=!restricted;
  if(active){$('actor-name').textContent=state.actor.email;$('actor-meta').textContent=`${state.actor.tenantId} · ${({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||state.actor.role}`;
@@ -41,7 +53,7 @@ $('revoke-other-sessions').addEventListener('click',async()=>{
  if(!confirm('Bu cihaz dışındaki tüm oturumlar kapatılsın mı?'))return;
  try{const r=await api('/security/sessions/others',{method:'DELETE'});await refreshSessions();feedback(`${r.revoked} diğer oturum kapatıldı.`);}catch(err){feedback(err.message,true);}
 });
-async function init(){try{const s=await api('/session');state.actor=s.authenticated?s.member:null;state.csrf=s.csrf||null;actorView();if(state.actor){await refreshMfa();if(!state.mfaSetupRequired){await refresh();await refreshSessions();}}}catch(err){feedback(err.message,true);}}
+async function init(){try{const s=await api('/session');state.actor=s.authenticated?s.member:null;state.csrf=s.csrf||null;state.mfaSetupRequired=!!(s.authenticated&&s.mfaSetupRequired===true);actorView();if(state.actor){await refreshMfa();if(!state.mfaSetupRequired){await refresh();await refreshSessions();}}}catch(err){actorView();feedback(err.message,true);}}
 async function refreshMfa(){if(!state.actor)return;const s=await api('/security/mfa');$('mfa-status').textContent=s.enabled?`MFA etkin · ${s.recoveryRemaining} kurtarma kodu kullanılabilir.`:(s.configured?'MFA henüz etkin değil.':'Sunucu MFA anahtarı yapılandırılmamış.');$('mfa-setup-form').hidden=s.enabled||!s.configured;$('mfa-disable-form').hidden=!s.enabled||state.mfaPolicyRequired;
  if(state.actor.role==='admin'&&!state.mfaSetupRequired){const policy=await api('/security/mfa/policy');state.mfaPolicyRequired=policy.required;$('mfa-policy-status').textContent=policy.required?'Tüm çalışanlar için MFA zorunlu.':'MFA isteğe bağlı. Kurumsal zorunluluk için önce kendi MFA hesabınızı etkinleştirin.';$('mfa-policy-form').querySelector('[name=required]').value=String(policy.required);$('mfa-disable-form').hidden=!s.enabled||policy.required;}
  }
