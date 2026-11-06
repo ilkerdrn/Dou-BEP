@@ -487,3 +487,45 @@ body.institution-page #exam-workspace .exam-optional-tool>summary:focus-visible{
  }
  body.institution-page #exam-workspace #exam-editor-card{padding:15px!important}
 }
+
+/* Sidebar disclosure groups: no duplicated routes, keyboard-native summaries. */
+body.institution-page .dou-nav .dou-nav-disclosure{
+ border-bottom:1px solid #ffffff10;
+ padding:3px 0 8px;
+}
+body.institution-page .dou-nav .dou-nav-disclosure>summary.dou-nav-group-title{
+ list-style:none;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ min-height:38px;
+ margin:0;
+ padding:10px 14px;
+ border-radius:9px;
+ color:#b9c6d8!important;
+ letter-spacing:.09em;
+ font-size:10.5px!important;
+ cursor:pointer;
+ user-select:none;
+}
+body.institution-page .dou-nav .dou-nav-disclosure>summary::-webkit-details-marker{display:none}
+body.institution-page .dou-nav .dou-nav-disclosure>summary::after{
+ content:"+";
+ font-size:16px;
+ font-weight:500;
+ letter-spacing:0;
+ opacity:.85;
+}
+body.institution-page .dou-nav .dou-nav-disclosure[open]>summary::after{content:"−"}
+body.institution-page .dou-nav .dou-nav-disclosure>summary:hover{
+ background:#ffffff12;
+ color:#fff!important;
+}
+body.institution-page .dou-nav .dou-nav-disclosure>summary:focus-visible{
+ outline:3px solid #f28bad!important;
+ outline-offset:-3px!important;
+}
+body.institution-page .dou-nav .dou-nav-group-links{padding:3px 0 6px}
+body.institution-page .dou-nav .dou-nav-disclosure .dou-nav-link.portal-menu{
+ margin:2px 0!important;
+}
