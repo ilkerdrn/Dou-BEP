@@ -186,6 +186,8 @@ async function main(){
   editor:document.getElementById('exam-editor-card').getBoundingClientRect().width
  })`);
  console.log('BROWSER LAYOUT EXAM MOBILE: '+JSON.stringify(mobileExam));
+ // Return to the top after interactive keyboard tests so screenshots depict the first fold.
+ await evaluate('window.scrollTo(0,0)');
  await captureSyntheticScreenshot('exam-mobile');
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
@@ -219,6 +221,8 @@ async function main(){
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
  const mobileDashboard=await evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})');
  console.log('BROWSER LAYOUT DASHBOARD MOBILE: '+JSON.stringify(mobileDashboard));
+ // Return to the top after interactive keyboard tests so screenshots depict the first fold.
+ await evaluate('window.scrollTo(0,0)');
  await captureSyntheticScreenshot('dashboard-mobile');
  pass(mobileDashboard.scroll<=mobileDashboard.width+2,'No horizontal page overflow on 390px dashboard');
  for(const width of [320,768,1280]){
