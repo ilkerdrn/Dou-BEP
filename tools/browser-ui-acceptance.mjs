@@ -250,8 +250,8 @@ async function main(){
  console.log('BROWSER LONG EXAM DIAGNOSTIC: '+JSON.stringify(longExam));
  pass(longExam.count===24,'Long exam renders 24 editable questions');
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===24'),'Question navigation synchronized with 24-card editor');
- pass(await evaluate('document.querySelector("#exam-question-jump [data-question-jump=\"23\"]")!==null'),'Last question jump is available');
- await evaluate('document.querySelector("#exam-question-jump [data-question-jump=\"23\"]").click()');
+ pass(await evaluate('document.querySelector("#exam-question-jump [data-question-jump=23]")!==null'),'Last question jump is available');
+ await evaluate('document.querySelector("#exam-question-jump [data-question-jump=23]").click()');
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="23"'),'Jump to last long-exam question moves focus to correct card');
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
