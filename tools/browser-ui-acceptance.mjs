@@ -90,13 +90,28 @@ async function navigate(base,path){
 async function captureSyntheticScreenshot(name){
  const dest=process.env.BEP_UI_CAPTURE_DIR;
  if(!dest)return;
- if(!['dashboard-desktop','dashboard-mobile','exam-desktop','exam-mobile'].includes(name))throw Error('Unknown screenshot name');
+ if(!["dashboard-desktop","dashboard-mobile","exam-desktop","exam-mobile","exam-questions-mobile","exam-quality-mobile","exam-output-mobile","exam-questions-desktop","exam-output-desktop"].includes(name))throw Error('Unknown screenshot name');
  const result=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:true});
  const bytes=Buffer.from(result.data||'','base64');
  if(bytes.length<1000||bytes.length>10_000_000)throw Error('Invalid synthetic screenshot size');
  mkdirSync(dest,{recursive:true});
  writeFileSync(join(dest,name+'.png'),bytes,{flag:'w',mode:0o600});
  console.log('BROWSER CAPTURE: '+name+'.png ('+bytes.length+' bytes, synthetic fixture only)');
+}
+async function captureSyntheticSection(id,name){
+ if(!process.env.BEP_UI_CAPTURE_DIR)return;
+ const exists=await evaluate(`(function(){
+   const target=document.getElementById(${JSON.stringify(id)});
+   if(!target)return false;
+   for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement){
+    if(ancestor.tagName==='DETAILS')ancestor.open=true;
+   }
+   target.scrollIntoView({block:'start',behavior:'instant'});
+   return true;
+ })()`);
+ if(!exists)throw Error('Synthetic capture target missing: '+id);
+ await delay(130);
+ await captureSyntheticScreenshot(name);
 }
 async function main(){
  const port=await freePort();
@@ -141,6 +156,7 @@ async function main(){
  pass(await evaluate('Boolean(document.getElementById("workspace-view").compareDocumentPosition(document.getElementById("mfa-panel")) & Node.DOCUMENT_POSITION_FOLLOWING)'),'Primary teacher workspace precedes optional MFA settings');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
+ pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  await captureSyntheticScreenshot('dashboard-desktop');
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
@@ -190,6 +206,9 @@ async function main(){
  // Return to the top after interactive keyboard tests so screenshots depict the first fold.
  await evaluate('window.scrollTo(0,0)');
  await captureSyntheticScreenshot('exam-mobile');
+ await captureSyntheticSection('exam-question-section','exam-questions-mobile');
+ await captureSyntheticSection('exam-quality','exam-quality-mobile');
+ await captureSyntheticSection('exam-output-section','exam-output-mobile');
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
  // Screen geometry matrix: compact phone, medium phone, tablet and desktop.
@@ -211,6 +230,10 @@ async function main(){
     nextHeight:Math.round(rect.height)
    };
   })()`);
+  if(width===1280){
+    await captureSyntheticSection('exam-question-section','exam-questions-desktop');
+    await captureSyntheticSection('exam-output-section','exam-output-desktop');
+  }
   console.log('BROWSER LAYOUT EXAM '+width+': '+JSON.stringify(geometry));
   pass(geometry.scrollWidth<=geometry.viewport+2,'Exam editor has no document overflow at '+width+'px');
   pass(geometry.editorWidth<=geometry.viewport+2,'Exam card fits at '+width+'px');
