@@ -22,6 +22,8 @@ on:
       - 'admin-design-v3.css'
       - 'institution.html'
       - 'admin-navigation.js'
+      - 'workflow-ui.mjs'
+      - 'institution.mjs'
       - 'package.json'
   workflow_dispatch:
 
