@@ -209,6 +209,19 @@ async function main(){
   select.dispatchEvent(new Event('change',{bubbles:true}));
  })()`);
  pass(await evaluate('document.activeElement?.dataset.qkey==="type"'),'Redrawn question keeps field keyboard focus');
+ // Optional visual mode lives inside a reconstructed <details>. It must reopen
+ // before keyboard focus returns to the replacement select.
+ await evaluate(`(function(){
+  const card=document.querySelector('#exam-questions > .exam-question:last-child');
+  const select=card.querySelector('[data-qkey="visualMode"]');
+  if(!select)throw Error('Visual mode selector missing');
+  select.value='numberline';
+  select.dispatchEvent(new Event('input',{bubbles:true}));
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+ })()`);
+ await waitUntil(()=>evaluate('document.activeElement?.dataset.qkey==="visualMode"'),'Focus returns to reconstructed visual mode');
+ pass(await evaluate('document.activeElement.closest(".exam-question-advanced")?.open===true'),'Advanced visual settings remain expanded around focused selector');
+ pass(await evaluate('document.querySelector("#exam-questions > .exam-question:last-child [data-qkey=numberLineEnd]")!==null'),'Number-line controls render after visual mode switch');
  await evaluate('window.__nativeConfirmForSmoke=window.confirm;window.confirm=()=>false;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click()');
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Cancelled deletion preserves question');
  await evaluate('window.confirm=()=>true;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click();window.confirm=window.__nativeConfirmForSmoke;delete window.__nativeConfirmForSmoke');
