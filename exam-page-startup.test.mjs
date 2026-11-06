@@ -215,3 +215,13 @@ test('Compact question cards keep essential question data and source review visi
  assert.match(css,/\.exam-question-advanced>summary:focus-visible/);
  assert.match(css,/\.exam-question-jump-button:focus-visible/);
 });
+
+test('Question disclosure reveals keyboard focus without persisting private answers',()=>{
+ const helper=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ assert.match(helper,/questionList\.addEventListener\('focusin',event=>/);
+ assert.match(helper,/event\.target\.closest\('\.exam-question-advanced'\)/);
+ assert.match(helper,/if\(details&&!details\.open\)details\.open=true/);
+ assert.match(helper,/advanced\.addEventListener\('focusin',\(\)=>\{advanced\.open=true;\}\)/);
+ assert.match(helper,/if\(index>=cards\.length\)expandedQuestions\.delete\(index\)/);
+ assert.doesNotMatch(helper,/localStorage|sessionStorage|indexedDB/);
+});
