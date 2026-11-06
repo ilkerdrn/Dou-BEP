@@ -1166,3 +1166,22 @@ body.institution-page.campus-layout #exam-workspace .exam-question-advanced{
  body.institution-page.campus-layout .dou-nav-brand{padding:9px 4px!important}
  body.institution-page.campus-layout .dou-nav-sections{border-radius:15px!important}
 }
+
+/* High-contrast menu control against the pale mobile rail. */
+body.institution-page.campus-layout .dou-nav-toggle{
+ color:#801b2a!important;
+ background:#fff!important;
+ border:1px solid #e2cdd4!important;
+ box-shadow:0 2px 8px rgba(56,31,41,.06)!important;
+}
+body.institution-page.campus-layout .dou-nav-toggle:hover{
+ background:#fff2f5!important;
+ border-color:#ba8996!important;
+}
+body.institution-page.campus-layout .dou-nav-toggle span{
+ background:currentColor!important;
+}
+body.institution-page.campus-layout .dou-nav-toggle:focus-visible{
+ outline:3px solid #ad3852!important;
+ outline-offset:2px!important;
+}
