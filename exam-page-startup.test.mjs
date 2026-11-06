@@ -96,7 +96,7 @@ test('Institutional navigation is gated by verified session and reappears after 
  const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
  const js=readFileSync(new URL('./institution.mjs',import.meta.url),'utf8');
  const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
- assert.match(html,/<body class="institution-page" data-portal-auth="checking">/);
+ assert.match(html,/<body class="institution-page campus-layout" data-portal-auth="checking">/);
  assert.match(js,/document\.body\.dataset\.portalAuth=signedIn\?'authenticated':'guest'/);
  assert.match(js,/navigation\.inert=!signedIn/);
  assert.match(js,/const signedIn=active&&!restricted/);
