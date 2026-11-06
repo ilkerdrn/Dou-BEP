@@ -95,7 +95,7 @@ for(const [id,title,description] of optionalExamTools){
  wrapper.appendChild(section);
  // Deep links and keyboard focus may reference an optional section.
  // Reveal its native details before focusing/scrolling a target inside.
- if(location.hash&&section.contains(document.getElementById(decodeURIComponent(location.hash.slice(1)))))
+ if(location.hash&&section.contains(document.getElementById(location.hash.slice(1))))
   wrapper.open=true;
  wrapper.addEventListener('focusin',()=>{wrapper.open=true;});
 }
