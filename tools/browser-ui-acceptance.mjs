@@ -139,6 +139,24 @@ async function main(){
  pass(await evaluate('document.getElementById("exam-drafts-panel").inert'),'Focus mode makes hidden drafts inert');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
  pass(await evaluate('!document.getElementById("exam-drafts-panel").inert'),'Focus mode restores drafts');
+ // Exercise a real editable question card, including keyboard focus, redraw
+ // and destructive-action cancellation. All changes live in the temp fixture.
+ const originalCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
+ await evaluate('document.getElementById("exam-add-question").click()');
+ await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'New question rendered');
+ pass(await evaluate('document.activeElement?.dataset.qkey==="prompt"'),'New question gets prompt keyboard focus');
+ await evaluate(`(function(){
+  const card=document.querySelector('#exam-questions > .exam-question:last-child');
+  const select=card.querySelector('[data-qkey="type"]');
+  select.value='short';
+  select.dispatchEvent(new Event('input',{bubbles:true}));
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+ })()`);
+ pass(await evaluate('document.activeElement?.dataset.qkey==="type"'),'Redrawn question keeps field keyboard focus');
+ await evaluate('window.__nativeConfirmForSmoke=window.confirm;window.confirm=()=>false;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click()');
+ pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Cancelled deletion preserves question');
+ await evaluate('window.confirm=()=>true;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click();window.confirm=window.__nativeConfirmForSmoke;delete window.__nativeConfirmForSmoke');
+ pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount)),'Confirmed deletion removes one question');
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
  pass(await evaluate('document.getElementById("workflow-next").getBoundingClientRect().width>40'),'Mobile next-step button has usable width');
