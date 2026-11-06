@@ -162,12 +162,23 @@ async function main(){
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Cancelled deletion preserves question');
  await evaluate('window.confirm=()=>true;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click();window.confirm=window.__nativeConfirmForSmoke;delete window.__nativeConfirmForSmoke');
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount)),'Confirmed deletion removes one question');
+ // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
  pass(await evaluate('document.getElementById("workflow-next").getBoundingClientRect().width>40'),'Mobile next-step button has usable width');
+ const mobileExam=await evaluate(`({
+  width:innerWidth,scroll:document.documentElement.scrollWidth,
+  editor:document.getElementById('exam-editor-card').getBoundingClientRect().width
+ })`);
+ console.log('BROWSER LAYOUT EXAM MOBILE: '+JSON.stringify(mobileExam));
+ pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
+ pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
  await navigate(base,'/kurum');
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Mobile session restoration');
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
+ const mobileDashboard=await evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})');
+ console.log('BROWSER LAYOUT DASHBOARD MOBILE: '+JSON.stringify(mobileDashboard));
+ pass(mobileDashboard.scroll<=mobileDashboard.width+2,'No horizontal page overflow on 390px dashboard');
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
 try{await main();}
