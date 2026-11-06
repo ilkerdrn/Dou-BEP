@@ -790,3 +790,10 @@ body.institution-page #exam-workspace .preflight-all-checked{
 @media(max-width:760px){
  body.institution-page #exam-workspace .preflight-next-action .portal-btn{width:100%;justify-content:center}
 }
+
+/* The authenticated dashboard is a workspace: primary teacher tasks should
+   be visible before optional marketing/intro content on phone and desktop.
+   Guest login and MFA security content remain untouched. */
+body.institution-page[data-portal-auth="authenticated"] .portal-hero{
+ display:none!important;
+}
