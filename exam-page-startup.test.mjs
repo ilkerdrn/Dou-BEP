@@ -256,12 +256,12 @@ test('Question type and visual mode redraw restore form focus',()=>{
  const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
  const at=editor.indexOf("const key=ev.target.dataset.qkey;");
  assert.ok(at>=0,'Redraw handler reads changed question field');
- const snippet=editor.slice(at,at+650);
+ const snippet=editor.slice(at,at+1100);
  assert.match(snippet,/if\(!\['type','visualMode'\]\.includes\(key\)\)return/);
  assert.match(snippet,/Number\.isInteger\(index\)/);
  assert.match(snippet,/draw\(\)/);
- assert.match(snippet,/target\.closest\('\.exam-question-advanced'\)/);
- assert.match(snippet,/if\(advanced\)advanced\.open=true/);
+ assert.match(snippet,/queueMicrotask\(\(\)=>\{/);
+ assert.match(snippet,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
  assert.match(snippet,/target\.focus\(\{preventScroll:true\}\)/);
 });
 
@@ -381,7 +381,7 @@ test('Approved delivery remains the final labeled workflow and preparatory impor
 
 test('Visual-mode redraw restores keyboard focus after the advanced disclosure exists',()=>{
  const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
- const start=editor.indexOf("$('exam-questions').addEventListener('change',ev=>{\n const key=ev.target.dataset.qkey;");
+ const start=editor.indexOf("const key=ev.target.dataset.qkey;");
  const end=editor.indexOf("$('exam-adjustments').addEventListener",start);
  assert.ok(start>=0&&end>start,'Question redraw handler exists');
  const handler=editor.slice(start,end);
