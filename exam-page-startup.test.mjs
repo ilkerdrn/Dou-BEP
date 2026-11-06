@@ -251,3 +251,16 @@ test('Question removal requires confirmation and keyboard focus returns safely',
  assert.match(handlers,/target\.focus\(\{preventScroll:true\}\)/);
  assert.match(handlers,/lastElementChild\?\.querySelector\('\[data-qkey="prompt"\]'\)\?\.focus/);
 });
+
+test('Question type and visual mode redraw restore form focus',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const at=editor.indexOf("const key=ev.target.dataset.qkey;");
+ assert.ok(at>=0,'Redraw handler reads changed question field');
+ const snippet=editor.slice(at,at+650);
+ assert.match(snippet,/if\(!\['type','visualMode'\]\.includes\(key\)\)return/);
+ assert.match(snippet,/Number\.isInteger\(index\)/);
+ assert.match(snippet,/draw\(\)/);
+ assert.match(snippet,/target\.closest\('\.exam-question-advanced'\)/);
+ assert.match(snippet,/if\(advanced\)advanced\.open=true/);
+ assert.match(snippet,/target\.focus\(\{preventScroll:true\}\)/);
+});
