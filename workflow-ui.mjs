@@ -3,7 +3,27 @@ const nav = document.querySelector('.workflow-nav');
 if (nav) {
   const steps = Array.from(nav.querySelectorAll('[data-workflow-target]'));
   const findTarget = button => document.getElementById(button.dataset.workflowTarget);
+  const previous=document.getElementById('workflow-prev');
+  const next=document.getElementById('workflow-next');
+  const stepCount=document.getElementById('workflow-step-count');
+  const revealAndVisit = button => {
+    const target=findTarget(button);
+    if(!target)return;
+    // Always reveal a section before scrolling or moving keyboard focus.
+    for(let parent=target.parentElement;parent;parent=parent.parentElement){
+      if(parent.tagName==='DETAILS')parent.open=true;
+    }
+    activate(button);
+    target.scrollIntoView({block:'start',behavior:'auto'});
+    const heading=target.querySelector('h2,h3,h4')||target;
+    heading.setAttribute('tabindex','-1');
+    heading.focus({preventScroll:true});
+  };
   const activate = button => {
+    const selectedIndex=steps.indexOf(button);
+    if(previous)previous.disabled=selectedIndex<=0;
+    if(next)next.disabled=selectedIndex<0||selectedIndex>=steps.length-1;
+    if(stepCount&&selectedIndex>=0)stepCount.textContent='Adım '+(selectedIndex+1)+' / '+steps.length;
     for (const step of steps) {
       const selected = step === button;
       step.classList.toggle('active',selected);
@@ -11,15 +31,16 @@ if (nav) {
       else step.removeAttribute('aria-current');
     }
   };
-  for (const button of steps) button.addEventListener('click', () => {
-    const target = findTarget(button);
-    if (!target) return;
-    activate(button);
-    target.scrollIntoView({block:'start',behavior:'auto'});
-    const heading = target.querySelector('h3') || target;
-    heading.setAttribute('tabindex','-1');
-    heading.focus({preventScroll:true});
+  for(const button of steps)button.addEventListener('click',()=>revealAndVisit(button));
+  if(previous)previous.addEventListener('click',()=>{
+    const index=steps.findIndex(step=>step.classList.contains('active'));
+    if(index>0)revealAndVisit(steps[index-1]);
   });
+  if(next)next.addEventListener('click',()=>{
+    const index=steps.findIndex(step=>step.classList.contains('active'));
+    if(index>=0&&index<steps.length-1)revealAndVisit(steps[index+1]);
+  });
+  if(steps.length)activate(steps.find(step=>step.classList.contains('active'))||steps[0]);
   // Follow the section the teacher is actually reading, not just the last
   // clicked tab. No polling or remote calls; observer is local-only.
   if(typeof IntersectionObserver!=='undefined'){
