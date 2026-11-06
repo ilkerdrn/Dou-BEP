@@ -143,6 +143,7 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
  pass(await evaluate('document.getElementById("workflow-next").getBoundingClientRect().width>40'),'Mobile next-step button has usable width');
  await navigate(base,'/kurum');
+ await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Mobile session restoration');
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
