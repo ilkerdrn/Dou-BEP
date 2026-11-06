@@ -63,10 +63,15 @@ if (nav) {
   // Focus mode changes only presentation: never destroys a draft or saves it.
   const focusToggle=document.getElementById('exam-focus-toggle');
   const workspace=document.getElementById('exam-workspace');
-  if(focusToggle&&workspace){
+  const draftsPanel=document.getElementById('exam-drafts-panel');
+  if(focusToggle&&workspace&&draftsPanel){
     focusToggle.addEventListener('click',()=>{
       const enabled=!workspace.classList.contains('exam-focus-mode');
+      // Focus must not remain in a now-hidden panel, including for screen readers.
+      if(enabled&&draftsPanel.contains(document.activeElement))focusToggle.focus();
       workspace.classList.toggle('exam-focus-mode',enabled);
+      draftsPanel.inert=enabled;
+      draftsPanel.setAttribute('aria-hidden',String(enabled));
       focusToggle.setAttribute('aria-pressed',String(enabled));
       focusToggle.textContent=enabled?'Odak modu: Açık':'Odak modu: Kapalı';
       focusToggle.title=enabled?'Taslak listesini yeniden göster':'Taslak listesini gizleyip soru düzenleme alanını genişlet';
