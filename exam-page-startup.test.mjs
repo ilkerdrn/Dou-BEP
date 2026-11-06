@@ -225,3 +225,14 @@ test('Question disclosure reveals keyboard focus without persisting private answ
  assert.match(helper,/if\(index>=cards\.length\)expandedQuestions\.delete\(index\)/);
  assert.doesNotMatch(helper,/localStorage|sessionStorage|indexedDB/);
 });
+
+test('Long exam workflow tracks visible section without overwriting save status',()=>{
+ const script=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ assert.match(script,/typeof IntersectionObserver!=='undefined'/);
+ assert.match(script,/new IntersectionObserver\(entries=>/);
+ assert.match(script,/visible\.set\(entry\.target\.id,entry\.boundingClientRect\.top\)/);
+ assert.match(script,/if\(active\)activate\(active\)/);
+ assert.match(script,/sectionObserver\.observe\(target\)/);
+ assert.match(script,/rootMargin:'-15% 0px -65% 0px'/);
+ assert.doesNotMatch(script,/if \(status\) status\.textContent = value/);
+});
