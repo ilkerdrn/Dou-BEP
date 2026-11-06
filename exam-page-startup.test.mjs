@@ -323,3 +323,19 @@ test('Readiness checklist reveals collapsed parent panels before scrolling and f
  assert.match(handler,/if\(!\['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'\]\.includes\(id\)\)return/);
  assert.doesNotMatch(handler,/state\.exam\s*=|autosave\.changed\(/);
 });
+
+test('Readiness summary directs teachers to the first incomplete stage without auto-approving',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const start=editor.indexOf('function renderPreflight(){');
+ const end=editor.indexOf("$('exam-preflight-body').addEventListener('click'",start);
+ assert.ok(start>=0&&end>start);
+ const block=editor.slice(start,end);
+ assert.match(block,/const nextStage=report\.stages\.find\(step=>!step\.done\)/);
+ assert.match(block,/data-preflight-jump="\$\{nextStage\.target\}"/);
+ assert.match(block,/esc\(nextStage\.title\)/);
+ assert.match(block,/esc\(nextStage\.detail\)/);
+ assert.match(block,/preflight-all-checked/);
+ assert.doesNotMatch(block,/state\.current\s*=|autosave\.changed\(|\.approved\s*=/);
+ assert.match(css,/\.preflight-next-action/);
+});
