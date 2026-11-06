@@ -134,3 +134,31 @@ test('Exam focus mode is reversible without mutating draft/autosave state',()=>{
  assert.match(css,/#exam-workspace\.exam-focus-mode #exam-editor-card/);
  assert.doesNotMatch(script,/if \(status\) status\.textContent = value/);
 });
+
+test('Dashboard prioritizes four essential flows while retaining all auxiliary routes',()=>{
+ const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ const primary=html.match(/<div class="dashboard-shortcuts" aria-label="Hızlı çalışma alanları">([\s\S]*?)<\/div><details class="dashboard-more-tools">/);
+ const secondary=html.match(/<details class="dashboard-more-tools"><summary>[\s\S]*?<div class="dashboard-shortcuts dashboard-secondary-shortcuts">([\s\S]*?)<\/div><\/details>/);
+ assert.ok(primary,'Essential dashboard shortcuts must be visible');
+ assert.ok(secondary,'Secondary shortcuts must remain accessible in native details');
+ assert.equal([...primary[1].matchAll(/class="dashboard-shortcut"/g)].length,4);
+ assert.equal([...secondary[1].matchAll(/class="dashboard-shortcut"/g)].length,4);
+ for(const url of ['/kurumsal-sinav?new=1','/bep-import','/sinav-operasyon','/erisilebilirlik-kabul','/sinav-koordinasyon','/toplu-sinav','/pilot-yonetim','/erisilebilirlik-kontrol'])
+  assert.ok(html.includes('href="'+url+'"'),'Missing existing dashboard route '+url);
+});
+test('Optional exam tools are native details, retaining original section nodes and accessible focus',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const helper=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const ids=['exam-goal-matrix-section','exam-guided-panel','exam-material-library','exam-teacher-preview'];
+ for(const id of ids){
+  assert.ok(editor.includes('id="'+id+'"'),'Missing section '+id);
+  assert.ok(helper.includes("'"+id+"'"),'Missing progressive disclosure tool '+id);
+ }
+ assert.match(helper,/document\.createElement\('details'\)/);
+ assert.match(helper,/section\.parentNode\.insertBefore\(wrapper,section\)/);
+ assert.match(helper,/wrapper\.appendChild\(section\)/);
+ assert.match(helper,/wrapper\.addEventListener\('focusin'/);
+ assert.match(css,/\.exam-optional-tool>summary:focus-visible/);
+ assert.match(css,/prefers-reduced-motion/);
+});
