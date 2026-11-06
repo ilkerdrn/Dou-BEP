@@ -108,7 +108,7 @@ async function main(){
  const debugPort=await waitUntil(()=>{
   if(edge.exitCode!==null)throw Error('Edge exited before DevTools opened');
   if(!existsSync(activePort))return null;
-  const port=Number(readFileSync(activePort,'utf8').split(/\\r?\\n/)[0]);
+  const port=Number(readFileSync(activePort,'utf8').split(String.fromCharCode(10))[0]);
   return Number.isInteger(port)&&port>0?port:null;
  },'Edge DevTools startup',20000);
  await connectTab(debugPort);
