@@ -7,7 +7,7 @@
  */
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {mkdtempSync,existsSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,mkdirSync,writeFileSync,existsSync,readFileSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {createServer as createTcpServer} from 'node:net';
@@ -85,6 +85,19 @@ async function navigate(base,path){
  await command('Page.navigate',{url:base+path});
  await waitUntil(()=>evaluate('document.readyState==="complete"'),'Page loaded '+path);
 }
+// Screenshots are opt-in and restricted to this synthetic fixture.
+// Captures are never made on a user's logged-in browser profile or actual DB.
+async function captureSyntheticScreenshot(name){
+ const dest=process.env.BEP_UI_CAPTURE_DIR;
+ if(!dest)return;
+ if(!['dashboard-desktop','dashboard-mobile','exam-desktop','exam-mobile'].includes(name))throw Error('Unknown screenshot name');
+ const result=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:true});
+ const bytes=Buffer.from(result.data||'','base64');
+ if(bytes.length<1000||bytes.length>10_000_000)throw Error('Invalid synthetic screenshot size');
+ mkdirSync(dest,{recursive:true});
+ writeFileSync(join(dest,name+'.png'),bytes,{flag:'w',mode:0o600});
+ console.log('BROWSER CAPTURE: '+name+'.png ('+bytes.length+' bytes, synthetic fixture only)');
+}
 async function main(){
  const port=await freePort();
  process.env.PORT=String(port);
@@ -127,12 +140,14 @@ async function main(){
  pass(await evaluate('!document.getElementById("workspace-view").hidden'),'Authenticated dashboard visible');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
+ await captureSyntheticScreenshot('dashboard-desktop');
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
  pass(await evaluate('document.body.dataset.examAuth==="authenticated"'),'Exam editor authorizes fixture session');
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
  pass(await evaluate('getComputedStyle(document.querySelector(".exam-hero")).display==="none"'),'Promotional hero hidden in editor');
  pass(await evaluate('document.getElementById("workflow-next")!==null'),'Step pager exists');
+ await captureSyntheticScreenshot('exam-desktop');
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
@@ -171,6 +186,7 @@ async function main(){
   editor:document.getElementById('exam-editor-card').getBoundingClientRect().width
  })`);
  console.log('BROWSER LAYOUT EXAM MOBILE: '+JSON.stringify(mobileExam));
+ await captureSyntheticScreenshot('exam-mobile');
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
  // Screen geometry matrix: compact phone, medium phone, tablet and desktop.
@@ -203,6 +219,7 @@ async function main(){
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
  const mobileDashboard=await evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})');
  console.log('BROWSER LAYOUT DASHBOARD MOBILE: '+JSON.stringify(mobileDashboard));
+ await captureSyntheticScreenshot('dashboard-mobile');
  pass(mobileDashboard.scroll<=mobileDashboard.width+2,'No horizontal page overflow on 390px dashboard');
  for(const width of [320,768,1280]){
   await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<=768});
