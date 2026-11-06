@@ -963,3 +963,206 @@ body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{
  body.institution-page #exam-workspace .workflow-step{transition:none!important}
  body.institution-page .dashboard-shortcut:hover{transform:none}
 }
+
+
+/* Campus-inspired teacher workspace: airy side rail, white learning surfaces,
+   burgundy active navigation. Scoped to the two opted-in routes only.
+   All existing native disclosures, keyboard handling and data flow are retained. */
+body.institution-page.campus-layout{
+ --campus-red:#811820;
+ --campus-red-hover:#9c2732;
+ --campus-background:#f7f4f5;
+ --campus-line:#eae5e8;
+ --campus-ink:#2e2732;
+ --campus-muted:#756c7a;
+ background:var(--campus-background)!important;
+ color:var(--campus-ink);
+}
+body.institution-page.campus-layout .portal-main{
+ background:var(--campus-background)!important;
+}
+body.institution-page.campus-layout .portal-topbar{
+ background:#faf7f8!important;
+ border-bottom:1px solid #ebe6e8!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout .portal-topbar strong{color:#36212a!important}
+body.institution-page.campus-layout .portal-content{
+ max-width:1660px!important;
+ padding-top:24px!important;
+}
+body.institution-page.campus-layout .dou-nav{
+ background:var(--campus-background)!important;
+ color:#3d3038!important;
+ border-right:1px solid #ede6e9!important;
+ box-shadow:none!important;
+ scrollbar-color:#c7b5bd transparent;
+}
+body.institution-page.campus-layout .dou-nav-brand{
+ padding:24px 11px 23px!important;
+}
+body.institution-page.campus-layout .dou-brand-mark{
+ background:var(--campus-red)!important;
+ border:1px solid var(--campus-red)!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout .dou-brand-title strong{
+ color:#9c2633!important;
+ font-size:16px!important;
+ letter-spacing:-.025em!important;
+}
+body.institution-page.campus-layout .dou-brand-title small{color:#776f78!important}
+body.institution-page.campus-layout .dou-nav-actions{padding-bottom:14px}
+body.institution-page.campus-layout .dou-nav .dou-create{
+ background:var(--campus-red)!important;
+ border-color:var(--campus-red)!important;
+ color:#fff!important;
+ box-shadow:0 6px 13px rgba(110,22,32,.12)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-create:hover{
+ background:var(--campus-red-hover)!important;
+}
+body.institution-page.campus-layout .dou-nav-find label{
+ color:#7f7380!important;
+}
+body.institution-page.campus-layout .dou-nav-find input{
+ background:#fff!important;
+ border:1px solid #e5dfe3!important;
+ color:#332a34!important;
+ border-radius:11px!important;
+}
+body.institution-page.campus-layout .dou-nav-find-field:before{
+ border-color:#887b83!important;
+}
+body.institution-page.campus-layout .dou-nav-find-field:after{
+ background:#887b83!important;
+}
+body.institution-page.campus-layout .dou-nav-sections{
+ padding:12px 8px 17px!important;
+ background:#fff!important;
+ border-radius:22px!important;
+ border:1px solid #efe9ec!important;
+ box-shadow:0 7px 22px rgba(48,28,39,.06)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-disclosure{
+ border-bottom:1px solid #f0ecee!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-disclosure>summary.dou-nav-group-title{
+ color:#857780!important;
+ letter-spacing:.07em!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-disclosure>summary:hover{
+ background:#faf5f7!important;
+ color:#742332!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-disclosure>summary:focus-visible{
+ outline:3px solid #ad3c56!important;
+ outline-offset:2px;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.portal-menu{
+ background:transparent!important;
+ color:#463640!important;
+ border-color:transparent!important;
+ border-radius:12px!important;
+ min-height:45px!important;
+ padding:10px 12px!important;
+ font-size:12.8px!important;
+ font-weight:630!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link svg{
+ color:#6e5d67!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link:hover:not(.current):not([aria-current="page"]){
+ background:#faf0f3!important;
+ color:#772231!important;
+ border-color:#f5e5eb!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.current,
+body.institution-page.campus-layout .dou-nav .dou-nav-link[aria-current="page"]{
+ background:var(--campus-red)!important;
+ color:#fff!important;
+ border-color:var(--campus-red)!important;
+ border-radius:13px!important;
+ box-shadow:0 7px 16px rgba(104,16,26,.18)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.current svg,
+body.institution-page.campus-layout .dou-nav .dou-nav-link[aria-current="page"] svg{
+ color:#fff!important;
+}
+body.institution-page.campus-layout .dou-nav-bottom{
+ border-top:1px solid #e9e2e6!important;
+}
+body.institution-page.campus-layout .dou-nav-offline{
+ color:#596b62!important;
+}
+body.institution-page.campus-layout .dou-nav-version,
+body.institution-page.campus-layout .dou-nav-bottom p{
+ color:#847983!important;
+}
+body.institution-page.campus-layout .dashboard-welcome{
+ background:#fff!important;
+ border:1px solid #ede7ea!important;
+ border-radius:24px!important;
+ padding:30px 34px!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout .dashboard-welcome .dashboard-badge{
+ color:#7a2533!important;
+ background:#f9f0f2!important;
+ border-color:#efdde1!important;
+}
+body.institution-page.campus-layout .dashboard-shortcut{
+ background:#fff!important;
+ border:1px solid #eae5e8!important;
+ border-radius:14px!important;
+ box-shadow:0 4px 14px rgba(51,30,41,.045)!important;
+}
+body.institution-page.campus-layout .dashboard-shortcut:hover{
+ border-color:#cdaab3!important;
+ box-shadow:0 8px 20px rgba(81,28,42,.09)!important;
+}
+body.institution-page.campus-layout .dashboard-shortcut strong{
+ color:#342a31!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-nav{
+ background:#fff!important;
+ border-color:#eee8ec!important;
+ border-radius:20px!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-step[aria-current="step"]{
+ background:var(--campus-red)!important;
+ color:#fff!important;
+ border-color:var(--campus-red)!important;
+ box-shadow:0 4px 13px rgba(104,16,26,.14)!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-card,
+body.institution-page.campus-layout #exam-workspace #exam-editor-card{
+ background:#fff!important;
+ border-color:#eee8eb!important;
+ border-radius:20px!important;
+ box-shadow:0 4px 18px rgba(45,27,40,.035)!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-question{
+ border-left-color:var(--campus-red)!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-question-advanced{
+ background:#faf8f9!important;
+ border-color:#eae3e7!important;
+}
+@media(max-width:1080px){
+ body.institution-page.campus-layout .dou-nav{
+  border-right:0!important;
+  border-bottom:1px solid #eae3e6!important;
+ }
+ body.institution-page.campus-layout .dou-nav.dou-nav-open .dou-nav-sections{
+  margin-bottom:10px;
+ }
+}
+@media(max-width:680px){
+ body.institution-page.campus-layout .portal-content{padding:16px 13px 50px!important}
+ body.institution-page.campus-layout .dashboard-welcome{padding:19px!important}
+ body.institution-page.campus-layout .dou-nav-brand{padding:9px 4px!important}
+ body.institution-page.campus-layout .dou-nav-sections{border-radius:15px!important}
+}
