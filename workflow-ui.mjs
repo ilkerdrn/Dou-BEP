@@ -20,14 +20,27 @@ if (nav) {
     heading.setAttribute('tabindex','-1');
     heading.focus({preventScroll:true});
   });
+  // Focus mode changes only presentation: never destroys a draft or saves it.
+  const focusToggle=document.getElementById('exam-focus-toggle');
+  const workspace=document.getElementById('exam-workspace');
+  if(focusToggle&&workspace){
+    focusToggle.addEventListener('click',()=>{
+      const enabled=!workspace.classList.contains('exam-focus-mode');
+      workspace.classList.toggle('exam-focus-mode',enabled);
+      focusToggle.setAttribute('aria-pressed',String(enabled));
+      focusToggle.textContent=enabled?'Odak modu: Açık':'Odak modu: Kapalı';
+      focusToggle.title=enabled?'Taslak listesini yeniden göster':'Taslak listesini gizleyip soru düzenleme alanını genişlet';
+    });
+  }
   const status = document.getElementById('workflow-save-state');
   const context = document.getElementById('workflow-context');
   const source = document.getElementById('exam-status');
   const onChange = () => {
     if (!source) return;
     const value = source.textContent.trim() || 'Yeni taslak';
-    if (status) status.textContent = value;
-    if (context) context.textContent = value === 'KAYDEDİLMEDİ' ? 'Yeni taslak' : value;
+    // The autosave manager owns #workflow-save-state (pending/saving/error).
+    // Do not overwrite that detailed status when only the exam approval badge changes.
+    if (context) context.textContent = value === 'KAYDEDİLMEDİ' ? 'Kaydedilmemiş değişiklikler' : value;
   };
   if (source) { new MutationObserver(onChange).observe(source,{subtree:true,childList:true,characterData:true});onChange(); }
 }
