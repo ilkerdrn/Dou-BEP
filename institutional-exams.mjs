@@ -536,11 +536,19 @@ $('exam-questions').addEventListener('click',ev=>{
  target.focus({preventScroll:true});
  notice('Soru kaldırıldı. Değişiklikler yeniden kaydedilecektir.');
 });
-$('exam-add-question').addEventListener('click',()=>{
- if(!has('exam.edit')||state.busy)return;
- state.exam.questions.push(starterQuestion('choice'));touch();draw();
- $('exam-questions').lastElementChild?.querySelector('[data-qkey="prompt"]')?.focus({preventScroll:true});
-});
+function appendBlankQuestions(count){
+ if(!has('exam.edit')||state.busy||!state.exam)return;
+ if(!Number.isSafeInteger(count)||count<1||count>10)return;
+ const firstNewIndex=state.exam.questions.length;
+ for(let i=0;i<count;i++)state.exam.questions.push(starterQuestion('choice'));
+ // One draft invalidation and one redraw, even when adding 10 cards.
+ touch();draw();
+ const field=$('exam-questions').querySelector(`.exam-question[data-qindex="${firstNewIndex}"] [data-qkey="prompt"]`);
+ field?.focus({preventScroll:true});
+ if(count>1)notice(count+' boş soru eklendi. Soruların metnini, kazanımlarını ve yanıtlarını öğretmen olarak tamamlayın.');
+}
+$('exam-add-question').addEventListener('click',()=>appendBlankQuestions(1));
+$('exam-add-ten-questions').addEventListener('click',()=>appendBlankQuestions(10));
 $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
  if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
