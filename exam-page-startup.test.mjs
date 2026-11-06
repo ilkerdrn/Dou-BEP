@@ -309,3 +309,17 @@ test('Step pager moves between all five exam sections without hiding fields',()=
  assert.match(css,/\.workflow-pager .portal-btn:disabled/);
  assert.match(css,/@media\(max-width:760px\)/);
 });
+
+test('Readiness checklist reveals collapsed parent panels before scrolling and focusing',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const start=editor.indexOf("$('exam-preflight-body').addEventListener('click',event=>{");
+ const end=editor.indexOf("$('exam-preflight-export').addEventListener(",start);
+ assert.ok(start>=0&&end>start,'Readiness checklist jump handler exists');
+ const handler=editor.slice(start,end);
+ const reveal=handler.indexOf("if(parent.tagName==='DETAILS')parent.open=true");
+ const scroll=handler.indexOf("target.scrollIntoView({behavior:'auto',block:'start'})");
+ const focus=handler.indexOf('focusTarget.focus({preventScroll:true})');
+ assert.ok(reveal>=0&&scroll>reveal&&focus>scroll,'Reveal must precede scroll and focus');
+ assert.match(handler,/if\(!\['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'\]\.includes\(id\)\)return/);
+ assert.doesNotMatch(handler,/state\.exam\s*=|autosave\.changed\(/);
+});
