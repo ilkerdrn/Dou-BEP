@@ -488,7 +488,20 @@ $('exam-questions').addEventListener('click',event=>{const b=event.target.closes
 $('exam-main-fields').addEventListener('input' ,ev=>{if(ev.target.dataset.field)applyInput(ev.target);});
 $('exam-questions').addEventListener('input',ev=>{if(ev.target.dataset.qkey||ev.target.dataset.access)applyInput(ev.target);});
 $('exam-questions').addEventListener('change',ev=>{if(ev.target.dataset.access)applyInput(ev.target);});
-$('exam-questions').addEventListener('change',ev=>{if(['type','visualMode'].includes(ev.target.dataset.qkey)){draw();}});
+$('exam-questions').addEventListener('change',ev=>{
+ const key=ev.target.dataset.qkey;
+ if(!['type','visualMode'].includes(key))return;
+ const index=Number(ev.target.dataset.qindex);
+ if(!Number.isInteger(index)||index<0)return;
+ draw();
+ const card=$('exam-questions').querySelector(`.exam-question[data-qindex="${index}"]`);
+ const target=card?.querySelector(`[data-qkey="${key}"]`);
+ if(target){
+  const advanced=target.closest('.exam-question-advanced');
+  if(advanced)advanced.open=true;
+  target.focus({preventScroll:true});
+ }
+});
 $('exam-adjustments').addEventListener('change',ev=>{if(ev.target.dataset.adapt){applyInput(ev.target);draw();}});
 $('exam-questions').addEventListener('change',ev=>{
  if(ev.target.dataset.sourceReview===undefined||!has('exam.edit'))return;
