@@ -369,6 +369,20 @@ async function main(){
  await evaluate('window.scrollTo(0,0)');
  await captureSyntheticScreenshot('dashboard-mobile');
  pass(mobileDashboard.scroll<=mobileDashboard.width+2,'No horizontal page overflow on 390px dashboard');
+ const mobileToggle=await evaluate(`(function(){
+  const button=document.querySelector('.dou-nav-toggle');
+  const style=getComputedStyle(button);
+  const rect=button.getBoundingClientRect();
+  return {color:style.color,background:style.backgroundColor,width:Math.round(rect.width),height:Math.round(rect.height)};
+ })()`);
+ console.log('BROWSER CAMPUS MOBILE MENU: '+JSON.stringify(mobileToggle));
+ pass(mobileToggle.color==='rgb(128, 27, 42)'&&mobileToggle.background==='rgb(255, 255, 255)','Mobile menu has contrasting burgundy icon on white surface');
+ pass(mobileToggle.width>=40&&mobileToggle.height>=40,'Mobile menu control has a usable touch target');
+ await evaluate('document.querySelector(".dou-nav-toggle").click()');
+ pass(await evaluate('document.querySelector(".dou-nav-toggle").getAttribute("aria-expanded")==="true"'),'Mobile menu opens with accessible expanded state');
+ pass(await evaluate('getComputedStyle(document.getElementById("dou-nav-sections")).display!=="none"'),'Mobile menu reveals module links');
+ await evaluate('document.querySelector(".dou-nav-toggle").click()');
+ pass(await evaluate('document.querySelector(".dou-nav-toggle").getAttribute("aria-expanded")==="false"'),'Mobile menu closes and restores expanded state');
  for(const width of [320,768,1280]){
   await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<=768});
   const geom=await evaluate('({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth})');
