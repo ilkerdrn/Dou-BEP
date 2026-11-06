@@ -193,8 +193,13 @@ if(questionList&&questionJump){
   const heading=card.querySelector('.exam-q-head strong');
   if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
  });
+ let previousCards=[];
  const enhanceQuestions=()=>{
   const cards=[...questionList.querySelectorAll(':scope > .exam-question')];
+  // MutationObserver fires again as we move optional fields into <details>.
+  // Do not rebuild a 100-button navigator for changes within the same cards.
+  if(cards.length===previousCards.length&&cards.every((card,index)=>card===previousCards[index]))return;
+  previousCards=cards;
   questionJump.hidden=cards.length===0;
   // Draft replacement/deletion may change indices: discard stale expansion entries.
   for(const index of [...expandedQuestions]){
