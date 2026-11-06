@@ -240,7 +240,7 @@ test('Long exam workflow tracks visible section without overwriting save status'
 test('Question removal requires confirmation and keyboard focus returns safely',()=>{
  const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
  const begin=editor.indexOf("const btn=ev.target.closest('[data-delete]')");
- const end=editor.indexOf("$('exam-list').addEventListener('click'",begin);
+ const end=editor.indexOf("function appendBlankQuestions(count){",begin);
  assert.ok(begin>=0&&end>begin,'Question deletion handler exists');
  const handlers=editor.slice(begin,end);
  const guard=handlers.indexOf('if(!confirm(');
