@@ -162,3 +162,39 @@ test('Optional exam tools are native details, retaining original section nodes a
  assert.match(css,/\.exam-optional-tool>summary:focus-visible/);
  assert.match(css,/prefers-reduced-motion/);
 });
+
+test('Dashboard exposes four primary actions, keeps the remaining actions accessible',()=>{
+ const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
+ const primary=html.match(/<div class="dashboard-shortcuts" aria-label="Hızlı çalışma alanları">([\s\S]*?)<\/div><details class="dashboard-more-tools">/);
+ const secondary=html.match(/<details class="dashboard-more-tools"><summary>[\s\S]*?<div class="dashboard-shortcuts dashboard-secondary-shortcuts">([\s\S]*?)<\/div><\/details>/);
+ assert.ok(primary,'Primary dashboard routes remain visible');
+ assert.ok(secondary,'Secondary dashboard routes use native details');
+ assert.equal([...primary[1].matchAll(/class="dashboard-shortcut"/g)].length,4);
+ assert.equal([...secondary[1].matchAll(/class="dashboard-shortcut"/g)].length,4);
+ for(const path of ['/kurumsal-sinav?new=1','/bep-import','/sinav-operasyon','/erisilebilirlik-kabul','/sinav-koordinasyon','/toplu-sinav','/pilot-yonetim','/erisilebilirlik-kontrol'])
+  assert.ok(html.includes('href="'+path+'"'),'Dashboard module missing '+path);
+});
+test('Optional exam tools preserve original editor section IDs and keyboard focus',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const helper=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ for(const id of ['exam-goal-matrix-section','exam-guided-panel','exam-material-library','exam-teacher-preview']){
+  assert.ok(html.includes('id="'+id+'"'),'Missing exam tool node '+id);
+  assert.ok(helper.includes("'"+id+"'"),'Missing disclosure definition '+id);
+ }
+ assert.match(helper,/document\.createElement\('details'\)/);
+ assert.match(helper,/section\.parentNode\.insertBefore\(wrapper,section\)/);
+ assert.match(helper,/wrapper\.appendChild\(section\)/);
+ assert.match(helper,/wrapper\.addEventListener\('focusin'/);
+ assert.match(css,/\.exam-optional-tool>summary:focus-visible/);
+});
+test('Navigation keeps every existing link accessible while filtering collapsible groups',()=>{
+ const nav=readFileSync(new URL('./admin-navigation.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ assert.match(nav,/document\.createElement\('details'\)/);
+ assert.match(nav,/details\.open=index===0\|\|items\.some/);
+ assert.match(nav,/for\(const link of items\)links\.appendChild\(link\)/);
+ assert.match(nav,/if\(disclosure&&q\)disclosure\.open=inGroup>0/);
+ assert.match(nav,/if\(!q&&searchActive\)/);
+ assert.match(css,/\.dou-nav-disclosure>summary:focus-visible/);
+});
