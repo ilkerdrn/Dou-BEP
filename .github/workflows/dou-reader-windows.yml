@@ -62,9 +62,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify login and exam workbench in real Edge browser (isolated fixture)
         shell: pwsh
+        env:
+          BEP_UI_CAPTURE_DIR: ${{ runner.temp }}/dou-bep-visuals
         run: |
           npm run ui:browser
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Upload synthetic visual acceptance screenshots
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dou-bep-anonymous-visual-review
+          path: ${{ runner.temp }}/dou-bep-visuals/*.png
+          if-no-files-found: error
+          retention-days: 3
       - name: Run local phoneme study and diagnostic regression tests
         shell: pwsh
         run: |
