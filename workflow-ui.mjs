@@ -180,6 +180,19 @@ if(questionList&&questionJump){
   if(node.matches('[data-qkey]'))fields.push(node);
   return fields.length>0&&fields.every(el=>essentialField.has(el.dataset.qkey));
  };
+ // One delegated jump handler for any number of questions; no per-card
+ // listeners survive a redraw and no exam content is copied into navigation.
+ questionJump.addEventListener('click',event=>{
+  const button=event.target.closest('[data-question-jump]');
+  if(!button||!questionJump.contains(button))return;
+  const index=Number(button.dataset.questionJump);
+  if(!Number.isSafeInteger(index)||index<0)return;
+  const card=questionList.querySelector(`.exam-question[data-qindex="${index}"]`);
+  if(!card)return;
+  card.scrollIntoView({block:'start',behavior:'auto'});
+  const heading=card.querySelector('.exam-q-head strong');
+  if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
+ });
  const enhanceQuestions=()=>{
   const cards=[...questionList.querySelectorAll(':scope > .exam-question')];
   questionJump.hidden=cards.length===0;
@@ -187,7 +200,7 @@ if(questionList&&questionJump){
   for(const index of [...expandedQuestions]){
    if(index>=cards.length)expandedQuestions.delete(index);
   }
-  questionJump.replaceChildren();
+  const jumpItems=document.createDocumentFragment();
   for(const [index,card] of cards.entries()){
    const actualIndex=Number(card.dataset.qindex);
    const link=document.createElement('button');
@@ -195,15 +208,8 @@ if(questionList&&questionJump){
    link.className='exam-question-jump-button';
    link.textContent='Soru '+(index+1);
    link.setAttribute('aria-label','Soru '+(index+1)+' düzenlemeye git');
-   link.addEventListener('click',()=>{
-    card.scrollIntoView({block:'start',behavior:'auto'});
-    const heading=card.querySelector('.exam-q-head strong');
-    if(heading){
-     heading.tabIndex=-1;
-     heading.focus({preventScroll:true});
-    }
-   });
-   questionJump.appendChild(link);
+   link.dataset.questionJump=String(actualIndex);
+   jumpItems.appendChild(link);
    if(card.querySelector(':scope > .exam-question-advanced'))continue;
    const advanced=document.createElement('details');
    advanced.className='exam-question-advanced';
@@ -224,6 +230,8 @@ if(questionList&&questionJump){
     else expandedQuestions.delete(actualIndex);
    });
   }
+  // Append once even for long exams; avoid one live DOM mutation per jump.
+  questionJump.replaceChildren(jumpItems);
  };
  new MutationObserver(enhanceQuestions).observe(questionList,{childList:true});
  enhanceQuestions();
