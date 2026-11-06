@@ -247,7 +247,7 @@ test('Question removal requires confirmation and keyboard focus returns safely',
  const splice=handlers.indexOf('state.exam.questions.splice(index,1)');
  assert.ok(guard>=0&&splice>guard,'Deletion must confirm before changing the draft');
  assert.match(handlers,/!Number\.isInteger\(index\)\|\|index<0\|\|index>=state\.exam\.questions\.length/);
- assert.match(handlers,/if\(!has\('exam.edit'\)\|\|state\.busy\)return/);
+ assert.match(handlers,/if\(!btn\|\|!has\('exam.edit'\)\|\|state\.busy\)return/);
  assert.match(handlers,/target\.focus\(\{preventScroll:true\}\)/);
  assert.match(handlers,/firstNewIndex=state\.exam\.questions\.length/);
  assert.match(handlers,/field\?\.focus\(\{preventScroll:true\}\)/);
