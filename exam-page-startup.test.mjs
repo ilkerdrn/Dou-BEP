@@ -389,3 +389,14 @@ test('Visual-mode redraw restores keyboard focus after the advanced disclosure e
  assert.match(handler,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
  assert.match(handler,/target\.focus\(\{preventScroll:true\}\)/);
 });
+
+test('Question disclosure state follows surviving indices and resets across drafts',()=>{
+ const ui=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ assert.match(ui,/questionList\.addEventListener\('exam-question-removed'/);
+ assert.match(ui,/index>removed\?index-1:index/);
+ assert.match(ui,/questionList\.addEventListener\('exam-question-reset'/);
+ assert.match(ui,/if\(!advanced\.isConnected\)return/);
+ assert.match(editor,/new CustomEvent\('exam-question-removed',\{detail:\{index\}\}\)/);
+ assert.match(editor,/new Event\('exam-question-reset'\)/);
+});
