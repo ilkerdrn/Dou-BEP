@@ -105,3 +105,19 @@ test('Institutional navigation is gated by verified session and reappears after 
  assert.match(css,/\.dou-nav\{\s*display:none!important/s);
  assert.match(css,/\.portal-shell\{\s*grid-template-columns:minmax\(0,1fr\)!important/s);
 });
+
+test('MFA-restricted sessions cannot reveal dashboard or direct exam navigation',()=>{
+ const login=readFileSync(new URL('./institution.mjs',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ assert.match(login,/state\.mfaSetupRequired=!!\(s\.authenticated&&s\.mfaSetupRequired===true\)/);
+ assert.match(login,/const signedIn=active&&!restricted/);
+ assert.match(html,/data-exam-auth="checking"/);
+ assert.match(editor,/!s\.authenticated\|\|s\.mfaSetupRequired===true/);
+ assert.match(editor,/document\.body\.dataset\.examAuth='guest'/);
+ assert.match(editor,/navigation\.inert=true/);
+ assert.match(editor,/document\.body\.dataset\.examAuth='authenticated'/);
+ assert.match(css,/\[data-exam-auth="checking"\]/);
+ assert.match(css,/\[data-exam-auth="guest"\]/);
+});
