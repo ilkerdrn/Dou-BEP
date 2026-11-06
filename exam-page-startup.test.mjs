@@ -264,3 +264,31 @@ test('Question type and visual mode redraw restore form focus',()=>{
  assert.match(snippet,/if\(advanced\)advanced\.open=true/);
  assert.match(snippet,/target\.focus\(\{preventScroll:true\}\)/);
 });
+
+test('Exam editor follows a single authoring sequence with approval and exports last',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const ordered=[
+  'id="exam-main-fields"',
+  'id="exam-goal-section"',
+  'id="exam-library-section"',
+  'id="exam-question-section"',
+  'id="exam-questions"',
+  'id="exam-quality"',
+  'id="exam-confirm"',
+  'id="exam-preflight-body"',
+  'id="exam-output-section"'
+ ];
+ let position=-1;
+ for(const anchor of ordered){
+  const found=html.indexOf(anchor);
+  assert.ok(found>position,'Exam workflow order broken at '+anchor);
+  position=found;
+ }
+ assert.match(html,/class="exam-workbench-heading"/);
+ assert.match(html,/class="exam-overview"><summary>Sınav kayıt özeti/);
+ assert.match(css,/\[data-exam-auth="authenticated"\] \.portal-hero\.exam-hero\{\s*display:none!important/s);
+ assert.match(css,/\.exam-overview>summary:focus-visible/);
+ for(const action of ['exam-save','exam-approve','exam-word','exam-print','exam-audio-mp3'])
+  assert.ok(html.includes('id="'+action+'"'),'Existing action removed: '+action);
+});
