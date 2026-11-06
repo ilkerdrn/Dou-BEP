@@ -253,6 +253,28 @@ async function main(){
  pass(await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[23]!==null'),'Last question jump is available');
  await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[23].click()');
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="23"'),'Jump to last long-exam question moves focus to correct card');
+ // A nested DOM mutation must not recreate navigation buttons or remove focus.
+ await evaluate(`(function(){
+  window.__firstJump= document.querySelector('#exam-question-jump [data-question-jump]');
+  const card=document.querySelector('#exam-questions > .exam-question:first-child');
+  const marker=document.createElement('span');
+  card.appendChild(marker);marker.remove();
+ })()`);
+ await delay(130);
+ pass(await evaluate('window.__firstJump===document.querySelector("#exam-question-jump [data-question-jump]")'),'Nested question changes do not recreate navigation controls');
+ await evaluate('delete window.__firstJump');
+ // Stress a longer anonymous examination without using any institutional data.
+ const stressExam=await evaluate(`(function(){
+  const button=document.getElementById('exam-add-question');
+  const started=performance.now();
+  for(let n=document.querySelectorAll('#exam-questions > .exam-question').length;n<60;n++)button.click();
+  return {count:document.querySelectorAll('#exam-questions > .exam-question').length,elapsedMs:Math.round(performance.now()-started)};
+ })()`);
+ console.log('BROWSER 60 QUESTION DIAGNOSTIC: '+JSON.stringify(stressExam));
+ pass(stressExam.count===60,'Long exam renders 60 editable questions');
+ await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===60'),'Navigation synchronized with 60-question exam');
+ await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[59].click()');
+ pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="59"'),'60-question navigator focuses last question');
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
