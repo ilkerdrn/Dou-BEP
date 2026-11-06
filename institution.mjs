@@ -1,5 +1,10 @@
 /** Same-origin local pilot UI. Never persists passwords/tokens in JS storage. */
 const $=id=>document.getElementById(id);
+// Put the teacher's primary actions before the optional security settings.
+// The existing MFA node, IDs and event listeners are preserved. Required MFA
+// stays accessible when the regular workspace is hidden by authentication.
+const teacherWorkspace=$('workspace-view'),mfaPanel=$('mfa-panel');
+if(teacherWorkspace&&mfaPanel)teacherWorkspace.after(mfaPanel);
 const state={csrf:null,actor:null,kind:'exam',mfaChallenge:null,mfaSetupRequired:false,mfaPolicyRequired:false};
 const escape=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 function feedback(message,error=false){$('portal-message').textContent=message;$('portal-message').className=error?'portal-error':'portal-success';}
