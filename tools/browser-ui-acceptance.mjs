@@ -275,6 +275,29 @@ async function main(){
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===60'),'Navigation synchronized with 60-question exam');
  await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[59].click()');
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="59"'),'60-question navigator focuses last question');
+ // Final high-cardinality acceptance uses the same anonymous temporary fixture.
+ // Time is diagnostic, not a pass/fail threshold across different CI machines.
+ const hundredExam=await evaluate(`(function(){
+  const add=document.getElementById('exam-add-question');
+  const before=performance.now();
+  for(let n=document.querySelectorAll('#exam-questions > .exam-question').length;n<100;n++)add.click();
+  return {count:document.querySelectorAll('#exam-questions > .exam-question').length,elapsedMs:Math.round(performance.now()-before)};
+ })()`);
+ console.log('BROWSER 100 QUESTION DIAGNOSTIC: '+JSON.stringify(hundredExam));
+ pass(hundredExam.count===100,'100 editable questions render without data loss');
+ await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===100'),'Navigator synchronizes 100 questions');
+ await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[99].click()');
+ pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="99"'),'Last of 100 questions receives keyboard focus');
+ const navigationStable=await evaluate(`(function(){
+  const first=document.querySelector('#exam-question-jump [data-question-jump]');
+  const last=document.querySelector('#exam-questions > .exam-question:last-child');
+  const p=last.querySelector('[data-qkey=prompt]');
+  p.value='Anonymous local load test';
+  p.dispatchEvent(new Event('input',{bubbles:true}));
+  return new Promise(resolve=>queueMicrotask(()=>resolve(first===document.querySelector('#exam-question-jump [data-question-jump]'))));
+ })()`);
+ pass(navigationStable,'Editing question 100 leaves navigation buttons intact');
+ pass(await evaluate('document.querySelector("#exam-questions > .exam-question:last-child [data-qkey=prompt]").value==="Anonymous local load test"'),'Text entered in question 100 remains in the editor');
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
