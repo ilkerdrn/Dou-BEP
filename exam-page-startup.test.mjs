@@ -236,3 +236,18 @@ test('Long exam workflow tracks visible section without overwriting save status'
  assert.match(script,/rootMargin:'-15% 0px -65% 0px'/);
  assert.doesNotMatch(script,/if \(status\) status\.textContent = value/);
 });
+
+test('Question removal requires confirmation and keyboard focus returns safely',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const begin=editor.indexOf("const btn=ev.target.closest('[data-delete]')");
+ const end=editor.indexOf("$('exam-list').addEventListener('click'",begin);
+ assert.ok(begin>=0&&end>begin,'Question deletion handler exists');
+ const handlers=editor.slice(begin,end);
+ const guard=handlers.indexOf('if(!confirm(');
+ const splice=handlers.indexOf('state.exam.questions.splice(index,1)');
+ assert.ok(guard>=0&&splice>guard,'Deletion must confirm before changing the draft');
+ assert.match(handlers,/!Number\.isInteger\(index\)\|\|index<0\|\|index>=state\.exam\.questions\.length/);
+ assert.match(handlers,/if\(!has\('exam.edit'\)\|\|state\.busy\)return/);
+ assert.match(handlers,/target\.focus\(\{preventScroll:true\}\)/);
+ assert.match(handlers,/lastElementChild\?\.querySelector\('\[data-qkey="prompt"\]'\)\?\.focus/);
+});
