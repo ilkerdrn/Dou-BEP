@@ -68,3 +68,34 @@ if (filter && library) {
   });
   new MutationObserver(apply).observe(library,{childList:true});
 }
+
+
+// Progressive disclosure is presentation-only. Keep the original section nodes
+// and their IDs intact so every existing editor handler continues to work.
+const optionalExamTools=[
+  ['exam-goal-matrix-section','Hedef–soru kapsam matrisi','Kazanım ilişkilerini ve eksik bağlantıları incele'],
+  ['exam-guided-panel','Hazır soru şablonları','Şablondan yeni soru oluştur'],
+  ['exam-material-library','Görsel materyal kütüphanesi','Geometri ve görsel destekleri kullan'],
+  ['exam-teacher-preview','Öğrenci görünümü önizlemesi','Sorunun uyarlanmış görünümünü kontrol et']
+];
+for(const [id,title,description] of optionalExamTools){
+ const section=document.getElementById(id);
+ if(!section||!section.parentNode)continue;
+ const wrapper=document.createElement('details');
+ wrapper.className='exam-optional-tool';
+ wrapper.dataset.toolId=id;
+ const summary=document.createElement('summary');
+ const name=document.createElement('span');
+ name.textContent=title;
+ const hint=document.createElement('small');
+ hint.textContent=description;
+ summary.append(name,hint);
+ wrapper.appendChild(summary);
+ section.parentNode.insertBefore(wrapper,section);
+ wrapper.appendChild(section);
+ // Deep links and keyboard focus may reference an optional section.
+ // Reveal its native details before focusing/scrolling a target inside.
+ if(location.hash&&section.contains(document.getElementById(decodeURIComponent(location.hash.slice(1)))))
+  wrapper.open=true;
+ wrapper.addEventListener('focusin',()=>{wrapper.open=true;});
+}
