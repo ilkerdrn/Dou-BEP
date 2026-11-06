@@ -20,6 +20,25 @@ if (nav) {
     heading.setAttribute('tabindex','-1');
     heading.focus({preventScroll:true});
   });
+  // Follow the section the teacher is actually reading, not just the last
+  // clicked tab. No polling or remote calls; observer is local-only.
+  if(typeof IntersectionObserver!=='undefined'){
+    const visible=new Map();
+    const sectionObserver=new IntersectionObserver(entries=>{
+      for(const entry of entries){
+        if(entry.isIntersecting)visible.set(entry.target.id,entry.boundingClientRect.top);
+        else visible.delete(entry.target.id);
+      }
+      const nearest=[...visible].sort((a,b)=>Math.abs(a[1])-Math.abs(b[1]))[0];
+      if(!nearest)return;
+      const active=steps.find(step=>step.dataset.workflowTarget===nearest[0]);
+      if(active)activate(active);
+    },{root:null,rootMargin:'-15% 0px -65% 0px',threshold:0});
+    for(const step of steps){
+      const target=findTarget(step);
+      if(target)sectionObserver.observe(target);
+    }
+  }
   // Focus mode changes only presentation: never destroys a draft or saves it.
   const focusToggle=document.getElementById('exam-focus-toggle');
   const workspace=document.getElementById('exam-workspace');
