@@ -226,6 +226,20 @@ async function main(){
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Cancelled deletion preserves question');
  await evaluate('window.confirm=()=>true;document.querySelector("#exam-questions > .exam-question:last-child [data-delete]").click();window.confirm=window.__nativeConfirmForSmoke;delete window.__nativeConfirmForSmoke');
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount)),'Confirmed deletion removes one question');
+ // Regression: an expanded middle question must stay expanded when the first
+ // question is deleted and its index changes. This uses only anonymous data.
+ await evaluate('document.getElementById("exam-add-question").click();document.getElementById("exam-add-question").click()');
+ await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+2)),'Three question cards available');
+ await evaluate(`(function(){
+  const second=document.querySelectorAll('#exam-questions > .exam-question')[1];
+  second.querySelector('.exam-question-advanced').open=true;
+ })()`);
+ await delay(150);
+ pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question")[1].querySelector(".exam-question-advanced").open'),'Second question advanced panel opens');
+ await evaluate('window.confirm=()=>true;document.querySelector("#exam-questions > .exam-question:first-child [data-delete]").click();window.confirm=window.__nativeConfirmForSmoke||(()=>true)');
+ pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Deleting first question shifts remaining question positions');
+ await waitUntil(()=>evaluate('document.querySelector("#exam-questions > .exam-question:first-child .exam-question-advanced")?.open'),'Expanded second question follows its new first position');
+ pass(await evaluate('document.querySelector("#exam-questions > .exam-question:first-child .exam-question-advanced").open'),'Expanded state stays on surviving question after deletion');
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
