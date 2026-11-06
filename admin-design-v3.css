@@ -748,3 +748,45 @@ body.institution-page #exam-workspace #workflow-step-count{
   font-size:11px;
  }
 }
+
+/* Teacher readiness: one clear next action above the detailed audit tiles. */
+body.institution-page #exam-workspace .preflight-next-action{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ flex-wrap:wrap;
+ gap:13px;
+ margin:0 0 16px;
+ padding:17px 19px;
+ background:linear-gradient(110deg,#fff7fa,#fff);
+ border:1px solid #e5c8d2;
+ border-radius:13px;
+}
+body.institution-page #exam-workspace .preflight-next-action>div{
+ flex:1 1 220px;
+ min-width:0;
+}
+body.institution-page #exam-workspace .preflight-next-action strong{
+ display:block;
+ font-size:15px;
+ font-weight:780;
+ color:#263950;
+ margin:5px 0 4px;
+}
+body.institution-page #exam-workspace .preflight-next-action p{
+ margin:0;
+ font-size:12px;
+ line-height:1.5;
+ color:#586a7e;
+}
+body.institution-page #exam-workspace .preflight-next-action .portal-btn{
+ min-height:42px;
+ flex:0 0 auto;
+}
+body.institution-page #exam-workspace .preflight-all-checked{
+ background:#f4f9f7;
+ border-color:#c8ded4;
+}
+@media(max-width:760px){
+ body.institution-page #exam-workspace .preflight-next-action .portal-btn{width:100%;justify-content:center}
+}
