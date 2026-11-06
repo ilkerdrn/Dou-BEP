@@ -845,3 +845,121 @@ body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{
  body.institution-page #exam-workspace .exam-question-add-actions{width:100%}
  body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{flex:1 1 130px;min-width:0}
 }
+
+/* Reference-led visual refinement: quieter workspace surfaces, clearer
+   hierarchy, consistent card rhythm and a compact authoring toolbar.
+   Pure presentation; existing routes, fields and accessible states remain. */
+body.institution-page{
+ --dou-v3-bg:#f3f5f9;
+ --dou-v3-ink:#18273c;
+ --dou-v3-border:#e1e7ef;
+ --dou-v3-shadow:0 6px 22px rgba(24,39,60,.045);
+}
+body.institution-page .portal-main{
+ background:linear-gradient(180deg,#f8f9fc 0%,#f3f5f9 320px)!important;
+}
+body.institution-page .portal-content{
+ max-width:1600px!important;
+ padding-top:26px!important;
+}
+body.institution-page .dou-nav{
+ background:linear-gradient(180deg,#192338 0%,#172238 66%,#242437 100%)!important;
+}
+body.institution-page .portal-topbar{
+ min-height:66px!important;
+ box-shadow:0 2px 16px rgba(18,30,50,.035);
+}
+body.institution-page .portal-card,
+body.institution-page .dashboard-welcome,
+body.institution-page #exam-workspace .exam-workbench-heading{
+ background:#fff!important;
+ border:1px solid #e0e7f0!important;
+ border-radius:16px!important;
+ box-shadow:0 6px 28px rgba(20,38,62,.045)!important;
+}
+body.institution-page .dashboard-welcome{
+ padding:26px 30px!important;
+}
+body.institution-page .dashboard-shortcut{
+ min-height:138px;
+ padding:21px!important;
+ transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;
+}
+body.institution-page .dashboard-shortcut:hover{
+ transform:translateY(-2px);
+}
+body.institution-page #exam-workspace .workflow-nav{
+ border-radius:16px!important;
+ padding:15px!important;
+ background:#fff!important;
+ box-shadow:0 5px 22px rgba(20,38,62,.045)!important;
+}
+body.institution-page #exam-workspace .workflow-step{
+ border-radius:10px!important;
+ font-weight:700!important;
+ transition:background-color .16s ease,border-color .16s ease;
+}
+body.institution-page #exam-workspace .workflow-step[aria-current="step"]{
+ background:#fdf0f4!important;
+ border-color:#e4b6c6!important;
+ box-shadow:inset 0 0 0 1px rgba(148,36,72,.06);
+}
+body.institution-page #exam-workspace #exam-editor-card{
+ border-color:#dfe7ef!important;
+ box-shadow:0 10px 32px rgba(20,38,62,.048)!important;
+}
+body.institution-page #exam-workspace .exam-question{
+ background:#fff!important;
+ border:1px solid #e0e7ef!important;
+ border-left:3px solid #ad3155!important;
+ border-radius:13px!important;
+ box-shadow:0 3px 14px rgba(20,38,62,.035)!important;
+ padding:clamp(15px,1.8vw,24px)!important;
+}
+body.institution-page #exam-workspace .exam-question:focus-within{
+ border-color:#cb8da3!important;
+ border-left-color:#9e2247!important;
+ box-shadow:0 0 0 3px rgba(158,34,71,.09)!important;
+}
+body.institution-page #exam-workspace .exam-q-head{
+ padding-bottom:10px;
+ border-bottom:1px solid #ecf0f5;
+ margin-bottom:15px;
+}
+body.institution-page #exam-workspace .exam-question-advanced{
+ border:1px solid #e3e9f1;
+ border-radius:10px;
+ background:#fafbfd;
+ margin-top:12px;
+}
+body.institution-page #exam-workspace .exam-question-advanced>summary{
+ cursor:pointer;
+ padding:12px 14px;
+ color:#394e68;
+ font-size:12px;
+ font-weight:750;
+}
+body.institution-page #exam-workspace .exam-question-advanced[open]{
+ padding-bottom:12px;
+}
+body.institution-page #exam-workspace .exam-question-advanced>summary:hover{
+ background:#f3f6fb;
+}
+body.institution-page #exam-workspace .exam-question-add-actions{
+ gap:9px;
+}
+body.institution-page #exam-workspace .exam-question-add-actions .portal-btn{
+ border-radius:10px!important;
+}
+@media(max-width:760px){
+ body.institution-page .portal-content{padding:16px 14px 50px!important}
+ body.institution-page .dashboard-welcome{padding:20px!important}
+ body.institution-page .dashboard-shortcut{min-height:120px;padding:17px!important}
+ body.institution-page #exam-workspace .workflow-nav{padding:12px!important}
+ body.institution-page #exam-workspace .exam-question{padding:16px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.institution-page .dashboard-shortcut,
+ body.institution-page #exam-workspace .workflow-step{transition:none!important}
+ body.institution-page .dashboard-shortcut:hover{transform:none}
+}
