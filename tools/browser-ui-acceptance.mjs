@@ -141,11 +141,13 @@ async function main(){
  pass(await evaluate('!document.getElementById("exam-drafts-panel").inert'),'Focus mode restores drafts');
  // Exercise a real editable question card, including keyboard focus, redraw
  // and destructive-action cancellation. All changes live in the temp fixture.
+ await evaluate('window.__browserSmokeErrors=[];window.addEventListener("error",event=>window.__browserSmokeErrors.push(String(event.message).slice(0,200)))');
  const originalCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
  const addButtonState=await evaluate('({disabled:document.getElementById("exam-add-question").disabled,hidden:document.getElementById("exam-add-question").hidden})');
  await evaluate('document.getElementById("exam-add-question").click()');
  const afterClickCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
- console.log('BROWSER QUESTION DIAGNOSTIC: before='+originalCount+' afterClick='+afterClickCount+' disabled='+addButtonState.disabled+' hidden='+addButtonState.hidden);
+ const browserErrors=await evaluate('window.__browserSmokeErrors||[]');
+ console.log('BROWSER QUESTION DIAGNOSTIC: before='+originalCount+' afterClick='+afterClickCount+' disabled='+addButtonState.disabled+' hidden='+addButtonState.hidden+' exceptions='+JSON.stringify(browserErrors));
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'New question rendered');
  pass(await evaluate('document.activeElement?.dataset.qkey==="prompt"'),'New question gets prompt keyboard focus');
  await evaluate(`(function(){
