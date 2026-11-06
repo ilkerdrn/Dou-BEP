@@ -167,6 +167,15 @@ async function main(){
  await captureSyntheticScreenshot('exam-desktop');
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
+ pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
+ // Drive an actual Enter key through Edge rather than invoking click().
+ await evaluate('document.querySelector(\'[data-workflow-target="exam-output-section"]\').focus()');
+ await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+ await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+ pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("5 / 5")'),'Keyboard Enter activates final review step');
+ pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("Onay ve çıktı")'),'Screen reader receives final review announcement');
+ pass(await evaluate('document.activeElement===document.getElementById("exam-output-section")||document.getElementById("exam-output-section").contains(document.activeElement)'),'Keyboard focus moves inside final review step');
+ await evaluate('document.querySelector(\'[data-workflow-target="exam-main-fields"]\').click()');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
  pass(await evaluate('document.getElementById("exam-drafts-panel").inert'),'Focus mode makes hidden drafts inert');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
