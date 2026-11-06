@@ -179,7 +179,7 @@ async function main(){
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
  // CDP synthetic key events are not a substitute for manual NVDA/keyboard
  // testing. Verify focused-button activation and the accessible state here.
- await evaluate('document.querySelector(\\'[data-workflow-target="exam-output-section"]\\').focus()');
+ await evaluate('document.querySelector("[data-workflow-target=exam-output-section]").focus()');
  pass(await evaluate('document.activeElement?.dataset.workflowTarget==="exam-output-section"'),'Final review step can receive keyboard focus');
  await evaluate('document.activeElement.click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("5 / 5")'),'Final review navigation updates step counter');
