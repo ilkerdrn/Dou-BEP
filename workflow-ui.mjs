@@ -99,3 +99,60 @@ for(const [id,title,description] of optionalExamTools){
   wrapper.open=true;
  wrapper.addEventListener('focusin',()=>{wrapper.open=true;});
 }
+
+
+// Short question cards show the fields needed to write/score a question first.
+// Optional presentation, visual support and review controls remain in the DOM.
+// Delegated handlers in institutional-exams.mjs continue to receive all events.
+const questionList=document.getElementById('exam-questions');
+const questionJump=document.getElementById('exam-question-jump');
+if(questionList&&questionJump){
+ const expandedQuestions=new Set();
+ const essentialField=new Set(['type','prompt','objective','points','options','pairs','answer']);
+ const isEssential=node=>{
+  if(node.matches('.exam-q-head'))return true;
+  if(node.querySelector('[data-source-review]'))return true; // explicit source review should remain visible
+  const fields=[...node.querySelectorAll('[data-qkey]')];
+  if(node.matches('[data-qkey]'))fields.push(node);
+  return fields.length>0&&fields.every(el=>essentialField.has(el.dataset.qkey));
+ };
+ const enhanceQuestions=()=>{
+  const cards=[...questionList.querySelectorAll(':scope > .exam-question')];
+  questionJump.hidden=cards.length===0;
+  questionJump.replaceChildren();
+  for(const [index,card] of cards.entries()){
+   const actualIndex=Number(card.dataset.qindex);
+   const link=document.createElement('button');
+   link.type='button';
+   link.className='exam-question-jump-button';
+   link.textContent='Soru '+(index+1);
+   link.setAttribute('aria-label','Soru '+(index+1)+' düzenlemeye git');
+   link.addEventListener('click',()=>{
+    card.scrollIntoView({block:'start',behavior:'auto'});
+    const heading=card.querySelector('.exam-q-head strong');
+    if(heading){
+     heading.tabIndex=-1;
+     heading.focus({preventScroll:true});
+    }
+   });
+   questionJump.appendChild(link);
+   if(card.querySelector(':scope > .exam-question-advanced'))continue;
+   const advanced=document.createElement('details');
+   advanced.className='exam-question-advanced';
+   if(expandedQuestions.has(actualIndex))advanced.open=true;
+   const summary=document.createElement('summary');
+   summary.textContent='Gelişmiş ayarlar ve erişilebilirlik kontrolleri';
+   advanced.appendChild(summary);
+   const optional=[...card.children].filter(node=>!isEssential(node));
+   for(const node of optional)advanced.appendChild(node);
+   if(!optional.length)continue;
+   card.appendChild(advanced);
+   advanced.addEventListener('toggle',()=>{
+    if(advanced.open)expandedQuestions.add(actualIndex);
+    else expandedQuestions.delete(actualIndex);
+   });
+  }
+ };
+ new MutationObserver(enhanceQuestions).observe(questionList,{childList:true});
+ enhanceQuestions();
+}
