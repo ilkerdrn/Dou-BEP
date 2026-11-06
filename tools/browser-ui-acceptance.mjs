@@ -166,6 +166,17 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
+ // Reference-led layout: real computed colors, not only CSS source assertions.
+ const campusVisual=await evaluate(`({
+  sidebar:getComputedStyle(document.querySelector('.dou-nav')).backgroundColor,
+  selected:getComputedStyle(document.querySelector('.dou-nav-link[aria-current="page"]')).backgroundColor,
+  selectedText:getComputedStyle(document.querySelector('.dou-nav-link[aria-current="page"]')).color,
+  card:getComputedStyle(document.querySelector('.dashboard-welcome')).backgroundColor
+ })`);
+ console.log('BROWSER CAMPUS DASHBOARD STYLE: '+JSON.stringify(campusVisual));
+ pass(campusVisual.sidebar==='rgb(247, 244, 245)','Dashboard sidebar adopts reference-inspired pale surface');
+ pass(campusVisual.selected==='rgb(129, 24, 32)'&&campusVisual.selectedText==='rgb(255, 255, 255)','Active dashboard navigation uses contrasting burgundy');
+ pass(campusVisual.card==='rgb(255, 255, 255)','Dashboard welcome remains white card');
  await captureSyntheticScreenshot('dashboard-desktop');
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
@@ -173,6 +184,8 @@ async function main(){
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
  pass(await evaluate('getComputedStyle(document.querySelector(".exam-hero")).display==="none"'),'Promotional hero hidden in editor');
  pass(await evaluate('document.getElementById("workflow-next")!==null'),'Step pager exists');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundColor==="rgb(247, 244, 245)"'),'Exam editor uses the same pale navigation shell');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundColor==="rgb(129, 24, 32)"'),'Exam editor current menu remains burgundy');
  await captureSyntheticScreenshot('exam-desktop');
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
