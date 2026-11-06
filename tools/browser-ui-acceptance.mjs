@@ -240,6 +240,19 @@ async function main(){
  pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'Deleting first question shifts remaining question positions');
  await waitUntil(()=>evaluate('document.querySelector("#exam-questions > .exam-question:first-child .exam-question-advanced")?.open'),'Expanded second question follows its new first position');
  pass(await evaluate('document.querySelector("#exam-questions > .exam-question:first-child .exam-question-advanced").open'),'Expanded state stays on surviving question after deletion');
+ // Stress the question navigator with a moderately long anonymous exam.
+ const longExam=await evaluate(`(function(){
+  const add=document.getElementById('exam-add-question');
+  const started=performance.now();
+  while(document.querySelectorAll('#exam-questions > .exam-question').length<24)add.click();
+  return {count:document.querySelectorAll('#exam-questions > .exam-question').length,elapsedMs:Math.round(performance.now()-started)};
+ })()`);
+ console.log('BROWSER LONG EXAM DIAGNOSTIC: '+JSON.stringify(longExam));
+ pass(longExam.count===24,'Long exam renders 24 editable questions');
+ await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===24'),'Question navigation synchronized with 24-card editor');
+ pass(await evaluate('document.querySelector("#exam-question-jump [data-question-jump=\"23\"]")!==null'),'Last question jump is available');
+ await evaluate('document.querySelector("#exam-question-jump [data-question-jump=\"23\"]").click()');
+ pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="23"'),'Jump to last long-exam question moves focus to correct card');
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
