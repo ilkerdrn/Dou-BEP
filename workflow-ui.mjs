@@ -108,6 +108,12 @@ const questionList=document.getElementById('exam-questions');
 const questionJump=document.getElementById('exam-question-jump');
 if(questionList&&questionJump){
  const expandedQuestions=new Set();
+ // Keep keyboard focus in view when an editor handler opens a concealed field.
+ // No question state, answers or personal data are stored here.
+ questionList.addEventListener('focusin',event=>{
+   const details=event.target.closest('.exam-question-advanced');
+   if(details&&!details.open)details.open=true;
+ });
  const essentialField=new Set(['type','prompt','objective','points','options','pairs','answer']);
  const isEssential=node=>{
   if(node.matches('.exam-q-head'))return true;
@@ -119,6 +125,10 @@ if(questionList&&questionJump){
  const enhanceQuestions=()=>{
   const cards=[...questionList.querySelectorAll(':scope > .exam-question')];
   questionJump.hidden=cards.length===0;
+  // Draft replacement/deletion may change indices: discard stale expansion entries.
+  for(const index of [...expandedQuestions]){
+   if(index>=cards.length)expandedQuestions.delete(index);
+  }
   questionJump.replaceChildren();
   for(const [index,card] of cards.entries()){
    const actualIndex=Number(card.dataset.qindex);
@@ -147,6 +157,9 @@ if(questionList&&questionJump){
    for(const node of optional)advanced.appendChild(node);
    if(!optional.length)continue;
    card.appendChild(advanced);
+   // Programmatic focus, keyboard navigation and browser find may expose controls.
+   // A section is never removed from the DOM: all editor handlers keep working.
+   advanced.addEventListener('focusin',()=>{advanced.open=true;});
    advanced.addEventListener('toggle',()=>{
     if(advanced.open)expandedQuestions.add(actualIndex);
     else expandedQuestions.delete(actualIndex);
