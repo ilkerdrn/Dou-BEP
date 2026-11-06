@@ -72,8 +72,17 @@ async function connectTab(debugPort){
 function command(method,params={}){
  return new Promise((resolve,reject)=>{
   const id=++seq;
-  pending.set(id,{resolve,reject});
-  ws.send(JSON.stringify({id,method,params}));
+  // A lost DevTools response must not hang the entire Windows acceptance gate.
+  const timeout=setTimeout(()=>{
+   pending.delete(id);
+   reject(Error('Edge DevTools command timed out: '+method));
+  },12000);
+  pending.set(id,{
+   resolve(value){clearTimeout(timeout);resolve(value);},
+   reject(error){clearTimeout(timeout);reject(error);}
+  });
+  try{ws.send(JSON.stringify({id,method,params}));}
+  catch(error){const task=pending.get(id);pending.delete(id);task.reject(error);}
  });
 }
 async function evaluate(expression){
