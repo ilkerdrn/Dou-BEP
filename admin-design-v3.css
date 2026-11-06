@@ -239,3 +239,25 @@ body.institution-page:is([data-portal-auth="checking"],[data-portal-auth="guest"
   padding:18px 14px 42px!important;
  }
 }
+
+/* Direct exam URL is a login boundary as well: no menu flash while session
+   lookup is pending, and no module navigation for MFA-restricted accounts. */
+body.institution-page:is([data-exam-auth="checking"],[data-exam-auth="guest"]) .portal-shell{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page:is([data-exam-auth="checking"],[data-exam-auth="guest"]) .dou-nav{
+ display:none!important;
+}
+body.institution-page:is([data-exam-auth="checking"],[data-exam-auth="guest"]) .portal-topbar{
+ display:none!important;
+}
+body.institution-page:is([data-exam-auth="checking"],[data-exam-auth="guest"]) .portal-content{
+ max-width:900px!important;
+ margin-inline:auto!important;
+ padding-top:clamp(25px,7vh,76px)!important;
+}
+body.institution-page:is([data-exam-auth="checking"],[data-exam-auth="guest"]) .exam-hero{display:none!important}
+body.institution-page[data-exam-auth="guest"] #exam-login-required{
+ display:block;
+ padding:clamp(24px,4vw,45px)!important;
+}
