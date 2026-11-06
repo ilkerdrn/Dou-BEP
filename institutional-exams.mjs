@@ -84,10 +84,10 @@ const examSelection=createExamSelection({
   autosave.reset();state.approvalHistory=null;state.current=r.item;state.exam=normalizeExam(r.item.exam);
   state.needArea='';state.supportDraft=[...(state.exam.supportPlan?.selected||[])];
   state.domainDraft=state.exam.supportPlan?.domain||'general';state.dirty=false;
-  $('exam-confirm').checked=false;draw();showAutosave('saved');await loadHistory();
+  $('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('saved');await loadHistory();
  }
 });
-function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;draw();showAutosave('new');}
+function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
 const field=(key,label,value,tag='input',extra='')=>`<label>${esc(label)}${tag==='textarea'?`<textarea data-field="${key}" rows="${extra||3}">${esc(value)}</textarea>`:`<input data-field="${key}" value="${esc(value)}" ${extra}>`}</label>`;
 function renderQuality(x){
  const report=reviewExam(x),issues=report.issues;
@@ -529,6 +529,7 @@ $('exam-questions').addEventListener('click',ev=>{
  const index=Number(btn.dataset.delete);
  if(!Number.isInteger(index)||index<0||index>=state.exam.questions.length)return;
  if(!confirm(`Soru ${index+1} kaldırılacak ve taslak değişecek. Devam etmek istiyor musunuz?`))return;
+ $('exam-questions').dispatchEvent(new CustomEvent('exam-question-removed',{detail:{index}}));
  state.exam.questions.splice(index,1);touch();draw();
  const cards=$('exam-questions').querySelectorAll('.exam-question');
  const target=cards[Math.min(index,cards.length-1)]?.querySelector('[data-qkey="prompt"]')||$('exam-add-question');
