@@ -1,5 +1,5 @@
 /** v2.6: Server-backed autosave orchestration. Never writes exams to browser storage. */
-export function createAutosaveManager({getDraft,persist,onEvent=()=>{},delayMs=2400,clock={set:setTimeout,clear:clearTimeout}}){
+export function createAutosaveManager({getDraft,persist,onEvent=()=>{},delayMs=2400,clock={set:(fn,ms)=>globalThis.setTimeout(fn,ms),clear:id=>globalThis.clearTimeout(id)}}){
  if(typeof getDraft!=='function'||typeof persist!=='function')throw Error('Kaydetme bağımlılıkları eksik.');
  let timer=null,inFlight=null,epoch=0,changes=0,saved=0,blocked=false,failed=false,stopped=false;
  const emit=(state,detail)=>{if(!stopped)onEvent(state,detail);};
