@@ -121,3 +121,16 @@ test('MFA-restricted sessions cannot reveal dashboard or direct exam navigation'
  assert.match(css,/\[data-exam-auth="checking"\]/);
  assert.match(css,/\[data-exam-auth="guest"\]/);
 });
+
+test('Exam focus mode is reversible without mutating draft/autosave state',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const script=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ assert.match(html,/id="exam-focus-toggle"[^>]*aria-pressed="false"/);
+ assert.match(html,/id="exam-workspace" hidden/);
+ assert.match(script,/workspace\.classList\.toggle\('exam-focus-mode',enabled\)/);
+ assert.match(script,/focusToggle\.setAttribute\('aria-pressed',String\(enabled\)\)/);
+ assert.match(css,/#exam-workspace\.exam-focus-mode \.exam-grid>section:first-child\{\s*display:none!important/s);
+ assert.match(css,/#exam-workspace\.exam-focus-mode #exam-editor-card/);
+ assert.doesNotMatch(script,/if \(status\) status\.textContent = value/);
+});
