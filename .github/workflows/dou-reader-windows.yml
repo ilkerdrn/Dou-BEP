@@ -15,6 +15,7 @@ on:
       - 'dou-speech-phoneme-diagnostics.test.mjs'
       - 'tools/exam-closure-smoke.mjs'
       - 'tools/acceptance-pilot.mjs'
+      - 'tools/browser-ui-acceptance.mjs'
       - 'exam-page-health.js'
       - 'exam-page-startup.test.mjs'
       - 'institutional-exams.html'
@@ -56,6 +57,11 @@ jobs:
         shell: pwsh
         run: |
           node --test exam-page-startup.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify login and exam workbench in real Edge browser (isolated fixture)
+        shell: pwsh
+        run: |
+          npm run ui:browser
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run local phoneme study and diagnostic regression tests
         shell: pwsh
