@@ -142,7 +142,10 @@ async function main(){
  // Exercise a real editable question card, including keyboard focus, redraw
  // and destructive-action cancellation. All changes live in the temp fixture.
  const originalCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
+ const addButtonState=await evaluate('({disabled:document.getElementById("exam-add-question").disabled,hidden:document.getElementById("exam-add-question").hidden})');
  await evaluate('document.getElementById("exam-add-question").click()');
+ const afterClickCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
+ console.log('BROWSER QUESTION DIAGNOSTIC: before='+originalCount+' afterClick='+afterClickCount+' disabled='+addButtonState.disabled+' hidden='+addButtonState.hidden);
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'New question rendered');
  pass(await evaluate('document.activeElement?.dataset.qkey==="prompt"'),'New question gets prompt keyboard focus');
  await evaluate(`(function(){
