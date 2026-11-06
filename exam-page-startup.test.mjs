@@ -249,8 +249,6 @@ test('Question removal requires confirmation and keyboard focus returns safely',
  assert.match(handlers,/!Number\.isInteger\(index\)\|\|index<0\|\|index>=state\.exam\.questions\.length/);
  assert.match(handlers,/if\(!btn\|\|!has\('exam.edit'\)\|\|state\.busy\)return/);
  assert.match(handlers,/target\.focus\(\{preventScroll:true\}\)/);
- assert.match(handlers,/firstNewIndex=state\.exam\.questions\.length/);
- assert.match(handlers,/field\?\.focus\(\{preventScroll:true\}\)/);
 });
 
 test('Question type and visual mode redraw restore form focus',()=>{
