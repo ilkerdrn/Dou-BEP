@@ -141,7 +141,7 @@ async function main(){
  pass(await evaluate('!document.getElementById("exam-drafts-panel").inert'),'Focus mode restores drafts');
  // Exercise a real editable question card, including keyboard focus, redraw
  // and destructive-action cancellation. All changes live in the temp fixture.
- await evaluate('window.__browserSmokeErrors=[];window.addEventListener("error",event=>window.__browserSmokeErrors.push(String(event.message).slice(0,200)))');
+ await evaluate('window.__browserSmokeErrors=[];window.addEventListener("error",event=>window.__browserSmokeErrors.push({message:String(event.message).slice(0,200),stack:String(event.error?.stack||"").slice(0,750)}))');
  const originalCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
  const addButtonState=await evaluate('({disabled:document.getElementById("exam-add-question").disabled,hidden:document.getElementById("exam-add-question").hidden})');
  await evaluate('document.getElementById("exam-add-question").click()');
