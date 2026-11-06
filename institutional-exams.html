@@ -116,9 +116,8 @@
  <p class="portal-help"><a href="/ses-inceleme" target="_blank" rel="noopener noreferrer">Öğretmen ses yanıtı inceleme ekranını aç</a> — indirilen ses dosyalarını yalnızca yerel cihazda dinler; sunucuya göndermez.</p>
  <p class="portal-help">Sesli sınav dosyası öğrenci için hazırlanır: cevap anahtarı içermez, ağ bağlantısı olmadan açılır. Yazılı yanıtlar geçicidir; mikrofon yalnızca öğretmen izinli ayrı HTML dosyasında ve açık kullanıcı seçimiyle çalışır. Türkçe ses cihazdaki tarayıcıya bağlıdır. MP3 indirme için öğretmen bilgisayarında ayrıca eSpeak ve FFmpeg gerekir; MP3 yalnızca onaylı sınavdan üretilir. Görsel betimlemeleri öğretmen denetlemelidir.</p>
  <section class="portal-card" aria-labelledby="delivery-title" style="margin:12px 0;padding:20px;border:1px solid #e1e5eb;border-radius:14px">
- <span class="portal-mini-label">BEP PLANI → SINAV</span><h3 id="delivery-title">Belgeden kazanım aktarımı ve erişilebilir sürümler</h3>
- <p class="portal-help"><a href="/sinav-dosya-aktar"><strong>Mevcut Word/PDF sınavını sorulara ayrıştır →</strong></a> (anonim yerel belge, yalnızca onaysız taslak)</p>
- <p class="portal-help">BEP planından kimliksiz kazanım adayları çıkarmak için <a href="/bep-import">BEP içe aktarma atölyesini aç</a>. Öğretmen hedefleri doğrular; gerçek öğrenci belgesi yüklemeyin.</p>
+ <span class="portal-mini-label">05 · ONAYLI SINAV TESLİMİ</span><h3 id="delivery-title">Erişilebilir çıktı profilleri</h3>
+ <p class="portal-help">Onaylı sürüm için sunum biçimini seçin, çıktıyı kontrol edin ve gerekiyorsa doğrulanabilir teslim paketini alın.</p>
  <label class="exam-label" for="exam-delivery-profile">Onaylı sınav için erişilebilir sunum profili</label><select id="exam-delivery-profile" class="portal-select"><option value="standard">Standart</option><option value="large">Geniş okuma · 24 pt</option><option value="focus">Odaklanma · tek soru</option><option value="contrast">Yüksek kontrast</option><option value="motor">Geniş yanıt alanı</option></select>
  <div class="exam-editor-actions"><button type="button" id="exam-delivery-word" class="portal-btn secondary" disabled>Bu profilde Word indir</button><button type="button" id="exam-delivery-preview" class="portal-btn secondary">Bu profilde HTML önizle</button></div><div class="editor-export-content" style="margin-top:12px;padding:12px;border:1px solid #d6dce6;border-radius:10px">
  <strong>v2.31 · Sunucuda doğrulanmış teslim ve yerel PDF pilotu</strong>
@@ -128,6 +127,9 @@
  <p id="exam-delivery-status" role="status" aria-live="polite" class="portal-help">Onaylı sınavı seçin. Kaydedilmemiş düzenlemeler paketlenemez.</p>
  </div>
  <small>Profiller sadece görünümü değiştirir; soru metinleri, kazanımlar, cevap anahtarları ve puanlar aynı kalır. Her profilin pedagojik uygunluğunu öğretmen ayrıca kontrol etmelidir.</small>
+ <details class="exam-related-imports"><summary>İçe aktarma araçları — hazırlık aşamasına dön</summary>
+ <p class="portal-help"><a href="/sinav-dosya-aktar"><strong>Mevcut Word/PDF sınavını sorulara ayrıştır →</strong></a> (anonim yerel belge, yalnızca onaysız taslak)</p>
+ <p class="portal-help">BEP planından kimliksiz kazanım adayları çıkarmak için <a href="/bep-import">BEP içe aktarma atölyesini aç</a>. Öğretmen hedefleri doğrular; gerçek öğrenci belgesi yüklemeyin.</p></details>
  </section>
 
  </section></div>
