@@ -703,3 +703,48 @@ body.institution-page #exam-workspace .exam-preflight{
   margin:4px 0 0;
  }
 }
+
+/* Step pager keeps the actual authoring flow understandable without hiding data. */
+body.institution-page #exam-workspace .workflow-pager{
+ order:4;
+ flex:1 0 100%;
+ display:flex;
+ justify-content:flex-end;
+ align-items:center;
+ gap:11px;
+ padding-top:11px;
+ border-top:1px solid #e5eaf2;
+}
+body.institution-page #exam-workspace .workflow-pager .portal-btn{
+ min-height:38px;
+ padding:9px 14px!important;
+ font-size:12px!important;
+}
+body.institution-page #exam-workspace .workflow-pager .portal-btn:disabled{
+ cursor:not-allowed!important;
+ opacity:.5;
+}
+body.institution-page #exam-workspace #workflow-step-count{
+ min-width:78px;
+ text-align:center;
+ color:#51647d;
+ font-weight:700;
+ font-size:12px;
+ font-variant-numeric:tabular-nums;
+}
+@media(max-width:760px){
+ body.institution-page #exam-workspace .workflow-pager{
+  justify-content:space-between;
+  gap:6px;
+  padding-top:8px;
+ }
+ body.institution-page #exam-workspace .workflow-pager .portal-btn{
+  flex:1 1 auto;
+  min-width:0;
+  padding:9px 8px!important;
+ }
+ body.institution-page #exam-workspace #workflow-step-count{
+  min-width:64px;
+  font-size:11px;
+ }
+}
