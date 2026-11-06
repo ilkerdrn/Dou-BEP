@@ -820,3 +820,16 @@ body.institution-page #exam-workspace .exam-related-imports>summary:focus-visibl
 body.institution-page #exam-workspace .exam-related-imports[open]{
  padding-bottom:12px;
 }
+
+/* Announce deliberate step changes to assistive technology without visual clutter. */
+body.institution-page #exam-workspace #workflow-announcement{
+ position:absolute!important;
+ width:1px!important;
+ height:1px!important;
+ padding:0!important;
+ margin:-1px!important;
+ overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;
+ white-space:nowrap!important;
+ border:0!important;
+}
