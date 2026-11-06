@@ -339,3 +339,14 @@ test('Readiness summary directs teachers to the first incomplete stage without a
  assert.doesNotMatch(block,/state\.current\s*=|autosave\.changed\(|\.approved\s*=/);
  assert.match(css,/\.preflight-next-action/);
 });
+
+test('Focus mode cannot leave keyboard focus inside hidden draft sidebar',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const script=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ assert.match(html,/id="exam-drafts-panel" aria-label="Sınav taslakları"/);
+ assert.match(html,/aria-controls="exam-drafts-panel"/);
+ assert.match(script,/if\(enabled&&draftsPanel\.contains\(document\.activeElement\)\)focusToggle\.focus\(\)/);
+ assert.match(script,/draftsPanel\.inert=enabled/);
+ assert.match(script,/draftsPanel\.setAttribute\('aria-hidden',String\(enabled\)\)/);
+ assert.match(script,/workspace\.classList\.toggle\('exam-focus-mode',enabled\)/);
+});
