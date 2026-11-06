@@ -155,6 +155,17 @@ const questionList=document.getElementById('exam-questions');
 const questionJump=document.getElementById('exam-question-jump');
 if(questionList&&questionJump){
  const expandedQuestions=new Set();
+ // Question indices are presentation positions. Deleting one question shifts
+ // later indices; carry each surviving disclosure to its new position.
+ questionList.addEventListener('exam-question-removed',event=>{
+  const removed=event.detail?.index;
+  if(!Number.isSafeInteger(removed)||removed<0)return;
+  const shifted=[...expandedQuestions].filter(index=>index!==removed).map(index=>index>removed?index-1:index);
+  expandedQuestions.clear();
+  for(const index of shifted)expandedQuestions.add(index);
+ });
+ // Opening a different exam must never inherit another draft's UI state.
+ questionList.addEventListener('exam-question-reset',()=>expandedQuestions.clear());
  // Keep keyboard focus in view when an editor handler opens a concealed field.
  // No question state, answers or personal data are stored here.
  questionList.addEventListener('focusin',event=>{
@@ -208,6 +219,7 @@ if(questionList&&questionJump){
    // A section is never removed from the DOM: all editor handlers keep working.
    advanced.addEventListener('focusin',()=>{advanced.open=true;});
    advanced.addEventListener('toggle',()=>{
+    if(!advanced.isConnected)return;
     if(advanced.open)expandedQuestions.add(actualIndex);
     else expandedQuestions.delete(actualIndex);
    });
