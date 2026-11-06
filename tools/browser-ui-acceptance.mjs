@@ -138,6 +138,7 @@ async function main(){
  })()`);
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Authenticated workspace');
  pass(await evaluate('!document.getElementById("workspace-view").hidden'),'Authenticated dashboard visible');
+ pass(await evaluate('Boolean(document.getElementById("workspace-view").compareDocumentPosition(document.getElementById("mfa-panel")) & Node.DOCUMENT_POSITION_FOLLOWING)'),'Primary teacher workspace precedes optional MFA settings');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
  await captureSyntheticScreenshot('dashboard-desktop');
