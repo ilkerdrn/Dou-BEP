@@ -170,7 +170,7 @@ async function main(){
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
  // Drive an actual Enter key through Edge rather than invoking click().
  await evaluate('document.querySelector(\'[data-workflow-target="exam-output-section"]\').focus()');
- await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13,text:'\\r',unmodifiedText:'\\r'});
+ await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13,text:String.fromCharCode(13),unmodifiedText:String.fromCharCode(13)});
  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13});
  const keyboardState=await evaluate(`({
   current:document.getElementById('workflow-step-count').textContent,
