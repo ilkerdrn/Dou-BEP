@@ -321,3 +321,169 @@ body.institution-page #exam-workspace #exam-output-section{
   flex:0 0 auto;
  }
 }
+
+/* Cohesive authoring workbench — information hierarchy instead of showing
+   every advanced tool at once. Secondary tools remain available via <details>. */
+body.institution-page .dashboard-welcome{
+ padding:clamp(21px,2.6vw,35px)!important;
+ margin-bottom:20px!important;
+}
+body.institution-page .dashboard-welcome h2{
+ font-size:clamp(23px,2.5vw,33px)!important;
+ line-height:1.18!important;
+ letter-spacing:-.045em!important;
+}
+body.institution-page .dashboard-welcome p{
+ max-width:62ch!important;
+ font-size:13.5px!important;
+ line-height:1.65!important;
+}
+body.institution-page #workspace-view>.dashboard-shortcuts{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:13px!important;
+ margin-bottom:12px!important;
+}
+body.institution-page #workspace-view>.dashboard-shortcuts .dashboard-shortcut{
+ min-height:130px!important;
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ gap:8px!important;
+ padding:21px!important;
+}
+body.institution-page #workspace-view>.dashboard-shortcuts .dashboard-shortcut:first-child{
+ background:linear-gradient(140deg,#fff,#fff6f9)!important;
+ border-color:#dbb7c3!important;
+}
+body.institution-page #workspace-view>.dashboard-shortcuts .dashboard-shortcut strong{
+ font-size:16px!important;
+ letter-spacing:-.025em;
+}
+body.institution-page #workspace-view>.dashboard-shortcuts .dashboard-shortcut small{
+ font-size:12px!important;
+}
+body.institution-page .dashboard-more-tools{
+ background:#fff;
+ border:1px solid var(--dou-v3-border);
+ border-radius:14px;
+ margin:0 0 21px;
+ overflow:hidden;
+}
+body.institution-page .dashboard-more-tools>summary{
+ cursor:pointer;
+ padding:15px 20px;
+ font-size:13px;
+ font-weight:750;
+ color:#283d55;
+ display:list-item;
+}
+body.institution-page .dashboard-more-tools>summary:hover{background:#f7f9fd}
+body.institution-page .dashboard-more-count{
+ font-size:11px;
+ font-weight:650;
+ margin-left:10px;
+ color:#77869b;
+}
+body.institution-page .dashboard-secondary-shortcuts{
+ display:grid!important;
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ padding:0 16px 17px!important;
+ margin:0!important;
+ gap:10px!important;
+}
+body.institution-page .dashboard-secondary-shortcuts .dashboard-shortcut{
+ min-height:100px!important;
+ border-radius:12px!important;
+ box-shadow:none!important;
+ padding:14px 16px!important;
+}
+body.institution-page .dashboard-secondary-shortcuts .dashboard-shortcut strong{font-size:13px!important}
+body.institution-page #exam-workspace .portal-user{
+ margin-bottom:11px!important;
+}
+body.institution-page #exam-workspace .portal-kpis{margin-bottom:14px!important}
+body.institution-page #exam-workspace #exam-editor-card{
+ border-color:#dce5ef!important;
+ padding:clamp(17px,2vw,27px)!important;
+}
+body.institution-page #exam-workspace #exam-editor-card>.portal-card-head{
+ border-bottom:1px solid #e8edf3;
+ padding-bottom:15px;
+ margin-bottom:15px!important;
+}
+body.institution-page #exam-workspace #exam-editor-title{
+ font-size:clamp(19px,2vw,25px)!important;
+ font-weight:780!important;
+}
+body.institution-page #exam-workspace .exam-question{
+ padding:clamp(14px,1.8vw,22px)!important;
+ margin-block:14px!important;
+ border-radius:14px!important;
+}
+body.institution-page #exam-workspace .exam-q-head strong{
+ font-size:15px;
+ color:#22344a;
+}
+body.institution-page #exam-workspace :is(.exam-main-fields,.exam-two){
+ gap:13px!important;
+}
+body.institution-page #exam-workspace .exam-subheading h3{
+ color:#22344e!important;
+ font-size:16px!important;
+}
+body.institution-page #exam-workspace .exam-optional-tool{
+ border:1px solid #dfe8f1;
+ border-radius:13px;
+ margin:13px 0;
+ background:#fff;
+ overflow:hidden;
+}
+body.institution-page #exam-workspace .exam-optional-tool>summary{
+ display:flex;
+ flex-direction:column;
+ gap:3px;
+ cursor:pointer;
+ padding:15px 18px;
+ font-size:13px;
+ font-weight:750;
+ background:#f7f9fd;
+ color:#243950;
+ border-left:3px solid #a62f56;
+}
+body.institution-page #exam-workspace .exam-optional-tool>summary:hover{
+ background:#f1f5fb;
+}
+body.institution-page #exam-workspace .exam-optional-tool>summary:after{
+ content:"Göster";
+ margin-left:auto;
+ font-size:11px;
+ font-weight:750;
+ color:#9a2144;
+}
+body.institution-page #exam-workspace .exam-optional-tool[open]>summary:after{content:"Gizle"}
+body.institution-page #exam-workspace .exam-optional-tool>summary small{
+ font-weight:450;
+ color:#6b7b90;
+ font-size:11.5px;
+}
+body.institution-page #exam-workspace .exam-optional-tool>section{
+ margin:0!important;
+ border:0!important;
+ box-shadow:none!important;
+ border-radius:0!important;
+}
+body.institution-page #exam-workspace .exam-optional-tool>summary:focus-visible{
+ outline:3px solid #cb3866!important;
+ outline-offset:-3px!important;
+}
+@media(max-width:750px){
+ body.institution-page #workspace-view>.dashboard-shortcuts,
+ body.institution-page .dashboard-secondary-shortcuts{
+  grid-template-columns:1fr!important;
+ }
+ body.institution-page #workspace-view>.dashboard-shortcuts .dashboard-shortcut{
+  min-height:0!important;
+ }
+ body.institution-page #exam-workspace #exam-editor-card{padding:15px!important}
+}
