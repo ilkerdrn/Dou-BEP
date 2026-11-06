@@ -6,6 +6,7 @@ if (nav) {
   const previous=document.getElementById('workflow-prev');
   const next=document.getElementById('workflow-next');
   const stepCount=document.getElementById('workflow-step-count');
+  const announcement=document.getElementById('workflow-announcement');
   const revealAndVisit = button => {
     const target=findTarget(button);
     if(!target)return;
@@ -14,6 +15,7 @@ if (nav) {
       if(parent.tagName==='DETAILS')parent.open=true;
     }
     activate(button);
+    if(announcement)announcement.textContent='Hazırlama aşaması: '+button.textContent.replace(/\s+/g,' ').trim();
     target.scrollIntoView({block:'start',behavior:'auto'});
     const heading=target.querySelector('h2,h3,h4')||target;
     heading.setAttribute('tabindex','-1');
