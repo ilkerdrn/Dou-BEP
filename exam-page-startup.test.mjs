@@ -198,3 +198,20 @@ test('Navigation keeps every existing link accessible while filtering collapsibl
  assert.match(nav,/if\(!q&&searchActive\)/);
  assert.match(css,/\.dou-nav-disclosure>summary:focus-visible/);
 });
+
+test('Compact question cards keep essential question data and source review visible',()=>{
+ const markup=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const helper=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ assert.match(markup,/id="exam-question-jump" class="exam-question-jump"[^>]*hidden/);
+ assert.match(helper,/const essentialField=new Set\(\['type','prompt','objective','points','options','pairs','answer'\]\)/);
+ assert.match(helper,/node\.querySelector\('\[data-source-review\]'\)/);
+ assert.match(helper,/new MutationObserver\(enhanceQuestions\)\.observe\(questionList,\{childList:true\}\)/);
+ assert.match(helper,/advanced\.appendChild\(node\)/);
+ assert.match(helper,/advanced\.addEventListener\('toggle'/);
+ assert.match(helper,/heading\.focus\(\{preventScroll:true\}\)/);
+ assert.match(editor,/\$\('exam-questions'\)\.innerHTML=x\.questions\.map/);
+ assert.match(css,/\.exam-question-advanced>summary:focus-visible/);
+ assert.match(css,/\.exam-question-jump-button:focus-visible/);
+});
