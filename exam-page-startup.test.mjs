@@ -249,7 +249,8 @@ test('Question removal requires confirmation and keyboard focus returns safely',
  assert.match(handlers,/!Number\.isInteger\(index\)\|\|index<0\|\|index>=state\.exam\.questions\.length/);
  assert.match(handlers,/if\(!has\('exam.edit'\)\|\|state\.busy\)return/);
  assert.match(handlers,/target\.focus\(\{preventScroll:true\}\)/);
- assert.match(handlers,/lastElementChild\?\.querySelector\('\[data-qkey="prompt"\]'\)\?\.focus/);
+ assert.match(handlers,/firstNewIndex=state\.exam\.questions\.length/);
+ assert.match(handlers,/field\?\.focus\(\{preventScroll:true\}\)/);
 });
 
 test('Question type and visual mode redraw restore form focus',()=>{
@@ -399,4 +400,21 @@ test('Question disclosure state follows surviving indices and resets across draf
  assert.match(ui,/if\(!advanced\.isConnected\)return/);
  assert.match(editor,/new CustomEvent\('exam-question-removed',\{detail:\{index\}\}\)/);
  assert.match(editor,/new Event\('exam-question-reset'\)/);
+});
+
+test('Batch question creation redraws only once and preserves permissions and focus',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ assert.match(html,/id="exam-add-ten-questions"/);
+ const start=editor.indexOf('function appendBlankQuestions(count){');
+ const end=editor.indexOf("$('exam-list').addEventListener('click'",start);
+ assert.ok(start>=0&&end>start,'Batch handler exists');
+ const handler=editor.slice(start,end);
+ assert.match(handler,/if\(!has\('exam.edit'\)\|\|state.busy\|\|!state.exam\)return/);
+ assert.match(handler,/count<1\|\|count>10/);
+ assert.match(handler,/for\(let i=0;i<count;i\+\+\)state.exam.questions.push\(starterQuestion\('choice'\)\)/);
+ assert.match(handler,/touch\(\);draw\(\)/);
+ assert.match(handler,/field\?\.focus\(\{preventScroll:true\}\)/);
+ assert.match(handler,/appendBlankQuestions\(1\)/);
+ assert.match(handler,/appendBlankQuestions\(10\)/);
 });
