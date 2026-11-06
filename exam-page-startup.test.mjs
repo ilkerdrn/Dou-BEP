@@ -378,3 +378,14 @@ test('Approved delivery remains the final labeled workflow and preparatory impor
  assert.ok(section.indexOf('id="exam-delivery-profile"')<section.indexOf('class="exam-related-imports"'));
  assert.match(css,/\.exam-related-imports>summary:focus-visible/);
 });
+
+test('Visual-mode redraw restores keyboard focus after the advanced disclosure exists',()=>{
+ const editor=readFileSync(new URL('./institutional-exams.mjs',import.meta.url),'utf8');
+ const start=editor.indexOf("$('exam-questions').addEventListener('change',ev=>{\n const key=ev.target.dataset.qkey;");
+ const end=editor.indexOf("$('exam-adjustments').addEventListener",start);
+ assert.ok(start>=0&&end>start,'Question redraw handler exists');
+ const handler=editor.slice(start,end);
+ assert.match(handler,/queueMicrotask\(\(\)=>\{/);
+ assert.match(handler,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
+ assert.match(handler,/target\.focus\(\{preventScroll:true\}\)/);
+});
