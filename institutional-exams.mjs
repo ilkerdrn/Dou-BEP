@@ -496,8 +496,23 @@ $('exam-questions').addEventListener('change',ev=>{
  q.provenance.reviewed=ev.target.checked===true;touch();renderQuality(state.exam);
  notice(q.provenance.reviewed?'Kaynak belgeyle karşılaştırma onayı taslağa eklendi. Soru düzenlenirse onay düşer.':'Kaynak belge kontrol onayı geri alındı.');
 });
-$('exam-questions').addEventListener('click',ev=>{const btn=ev.target.closest('[data-delete]');if(!btn||!has('exam.edit'))return;state.exam.questions.splice(Number(btn.dataset.delete),1);touch();draw();});
-$('exam-add-question').addEventListener('click',()=>{if(!has('exam.edit'))return;state.exam.questions.push(starterQuestion('choice'));touch();draw();});
+$('exam-questions').addEventListener('click',ev=>{
+ const btn=ev.target.closest('[data-delete]');
+ if(!btn||!has('exam.edit')||state.busy)return;
+ const index=Number(btn.dataset.delete);
+ if(!Number.isInteger(index)||index<0||index>=state.exam.questions.length)return;
+ if(!confirm(`Soru ${index+1} kaldırılacak ve taslak değişecek. Devam etmek istiyor musunuz?`))return;
+ state.exam.questions.splice(index,1);touch();draw();
+ const cards=$('exam-questions').querySelectorAll('.exam-question');
+ const target=cards[Math.min(index,cards.length-1)]?.querySelector('[data-qkey="prompt"]')||$('exam-add-question');
+ target.focus({preventScroll:true});
+ notice('Soru kaldırıldı. Değişiklikler yeniden kaydedilecektir.');
+});
+$('exam-add-question').addEventListener('click',()=>{
+ if(!has('exam.edit')||state.busy)return;
+ state.exam.questions.push(starterQuestion('choice'));touch();draw();
+ $('exam-questions').lastElementChild?.querySelector('[data-qkey="prompt"]')?.focus({preventScroll:true});
+});
 $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
  if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
