@@ -365,3 +365,16 @@ test('Opt-in browser acceptance uses a disposable database and local Edge only',
  assert.match(script,/rmSync\(temp,\{recursive:true,force:true/);
  assert.doesNotMatch(script,/https:\/\/|fetch\('https:|localStorage|sessionStorage/);
 });
+
+test('Approved delivery remains the final labeled workflow and preparatory imports stay accessible',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ const section=html.slice(html.indexOf('id="exam-output-section"'));
+ assert.match(section,/05 · ONAYLI SINAV TESLİMİ/);
+ assert.match(section,/id="delivery-title">Erişilebilir çıktı profilleri/);
+ assert.match(section,/<details class="exam-related-imports"><summary>/);
+ assert.match(section,/href="\/sinav-dosya-aktar"/);
+ assert.match(section,/href="\/bep-import"/);
+ assert.ok(section.indexOf('id="exam-delivery-profile"')<section.indexOf('class="exam-related-imports"'));
+ assert.match(css,/\.exam-related-imports>summary:focus-visible/);
+});
