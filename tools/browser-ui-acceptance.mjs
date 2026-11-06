@@ -172,6 +172,13 @@ async function main(){
  await evaluate('document.querySelector(\'[data-workflow-target="exam-output-section"]\').focus()');
  await command('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
  await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+ const keyboardState=await evaluate(`({
+  current:document.getElementById('workflow-step-count').textContent,
+  focus:document.activeElement?.id||document.activeElement?.tagName,
+  selected:[...document.querySelectorAll('.workflow-step[aria-current]')].map(x=>x.dataset.workflowTarget),
+  announcement:document.getElementById('workflow-announcement')?.textContent
+ })`);
+ console.log('BROWSER KEYBOARD STEP DIAGNOSTIC: '+JSON.stringify(keyboardState));
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("5 / 5")'),'Keyboard Enter activates final review step');
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("Onay ve çıktı")'),'Screen reader receives final review announcement');
  pass(await evaluate('document.activeElement===document.getElementById("exam-output-section")||document.getElementById("exam-output-section").contains(document.activeElement)'),'Keyboard focus moves inside final review step');
