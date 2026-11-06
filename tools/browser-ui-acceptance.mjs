@@ -173,12 +173,43 @@ async function main(){
  console.log('BROWSER LAYOUT EXAM MOBILE: '+JSON.stringify(mobileExam));
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
+ // Screen geometry matrix: compact phone, medium phone, tablet and desktop.
+ // The only measurements exported to CI are dimensions, never page contents.
+ for(const width of [320,768,1280]){
+  await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<=768});
+  const geometry=await evaluate(`(function(){
+   const viewport=innerWidth;
+   const doc=document.documentElement;
+   const editor=document.getElementById('exam-editor-card');
+   const pager=document.querySelector('.workflow-pager');
+   const next=document.getElementById('workflow-next');
+   const rect=next.getBoundingClientRect();
+   return {
+    viewport,scrollWidth:doc.scrollWidth,
+    editorWidth:Math.round(editor.getBoundingClientRect().width),
+    pagerWidth:Math.round(pager.getBoundingClientRect().width),
+    nextWidth:Math.round(rect.width),
+    nextHeight:Math.round(rect.height)
+   };
+  })()`);
+  console.log('BROWSER LAYOUT EXAM '+width+': '+JSON.stringify(geometry));
+  pass(geometry.scrollWidth<=geometry.viewport+2,'Exam editor has no document overflow at '+width+'px');
+  pass(geometry.editorWidth<=geometry.viewport+2,'Exam card fits at '+width+'px');
+  pass(geometry.nextWidth>=40&&geometry.nextHeight>=32,'Step control stays usable at '+width+'px');
+ }
+ await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  await navigate(base,'/kurum');
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Mobile session restoration');
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
  const mobileDashboard=await evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})');
  console.log('BROWSER LAYOUT DASHBOARD MOBILE: '+JSON.stringify(mobileDashboard));
  pass(mobileDashboard.scroll<=mobileDashboard.width+2,'No horizontal page overflow on 390px dashboard');
+ for(const width of [320,768,1280]){
+  await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<=768});
+  const geom=await evaluate('({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth})');
+  console.log('BROWSER LAYOUT DASHBOARD '+width+': '+JSON.stringify(geom));
+  pass(geom.scrollWidth<=geom.viewport+2,'Dashboard has no document overflow at '+width+'px');
+ }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
 try{await main();}
