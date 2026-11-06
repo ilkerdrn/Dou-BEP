@@ -671,9 +671,22 @@ $('exam-audio-mp3').addEventListener('click',async()=>{
  }catch(err){notice(err.message,true);}finally{state.busy=false;draw();}
 });
 $('exam-print').addEventListener('click',async()=>{const w=window.open('','_blank');if(!w)return notice('Açılır pencereye izin verin.',true);try{const exam=await getApproved();w.document.open();w.document.write(printableHtml(exam,false));w.document.close();w.focus();setTimeout(()=>w.print(),240);notice('A4 çıktı yalnızca sunucudaki onaylı sürümden üretildi.');}catch(err){w.close();notice(err.message,true);}});
-(async function init(){try{const s=await api('/session');if(!s.authenticated){$('exam-login-required').hidden=false;document.documentElement.dataset.examAppReady='login';return;}state.actor=s.member;state.csrf=s.csrf;
+(async function init(){try{const s=await api('/session');if(!s.authenticated||s.mfaSetupRequired===true){
+  document.body.dataset.examAuth='guest';
+  const navigation=document.querySelector('.dou-nav');
+  if(navigation)navigation.inert=true;
+  $('exam-login-required').hidden=false;
+  if(s.mfaSetupRequired===true){
+   const prompt=$('exam-login-required').querySelector('p');
+   if(prompt)prompt.textContent='Kurum politikasina gore once iki asamali dogrulamayi kurumsal panelde tamamlamalisiniz. Sinav editoru bu asamada acilmaz.';
+  }
+  document.documentElement.dataset.examAppReady='login';
+  return;
+ }state.actor=s.member;state.csrf=s.csrf;
+ document.body.dataset.examAuth='authenticated';
+ const navigation=document.querySelector('.dou-nav');if(navigation)navigation.inert=false;
  $('exam-workspace').hidden=false;$('exam-actor').textContent=s.member.email;$('exam-tenant').textContent=`${s.member.tenantId} · ${s.member.role}`;
  $('exam-new').hidden=!has('exam.edit');$('exam-add-question').hidden=!has('exam.edit');$('exam-confirm').disabled=!has('exam.approve');
  await refreshList();draft();await refreshLibrary();{const requested=new URLSearchParams(location.search).get('exam');if(requested&&/^[a-f0-9-]{36}$/.test(requested)){try{await openExam(requested);}catch(err){notice('Sınav açılmadı: '+err.message,true);}}}try{const capability=await api('/audio-capability');state.mp3Available=capability.mp3===true;}catch{state.mp3Available=false;}draw();if(!has('exam.edit')&&state.exams.length){await openExam(state.exams[0].id);}else if(!has('exam.edit')){state.dirty=false;draw();}
  document.documentElement.dataset.examAppReady='ready';
- }catch(err){notice(err.message,true);$('exam-login-required').hidden=!!state.actor;document.documentElement.dataset.examAppReady='error';}})();
+ }catch(err){document.body.dataset.examAuth='guest';const navigation=document.querySelector('.dou-nav');if(navigation)navigation.inert=true;notice(err.message,true);$('exam-workspace').hidden=true;$('exam-login-required').hidden=false;document.documentElement.dataset.examAppReady='error';}})();
