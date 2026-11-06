@@ -292,3 +292,20 @@ test('Exam editor follows a single authoring sequence with approval and exports 
  for(const action of ['exam-save','exam-approve','exam-word','exam-print','exam-audio-mp3'])
   assert.ok(html.includes('id="'+action+'"'),'Existing action removed: '+action);
 });
+
+test('Step pager moves between all five exam sections without hiding fields',()=>{
+ const html=readFileSync(new URL('./institutional-exams.html',import.meta.url),'utf8');
+ const script=readFileSync(new URL('./workflow-ui.mjs',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
+ for(const id of ['workflow-prev','workflow-next','workflow-step-count'])
+  assert.ok(html.includes('id="'+id+'"'),'Missing step pager control '+id);
+ assert.match(script,/const revealAndVisit = button =>/);
+ assert.match(script,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
+ assert.match(script,/if\(previous\)previous\.disabled=selectedIndex<=0/);
+ assert.match(script,/if\(next\)next\.disabled=selectedIndex<0\|\|selectedIndex>=steps\.length-1/);
+ assert.match(script,/if\(previous\)previous\.addEventListener\('click'/);
+ assert.match(script,/if\(next\)next\.addEventListener\('click'/);
+ assert.match(script,/heading\.focus\(\{preventScroll:true\}\)/);
+ assert.match(css,/\.workflow-pager .portal-btn:disabled/);
+ assert.match(css,/@media\(max-width:760px\)/);
+});
