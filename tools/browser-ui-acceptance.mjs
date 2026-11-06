@@ -278,13 +278,16 @@ async function main(){
  // Final high-cardinality acceptance uses the same anonymous temporary fixture.
  // Time is diagnostic, not a pass/fail threshold across different CI machines.
  const hundredExam=await evaluate(`(function(){
-  const add=document.getElementById('exam-add-question');
+  const addTen=document.getElementById('exam-add-ten-questions');
+  if(!addTen)throw Error('Batch question button missing');
   const before=performance.now();
-  for(let n=document.querySelectorAll('#exam-questions > .exam-question').length;n<100;n++)add.click();
-  return {count:document.querySelectorAll('#exam-questions > .exam-question').length,elapsedMs:Math.round(performance.now()-before)};
+  const initial=document.querySelectorAll('#exam-questions > .exam-question').length;
+  for(let n=initial;n<100;n+=10)addTen.click();
+  return {initial,count:document.querySelectorAll('#exam-questions > .exam-question').length,elapsedMs:Math.round(performance.now()-before)};
  })()`);
  console.log('BROWSER 100 QUESTION DIAGNOSTIC: '+JSON.stringify(hundredExam));
  pass(hundredExam.count===100,'100 editable questions render without data loss');
+ pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="90"'),'Batch add places keyboard focus at first new question');
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===100'),'Navigator synchronizes 100 questions');
  await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[99].click()');
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="99"'),'Last of 100 questions receives keyboard focus');
