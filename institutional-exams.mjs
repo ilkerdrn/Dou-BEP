@@ -106,10 +106,16 @@ $('exam-preflight-body').addEventListener('click',event=>{
  const id=btn.dataset.preflightJump;
  if(!['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'].includes(id))return;
  const target=document.getElementById(id);if(!target)return;
+ // A collapsed details panel makes scroll/focus appear broken.
+ // Reveal ancestors before visiting; never change the draft or its approval.
+ for(let parent=target.parentElement;parent;parent=parent.parentElement){
+  if(parent.tagName==='DETAILS')parent.open=true;
+ }
  target.scrollIntoView({behavior:'auto',block:'start'});
  // Scrolling alone leaves keyboard/screen-reader focus on the old tile.
  const focusTarget=target.querySelector('h2,h3,h4')||target;
- focusTarget.setAttribute('tabindex','-1');focusTarget.focus({preventScroll:true});
+ focusTarget.setAttribute('tabindex','-1');
+ focusTarget.focus({preventScroll:true});
 });
 $('exam-preflight-export').addEventListener('click',()=>{
  if(!state.exam)return;
