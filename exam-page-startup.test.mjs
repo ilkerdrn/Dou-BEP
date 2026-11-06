@@ -350,3 +350,18 @@ test('Focus mode cannot leave keyboard focus inside hidden draft sidebar',()=>{
  assert.match(script,/draftsPanel\.setAttribute\('aria-hidden',String\(enabled\)\)/);
  assert.match(script,/workspace\.classList\.toggle\('exam-focus-mode',enabled\)/);
 });
+
+test('Opt-in browser acceptance uses a disposable database and local Edge only',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('./package.json',import.meta.url),'utf8'));
+ const script=readFileSync(new URL('./tools/browser-ui-acceptance.mjs',import.meta.url),'utf8');
+ assert.equal(pkg.scripts['ui:browser'],'node tools/browser-ui-acceptance.mjs');
+ assert.match(script,/mkdtempSync\(join\(tmpdir\(\),'dou-bep-browser-'\)\)/);
+ assert.match(script,/process\.env\.BEP_DB_PATH=join\(temp,'fixture\.sqlite'\)/);
+ assert.match(script,/process\.env\.BEP_NO_LISTEN='1'/);
+ assert.match(script,/--headless=new/);
+ assert.match(script,/--remote-debugging-port=0/);
+ assert.match(script,/getComputedStyle\(document\.querySelector\("\.dou-nav"\)\)/);
+ assert.match(script,/Emulation\.setDeviceMetricsOverride/);
+ assert.match(script,/rmSync\(temp,\{recursive:true,force:true/);
+ assert.doesNotMatch(script,/https:\/\/|fetch\('https:|localStorage|sessionStorage/);
+});
