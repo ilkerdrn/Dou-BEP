@@ -301,3 +301,16 @@ test('navigation search supports bidirectional keyboard focus and visible filter
  assert.match(js,/field\.focus\(\)/);
  assert.match(css,/\.dou-nav \.dou-nav-link\[hidden\]\{display:none!important\}/);
 });
+
+
+test('manual NVDA acceptance remains explicit and keyboard ArrowUp only applies to active search',()=>{
+ const nav=read('./admin-navigation.js');
+ assert.match(nav,/event\.key!=='ArrowUp'\|\|!field\|\|!searchActive/);
+ const protocol=read('./docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md');
+ for(const token of ['K01','K04','K09','K14','K16','PASS','FAIL','BLOCKED','NOT RUN']){
+  assert.ok(protocol.includes(token),'Missing manual-acceptance criterion '+token);
+ }
+ assert.match(protocol,/NVDA/);
+ assert.match(protocol,/gerçek öğrenci/i);
+ assert.match(protocol,/otomatik Edge testi/i);
+});
