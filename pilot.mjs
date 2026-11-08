@@ -112,7 +112,7 @@ $('ready-start').addEventListener('click',()=>{
  heading.setAttribute('tabindex','-1');heading.focus();
 });
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
  $('ready-understand').checked=false;$('ready-device').checked=false;
  $('ready-exam-details').textContent=exam.title+' · '+exam.subject+' · '+exam.questions.length+' soru · Pilot süre sınırı 45 dakika.';
  updateReadyStart();announce('Kod kabul edildi. Önce sınav hazırlık bilgilerini kontrol edin.');
@@ -129,6 +129,22 @@ $('answer-form').addEventListener('change',event=>{
 });
 // Anonymous pilot draft data stays on the localhost server; the bearer token
 // stays only in this tab's JavaScript memory, never in browser storage.
+function applySavedAnswers(saved){
+ const form=$('answer-form');form.reset();
+ for(const q of exam.questions){
+  const answer=saved?.[q.id];
+  if(q.options&&typeof answer==='string'){
+   const radio=[...form.querySelectorAll('input[type="radio"]')].find(x=>x.name===q.id&&x.value===answer);
+   if(radio)radio.checked=true;
+  }else if(q.type==='matching'&&answer&&typeof answer==='object'){
+   for(const left of q.left){
+    const field=[...form.querySelectorAll('select')].find(x=>x.name===q.id+'_'+left.id);
+    if(field&&q.right.some(r=>r.id===answer[left.id]))field.value=answer[left.id];
+   }
+  }
+ }
+ updateAnswerProgress();
+}
 async function getProgress(){
  const r=await fetch('/api/pilot/progress',{method:'GET',credentials:'omit',headers:{Authorization:'Bearer '+claim},cache:'no-store'});
  const result=await r.json();if(!r.ok)throw Error(result.message||'Ara kayıt alınamadı.');return result;
@@ -181,19 +197,7 @@ $('pilot-restore').addEventListener('click',async()=>{
  $('pilot-restore').disabled=true;
  try{
   const data=await getProgress();
-  const form=$('answer-form');form.reset();
-  for(const q of exam.questions){
-   const answer=data.answers[q.id];
-   if(q.options&&typeof answer==='string'){
-    const radio=[...form.querySelectorAll('input[type="radio"]')].find(x=>x.name===q.id&&x.value===answer);
-    if(radio)radio.checked=true;
-   }else if(q.type==='matching'&&answer&&typeof answer==='object'){
-    for(const left of q.left){
-     const field=[...form.querySelectorAll('select')].find(x=>x.name===q.id+'_'+left.id);
-     if(field&&q.right.some(r=>r.id===answer[left.id]))field.value=answer[left.id];
-    }
-   }
-  }
+  applySavedAnswers(data.answers);
   answerRevision++;savedRevision=answerRevision;
   resetFinalReview();updateAnswerProgress();$('pilot-save-status').textContent='Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.';
  }catch(e){$('pilot-save-status').textContent='Geri yükleme başarısız: '+e.message;}
