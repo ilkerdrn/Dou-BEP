@@ -2,18 +2,8 @@
    Transitional consolidation: legacy CSS retained until visual regression gates prove parity.
    No changes to authentication, role enforcement or data handling.
 */
+/* V3 base semantics; palette variables defined in the canonical block below. */
 body.institution-page.campus-layout{
- --bep-bg:#f5f6f9;
- --bep-surface:#ffffff;
- --bep-surface-alt:#faf8fa;
- --bep-text:#1c293b;
- --bep-muted:#617083;
- --bep-brand:#8d263d;
- --bep-brand-hover:#701b30;
- --bep-border:#e2e5eb;
- --bep-focus:#bd3e67;
- --bep-radius:14px;
- --bep-shadow:0 10px 32px rgba(25,33,49,.07);
  color:var(--bep-text);
  background:var(--bep-bg)!important;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -869,9 +859,6 @@ body.institution-page:not(.campus-layout) .coord-table button{
  body.institution-page:not(.campus-layout) .portal-hero{
   padding:22px 18px!important;
  }
- body.institution-page:not(.campus-layout) .portal-hero h1{
-  font-size:clamp(26px,7vw,33px)!important;
- }
 }
 
 
@@ -991,6 +978,9 @@ body.institution-page:not(.campus-layout) .coord-quick-nav a:focus-visible{
  outline:3px solid #a92347!important;outline-offset:3px!important;
 }
 @media(max-width:760px){
+ body.institution-page:not(.campus-layout) .portal-hero h1{
+  font-size:clamp(26px,7vw,33px)!important;
+ }
  body.institution-page:not(.campus-layout) .coord-form-divider{grid-column:1/-1}
  body.institution-page:not(.campus-layout) .coord-quick-nav a{flex:1 1 170px}
  body.institution-page:not(.campus-layout) .coord-kpis>div{padding:14px!important}
