@@ -39,7 +39,7 @@ test('anonymous learner can save and restore choices explicitly without browser 
  assert.match(html,/id="pilot-save-status"[^>]*role="status"/);
  assert.match(html,/id="pilot-save"/);
  assert.match(html,/id="pilot-restore"/);
- assert.match(js,/post\('\/api\/pilot\/save',\{answers\},claim\)/);
+ assert.match(js,/post\('\/api\/pilot\/save',\{answers\},token\)/);
  assert.match(js,/fetch\('\/api\/pilot\/progress'/);
  assert.match(js,/credentials:'omit'/);
  assert.match(js,/cache:'no-store'/);
@@ -91,7 +91,7 @@ test('final submission requires a separate question status review and allows ret
  assert.match(js,/const flagged=\[\.\.\.reviewFlags\]\.sort/);
  assert.match(js,/if\(!confirm\(warning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
  assert.match(js,/post\('\/api\/pilot\/submit',\{answers\},claim\)/);
- assert.match(js,/if\(event\.target\.matches\('input\[type="radio"\],select'\)\)\{resetFinalReview\(\);updateAnswerProgress\(\);\}/);
+ assert.match(js,/if\(event\.target\.matches\('input\[type="radio"\],select'\)\)\{\s*resetFinalReview\(\);updateAnswerProgress\(\);scheduleAutoSave\(\);/);
  assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
 
