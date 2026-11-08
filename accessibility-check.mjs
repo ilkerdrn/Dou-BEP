@@ -62,6 +62,24 @@ function refresh(){
   if(!card.hidden)visible++;
  }
  $('pilot-no-results').hidden=visible!==0;
+ // Keep this overview anonymous: only fixed checklist titles and statuses, never notes.
+ const findings=$('pilot-findings-list');
+ findings.replaceChildren();
+ for(const outcome of ['fail','not-tested']){
+  for(const [i,value] of outcomes.entries()){
+   if(value!==outcome)continue;
+   const entry=make('li','pilot-finding');
+   const label=make('span','pilot-finding-title',PILOT_CHECKS[i].label);
+   const state=make('span','pilot-finding-state',outcome==='fail'?'Sorun var':'Bekliyor');
+   entry.dataset.outcome=outcome;
+   entry.append(label,state);
+   findings.append(entry);
+  }
+ }
+ $('pilot-jump-fail').disabled=failed===0;
+ $('pilot-findings-status').textContent=failed
+  ?failed+' sorunlu · '+untested+' bekleyen kontrol. Önce sorunlu maddeleri inceleyin.'
+  :untested?untested+' kontrol henüz değerlendirilmedi.':'İşaretlenmiş sorun veya bekleyen kontrol yok. Bağımsız değerlendirme yine gereklidir.';
  // A filtered card may disappear after its selected outcome changes. Keep keyboard focus predictable.
  if(oldFocusedCard?.hidden){
   const next=Array.from(container.children).find(c=>!c.hidden);
@@ -89,6 +107,15 @@ function exportEvidence(kind){
  }catch(error){$('pilot-export-error').textContent=error.message;}
 }
 for(const id of ['pilot-reader','pilot-platform','pilot-browser'])$(id).addEventListener('change',refresh);
+$('pilot-jump-fail').addEventListener('click',()=>{
+ const index=PILOT_CHECKS.findIndex((item,i)=>$('status-'+i).value==='fail');
+ if(index<0)return;
+ activeFilter='all';
+ for(const b of document.querySelectorAll('[data-filter]'))b.setAttribute('aria-pressed',String(b.dataset.filter==='all'));
+ refresh();
+ $('status-'+index).focus();
+ $('pilot-export-error').textContent='Sorunlu kontrol '+(index+1)+' açıldı.';
+});
 $('pilot-jump').addEventListener('click',()=>{
  activeFilter='all';
  for(const b of document.querySelectorAll('[data-filter]'))b.setAttribute('aria-pressed',String(b.dataset.filter==='all'));
