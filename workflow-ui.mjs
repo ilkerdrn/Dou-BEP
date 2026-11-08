@@ -1,5 +1,6 @@
 // Visual workflow helpers only. No network, cookies, credentials, or personal data storage.
 const nav = document.querySelector('.workflow-nav');
+let updateGuidedView=()=>{};
 if (nav) {
   const steps = Array.from(nav.querySelectorAll('[data-workflow-target]'));
   const findTarget = button => document.getElementById(button.dataset.workflowTarget);
@@ -8,7 +9,7 @@ if (nav) {
   const stepCount=document.getElementById('workflow-step-count');
   const nextHint=document.getElementById('workflow-next-hint');
   const announcement=document.getElementById('workflow-announcement');
-  let updateGuidedView=()=>{};
+
   const revealAndVisit = button => {
     const target=findTarget(button);
     if(!target)return;
