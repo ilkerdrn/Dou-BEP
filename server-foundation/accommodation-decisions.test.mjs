@@ -7,6 +7,7 @@ import http from 'node:http';
 import {openStore} from './institutional-store.mjs';
 import {createApiHandler} from './institutional-api.mjs';
 import {normalizeDecision} from './accommodation-decisions.mjs';
+import {createDemo} from '../core.mjs';
 const password='Strong-Local-Anon-Password-2026!';
 const sample={term:'2026-GUZ',courseCode:'BLP103',examLabel:'VIZE',candidateCode:'KOD-001',adjustments:['LARGE_PRINT','HIGH_CONTRAST'],extraMinutes:15};
 function make(){const dir=mkdtempSync(join(tmpdir(),'bep-decisions-')),s=openStore(join(dir,'db.sqlite'));
@@ -82,4 +83,34 @@ test('HTTP decision endpoints require auth, origin and CSRF and preserve dual-co
   const verified=await request('/accommodations/verify-batch','POST',{rows:[sample]},{Cookie:cookie,'X-CSRF-Token':csrf});assert.equal(verified.status,200);assert.equal(verified.body.ok,true);
   const wrong=await request('/accommodations/verify-batch','POST',{rows:[{...sample,extraMinutes:20}]},{Cookie:cookie,'X-CSRF-Token':csrf});assert.equal(wrong.body.ok,false);
  }finally{await new Promise(resolve=>server.close(resolve));f.dispose();}
+});
+
+test('approved anonymous decision derives a read-only duration preview only from one approved coordinated sitting',()=>{
+ const f=make();try{
+  const {s,adminA:a,reviewer:r}=f;
+  const row=s.accommodationCreate(a,sample);
+  assert.equal(s.accommodationDurationPreview(a,row.id).reason,'decision_not_approved');
+  s.accommodationApprove(r,row.id,row.revision);
+  assert.equal(s.accommodationDurationPreview(a,row.id).reason,'session_missing');
+  const source=createDemo();source.profile='';
+  source.questions=source.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
+  const exam=s.createExam(a,{exam:source});
+  s.approveExam(a,exam.id,{revision:1,confirmed:true});
+  const plan={term:'2026-GUZ',department:'TEKNOLOJI',program:'BILGISAYAR',
+   courseCode:'BLP103',courseName:'İşletim Sistemleri',examLabel:'VIZE',
+   startsAt:'2026-11-15T09:30',durationMinutes:70,instructorCode:'HOC01',
+   roomCode:'LAB01',examId:exam.id,examRevision:1};
+  s.coordinationCreate(a,plan);
+  const result=s.accommodationDurationPreview(r,row.id);
+  assert.equal(result.ready,true);
+  assert.deepEqual([result.baseMinutes,result.extraMinutes,result.totalMinutes],[70,15,85]);
+  assert.equal(result.candidateCode,undefined);
+  assert.equal(result.message.includes('otomatik'),true);
+  const second=s.coordinationCreate(a,{...plan,startsAt:'2026-11-15T13:30',roomCode:'LAB02',instructorCode:'HOC02'});
+  assert.ok(second.id);
+  assert.equal(s.accommodationDurationPreview(a,row.id).reason,'ambiguous_session');
+  assert.equal(s.accommodationDurationPreview(f.adminB,row.id).ready,false);
+  s.accommodationRevoke(r,row.id,row.revision);
+  assert.equal(s.accommodationDurationPreview(a,row.id).reason,'decision_not_approved');
+ }finally{f.dispose();}
 });
