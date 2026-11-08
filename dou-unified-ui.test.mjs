@@ -35,3 +35,12 @@ test('high contrast overrides stay untouched on anonymous student screen',()=>{
  assert.match(css,/body\.bep-student-pilot:not\(\.high\):not\(\.high-contrast\)/);
  assert.match(read('./pilot.css'),/\.high\{/);
 });
+
+test('V4 sidebar accordion remains charcoal with readable menu links despite older V3 white card rules',()=>{
+ const legacy=read('./bep-design-system.css');
+ assert.match(legacy,/body\.institution-page\.campus-layout \.dou-nav-sections\{[\s\S]*?background:#fff!important/);
+ assert.match(css,/\.dou-nav #dou-nav-sections\{[\s\S]*?background:#1d1d1b!important/);
+ assert.match(css,/\.dou-nav #dou-nav-sections \.dou-nav-disclosure>summary\.dou-nav-group-title\{[\s\S]*?color:#bdbdb9!important/);
+ assert.match(css,/\.dou-nav #dou-nav-sections \.dou-nav-link\.portal-menu:not\(\.current\):not\(\[aria-current="page"\]\)\{[\s\S]*?color:#f0f0ed!important/);
+ assert.match(css,/\.dou-nav #dou-nav-sections \.dou-nav-link\.portal-menu\.current,[\s\S]*?background:#d70926!important/);
+});
