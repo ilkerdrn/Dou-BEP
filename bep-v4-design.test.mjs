@@ -442,10 +442,10 @@ test('V4 retired institutional routes do not load admin V3 but keep the original
  assert.ok(v3.length>1000,'Original V3 asset must remain available for rollback');
  for(const page of ['institution.html','institutional-exams.html']){
   const html=read('./'+page);
-  assert.doesNotMatch(html,/href="\\/admin-design-v3\\.css"/);
-  assert.match(html,/href="\\/bep-v4\\.css"/);
+  assert.doesNotMatch(html,/href="\/admin-design-v3\.css"/);
+  assert.match(html,/href="\/bep-v4\.css"/);
  }
  const browser=read('./tools/browser-ui-acceptance.mjs');
  assert.match(browser,/BROWSER V4 CSS RETIREMENT VERIFIED/);
- assert.match(browser,/status\\.v4!==1\\|\\|status\\.legacy!==0/);
+ assert.match(browser,/status\.v4!==1\|\|status\.legacy!==0/);
 });
