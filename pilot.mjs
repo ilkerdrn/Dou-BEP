@@ -1,8 +1,38 @@
 import {attachPilotReader} from './dou-reader-panel.mjs';
+import {pilotTimeState} from './pilot-time.mjs';
 /** One-time anonymous pilot. Token lives only in JS memory. No identity, audio, or browser storage. */
 const $=id=>document.getElementById(id);let claim=null,exam=null,activeQuestionIndex=0;
 // Review flags are an optional local navigation aid, never part of submitted answers.
 const reviewFlags=new Set();
+let pilotExpiresAt=null,pilotTimeInterval=null,lastTimePhase='unknown';
+function stopPilotClock(){if(pilotTimeInterval!==null){clearInterval(pilotTimeInterval);pilotTimeInterval=null;}}
+function renderPilotClock(){
+ const state=pilotTimeState(pilotExpiresAt);
+ $('pilot-ready-time').textContent=state.label;
+ $('pilot-time-text').textContent=state.label;
+ $('pilot-time-text').dataset.phase=state.phase;
+ const warning=$('pilot-time-warning');
+ const phaseChanged=state.phase!==lastTimePhase;
+ warning.hidden=state.phase!=='warning'&&state.phase!=='expired';
+ if(phaseChanged){
+  warning.textContent=state.phase==='warning'?'Son 5 dakikaya girdiniz. Yanıtlarınızı kontrol edin.':state.phase==='expired'?'Süre doldu. Teslim ve ara kayıt için sunucu süresi geçerlidir.':'';
+  lastTimePhase=state.phase;
+ }
+ if(state.phase==='expired'){
+  $('ready-start').disabled=true;
+  $('pilot-save').disabled=true;
+  $('pilot-restore').disabled=true;
+  $('send').disabled=true;
+  if(phaseChanged)announce('Oturum süresi doldu. Öğretmeninizle görüşün.',true);
+ }
+}
+function startPilotClock(expiresAt){
+ stopPilotClock();
+ pilotExpiresAt=Number(expiresAt);
+ lastTimePhase='unknown';
+ renderPilotClock();
+ pilotTimeInterval=setInterval(renderPilotClock,1000);
+}
 function announce(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
@@ -99,7 +129,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  reviewFlags.clear();resetFinalReview();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
 function updateReadyStart(){
- $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam;
+ $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam||pilotTimeState(pilotExpiresAt).phase==='expired';
 }
 $('ready-understand').addEventListener('change',updateReadyStart);
 $('ready-device').addEventListener('change',updateReadyStart);
@@ -112,7 +142,7 @@ $('ready-start').addEventListener('click',()=>{
  heading.setAttribute('tabindex','-1');heading.focus();
 });
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;startPilotClock(r.expiresAt);$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
  $('ready-understand').checked=false;$('ready-device').checked=false;
  $('ready-exam-details').textContent=exam.title+' · '+exam.subject+' · '+exam.questions.length+' soru · Pilot süre sınırı 45 dakika.';
  updateReadyStart();announce('Kod kabul edildi. Önce sınav hazırlık bilgilerini kontrol edin.');
@@ -164,7 +194,7 @@ function scheduleAutoSave(){
 }
 async function saveDraft(){
  clearSaveTimer();
- if(!claim||!exam)return;
+ if(!claim||!exam||pilotTimeState(pilotExpiresAt).phase==='expired')return;
  if(draftPromise)return draftPromise;
  draftPromise=(async()=>{
   draftBusy=true;
@@ -183,8 +213,8 @@ async function saveDraft(){
    if(claim&&exam)$('pilot-save-status').textContent='Ara kayıt başarısız: '+e.message+'. Yanıtlar bu açık sekmede duruyor; tekrar kaydetmeyi deneyin.';
   }finally{
    draftBusy=false;draftPromise=null;
-   $('pilot-save').disabled=false;
-   $('pilot-restore').disabled=false;
+   $('pilot-save').disabled=pilotTimeState(pilotExpiresAt).phase==='expired';
+   $('pilot-restore').disabled=pilotTimeState(pilotExpiresAt).phase==='expired';
   }
  })();
  return draftPromise;
@@ -239,13 +269,14 @@ $('answer-form').addEventListener('submit',async event=>{event.preventDefault();
  const {empty}=collectAnswers();
  const warning=empty.length?empty.length+' soru boş veya tamamlanmamış. ':'';
  if(!confirm(warning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
+ if(pilotTimeState(pilotExpiresAt).phase==='expired'){announce('Oturum süresi doldu. Yeni teslim denemesi yapılamaz.',true);return;}
  btn.disabled=true;clearSaveTimer();
  try{
   if(draftPromise)await draftPromise;
   // A failed autosave does not invalidate a direct final submission; submit
   // carries the complete current answer snapshot and is validated by the server.
   const {answers}=collectAnswers();
-  const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
+  const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;stopPilotClock();douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
  catch(e){announce(e.message,true);btn.disabled=false;}});
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
 $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.max(0,activeQuestionIndex-1);updateQuestionNavigation(true);});
@@ -253,7 +284,7 @@ $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(ex
 $('size').addEventListener('change',()=>document.documentElement.style.setProperty('--student-size',$('size').value+'px'));
 $('contrast').addEventListener('change',()=>document.body.classList.toggle('high',$('contrast').checked));
 $('stop-voice').addEventListener('click',()=>{douReader?.stop();announce('Seslendirme durduruldu.');});
-window.addEventListener('pagehide',()=>{clearSaveTimer();claim=null;douReader?.stop();});
+window.addEventListener('pagehide',()=>{clearSaveTimer();stopPilotClock();claim=null;douReader?.stop();});
 
 // The reader is deliberately scoped to the current anonymized pilot question only.
 douReader=attachPilotReader({doc:document,win:window,
