@@ -868,3 +868,37 @@ body.bep-student-pilot.high .pilot-question-jump[aria-current="step"]{
  outline:3px solid #ff0!important;
 }
 body.bep-student-pilot.high .pilot-map-legend span:before{border:2px solid #fff;background:#000}
+
+/* Learner readiness step: no false timer or browser-stored capability. */
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-ready{
+ background:#fff!important;border:1px solid #e6e5e1!important;
+ border-top:4px solid #d70926!important;box-shadow:none!important;
+}
+body.bep-student-pilot .pilot-ready h2{margin:8px 0 12px}
+body.bep-student-pilot .pilot-ready-warning{
+ background:#fff9ed;color:#5c3d13;border:1px solid #efd5b1;
+ border-radius:10px;padding:14px 16px;line-height:1.65;
+}
+body.bep-student-pilot .pilot-ready-checks{
+ display:grid;gap:12px;margin:20px 0;
+}
+body.bep-student-pilot .pilot-ready-checks label{
+ display:flex;gap:12px;align-items:flex-start;line-height:1.55;
+ padding:12px 14px;border:1px solid #d8d8d2;border-radius:10px;
+}
+body.bep-student-pilot .pilot-ready-checks input[type="checkbox"]{
+ flex:0 0 22px;width:22px;min-height:22px;height:22px;margin:1px 0 0;
+}
+body.bep-student-pilot #ready-start{min-height:48px;font-weight:800}
+body.bep-student-pilot #ready-start:disabled{
+ opacity:.55;cursor:not-allowed;
+}
+body.bep-student-pilot.high .pilot-ready{
+ background:#000;color:#fff;border:2px solid #fff;
+}
+body.bep-student-pilot.high .pilot-ready-warning{
+ background:#000;color:#fff;border:2px solid #fff;
+}
+body.bep-student-pilot.high .pilot-ready-checks label{
+ border-color:#fff;
+}
