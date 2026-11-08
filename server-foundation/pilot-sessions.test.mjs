@@ -128,3 +128,30 @@ test('v2.35: tampered approved exam cannot be issued, redeemed, submitted or rev
   assert.throws(()=>f.s.pilotReviewGet(f.a,first.id),{code:'approval_integrity'});
  }finally{f.close();}
 });
+
+test('anonymous in-progress answer saves are bounded, resumable in the active session and hidden from teacher until submission',()=>{
+ const f=fixture();try{
+  const issued=f.s.pilotIssue(f.a,f.rec.id),ticket=f.s.pilotRedeem(issued.code);
+  assert.deepEqual(f.s.pilotProgress(ticket.token).answers,{});
+  assert.equal(f.s.pilotSave(ticket.token,{q1:'A',q4:{'1':'B'}}).saved,true);
+  assert.deepEqual(f.s.pilotProgress(ticket.token).answers,{q1:'A',q4:{'1':'B'}});
+  assert.equal(f.s.pilotView(f.a,issued.id).answers,null,'teachers must not inspect unfinished anonymous submissions');
+  assert.throws(()=>f.s.pilotSave(ticket.token,{q1:'INVALID'}),{code:'invalid_answers'});
+  assert.deepEqual(f.s.pilotProgress(ticket.token).answers,{q1:'A',q4:{'1':'B'}},'invalid save cannot overwrite a good draft');
+  assert.equal(f.s.pilotSubmit(ticket.token,{q1:'B'}).ok,true);
+  assert.throws(()=>f.s.pilotSave(ticket.token,{q1:'A'}),{code:'invalid_session'});
+  assert.throws(()=>f.s.pilotProgress(ticket.token),{code:'invalid_session'});
+  assert.deepEqual(f.s.pilotView(f.a,issued.id).answers,{q1:'B'},'only submitted answers are teacher-visible');
+ }finally{f.close();}
+});
+
+test('draft save rejects expired or revoked anonymous pilot capabilities',()=>{
+ const f=fixture();try{
+  const issued=f.s.pilotIssue(f.a,f.rec.id),ticket=f.s.pilotRedeem(issued.code);
+  f.s.pilotRevoke(f.a,issued.id);
+  assert.throws(()=>f.s.pilotSave(ticket.token,{q1:'A'}),{code:'invalid_session'});
+  const another=f.s.pilotIssue(f.a,f.rec.id),active=f.s.pilotRedeem(another.code);
+  f.s.db.prepare('UPDATE pilot_sessions SET expires_at=? WHERE id=?').run(Date.now()-1,another.id);
+  assert.throws(()=>f.s.pilotSave(active.token,{q1:'A'}),{code:'invalid_session'});
+ }finally{f.close();}
+});
