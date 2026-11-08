@@ -76,3 +76,24 @@ değişiklik gözlenmiştir. Düzen, içerik ve erişilebilirlik ayrı değerlen
 Başarı ölçütü: V3'süz testin tüm kontrollerinin PASS olması, CSS probe farklarının
 incelenmesi, 320/390/768/1280px ekran görüntüleri ve manuel NVDA kontrolleri.
 Bundan önce eski dosyayı veya HTML linkini silmeyin.
+
+
+## İşlevsel PASS ve görsel PASS ayrı kapılardır
+
+V3 CSS test tarayıcısında devre dışıyken 8 Kasım 2026 yerel kaydında
+**191/191 Edge kontrolü PASS** ve **18/18 V4 testi PASS** olarak raporlandı.
+Bu sonuç görsel eşdeğerliği kanıtlamaz. Son ayrı CSS ölçümünde yönetim panelinde
+5, sınav editöründe 9 seçici/alan farklı hesaplanmıştı.
+
+İşlevsellik başarılı olsa bile kaldırma için katı görsel karşılaştırma gerekir:
+
+```powershell
+npm.cmd run design:v4:parity
+```
+
+Bu mod, önce mevcut V3 tasarımını, sonra yalnızca geçici test DOM'unda kapatılan
+V3 stilinin sonucunu karşılaştırır. Herhangi bir ölçülen konum, boyut, arka plan,
+metin rengi veya grid farkı varsa ilk farkta açıkça FAIL döner.
+Özellikle başlangıçta FAIL beklenebilir; bu, gerileme değil kalan bağımlılıkların
+görünür olmasıdır. Eşleşme sağlandığında mobil ve manuel erişilebilirlik
+incelemesi de gereklidir. Hiçbir gerçek dosya veya yerel SQLite değiştirilmez.
