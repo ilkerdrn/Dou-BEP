@@ -663,11 +663,16 @@ body.institution-page.campus-layout[data-portal-auth="guest"] #portal-message:no
  margin:0!important;border-radius:0!important;
  box-sizing:border-box;
 }
+body.institution-page.campus-layout[data-portal-auth="guest"] #portal-message:empty{
+ display:none!important;margin:0!important;padding:0!important;
+}
 body.institution-page.campus-layout[data-portal-auth="guest"] .portal-footer{
- width:100%!important;max-width:none!important;
- margin:0!important;padding:10px clamp(20px,4vw,80px)!important;
- background:#fff!important;text-align:center;
- box-sizing:border-box;
+ position:absolute;bottom:6px;right:0;
+ width:50%!important;max-width:none!important;
+ margin:0!important;padding:8px 24px!important;
+ background:transparent!important;text-align:center;
+ font-size:10px!important;line-height:1.35!important;
+ box-sizing:border-box;pointer-events:none;
 }
 /* The layout can scroll on compact-height desktops; no clipped MFA or help text. */
 @media(max-width:900px){
@@ -676,6 +681,10 @@ body.institution-page.campus-layout[data-portal-auth="guest"] .portal-footer{
  }
  body.institution-page.campus-layout[data-portal-auth="guest"] #login-view .login-intro{
   min-height:0!important;padding:clamp(24px,5vw,48px)!important;
+ }
+ body.institution-page.campus-layout[data-portal-auth="guest"] .portal-footer{
+  position:static;width:100%!important;
+  padding:14px 22px 26px!important;background:#fff!important;
  }
  body.institution-page.campus-layout[data-portal-auth="guest"] #login-view .login-form-panel{
   min-height:calc(100dvh - 210px)!important;
