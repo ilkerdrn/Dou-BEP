@@ -288,3 +288,17 @@ test('V4 dashboard retains text measurements without copying V3 brand colors',()
  assert.match(css,/\.campus-summary-card p\{\s*font-size:12px!important;line-height:1\.6!important/);
  assert.match(css,/\.campus-notice-card>a\{\s*color:var\(--v4-primary\)!important/);
 });
+
+
+test('V4 independently sizes the dashboard secondary disclosure and inspects nested exam layout',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/\.dashboard-more-tools\{\s*background:#fff!important/);
+ assert.match(css,/margin:0 0 21px!important/);
+ assert.match(css,/\.dashboard-more-tools>summary\{\s*cursor:pointer!important/);
+ for(const selector of ['.dashboard-secondary-shortcuts','.workflow-caption',
+  '.workflow-steps','.exam-question','.exam-optional-tool']){
+  assert.ok(browser.includes("'"+selector+"'"),'Missing deep parity probe: '+selector);
+ }
+ assert.match(browser,/minHeight:s\.minHeight,overflow:s\.overflow/);
+});
