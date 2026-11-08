@@ -212,6 +212,11 @@ async function probeLegacySheet(page,selectors){
  const result={page,stylesheet:href,changedElements:changed.length,
   originalScroll:before.scroll,withoutV3Scroll:after.scroll,changes:changed};
  console.log('BROWSER V4 CSS RETIREMENT PROBE: '+JSON.stringify(result));
+ if(process.argv.includes('--css-parity')&&changed.length){
+  const summary=changed.map(entry=>entry.selector).join(', ');
+  throw Error('V4 CSS visual parity gate FAILED on '+page+
+   ': '+changed.length+' geometry/style differences: '+summary);
+ }
  return result;
 }
 
@@ -411,7 +416,7 @@ async function main(){
  pass(campusVisual.selected==='none'&&campusVisual.selectedText==='rgb(255, 255, 255)','V4 selected menu uses solid high-contrast burgundy');
  pass(campusVisual.card==='none','V4 dashboard welcome uses a plain institutional surface');
  await captureSyntheticScreenshot('dashboard-desktop');
- if(process.argv.includes('--css-probe'))await probeLegacySheet('dashboard',[
+ if(process.argv.includes('--css-probe')||process.argv.includes('--css-parity'))await probeLegacySheet('dashboard',[
   '.dou-nav','.portal-main','.portal-topbar','.dashboard-welcome',
   '.dashboard-shortcuts','.dashboard-shortcut','.campus-summary-card'
  ]);
@@ -462,7 +467,7 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundImage==="none"'),'V4 exam editor uses the same neutral navigation shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundImage==="none"'),'V4 exam menu active indicator has no decorative gradient');
  await captureSyntheticScreenshot('exam-desktop');
- if(process.argv.includes('--css-probe'))await probeLegacySheet('exam',[
+ if(process.argv.includes('--css-probe')||process.argv.includes('--css-parity'))await probeLegacySheet('exam',[
   '.dou-nav','.portal-main','.exam-workbench-heading','.workflow-nav',
   '.exam-grid','#exam-drafts-panel','#exam-editor-card',
   '.exam-list-controls','.editor-ribbon','.exam-autosave-panel'
