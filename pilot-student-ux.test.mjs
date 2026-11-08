@@ -9,7 +9,7 @@ const store=readFileSync(new URL('./server-foundation/pilot-sessions.mjs',import
 
 test('anonymous learner sees an accessible answer completion status and first-unanswered action',()=>{
  assert.match(html,/id="pilot-answer-progress"[^>]*role="status"[^>]*aria-live="polite"/);
- assert.match(html,/id="pilot-first-empty"[^>]*type="button"/);
+ assert.match(html,/<button[^>]*type="button"[^>]*id="pilot-first-empty"/);
  assert.match(js,/function collectAnswers\(\)/);
  assert.match(js,/function updateAnswerProgress\(\)/);
  assert.match(js,/updateAnswerProgress\(\)/);
@@ -19,7 +19,7 @@ test('anonymous learner sees an accessible answer completion status and first-un
 
 test('missing or incomplete matching responses are never counted as complete',()=>{
  assert.match(js,/if\(Object\.keys\(selected\)\.length!==q\.left\.length\)empty\.push\(i\)/);
- assert.match(js,/if\(!value\)empty\.push\(i\)/);
+ assert.match(js,/if\(value\)answers\[q\.id\]=value;else empty\.push\(i\)/);
  assert.match(js,/if\(!confirm\(warning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
  assert.match(js,/empty\.length\+' soru boş veya tamamlanmamış/);
 });
