@@ -68,6 +68,47 @@ $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();
  try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();$('entry').hidden=true;$('player').hidden=false;announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 $('answer-form').addEventListener('change',event=>{if(event.target.matches('input[type="radio"],select'))updateAnswerProgress();});
+// Anonymous pilot draft data stays on the localhost server; the bearer token
+// stays only in this tab's JavaScript memory, never in browser storage.
+async function getProgress(){
+ const r=await fetch('/api/pilot/progress',{method:'GET',credentials:'omit',headers:{Authorization:'Bearer '+claim},cache:'no-store'});
+ const result=await r.json();if(!r.ok)throw Error(result.message||'Ara kayıt alınamadı.');return result;
+}
+let draftBusy=false;
+async function saveDraft(){
+ if(!claim||!exam||draftBusy)return;
+ draftBusy=true;$('pilot-save').disabled=true;
+ try{
+  const {answers}=collectAnswers();
+  await post('/api/pilot/save',{answers},claim);
+  $('pilot-save-status').textContent='Anonim yanıtlar sunucuda ara kaydedildi. Henüz teslim edilmedi.';
+ }catch(e){$('pilot-save-status').textContent='Ara kayıt başarısız: '+e.message;}
+ finally{draftBusy=false;$('pilot-save').disabled=false;}
+}
+$('pilot-save').addEventListener('click',saveDraft);
+$('pilot-restore').addEventListener('click',async()=>{
+ if(!claim||!exam||draftBusy)return;
+ if(!confirm('Bu sekmedeki mevcut seçimleri son sunucu ara kaydıyla değiştirmek istiyor musunuz?'))return;
+ $('pilot-restore').disabled=true;
+ try{
+  const data=await getProgress();
+  const form=$('answer-form');form.reset();
+  for(const q of exam.questions){
+   const answer=data.answers[q.id];
+   if(q.options&&typeof answer==='string'){
+    const radio=[...form.querySelectorAll('input[type="radio"]')].find(x=>x.name===q.id&&x.value===answer);
+    if(radio)radio.checked=true;
+   }else if(q.type==='matching'&&answer&&typeof answer==='object'){
+    for(const left of q.left){
+     const field=[...form.querySelectorAll('select')].find(x=>x.name===q.id+'_'+left.id);
+     if(field&&q.right.some(r=>r.id===answer[left.id]))field.value=answer[left.id];
+    }
+   }
+  }
+  updateAnswerProgress();$('pilot-save-status').textContent='Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.';
+ }catch(e){$('pilot-save-status').textContent='Geri yükleme başarısız: '+e.message;}
+ finally{$('pilot-restore').disabled=false;}
+});
 $('pilot-first-empty').addEventListener('click',()=>{
  if(!exam)return;
  const {empty}=collectAnswers();
