@@ -144,3 +144,283 @@ body.institution-page.campus-layout[data-bep-theme="dark"]{
  --bep-text:#f1f4f9;--bep-muted:#b5c0cf;--bep-brand:#d87492;
  --bep-brand-hover:#ed92aa;--bep-border:#39475d;--bep-focus:#ffb0ca;
 }
+
+
+/* V3 visual implementation — approved burgundy / blush reference.
+   All rules are scoped to the existing campus layout; no JS behavior changes. */
+body.institution-page.campus-layout{
+ --bep-bg:#f8f4f5;
+ --bep-surface:#fff;
+ --bep-surface-alt:#fbf7f8;
+ --bep-text:#22243a;
+ --bep-muted:#677087;
+ --bep-brand:#8e1428;
+ --bep-brand-hover:#721023;
+ --bep-border:#ecdfe4;
+ --bep-focus:#a92347;
+ --bep-radius:17px;
+ --bep-shadow:0 8px 26px rgba(90,43,57,.065);
+ --campus-red:#8e1428;
+ --campus-red-hover:#721023;
+ --campus-background:#faf5f6;
+ font-size:14px;
+}
+body.institution-page.campus-layout .portal-shell{
+ background:var(--bep-bg)!important;
+}
+body.institution-page.campus-layout .portal-main{
+ background:radial-gradient(ellipse 68% 36% at 61% -9%,#fff 0%,transparent 85%),var(--bep-bg)!important;
+}
+body.institution-page.campus-layout .portal-topbar{
+ background:rgba(255,251,252,.95)!important;
+ border-bottom:1px solid #ebdfe4!important;
+ min-height:74px!important;
+}
+body.institution-page.campus-layout .portal-topbar strong{
+ color:#251e33!important;font-size:15px!important;font-weight:800;
+}
+body.institution-page.campus-layout .portal-topbar>div>span{
+ color:#78687c!important;font-size:10px!important;letter-spacing:.13em;
+}
+body.institution-page.campus-layout .portal-pill{
+ border:1px solid #eadde1!important;border-radius:999px!important;
+ color:#354254!important;background:#fff!important;padding:9px 14px!important;
+}
+body.institution-page.campus-layout .portal-content{
+ max-width:1580px!important;
+ padding:20px clamp(16px,3vw,38px) 64px!important;
+}
+body.institution-page.campus-layout .dou-nav{
+ background:linear-gradient(180deg,#fcf8f9 0%,#faf5f6 100%)!important;
+ border-right:1px solid #eadfe3!important;
+}
+body.institution-page.campus-layout .dou-brand-mark{
+ background:linear-gradient(145deg,#a01c35,#770d21)!important;
+ border-color:transparent!important;
+ border-radius:12px!important;
+ box-shadow:0 4px 14px rgba(126,15,35,.17)!important;
+}
+body.institution-page.campus-layout .dou-brand-title strong{
+ color:#901529!important;font-weight:850!important;
+}
+body.institution-page.campus-layout .campus-profile-avatar{
+ border:4px solid #fff!important;background:#fff!important;
+ color:#981c33!important;box-shadow:0 8px 24px rgba(37,25,36,.12)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-create{
+ background:linear-gradient(120deg,#a21734 0%,#821227 100%)!important;
+ color:#fff!important;border:1px solid #821227!important;
+ border-radius:12px!important;min-height:48px!important;
+ font-weight:800!important;box-shadow:0 7px 20px rgba(126,20,42,.17)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-create:hover{
+ background:var(--bep-brand-hover)!important;
+}
+body.institution-page.campus-layout .dou-nav-sections{
+ border:1px solid #eee2e6!important;background:#fff!important;
+ border-radius:20px!important;padding:12px 8px!important;
+ box-shadow:0 8px 25px rgba(88,47,60,.06)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-disclosure>summary.dou-nav-group-title{
+ color:#7c5664!important;font-size:11px!important;font-weight:800!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.portal-menu{
+ min-height:45px!important;border-radius:11px!important;
+ color:#46323e!important;font-weight:700!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.current,
+body.institution-page.campus-layout .dou-nav .dou-nav-link[aria-current="page"]{
+ background:linear-gradient(112deg,#a31632,#811326)!important;
+ border-color:#8f172d!important;color:white!important;
+ box-shadow:0 6px 17px rgba(136,20,39,.18)!important;
+}
+body.institution-page.campus-layout .dou-nav .dou-nav-link.current svg,
+body.institution-page.campus-layout .dou-nav .dou-nav-link[aria-current="page"] svg{
+ color:#fff!important;
+}
+body.institution-page.campus-layout .dou-nav-find input{
+ min-height:44px!important;border-radius:12px!important;
+ border-color:#e9dde2!important;background:white!important;
+}
+body.institution-page.campus-layout .portal-hero,
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading,
+body.institution-page.campus-layout .dashboard-welcome{
+ color:var(--bep-text)!important;
+ border:1px solid #e9dce1!important;
+ border-radius:20px!important;
+ background:linear-gradient(110deg,#fff 0%,#fff9fb 70%,#f9e6ec 100%)!important;
+ box-shadow:var(--bep-shadow)!important;
+}
+body.institution-page.campus-layout .portal-hero :is(h1,h2),
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading h1{
+ color:#22243a!important;
+ letter-spacing:-.045em!important;
+}
+body.institution-page.campus-layout .portal-hero em{color:#971b34!important}
+body.institution-page.campus-layout .portal-hero p,
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading p{
+ color:#677084!important;line-height:1.65!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading{
+ position:relative;overflow:hidden;
+ padding:clamp(22px,2.5vw,36px)!important;
+ margin-bottom:16px!important;min-height:142px;
+ align-items:center;gap:20px;
+}
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading::after{
+ content:"";position:absolute;right:18%;top:-36px;width:240px;height:210px;
+ background:radial-gradient(circle,#f8dce5 5%,#fbf0f4 53%,transparent 70%);
+ border-radius:50%;pointer-events:none;opacity:.75;
+}
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading>*{
+ position:relative;z-index:1;
+}
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading h1{
+ font-size:clamp(30px,3.1vw,43px)!important;margin:6px 0 8px!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-workbench-heading p{
+ max-width:62ch!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-nav{
+ border:1px solid var(--bep-border)!important;
+ border-radius:19px!important;background:white!important;
+ padding:19px!important;gap:14px!important;
+ box-shadow:var(--bep-shadow)!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-caption strong{
+ color:#332332!important;font-size:15px!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-step{
+ border-radius:11px!important;
+ font-weight:750!important;
+ min-height:43px!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-step[aria-current="step"]{
+ background:linear-gradient(110deg,#ac1c3a,#870f26)!important;
+ color:#fff!important;border-color:#89172d!important;
+ box-shadow:0 6px 18px rgba(130,18,43,.2)!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-step[aria-current="step"] span{
+ background:#c32e50!important;color:#fff!important;border-radius:9px!important;
+}
+body.institution-page.campus-layout #exam-workspace .workflow-pager{
+ border-color:#f1e7ea!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-user,
+body.institution-page.campus-layout #exam-workspace .exam-overview{
+ border:1px solid var(--bep-border)!important;
+ border-radius:17px!important;background:white!important;
+ box-shadow:0 4px 16px rgba(66,30,45,.04)!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-user{
+ padding:17px 21px!important;margin-block:14px!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-user h2{
+ font-size:18px!important;color:#292137!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-overview summary{
+ min-height:50px;color:#332b3e!important;
+ font-weight:750!important;cursor:pointer;
+}
+body.institution-page.campus-layout #exam-workspace .exam-grid{
+ gap:16px!important;align-items:start!important;
+}
+body.institution-page.campus-layout #exam-workspace #exam-drafts-panel,
+body.institution-page.campus-layout #exam-workspace #exam-editor-card{
+ border:1px solid var(--bep-border)!important;
+ border-radius:18px!important;
+ background:white!important;
+ box-shadow:var(--bep-shadow)!important;
+ padding:clamp(16px,2vw,25px)!important;min-width:0;
+}
+body.institution-page.campus-layout #exam-workspace #exam-editor-card{
+ box-shadow:0 14px 35px rgba(92,41,58,.075)!important;
+}
+body.institution-page.campus-layout #exam-workspace :is(#exam-drafts-panel,#exam-editor-card)>.portal-card-head{
+ padding-bottom:16px!important;margin-bottom:17px!important;
+ border-bottom:1px solid #f0e5e9!important;gap:14px!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-card-head h3{
+ color:#272237!important;letter-spacing:-.03em!important;
+ font-size:clamp(17px,1.8vw,24px)!important;
+}
+body.institution-page.campus-layout #exam-workspace .portal-outline-label{
+ background:#fff1f4!important;color:#951c37!important;
+ border:1px solid #f2d9e0!important;
+ border-radius:999px!important;
+ padding:8px 12px!important;font-weight:800!important;
+}
+body.institution-page.campus-layout #exam-workspace :is(.editor-ribbon,.exam-autosave-panel){
+ border-radius:12px!important;
+}
+body.institution-page.campus-layout #exam-workspace .editor-ribbon{
+ background:#faf4f6!important;border:1px solid #f0e4e8!important;
+ color:#4f4551!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-autosave-panel{
+ border-color:#dce9e4!important;background:#f7fbfa!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-list-controls :is(input,select),
+body.institution-page.campus-layout #exam-workspace .exam-grid :is(input,select,textarea){
+ background:#fff!important;border:1px solid #d7d8e0!important;
+ border-radius:12px!important;color:#293146!important;
+ min-height:46px!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-grid :is(input,select,textarea):focus{
+ border-color:#a32849!important;
+ box-shadow:0 0 0 3px rgba(163,40,73,.13)!important;
+}
+body.institution-page.campus-layout .portal-btn.primary{
+ background:linear-gradient(110deg,#a71b39,#89152c)!important;
+ border-color:#91152d!important;
+ box-shadow:0 5px 16px rgba(140,20,42,.12)!important;
+ font-weight:750!important;
+}
+body.institution-page.campus-layout .portal-btn.secondary{
+ background:#fff!important;border-color:#dfdbe3!important;
+ color:#343049!important;font-weight:700!important;
+}
+body.institution-page.campus-layout .portal-btn.secondary:hover{
+ background:#fff5f8!important;border-color:#d7b7c3!important;
+}
+body.institution-page.campus-layout .portal-mini-label{
+ color:#971b36!important;font-size:11px!important;
+ font-weight:850!important;letter-spacing:.12em!important;
+}
+body.institution-page.campus-layout .campus-dashboard-stage,
+body.institution-page.campus-layout .portal-card{
+ border-radius:19px!important;
+ border-color:#eadfe3!important;
+ box-shadow:var(--bep-shadow)!important;
+}
+body.institution-page.campus-layout .dashboard-shortcut:hover{
+ border-color:#d7aebb!important;
+ transform:translateY(-1px);
+}
+@media(max-width:1080px){
+ body.institution-page.campus-layout .portal-content{
+  padding:16px 14px 48px!important;
+ }
+ body.institution-page.campus-layout #exam-workspace .exam-workbench-heading{
+  min-height:0;
+ }
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout #exam-workspace .exam-workbench-heading{
+  display:flex;flex-direction:column;align-items:flex-start;padding:22px!important;
+ }
+ body.institution-page.campus-layout #exam-workspace .exam-workbench-heading::after{display:none}
+ body.institution-page.campus-layout #exam-workspace .workflow-nav{
+  padding:14px!important;
+ }
+ body.institution-page.campus-layout #exam-workspace #exam-drafts-panel,
+ body.institution-page.campus-layout #exam-workspace #exam-editor-card{
+  padding:16px!important;
+ }
+ body.institution-page.campus-layout #exam-workspace .portal-user{
+  padding:15px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.institution-page.campus-layout .dashboard-shortcut{transform:none!important}
+}
