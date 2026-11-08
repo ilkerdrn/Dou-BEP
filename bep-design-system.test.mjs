@@ -132,3 +132,31 @@ test('coordination uses three readable form groups and working anchor destinatio
  assert.match(css,/\.coord-quick-nav a:focus-visible/);
  assert.match(css,/\.coord-form-divider/);
 });
+
+
+test('batch and accommodation screens have accessible shortcuts and preserved workflows',()=>{
+ const screens=[
+  ['batch-exams.html',['step-exam','step-list','step-review','step-export']],
+  ['accommodation-admin.html',['decision-form-title','decision-records-title']]
+ ];
+ for(const [file,ids] of screens){
+  const html=read('./'+file);
+  assert.match(html,/<body class="institution-page bep-task-page">/);
+  assert.match(html,/class="bep-task-shortcuts"/);
+  for(const id of ids){
+   assert.ok(html.includes('id="'+id+'"'),file+' missing destination '+id);
+   assert.ok(html.includes('href="#'+id+'"'),file+' missing shortcut '+id);
+  }
+ }
+ const batch=read('./batch-exams.html');
+ const decisions=read('./accommodation-admin.html');
+ for(const id of ['batch-workspace','batch-mappings-section','batch-refresh','batch-message']){
+  assert.ok(batch.includes('id="'+id+'"'),'Lost batch workflow element '+id);
+ }
+ for(const id of ['decision-workspace','decision-form','decision-adjustments','decision-save','decision-history']){
+  assert.ok(decisions.includes('id="'+id+'"'),'Lost decision workflow element '+id);
+ }
+ const css=read('./bep-design-system.css');
+ assert.match(css,/\.bep-task-shortcuts a:focus-visible/);
+ assert.match(css,/@media\(max-width:480px\)/);
+});
