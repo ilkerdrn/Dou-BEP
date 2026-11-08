@@ -35,3 +35,23 @@ test('auth controls, MFA and separate exam module are retained',()=>{
  assert.match(read('./institution.mjs'),/\/login\/mfa/);
  assert.match(read('./design-interactions.mjs'),/toggle-password/);
 });
+
+
+test('approved burgundy reference has consistent navigation, workflow and editor styling',()=>{
+ const css=read('./bep-design-system.css');
+ for(const selector of [
+  '.portal-topbar','.dou-nav-sections','.dou-create','.dou-nav-link',
+  '.exam-workbench-heading','.workflow-nav','.workflow-step',
+  '#exam-drafts-panel','#exam-editor-card','.portal-btn.primary',
+  '.exam-list-controls','.exam-overview','.portal-user'
+ ]) assert.ok(css.includes(selector),'Missing design region '+selector);
+ for(const token of ['#8e1428','#f8f4f5','#fff']){
+  assert.ok(css.includes(token),'Missing approved reference color '+token);
+ }
+ assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ // Non-destructive structural guard for accidental truncation of source CSS.
+ let depth=0;
+ for(const char of css){if(char==='{')depth++;if(char==='}')depth--;assert.ok(depth>=0,'Unbalanced CSS block');}
+ assert.equal(depth,0,'Unclosed CSS block');
+});
