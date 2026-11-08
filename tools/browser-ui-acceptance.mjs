@@ -492,6 +492,24 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(route==='/pilot-yonetim'||route==='/bep-import'){
+   const layout=await evaluate(`(function(){
+     const nav=document.querySelector('.bep-section-nav');
+     const links=[...nav.querySelectorAll('a')];
+     const main=document.querySelector('main').getBoundingClientRect();
+     return {links:links.length,
+       valid:links.every(a=>a.hash&&document.getElementById(a.hash.slice(1))),
+       firstColor:getComputedStyle(links[0]).color,
+       firstBg:getComputedStyle(links[0]).backgroundColor,
+       contentWidth:Math.round(main.width),available:document.documentElement.clientWidth,
+       scroll:document.documentElement.scrollWidth};
+   })()`);
+   console.log('BROWSER V3 PILOT / BEP IMPORT '+label+': '+JSON.stringify(layout));
+   pass(layout.valid&&layout.links===(route==='/pilot-yonetim'?3:2),label+' shortcuts target existing workflow panels');
+   pass(layout.firstBg==='rgb(142, 20, 40)'&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
+   pass(layout.scroll<=layout.available+2,label+' has no horizontal overflow');
+  }
+
   if(route==='/sinav-dosya-aktar'||route==='/erisilebilirlik-kontrol'){
    const flow=await evaluate(`(function(){
     const nav=document.querySelector('.bep-task-shortcuts');
