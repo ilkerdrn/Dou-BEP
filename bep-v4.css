@@ -1382,3 +1382,34 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
 body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-related-imports[open]{
  padding-bottom:12px!important;
 }
+
+
+/* Phase 26 — local screenshot review: the left login panel is dark but
+ * inherited V4 light-surface typography made the hero unreadable.
+ * Keep the split-screen composition, use readable light foreground colors,
+ * and scope changes to the unauthenticated institutional login only.
+ */
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro{
+ color:#f7f3f6!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro h2{
+ color:#fff!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro h2 span{
+ color:#f4b2bf!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro>.portal-mini-label{
+ color:#f5aabb!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro>p{
+ color:#d7dce9!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-highlights strong{
+ color:#f8f5fa!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-highlights small{
+ color:#d4d9e8!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro-footer{
+ color:#cbd0df!important;
+}
