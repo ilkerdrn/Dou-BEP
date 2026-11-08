@@ -8,6 +8,7 @@ if (nav) {
   const stepCount=document.getElementById('workflow-step-count');
   const nextHint=document.getElementById('workflow-next-hint');
   const announcement=document.getElementById('workflow-announcement');
+  let updateGuidedView=()=>{};
   const revealAndVisit = button => {
     const target=findTarget(button);
     if(!target)return;
@@ -33,6 +34,7 @@ if (nav) {
         ?'Sıradaki: '+following.textContent.replace(/^\s*\d+\s*/,'').trim()
         :'Tüm hazırlama bölümlerini ziyaret ettiniz; kalite ve onayı kontrol edin.';
     }
+    updateGuidedView(selectedIndex);
     for (const step of steps) {
       const selected = step === button;
       step.classList.toggle('active',selected);
@@ -161,6 +163,65 @@ for(const [id,title,description] of optionalExamTools){
  wrapper.addEventListener('focusin',()=>{wrapper.open=true;});
 }
 
+
+// A progressive editor view: original fields, listeners and save logic stay in
+// place. Only the presentation of inactive stages changes; advanced view
+// restores every stage without discarding draft values.
+if(nav){
+ const editor=document.getElementById('exam-editor-card');
+ const viewToggle=document.getElementById('workflow-view-toggle');
+ if(editor&&viewToggle){
+  const stageIds=['exam-main-fields','exam-goal-section','exam-library-section',
+   'exam-question-section','exam-output-section'];
+  const directChildFor=id=>{
+   let node=document.getElementById(id);
+   while(node&&node.parentElement!==editor)node=node.parentElement;
+   return node?.parentElement===editor?node:null;
+  };
+  const nodes=[...editor.children];
+  const stageStarts=stageIds.map((id,index)=>{
+   const child=directChildFor(id);
+   let at=nodes.indexOf(child);
+   // Keep the headings attached to the related stage.
+   if((index===0||index===3)&&at>0&&nodes[at-1].matches('.workspace-block-label'))
+    at--;
+   return at;
+  });
+  const valid=stageStarts.every((at,index)=>at>=0&&(index===0||at>stageStarts[index-1]));
+  if(valid){
+   const stageFor=index=>{
+    let stage=-1;
+    for(let i=0;i<stageStarts.length;i++)if(index>=stageStarts[i])stage=i;
+    return stage;
+   };
+   let guided=true;
+   const sync=index=>{
+    const active=index>=0?index:0;
+    editor.classList.toggle('exam-guided-view',guided);
+    for(const [position,node] of nodes.entries()){
+     const stage=stageFor(position);
+     // Editor title, save state, autosave and version/history stay visible.
+     const hide=guided&&stage>=0&&stage!==active;
+     node.hidden=hide;
+     node.dataset.workflowHidden=String(hide);
+     if(hide&&node.contains(document.activeElement))viewToggle.focus();
+    }
+    viewToggle.setAttribute('aria-pressed',String(guided));
+    viewToggle.textContent=guided?'Tüm alanları göster':'Adım adım görünüme dön';
+   };
+   updateGuidedView=sync;
+   viewToggle.addEventListener('click',()=>{
+    guided=!guided;
+    const current=steps.findIndex(step=>step.classList.contains('active'));
+    sync(current);
+   });
+   sync(steps.findIndex(step=>step.classList.contains('active')));
+  }else{
+   // Fail open instead of hiding controls if the editor structure changes.
+   viewToggle.hidden=true;
+  }
+ }
+}
 
 // Short question cards show the fields needed to write/score a question first.
 // Optional presentation, visual support and review controls remain in the DOM.
