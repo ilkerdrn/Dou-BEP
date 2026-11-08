@@ -31,6 +31,9 @@
  let currentRole=null;
  const allowed=link=>!link.hasAttribute('data-admin-nav-roles')||
   (!!currentRole&&link.getAttribute('data-admin-nav-roles').split(',').includes(currentRole));
+ const firstVisibleResult=()=>[...panel.querySelectorAll('.dou-nav-link')].find(link=>
+  allowed(link)&&!link.hidden&&!link.closest('.dou-nav-group')?.hidden&&
+  link.closest('.dou-nav-disclosure')?.open!==false);
  const updateManagement=role=>{
   currentRole=typeof role==='string'?role:null;
   if(management){
@@ -39,6 +42,11 @@
    for(const link of management.querySelectorAll('.dou-nav-link'))link.hidden=!allowed(link);
   }
   filter();
+  // Make authorized management tools discoverable without extra clicks.
+  if(management&&currentRole&&!searchActive){
+   const disclosure=management.querySelector('.dou-nav-disclosure');
+   if(disclosure)disclosure.open=!management.hidden;
+  }
  };
  document.addEventListener('dou-nav-role',event=>updateManagement(event.detail?.role));
  const groups=[...panel.querySelectorAll('.dou-nav-group')];
@@ -73,7 +81,7 @@
   for(const group of groups){
    let inGroup=0;
    for(const link of group.querySelectorAll('.dou-nav-link')){
-    const match=allowed(link)&&(!q||normalize(link.textContent).includes(q));
+    const match=allowed(link)&&(!q||normalize(link.textContent+' '+(link.dataset.navKeywords||'')).includes(q));
     link.hidden=!match;
     if(match){visible++;inGroup++;}
    }
@@ -100,12 +108,14 @@
    if(e.key==='Escape'&&field.value){
     field.value='';filter();e.preventDefault();e.stopPropagation();
    }
-   // A keyboard user can search, then move directly to the first visible result.
-   if(e.key==='ArrowDown'){
-    const first=[...panel.querySelectorAll('.dou-nav-link')].find(link=>
-     !link.hidden&&!link.closest('.dou-nav-group')?.hidden&&
-     link.closest('.dou-nav-disclosure')?.open!==false);
-    if(first){e.preventDefault();first.focus();}
+   // Enter opens the first authorized matching module; ArrowDown focuses it.
+   if((e.key==='Enter'||e.key==='ArrowDown')&&field.value.trim()){
+    const first=firstVisibleResult();
+    if(first){
+     e.preventDefault();
+     if(e.key==='Enter')first.click();
+     else first.focus();
+    }
    }
   });
  }
