@@ -314,3 +314,19 @@ test('manual NVDA acceptance remains explicit and keyboard ArrowUp only applies 
  assert.match(protocol,/gerçek öğrenci/i);
  assert.match(protocol,/otomatik Edge testi/i);
 });
+
+
+test('offline accessibility checklist includes distinct human NVDA guidance without changing review controls',()=>{
+ const html=read('./accessibility-check.html');
+ const css=read('./bep-design-system.css');
+ assert.match(html,/<details class="card pilot-manual-guide" id="pilot-manual-guide">/);
+ assert.match(html,/<summary id="pilot-manual-guide-title">/);
+ assert.match(html,/12 manuel kontrol/);
+ assert.match(html,/16 senaryolu ayrıntılı protokol/);
+ assert.match(html,/docs\/V3-MANUEL-ERISILEBILIRLIK-KABUL\.md/);
+ assert.match(html,/NVDA kurulmamışsa/);
+ for(const id of ['pilot-reader','pilot-platform','pilot-browser','pilot-export-json','pilot-export-csv','pilot-import-json','checks']){
+  assert.ok(html.includes('id="'+id+'"'),'Missing original offline checklist control '+id);
+ }
+ assert.match(css,/\.pilot-manual-guide>summary:focus-visible/);
+});
