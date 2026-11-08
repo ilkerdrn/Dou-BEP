@@ -279,3 +279,14 @@ test('single full-width layout and offline Turkish menu search contract',()=>{
  assert.match(nav,/\.replace\(\/ş\/g,'s'\)/);
  assert.match(nav,/field\.dispatchEvent|field\.addEventListener\('input',filter\)/);
 });
+
+
+test('shared navigation supports keyboard search and safe mobile drawer dismissal',()=>{
+ const nav=read('./admin-navigation.js');
+ assert.match(nav,/e\.key==='ArrowDown'/,'Search should offer a first-result keyboard shortcut');
+ assert.match(nav,/first\.focus\(\)/,'First visible search result should receive keyboard focus');
+ assert.match(nav,/e\.key==='Escape'&&field\.value/,'Escape should clear non-empty search');
+ assert.match(nav,/toggle\.focus\(\)/,'Closing mobile drawer should restore keyboard focus');
+ assert.match(nav,/addEventListener\('pointerdown'/,'Outside click should dismiss mobile drawer');
+ assert.match(nav,/nav\.contains\(event\.target\)/,'Inside interactions must not dismiss mobile drawer');
+});
