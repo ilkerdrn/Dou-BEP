@@ -397,3 +397,15 @@ test('V4 exam section actions stay horizontal without restoring the regressed he
  assert.match(css,/#exam-workspace \.exam-question-add-actions \.portal-btn\{\s*min-height:40px!important/);
  assert.doesNotMatch(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
 });
+
+
+test('V4 preflight action layout remains usable with legacy institutional CSS disabled',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/#exam-workspace \.preflight-next-action\{\s*display:flex!important/);
+ assert.match(css,/justify-content:space-between!important;\s*align-items:center!important;\s*flex-wrap:wrap!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action>div\{\s*flex:1 1 220px!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action strong\{\s*display:block!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action p\{\s*margin:0!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action \.portal-btn\{\s*min-height:42px!important/);
+ assert.match(css,/#exam-workspace \.preflight-all-checked\{\s*background:#f4f9f7!important/);
+});
