@@ -278,3 +278,12 @@ test('V4 exam step navigation retains V3-independent two-row flex structure and 
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/\.workflow-step\{\s*flex:0 0 auto!important/);
 });
+
+
+test('V4 dashboard retains text measurements without copying V3 brand colors',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/\.campus-dashboard-stage \.dashboard-welcome p\{\s*max-width:62ch!important;\s*font-size:13\.5px!important;\s*line-height:1\.65!important/);
+ assert.match(css,/\.campus-summary-card h3\{\s*font-size:16px!important/);
+ assert.match(css,/\.campus-summary-card p\{\s*font-size:12px!important;line-height:1\.6!important/);
+ assert.match(css,/\.campus-notice-card>a\{\s*color:var\(--v4-primary\)!important/);
+});
