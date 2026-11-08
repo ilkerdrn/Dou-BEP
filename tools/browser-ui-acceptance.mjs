@@ -492,6 +492,28 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(['/dou-reader-demo','/dou-speech-phoneme','/dou-speech-pool','/dou-speech-listening','/dou-speech-intelligibility'].includes(route)){
+   const lab=await evaluate(`(function(){
+    const nav=document.querySelector('.bep-lab-shortcuts');
+    const links=[...nav.querySelectorAll('a')];
+    const skip=document.querySelector('.dou-skip');
+    return {
+     shortcuts:links.length,
+     destinationsValid:links.every(a=>a.hash&&document.getElementById(a.hash.slice(1))),
+     skipValid:!!document.querySelector(skip.getAttribute('href')),
+     firstBg:getComputedStyle(links[0]).backgroundColor,
+     firstColor:getComputedStyle(links[0]).color,
+     docWidth:document.documentElement.scrollWidth,
+     availableWidth:document.documentElement.clientWidth
+    };
+   })()`);
+   console.log('BROWSER OFFLINE SPEECH LAB UX '+label+': '+JSON.stringify(lab));
+   pass(lab.destinationsValid&&lab.shortcuts>=2,label+' shortcuts navigate to existing controls');
+   pass(lab.skipValid,label+' keyboard skip link reaches main content');
+   pass(lab.firstBg==='rgb(142, 20, 40)'&&lab.firstColor==='rgb(255, 255, 255)',label+' has premium readable primary navigation');
+   pass(lab.docWidth<=lab.availableWidth+2,label+' has no horizontal overflow');
+  }
+
   if(route==='/pilot-yonetim'||route==='/bep-import'){
    const layout=await evaluate(`(function(){
      const nav=document.querySelector('.bep-section-nav');
