@@ -1315,3 +1315,118 @@ body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(#ops-summary,#o
   grid-template-columns:minmax(0,1fr);
  }
 }
+
+
+/* V3 usability: offline document import and manual accessibility checklist.
+   Preserve native pilot control behavior, only refine visual composition. */
+body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux){
+ color:#252239!important;background:#f8f4f5!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-wrap,
+body.dou-admin-standalone.bep-audit-ux .pilot-audit{
+ width:100%!important;max-width:none!important;min-width:0;
+ margin:0!important;
+ padding:clamp(16px,2vw,30px)!important;
+ box-sizing:border-box;
+}
+body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) .bep-task-shortcuts{
+ display:flex;flex-wrap:wrap;gap:9px;
+ width:100%;margin:0 0 16px!important;
+ padding:14px!important;border:1px solid #e9dce2!important;
+ background:#fff!important;border-radius:15px!important;
+}
+body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) .bep-task-shortcuts a{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:9px 14px;min-height:42px;
+ background:#fff!important;color:#812139!important;
+ border:1px solid #e3ccd5!important;
+ border-radius:10px!important;text-decoration:none!important;
+ font-weight:800!important;font-size:13px!important;
+}
+body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) .bep-task-shortcuts a:first-child{
+ color:#fff!important;background:#8e1428!important;border-color:#8e1428!important;
+}
+body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) .bep-task-shortcuts a:focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-wrap>h1{
+ font-size:clamp(26px,2.9vw,39px)!important;
+ font-weight:850!important;color:#272239!important;
+ letter-spacing:-.035em!important;line-height:1.18!important;
+ max-width:38ch;
+}
+body.dou-admin-standalone.bep-import-ux .source-wrap>.portal-mini-label{
+ color:#8e1428!important;font-weight:850!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-note{
+ background:#fffaf1!important;color:#634c29!important;
+ border:1px solid #eeddb8!important;border-radius:12px!important;
+ padding:13px 16px!important;line-height:1.6!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-card,
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .card{
+ width:100%;min-width:0;background:#fff!important;
+ border:1px solid #eadfe4!important;border-radius:16px!important;
+ box-shadow:0 5px 22px rgba(75,39,54,.055)!important;
+ padding:clamp(17px,2vw,28px)!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-card{
+ margin:0 0 16px!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-card h2,
+body.dou-admin-standalone.bep-audit-ux .pilot-audit :is(h1,h2,h3){
+ color:#292439!important;letter-spacing:-.025em;
+}
+body.dou-admin-standalone.bep-import-ux .source-card h2{
+ font-size:clamp(19px,2vw,24px)!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-wrap :is(input:not([type="checkbox"]),textarea,select),
+body.dou-admin-standalone.bep-audit-ux .pilot-audit :is(input:not([type="checkbox"]),textarea,select){
+ background:#fff!important;color:#27243a!important;
+ border:1px solid #d9cdd5!important;border-radius:11px!important;
+ max-width:100%;min-width:0;box-sizing:border-box;
+}
+body.dou-admin-standalone.bep-import-ux .source-wrap input[type="file"]{
+ display:block;width:100%;padding:10px!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-actions .portal-btn.primary{
+ min-height:44px!important;background:#8e1428!important;
+ color:#fff!important;border-radius:11px!important;
+}
+body.dou-admin-standalone.bep-import-ux .source-card #source-rich-review{
+ border-color:#d4a257!important;background:#fffbf5!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-hero{
+ background:linear-gradient(110deg,#fff 0%,#fffafb 70%,#f8e7ed 100%)!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-kicker,
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-step{
+ color:#8e1428!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-stat,
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-check-grid>*, 
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-environment>*{
+ background:#fff!important;border-color:#eadfe4!important;
+ border-radius:12px!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-stat-value{
+ color:#292439!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-filterbar button[aria-pressed="true"]{
+ background:#8e1428!important;color:#fff!important;border-color:#8e1428!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit .pilot-action-buttons :is(button,.pilot-import-label){
+ border-radius:10px!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-audit :is(#pilot-env-title,#pilot-summary-title,#pilot-checks-title,#pilot-rule-title),
+body.dou-admin-standalone.bep-import-ux :is(#source-setup,#source-result){
+ scroll-margin-top:88px;
+}
+@media(max-width:720px){
+ body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) :is(.source-wrap,.pilot-audit){
+  padding:12px!important;
+ }
+ body.dou-admin-standalone:is(.bep-import-ux,.bep-audit-ux) .bep-task-shortcuts a{
+  flex:1 1 148px;
+ }
+}
