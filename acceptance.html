@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DOU BEP | Erişilebilirlik Kabul Merkezi</title><link rel="stylesheet" href="/acceptance.css"><link rel="stylesheet" href="/admin-premium.css"><link rel="stylesheet" href="/bep-design-system.css"></head>
-<body class="dou-admin-standalone">
+<body class="dou-admin-standalone bep-accept-page">
 <a class="dou-skip" href="#dou-content">İçeriğe geç</a>
 <aside class="portal-side dou-nav" aria-label="BEP ana menü">
 <div class="dou-nav-brand"><div class="dou-brand-mark" aria-hidden="true"><span>DOU</span><i></i></div><div class="dou-brand-title"><strong>BEP Sınav Atölyesi</strong><small>Kurumsal çalışma alanı</small></div><button class="dou-nav-toggle" type="button" aria-label="Menüyü aç veya kapat" aria-controls="dou-nav-sections" aria-expanded="false"><span></span><span></span><span></span></button></div>
@@ -28,12 +28,12 @@
 </nav>
 <div class="dou-nav-bottom"><span class="dou-nav-offline"><i aria-hidden="true"></i> Yalnızca yerel ortam</span><span class="dou-nav-version">ARAŞTIRMA PROTOTİPİ · v2.81</span><p>Gerçek öğrenci veya sağlık verisi girmeyin.</p></div>
 </aside>
-<a class="skip" href="#acceptance-main">İçeriğe geç</a><main id="dou-content" id="acceptance-main" class="shell">
-<header class="top"><div><div class="eyebrow">DOU BEP / AKADEMİK KALİTE GÜVENCESİ</div><h1>Erişilebilirlik Kabul Merkezi</h1><p>Öğretim sorumlusunun ve bağımsız koordinatörün sınav revizyonuna bağlı inceleme beyanlarını izleyin.</p></div><a class="back" href="/sinav-operasyon">← Operasyon merkezine dön</a></header>
+<a class="skip" href="#acceptance-main">İçeriğe geç</a><main id="dou-content" class="shell">
+<header class="top"><div><div class="eyebrow">DOU BEP / AKADEMİK KALİTE GÜVENCESİ</div><h1>Erişilebilirlik Kabul Merkezi</h1><p>Öğretim sorumlusunun ve bağımsız koordinatörün sınav revizyonuna bağlı inceleme beyanlarını izleyin.</p></div><nav class="bep-workflow-links" aria-label="Kabul merkezi bölümleri"><a href="#accept-summary">Kabul özeti</a><a href="#exam-head">Sınav incelemeleri</a></nav><a class="back" href="/sinav-operasyon">← Operasyon merkezine dön</a></header>
 <div class="notice" role="note"><strong>Anonim BAP araştırma pilotu.</strong> Bu formdaki işaretlemeler gerçek ekran okuyucu testinin, PDF/UA belgesinin, kurumsal izinlerin veya akademik eşdeğerlik incelemesinin yerine geçmez. Gerçek öğrenci verisi girmeyin.</div>
 <div id="gate" class="panel" hidden><h2>Kurumsal oturum gerekli</h2><p>Öğretmen, koordinatör veya yönetici hesabıyla giriş yapın.</p><a href="/kurum">Hesap girişi</a></div>
 <div id="app" hidden>
-<div class="overview" aria-label="Kabul özeti"><div><span>İzlenen sınavlar</span><strong id="count-all">—</strong></div><div><span>Öğretmen incelemesi bekliyor</span><strong id="count-teacher">—</strong></div><div><span>Koordinatör incelemesi bekliyor</span><strong id="count-coordinator">—</strong></div><div><span>İki aşama kaydı tamam</span><strong id="count-done">—</strong></div></div>
+<div class="overview" id="accept-summary" aria-label="Kabul özeti"><div><span>İzlenen sınavlar</span><strong id="count-all">—</strong></div><div><span>Öğretmen incelemesi bekliyor</span><strong id="count-teacher">—</strong></div><div><span>Koordinatör incelemesi bekliyor</span><strong id="count-coordinator">—</strong></div><div><span>İki aşama kaydı tamam</span><strong id="count-done">—</strong></div></div>
 <div class="toolbar"><label for="status-filter">Durum</label><select id="status-filter"><option value="">Tüm sınavlar</option><option value="source_blocked">Onay/özet sorunu</option><option value="teacher_pending">Öğretmen bekleniyor</option><option value="coordinator_pending">Koordinatör bekleniyor</option><option value="reviewed">Kayıt tamam</option></select><button type="button" id="refresh">Yenile</button><span id="updated" aria-live="polite"></span></div>
 <section class="panel" aria-labelledby="exam-head"><h2 id="exam-head">Sınav incelemeleri</h2><p>Önce sınavı seçin. Revizyon değişirse önceki beyanlar geçerli sayılmaz.</p><div id="exam-list" class="exam-list"></div><p id="empty" hidden>Bu kapsamda görüntülenebilen sınav yok.</p></section>
 <section class="panel" id="detail" hidden aria-labelledby="detail-title"><div class="detail-head"><div><p class="eyebrow">SEÇİLEN SINAV</p><h2 id="detail-title"></h2><p id="detail-meta"></p></div><span id="detail-status" class="chip"></span></div>
