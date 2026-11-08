@@ -157,7 +157,7 @@ test('V4 shortcut branding excludes old V3 primary color across migrated modules
 });
 
 
-test('V4 provides opt-in isolated CSS retirement comparison before removing V3 links',()=>{
+test('V4 preserves optional CSS parity probe and removes legacy links after approval',()=>{
  const browser=read('./tools/browser-ui-acceptance.mjs');
  const scripts=JSON.parse(read('./package.json')).scripts;
  const guide=read('./docs/V4-CSS-RETIREMENT-GATE.md');
@@ -172,12 +172,12 @@ test('V4 provides opt-in isolated CSS retirement comparison before removing V3 l
  assert.match(browser,/restoreIssues/);
  assert.match(guide,/admin-design-v3\.css/);
  for(const page of ['institution.html','institutional-exams.html']){
-  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/,'Do not remove before comparison');
+  assert.doesNotMatch(read('./'+page),/href="\/admin-design-v3\.css"/,'Retired V3 link must stay absent');
  }
 });
 
 
-test('V4 owns dashboard and exam geometry before the V3 stylesheet can be retired',()=>{
+test('V4 owns dashboard and exam geometry after retiring V3 links',()=>{
  const css=read('./bep-v4.css');
  const browser=read('./tools/browser-ui-acceptance.mjs');
  for(const selector of [
@@ -191,13 +191,13 @@ test('V4 owns dashboard and exam geometry before the V3 stylesheet can be retire
  assert.match(css,/@media\(min-width:1121px\)/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(265px,310px\)!important/);
  assert.match(browser,/BROWSER V4 CSS RETIREMENT PROBE/);
- // Preserve V3 in markup until the real Edge toggle has measured zero remaining differences.
+ // The isolated Edge comparison passed with zero differences; V3 links are now retired.
  for(const page of ['institution.html','institutional-exams.html'])
-  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+  assert.doesNotMatch(read('./'+page),/href="\/admin-design-v3\.css"/);
 });
 
 
-test('V4 can exercise existing browser acceptance with V3 disabled only in the disposable test DOM',()=>{
+test('V4 retains disposable V3-off browser testing for historical and new fixtures',()=>{
  const code=read('./tools/browser-ui-acceptance.mjs');
  const scripts=JSON.parse(read('./package.json')).scripts;
  assert.equal(scripts['design:v4:without-v3'],'node tools/browser-ui-acceptance.mjs --without-v3');
@@ -206,7 +206,7 @@ test('V4 can exercise existing browser acceptance with V3 disabled only in the d
  assert.match(code,/el\.disabled=true/);
  assert.match(code,/requestAnimationFrame/);
  for(const page of ['institution.html','institutional-exams.html']){
-  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+  assert.doesNotMatch(read('./'+page),/href="\/admin-design-v3\.css"/);
  }
 });
 
@@ -240,7 +240,7 @@ test('V4 preserves a visible mobile menu toggle independently of legacy V3',()=>
 });
 
 
-test('V4 CSS removal requires a strict computed visual parity gate, not only functional Edge checks',()=>{
+test('V4 still enforces strict computed visual parity and the retired stylesheet invariant',()=>{
  const code=read('./tools/browser-ui-acceptance.mjs');
  const scripts=JSON.parse(read('./package.json')).scripts;
  assert.equal(scripts['design:v4:parity'],'node tools/browser-ui-acceptance.mjs --css-parity');
@@ -249,7 +249,7 @@ test('V4 CSS removal requires a strict computed visual parity gate, not only fun
  assert.match(code,/changed\.length/);
  assert.match(code,/BROWSER V4 CSS RETIREMENT PROBE/);
  for(const page of ['institution.html','institutional-exams.html'])
-  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+  assert.doesNotMatch(read('./'+page),/href="\/admin-design-v3\.css"/);
 });
 
 
@@ -435,4 +435,17 @@ test('V4 final output section and related imports preserve their measured disclo
  assert.match(css,/#exam-workspace \.exam-related-imports>summary\{\s*cursor:pointer!important/);
  assert.match(css,/#exam-workspace \.exam-related-imports\[open\]\{\s*padding-bottom:12px!important/);
  assert.match(css,/#exam-workspace \.exam-related-imports>summary:focus-visible\{\s*outline:3px solid var\(--v4-focus\)!important/);
+});
+
+test('V4 retired institutional routes do not load admin V3 but keep the original CSS asset',()=>{
+ const v3=read('./admin-design-v3.css');
+ assert.ok(v3.length>1000,'Original V3 asset must remain available for rollback');
+ for(const page of ['institution.html','institutional-exams.html']){
+  const html=read('./'+page);
+  assert.doesNotMatch(html,/href="\\/admin-design-v3\\.css"/);
+  assert.match(html,/href="\\/bep-v4\\.css"/);
+ }
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(browser,/BROWSER V4 CSS RETIREMENT VERIFIED/);
+ assert.match(browser,/status\\.v4!==1\\|\\|status\\.legacy!==0/);
 });
