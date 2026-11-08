@@ -149,6 +149,13 @@ async function main(){
   return Number.isInteger(port)&&port>0?port:null;
  },'Edge DevTools startup',20000);
  await connectTab(debugPort);
+ // The bare local URL must open the same V3 login instead of the legacy index.
+ const rootResponse=await fetch(base+'/',{redirect:'manual'});
+ pass(rootResponse.status===302&&rootResponse.headers.get('location')==='/kurum',
+  'Root URL redirects to the canonical institutional V3 entry');
+ const legacyResponse=await fetch(base+'/index.html');
+ pass(legacyResponse.status===200&&(await legacyResponse.text()).includes('app.mjs'),
+  'Legacy editor remains available at its explicit URL during migration');
  await navigate(base,'/kurum');
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="guest"'),'Guest auth shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display==="none"'),'Guest does not see administrator navigation');
