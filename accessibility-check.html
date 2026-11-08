@@ -139,6 +139,20 @@ body.dou-admin-standalone.pilot-audit-page {background:#f4f6fa;color:#17253a}
     </div><span class="pilot-hero-pill">12 manuel kontrol · Yerel çalışma</span></div>
     <div class="pilot-privacy" role="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v5m0 3h.01"/></svg><span><strong>Gizlilik:</strong> Öğrenci adı, tanı, iletişim veya ses kaydı girmeyin. Kontroller yalnız bu sekmede tutulur; sunucuya gönderilmez. Bu ekran erişilebilirlik sertifikası ya da resmî onay üretmez.</span></div>
   </section>
+  <details class="card pilot-manual-guide" id="pilot-manual-guide">
+    <summary id="pilot-manual-guide-title">Gerçek NVDA ve klavye testi nasıl yapılır? <span aria-hidden="true">▾</span></summary>
+    <div class="pilot-manual-guide-body">
+      <p><strong>Önce testin kapsamını belirleyin:</strong> Bu sayfadaki 12 manuel kontrolün sonuçları yalnızca açık sekmede tutulur. V3 yönetim ekranları için ayrı, 16 senaryolu ayrıntılı protokol <code>docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md</code> dosyasında bulunur.</p>
+      <ol>
+        <li>Gerçek öğrenci verisi içermeyen yerel pilotu açın. Windows üzerinde NVDA ve Edge'i başlatın.</li>
+        <li>Yalnız klavyeyle <kbd>Tab</kbd>, <kbd>Shift</kbd> + <kbd>Tab</kbd>, <kbd>Enter</kbd> ve <kbd>Esc</kbd> kullanarak işlemleri deneyin.</li>
+        <li>NVDA ile başlıkları, alan adlarını, hata bildirimlerini ve durum değişikliklerini dinleyin.</li>
+        <li>Her kontrolün sonucunu <strong>Geçti</strong>, <strong>Sorun var</strong> veya <strong>Henüz test edilmedi</strong> olarak işaretleyin; teknik notlara kimlik yazmayın.</li>
+        <li>Sonuçları kapatmadan önce anonim JSON veya CSV olarak indirin. Bu işlem resmî erişilebilirlik onayı oluşturmaz.</li>
+      </ol>
+      <p class="pilot-manual-warning" role="note">Otomatik Edge testinin başarılı olması, gerçek NVDA kullanımı veya Türkçe ses motorunun anlaşılabilirliği için kanıt değildir. NVDA kurulmamışsa sonucu “Geçti” olarak işaretlemeyin.</p>
+    </div>
+  </details>
   <section class="card pilot-block" aria-labelledby="pilot-env-title"><div class="pilot-section-head"><div><h2 id="pilot-env-title">Test ortamı</h2><p>Denemeyi yaptığın cihazı ve yardımcı teknolojiyi seç. Kişisel bilgi girmen gerekmiyor.</p></div><span class="pilot-step">01 / ORTAM</span></div>
     <div class="pilot-environment">
       <label class="pilot-env-field" for="pilot-reader"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 10v4a4 4 0 0 0 4 4h2V6H8a4 4 0 0 0-4 4zM20 10v4a4 4 0 0 1-4 4h-2V6h2a4 4 0 0 1 4 4z"/></svg>Ekran okuyucu</span><select id="pilot-reader"><option value="other">Diğer / henüz seçilmedi</option><option value="nvda">NVDA</option><option value="voiceover">VoiceOver</option><option value="jaws">JAWS</option><option value="talkback">TalkBack</option></select></label>
