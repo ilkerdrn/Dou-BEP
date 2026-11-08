@@ -31,6 +31,7 @@ const allowed={
  '/exam-download-verify.mjs':['exam-download-verify.mjs','text/javascript; charset=utf-8'],
  '/':['index.html','text/html; charset=utf-8'],
  '/index.html':['index.html','text/html; charset=utf-8'],
+ '/eski-sinav-tasarimci':['index.html','text/html; charset=utf-8'],
  '/kurum':['institution.html','text/html; charset=utf-8'],
  '/kurumsal-sinav':['institutional-exams.html','text/html; charset=utf-8'],
  '/toplu-sinav':['batch-exams.html','text/html; charset=utf-8'],
@@ -171,8 +172,8 @@ export function createServer(){return http.createServer(async(req,res)=>{
    res.writeHead(403).end('Host rejected');return;
   }
   // One canonical public entry point: use the V3 institutional experience.
-  // Preserve /index.html and its source for legacy workflows until migrated.
-  if(path==='/'){
+  // Keep the old editor available only at an explicit migration route.
+  if(path==='/'||path==='/index.html'){
    res.writeHead(302,{'Location':'/kurum',...securityHeaders});
    res.end();return;
   }
