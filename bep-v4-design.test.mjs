@@ -34,3 +34,31 @@ test('V4 design plan includes preservation and true visual acceptance gates',()=
  }
  assert.match(read('./index.html'),/app\.mjs/,'Legacy editor source preserved');
 });
+
+
+test('V4 entry and administrative routes share one final CSS contract',()=>{
+ const pages=[
+  'institution.html','institutional-exams.html','coordination.html',
+  'batch-exams.html','accommodation-admin.html','operations.html',
+  'acceptance.html','pilot-admin.html','exam-source-import.html',
+  'bep-import.html','accessibility-check.html','dou-reader-demo.html',
+  'dou-speech-phoneme.html','dou-speech-pool.html',
+  'dou-speech-listening.html','dou-speech-intelligibility.html'
+ ];
+ for(const page of pages){
+  const html=read('./'+page);
+  assert.match(html,/<body[^>]*data-design-version="4"/,page+' must opt into V4');
+  const styles=[...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+\.css)"/g)].map(m=>m[1]);
+  assert.equal(styles.at(-1),'/bep-v4.css',page+' requires V4 as final stylesheet');
+  assert.equal(styles.filter(x=>x==='/bep-v4.css').length,1,page+' must not duplicate V4');
+  assert.match(html,/admin-navigation\.js/,page+' retains the shared accessible navigation');
+ }
+});
+test('V4 migration CSS preserves user flows and styles standalone routes consistently',()=>{
+ const css=read('./bep-v4.css');
+ for(const selector of ['.dou-admin-standalone','.ops-panel','.pilot-block','.bep-speech-ux main','.bep-task-shortcuts']){
+  assert.ok(css.includes(selector),'Missing shared shell rule '+selector);
+ }
+ assert.match(css,/@media\(max-width:720px\)/);
+ assert.doesNotMatch(css,/@import\s/i,'No remote CSS import');
+});
