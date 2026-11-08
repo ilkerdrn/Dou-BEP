@@ -50,3 +50,17 @@ test('anonymous learner can save and restore choices explicitly without browser 
  assert.match(api,/store\.pilotProgress\(match\[1\]\)/);
  assert.match(store,/row\.status==='submitted'&&row\.answers/);
 });
+
+test('student question map shows answered, empty and review states without revealing answers',()=>{
+ assert.match(html,/id="pilot-question-map"[^>]*aria-label="Soru numaraları"/);
+ assert.match(html,/id="pilot-toggle-review"[^>]*aria-pressed="false"/);
+ assert.match(html,/id="pilot-review-count"[^>]*role="status"[^>]*aria-live="polite"/);
+ assert.match(js,/const reviewFlags=new Set\(\)/);
+ assert.match(js,/function updateQuestionMap\(\)/);
+ assert.match(js,/button\.dataset\.status=flagged\?'review':answered\?'answered':'empty'/);
+ assert.match(js,/button\.setAttribute\('aria-label','Soru '\+\(i\+1\)/);
+ assert.match(js,/button\.setAttribute\('aria-current','step'\)/);
+ assert.match(js,/reviewFlags\.clear\(\);activeQuestionIndex=0/);
+ assert.doesNotMatch(js,/post\('\/api\/pilot\/save',\{answers,reviewFlags\}/);
+ assert.doesNotMatch(js,/post\('\/api\/pilot\/submit',\{answers,reviewFlags\}/);
+});
