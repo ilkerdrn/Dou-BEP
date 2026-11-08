@@ -302,3 +302,19 @@ test('V4 independently sizes the dashboard secondary disclosure and inspects nes
  }
  assert.match(browser,/minHeight:s\.minHeight,overflow:s\.overflow/);
 });
+
+
+test('V4 deep parity contracts replace V3 dashboard and exam disclosure scaffolding',()=>{
+ const css=read('./bep-v4.css');
+ for(const selector of [
+  '.campus-dashboard-aside','.dashboard-secondary-shortcuts',
+  '#exam-workspace .workflow-pager','#exam-workspace .exam-question',
+  '#exam-workspace .exam-question-advanced',
+  '#exam-workspace .exam-optional-tool.campus-major-module'
+ ])assert.ok(css.includes(selector),'Missing independent structural rule: '+selector);
+ assert.match(css,/\.campus-dashboard-aside\{\s*display:grid!important/);
+ assert.match(css,/\.dashboard-secondary-shortcuts\{\s*display:grid!important/);
+ assert.match(css,/\.workflow-pager\{\s*order:4!important/);
+ assert.match(css,/\.exam-question-advanced\{\s*margin:16px 0 0!important/);
+ assert.match(css,/\.exam-optional-tool\.campus-major-module>summary\{\s*display:flex!important/);
+});
