@@ -1302,3 +1302,48 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #ex
  font-size:clamp(19px,2vw,25px)!important;
  font-weight:780!important;
 }
+
+
+/* Phase 24 — Edge confirmed only 3 parity roots remain. V3 supplies the
+ * teacher's next-action card flex layout (103px versus 132px without V3).
+ * Transfer its structural contract, preserving the V4 neutral surface.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action{
+ display:flex!important;
+ justify-content:space-between!important;
+ align-items:center!important;
+ flex-wrap:wrap!important;
+ gap:13px!important;
+ margin:0 0 16px!important;
+ padding:17px 19px!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:13px!important;
+ background:#fff8fa!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action>div{
+ flex:1 1 220px!important;
+ min-width:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action strong{
+ display:block!important;
+ font-size:15px!important;
+ font-weight:780!important;
+ margin:5px 0 4px!important;
+ color:var(--v4-text)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action p{
+ margin:0!important;
+ font-size:12px!important;
+ line-height:1.5!important;
+ color:var(--v4-muted)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action .portal-btn{
+ min-height:42px!important;
+ flex:0 0 auto!important;
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .preflight-next-action .portal-btn{
+  width:100%!important;
+  justify-content:center!important;
+ }
+}
