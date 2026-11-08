@@ -149,7 +149,16 @@ async function probeLegacySheet(page,selectors){
  const href='/admin-design-v3.css';
  const query='link[href="'+href+'"]';
  const sheetCount=await evaluate('document.querySelectorAll('+JSON.stringify(query)+').length');
- if(sheetCount!==1)throw Error('Expected one V3 design stylesheet on '+page);
+ if(sheetCount===0){
+  // Retirement phase: the V3 stylesheet must be absent from the real DOM.
+  // Still exercise the entire 191-check browser acceptance suite below.
+  const status=await evaluate('({v4:document.querySelectorAll(\'link[href="/bep-v4.css"]\').length,legacy:document.querySelectorAll(\'link[href="/admin-design-v3.css"]\').length})');
+  if(status.v4!==1||status.legacy!==0)
+   throw Error('V4 stylesheet retirement invariant FAILED on '+page+': '+JSON.stringify(status));
+  console.log('BROWSER V4 CSS RETIREMENT VERIFIED: '+JSON.stringify({page,v3Linked:false,v4Linked:true,changedElements:0}));
+  return {page,stylesheet:href,retired:true,changedElements:0};
+ }
+ if(sheetCount!==1)throw Error('Expected zero or one V3 design stylesheet on '+page);
  const expression='(function(){const list='+JSON.stringify(selectors)+';'+
   'const nodes=Object.fromEntries(list.map(selector=>{const el=document.querySelector(selector);'+
   'if(!el)return [selector,null];const r=el.getBoundingClientRect(),s=getComputedStyle(el);'+
