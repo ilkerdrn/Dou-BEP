@@ -80,6 +80,7 @@
   }
  }
  if(field){
+  field.setAttribute('aria-keyshortcuts','/');
   field.addEventListener('input',filter);
   field.addEventListener('keydown',e=>{
    if(e.key==='Escape'&&field.value){
@@ -105,6 +106,17 @@
    if(window.matchMedia('(max-width:1080px)').matches){nav.classList.add('dou-nav-open');toggle.setAttribute('aria-expanded','true');}
    field.focus();
   }
+ });
+ // Return from a visible result to its search field without tabbing backwards
+ // across the whole sidebar. Do not intercept normal arrow-key behavior in inputs.
+ panel.addEventListener('keydown',event=>{
+  if(event.key!=='ArrowUp'||!field)return;
+  const link=event.target.closest('.dou-nav-link');
+  if(!link||link.hidden)return;
+  const visible=[...panel.querySelectorAll('.dou-nav-link')].filter(item=>
+   !item.hidden&&!item.closest('.dou-nav-group')?.hidden&&
+   item.closest('.dou-nav-disclosure')?.open!==false);
+  if(visible[0]===link){event.preventDefault();field.focus();}
  });
  panel.addEventListener('click',event=>{if(event.target.closest('a'))close();});
  // On a narrow viewport the navigation behaves like a dismissible drawer.
