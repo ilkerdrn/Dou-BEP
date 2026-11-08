@@ -675,3 +675,93 @@ body[data-design-version="4"] :is(.bep-workflow-links,.bep-section-nav,.bep-task
  outline:3px solid var(--v4-focus)!important;
  outline-offset:3px!important;
 }
+
+
+/* Phase 7 — V4 owns authenticated layout geometry independently of V3.
+ * Isolated Edge retirement probe found V3 was still sizing dashboard and
+ * exam heading. These rules intentionally outrank the legacy campus selectors.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .portal-topbar{
+ min-height:68px!important;
+ padding:16px clamp(18px,2.5vw,36px)!important;
+ box-sizing:border-box!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .portal-content{
+ padding-inline:clamp(16px,2vw,30px)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage{
+ padding:0!important;margin:0!important;
+ border:0!important;border-radius:0!important;
+ background:transparent!important;
+ gap:20px!important;align-items:start!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage .dashboard-welcome{
+ padding:24px 26px!important;
+ min-height:0!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:14px!important;
+ background:#fff!important;
+ box-shadow:none!important;
+ margin:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"]
+ .campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts{
+ display:grid!important;
+ gap:14px!important;
+ margin:16px 0 0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage .dashboard-shortcut{
+ min-height:150px!important;
+ padding:21px!important;
+ border-radius:12px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-aside{
+ align-content:start!important;
+ gap:14px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-workbench-heading{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:space-between!important;
+ flex-wrap:wrap!important;
+ gap:16px!important;
+ padding:22px 24px!important;
+ margin:0 0 16px!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:12px!important;
+ background:#fff!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+ padding:18px 20px!important;
+ margin:0 0 16px!important;
+ border-radius:12px!important;
+}
+@media(min-width:1121px){
+ body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage{
+  grid-template-columns:minmax(0,1fr) minmax(265px,310px)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"]
+  .campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:1120px){
+ body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-aside{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:670px){
+ body.institution-page.campus-layout[data-design-version="4"]
+  .campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts,
+ body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-aside{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage .dashboard-welcome,
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-workbench-heading{
+  padding:18px!important;
+ }
+}
