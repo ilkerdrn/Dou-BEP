@@ -617,6 +617,9 @@ async function main(){
  await evaluate('document.getElementById("exam-add-question").click()');
  const afterClickCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
  pass(await evaluate('document.getElementById("exam-question-count").textContent.includes("2 soru")'),'Question count updates after adding a question');
+ pass(await evaluate('document.querySelector(\'#exam-quality [data-quality-question="1"]\')!==null'),'Quality findings link directly to the second question');
+ await evaluate('document.querySelector(\'#exam-quality [data-quality-question="1"]\').click()');
+ pass(await evaluate('document.activeElement?.dataset.qindex==="1"&&document.activeElement?.dataset.qkey==="prompt"'),'Question-level quality link focuses the missing prompt field');
  const browserErrors=await evaluate('window.__browserSmokeErrors||[]');
  console.log('BROWSER QUESTION DIAGNOSTIC: before='+originalCount+' afterClick='+afterClickCount+' disabled='+addButtonState.disabled+' hidden='+addButtonState.hidden+' exceptions='+JSON.stringify(browserErrors));
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'New question rendered');
