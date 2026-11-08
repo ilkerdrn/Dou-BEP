@@ -1484,3 +1484,22 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .wo
   order:3!important;
  }
 }
+
+
+/* Phase 30 — the teacher sees one authoring stage at a time. Original
+ * DOM controls and server-owned validation remain intact for every stage.
+ * The advanced toggle restores all fields without discarding draft state. */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-editor-card>[data-workflow-hidden="true"]{
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-view-toggle{
+ min-height:40px!important;
+ white-space:normal!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-view-toggle[aria-pressed="true"]{
+ border-color:var(--v4-primary)!important;
+ color:var(--v4-primary)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-editor-card.exam-guided-view{
+ min-height:240px!important;
+}
