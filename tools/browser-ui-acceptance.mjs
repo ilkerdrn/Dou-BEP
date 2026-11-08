@@ -492,6 +492,25 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(route==='/toplu-sinav'||route==='/uyarlama-kararlari'){
+   const ux=await evaluate(`(function(){
+    const nav=document.querySelector('.bep-task-shortcuts');
+    const links=[...nav.querySelectorAll('a')];
+    const destinationIds=links.map(a=>a.getAttribute('href').slice(1));
+    return {
+     count:links.length,
+     destinationsValid:destinationIds.every(id=>document.getElementById(id)!==null),
+     linkContrast:getComputedStyle(links[0]).color,
+     horizontalScroll:document.documentElement.scrollWidth,
+     availableWidth:document.documentElement.clientWidth
+    };
+   })()`);
+   console.log('BROWSER TASK PAGE USABILITY '+label+': '+JSON.stringify(ux));
+   pass(ux.count>=(route==='/toplu-sinav'?4:2)&&ux.destinationsValid,label+' shortcuts reach existing workflow sections');
+   pass(ux.linkContrast==='rgb(255, 255, 255)',label+' primary shortcut remains legible');
+   pass(ux.horizontalScroll<=ux.availableWidth+2,label+' has no desktop horizontal overflow');
+  }
+
   if(route==='/sinav-koordinasyon'){
    const coordinationVisual=await evaluate(`(function(){
     const hero=document.querySelector('.portal-hero');
