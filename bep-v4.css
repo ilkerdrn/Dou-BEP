@@ -799,3 +799,27 @@ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="gue
  #exam-login-required{
  display:block;
 }
+
+
+/* Phase 9 — the mobile navigation toggle is a V4-owned control.
+ * Under V3 removal the inherited legacy admin button rendered white-on-
+ * translucent white; keep a high-contrast appearance without V3 dependency.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav-toggle{
+ color:#801b2a!important;
+ background:#fff!important;
+ background-image:none!important;
+ border:1px solid #e2cdd4!important;
+ box-shadow:0 2px 8px rgba(56,31,41,.06)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav-toggle:hover{
+ background:var(--v4-primary-soft)!important;
+ border-color:#ba8996!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav-toggle span{
+ background:currentColor!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav-toggle:focus-visible{
+ outline:3px solid var(--v4-focus)!important;
+ outline-offset:2px!important;
+}
