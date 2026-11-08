@@ -94,3 +94,17 @@ test('final submission requires a separate question status review and allows ret
  assert.match(js,/if\(event\.target\.matches\('input\[type="radio"\],select'\)\)\{resetFinalReview\(\);updateAnswerProgress\(\);\}/);
  assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
+
+test('automatic draft saves are debounced, serialized and never expose the bearer in storage',()=>{
+ assert.match(html,/class="muted pilot-autosave-help"/);
+ assert.match(html,/otomatik olarak yerel sunucuya ara kaydedilir/);
+ assert.match(js,/function scheduleAutoSave\(\)/);
+ assert.match(js,/saveTimer=setTimeout\(\(\)=>\{saveTimer=null;void saveDraft\(\);\},1200\)/);
+ assert.match(js,/if\(draftPromise\)return draftPromise/);
+ assert.match(js,/while\(claim&&exam&&savedRevision<answerRevision\)/);
+ assert.match(js,/await post\('\/api\/pilot\/save',\{answers\},token\)/);
+ assert.match(js,/if\(draftPromise\)await draftPromise/);
+ assert.match(js,/const \{answers\}=collectAnswers\(\);\s*const r=await post\('\/api\/pilot\/submit',\{answers\},claim\)/);
+ assert.match(js,/window\.addEventListener\('pagehide',\(\)=>\{clearSaveTimer\(\);claim=null/);
+ assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
