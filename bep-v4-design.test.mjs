@@ -155,3 +155,20 @@ test('V4 shortcut branding excludes old V3 primary color across migrated modules
  assert.match(browser,/task\.accent==='rgb\(122, 31, 43\)'/);
  assert.doesNotMatch(browser,/\['rgb\(142, 20, 40\)','rgb\(122, 31, 43\)'\]/);
 });
+
+
+test('V4 provides opt-in isolated CSS retirement comparison before removing V3 links',()=>{
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ const scripts=JSON.parse(read('./package.json')).scripts;
+ const guide=read('./docs/V4-CSS-RETIREMENT-GATE.md');
+ assert.equal(scripts['design:v4:css-probe'],'node tools/browser-ui-acceptance.mjs --css-probe');
+ assert.match(browser,/async function probeLegacySheet\(page,selectors\)/);
+ assert.match(browser,/if\(process\.argv\.includes\('--css-probe'\)\)/);
+ assert.match(browser,/BROWSER V4 CSS RETIREMENT PROBE/);
+ assert.match(browser,/document\.querySelector\('\+JSON\.stringify\(query\)\+'\)\.disabled=false/);
+ assert.match(browser,/CSS probe did not restore initial visual metrics/);
+ assert.match(guide,/admin-design-v3\.css/);
+ for(const page of ['institution.html','institutional-exams.html']){
+  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/,'Do not remove before comparison');
+ }
+});
