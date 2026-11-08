@@ -733,3 +733,143 @@ body.institution-page.campus-layout[data-portal-auth="guest"]:has(#login-view:no
   padding:0!important;
  }
 }
+
+
+/* V3 coordination and classic admin visual correction.
+   Counteract legacy dark navigation and navy hero with explicit accessible colors.
+   Scoped to legacy portal-shell screens; leaves exam editor and login unchanged. */
+body.institution-page:not(.campus-layout) .portal-topbar{
+ background:#fff!important;border-bottom:1px solid #eadfe3!important;
+ box-shadow:none!important;
+}
+body.institution-page:not(.campus-layout) .portal-topbar strong{
+ color:#252239!important;font-weight:800!important;
+}
+body.institution-page:not(.campus-layout) .portal-topbar>div>span{
+ color:#726479!important;
+}
+body.institution-page:not(.campus-layout) .portal-pill{
+ background:#eaf7f0!important;color:#245c43!important;
+ border:1px solid #cce6d6!important;border-radius:999px!important;
+}
+body.institution-page:not(.campus-layout) .dou-brand-title strong{
+ color:#8e1428!important;font-weight:850!important;
+}
+body.institution-page:not(.campus-layout) .dou-brand-title small{
+ color:#685f6b!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-find label{
+ color:#6a4857!important;font-weight:800!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-find input{
+ color:#252239!important;background:#fff!important;
+ border:1px solid #d9c9d0!important;border-radius:11px!important;
+ box-shadow:none!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-find input::placeholder{
+ color:#77717e!important;opacity:1!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-find-field:before{
+ border-color:#7a5564!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-find-field:after{
+ background:#7a5564!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-group-title{
+ color:#755667!important;font-weight:850!important;letter-spacing:.07em!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]){
+ background:transparent!important;color:#423540!important;
+ border-color:transparent!important;font-weight:650!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]) svg{
+ color:#71606e!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu:hover:not(.current):not([aria-current="page"]){
+ background:#f8e9ee!important;color:#74182d!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu.current,
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu[aria-current="page"]{
+ background:linear-gradient(110deg,#a31733,#86152c)!important;
+ border-color:#91172e!important;color:#fff!important;
+ font-weight:800!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu.current svg,
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.portal-menu[aria-current="page"] svg{
+ color:#fff!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-bottom,
+body.institution-page:not(.campus-layout) .dou-nav-bottom p{
+ color:#685f6b!important;
+}
+/* The reference design uses a pale, readable hero rather than the old navy banner. */
+body.institution-page:not(.campus-layout) .portal-hero{
+ background:linear-gradient(115deg,#fff 0%,#fffafb 64%,#f8e8ee 100%)!important;
+ border:1px solid #eadce2!important;border-radius:19px!important;
+ box-shadow:0 8px 26px rgba(90,43,57,.06)!important;
+ color:#252239!important;
+ min-height:0!important;
+ padding:clamp(24px,3vw,38px)!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero::before{
+ background:none!important;opacity:0!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero::after{
+ background:radial-gradient(circle,#f1d3dd 0%,transparent 72%)!important;
+ opacity:.55!important;pointer-events:none;
+}
+body.institution-page:not(.campus-layout) .portal-hero .portal-overline{
+ color:#961d38!important;font-weight:850!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero h1,
+body.institution-page:not(.campus-layout) .portal-hero h1 em{
+ color:#22243a!important;text-shadow:none!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero h1{
+ font-size:clamp(27px,3vw,40px)!important;line-height:1.17!important;
+ letter-spacing:-.04em!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero p{
+ color:#5e6678!important;line-height:1.7!important;
+}
+body.institution-page:not(.campus-layout) .portal-hero-symbol{
+ color:#a73450!important;border-color:#ead8df!important;
+ opacity:.75!important;
+}
+/* Coordination modules: consistent KPI, form, data-table, and action surfaces. */
+body.institution-page:not(.campus-layout) .coord-kpis>div,
+body.institution-page:not(.campus-layout) .coord-next{
+ background:#fff!important;border:1px solid #e9dde2!important;
+ border-radius:15px!important;box-shadow:0 5px 18px rgba(90,43,57,.045)!important;
+}
+body.institution-page:not(.campus-layout) .coord-kpis strong{
+ color:#252239!important;
+}
+body.institution-page:not(.campus-layout) .coord-kpis span,
+body.institution-page:not(.campus-layout) .coord-card p{
+ color:#626b7a!important;
+}
+body.institution-page:not(.campus-layout) .coord-form :is(input:not([type="checkbox"]),select),
+body.institution-page:not(.campus-layout) .coord-filters :is(input,select){
+ background:#fff!important;border:1px solid #d4cbd3!important;
+ color:#252239!important;border-radius:11px!important;min-height:44px!important;
+}
+body.institution-page:not(.campus-layout) .coord-table th{
+ background:#fcf7f9!important;color:#3b2c38!important;
+ border-bottom:1px solid #eadfe3!important;
+}
+body.institution-page:not(.campus-layout) .coord-table td{
+ color:#342d38!important;border-bottom:1px solid #f0e7eb!important;
+}
+body.institution-page:not(.campus-layout) .coord-table button{
+ border:1px solid #ddcdd5!important;background:#fff!important;
+ color:#631b31!important;border-radius:9px!important;
+}
+@media(max-width:760px){
+ body.institution-page:not(.campus-layout) .portal-hero{
+  padding:22px 18px!important;
+ }
+ body.institution-page:not(.campus-layout) .portal-hero h1{
+  font-size:clamp(26px,7vw,33px)!important;
+ }
+}
