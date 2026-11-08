@@ -330,6 +330,24 @@ async function main(){
  console.log('BROWSER EXAM FULL-WIDTH: '+JSON.stringify(examWidth));
  pass(examWidth.content>=examWidth.main-2,'Exam workspace occupies available main column');
 
+ const v4EditorLayout=await evaluate(`(function(){
+  const library=document.getElementById('exam-drafts-panel').getBoundingClientRect();
+  const editor=document.getElementById('exam-editor-card').getBoundingClientRect();
+  const grid=document.querySelector('#exam-workspace .exam-grid');
+  return {viewport:innerWidth,columns:getComputedStyle(grid).gridTemplateColumns,
+   libraryLeft:Math.round(library.left),libraryWidth:Math.round(library.width),
+   editorLeft:Math.round(editor.left),editorWidth:Math.round(editor.width),
+   pageScroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth};
+ })()`);
+ console.log('BROWSER V4 EDITOR WORKBENCH: '+JSON.stringify(v4EditorLayout));
+ pass(v4EditorLayout.libraryWidth>=250&&v4EditorLayout.libraryWidth<=300&&
+      v4EditorLayout.editorLeft>v4EditorLayout.libraryLeft+
+       v4EditorLayout.libraryWidth-2&&v4EditorLayout.editorWidth>v4EditorLayout.libraryWidth,
+      'V4 desktop exam editor uses balanced library and authoring columns');
+ pass(v4EditorLayout.pageScroll<=v4EditorLayout.client+2,
+      'V4 two-column exam workspace has no document overflow');
+
+
  pass(await evaluate('getComputedStyle(document.querySelector(".exam-hero")).display==="none"'),'Promotional hero hidden in editor');
  pass(await evaluate('document.getElementById("workflow-next")!==null'),'Step pager exists');
  pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Exam editor shows authenticated institution profile');
@@ -490,6 +508,17 @@ async function main(){
  await captureSyntheticSection('exam-output-section','exam-output-mobile');
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
+
+ const v4MobileColumns=await evaluate(`(function(){
+  const library=document.getElementById('exam-drafts-panel').getBoundingClientRect();
+  const editor=document.getElementById('exam-editor-card').getBoundingClientRect();
+  return {libraryLeft:Math.round(library.left),editorLeft:Math.round(editor.left),
+   libraryBottom:Math.round(library.bottom),editorTop:Math.round(editor.top)};
+ })()`);
+ pass(Math.abs(v4MobileColumns.libraryLeft-v4MobileColumns.editorLeft)<=2&&
+      v4MobileColumns.editorTop>=v4MobileColumns.libraryBottom-2,
+      'V4 mobile exam list stacks above authoring editor');
+
  // Screen geometry matrix: compact phone, medium phone, tablet and desktop.
  // The only measurements exported to CI are dimensions, never page contents.
  for(const width of [320,768,1280]){
