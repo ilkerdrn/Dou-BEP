@@ -609,6 +609,7 @@ async function main(){
  const addButtonState=await evaluate('({disabled:document.getElementById("exam-add-question").disabled,hidden:document.getElementById("exam-add-question").hidden})');
  await evaluate('document.getElementById("exam-add-question").click()');
  const afterClickCount=await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length');
+ pass(await evaluate('document.getElementById("exam-question-count").textContent.includes("2 soru")'),'Question count updates after adding a question');
  const browserErrors=await evaluate('window.__browserSmokeErrors||[]');
  console.log('BROWSER QUESTION DIAGNOSTIC: before='+originalCount+' afterClick='+afterClickCount+' disabled='+addButtonState.disabled+' hidden='+addButtonState.hidden+' exceptions='+JSON.stringify(browserErrors));
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-questions > .exam-question").length==='+String(originalCount+1)),'New question rendered');
