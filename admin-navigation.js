@@ -27,6 +27,20 @@
    .replace(/ş/g,'s').replace(/ü/g,'u')
    .replace(/\s+/g,' ').trim();
  }
+ const management=panel.querySelector('#dou-nav-management');
+ let currentRole=null;
+ const allowed=link=>!link.hasAttribute('data-admin-nav-roles')||
+  (!!currentRole&&link.getAttribute('data-admin-nav-roles').split(',').includes(currentRole));
+ const updateManagement=role=>{
+  currentRole=typeof role==='string'?role:null;
+  if(management){
+   const authorized=[...management.querySelectorAll('.dou-nav-link')].filter(allowed);
+   management.hidden=authorized.length===0;
+   for(const link of management.querySelectorAll('.dou-nav-link'))link.hidden=!allowed(link);
+  }
+  filter();
+ };
+ document.addEventListener('dou-nav-role',event=>updateManagement(event.detail?.role));
  const groups=[...panel.querySelectorAll('.dou-nav-group')];
  // Native disclosure keeps every menu link in the DOM (including without JS).
  // The active group and the primary workspace group start expanded.
@@ -59,11 +73,11 @@
   for(const group of groups){
    let inGroup=0;
    for(const link of group.querySelectorAll('.dou-nav-link')){
-    const match=!q||normalize(link.textContent).includes(q);
+    const match=allowed(link)&&(!q||normalize(link.textContent).includes(q));
     link.hidden=!match;
     if(match){visible++;inGroup++;}
    }
-   group.hidden=!!q&&inGroup===0;
+   group.hidden=(group===management&&![...group.querySelectorAll('.dou-nav-link')].some(allowed))|| (!!q&&inGroup===0);
    const disclosure=group.querySelector('.dou-nav-disclosure');
    if(disclosure&&q)disclosure.open=inGroup>0;
   }
