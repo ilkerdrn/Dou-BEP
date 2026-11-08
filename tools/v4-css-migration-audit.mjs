@@ -46,9 +46,9 @@ const assets=files.map(name=>{
   name,bytes:loaded?statSync(location).size:null,
   linkedFrom:entries.filter(entry=>entry.stylesheets.includes(name)).map(entry=>entry.page),
   legacy:legacy.has(name),
-  importantDeclarations:(css.match(/!important\\b/g)||[]).length,
-  gradientDeclarations:(css.match(/(?:linear|radial)-gradient\\(/g)||[]).length,
-  oldPrimaryColorReferences:(css.match(/#8e1428\\b/gi)||[]).length
+  importantDeclarations:(css.match(/!important\b/g)||[]).length,
+  gradientDeclarations:(css.match(/(?:linear|radial)-gradient\(/g)||[]).length,
+  oldPrimaryColorReferences:(css.match(/#8e1428\b/gi)||[]).length
  };
 });
 const unresolved=entries.filter(entry=>entry.legacyFiles.length);
