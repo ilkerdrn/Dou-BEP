@@ -149,6 +149,32 @@ export function pilotSessions(db,{StoreError,log}){
   }
   return result;
  }
+ // A draft is anonymous choice/matching data only. The bearer capability remains
+ // in memory, is bound to one started session, and cannot write after submission.
+ function startedSession(token){
+  if(typeof token!=='string'||token.length<25||token.length>200)error('invalid_session','Oturum anahtarı geçersiz.',401);
+  const row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
+  if(!row||row.status!=='started'||row.expires_at<=now())error('invalid_session','Oturum süresi dolmuş veya teslim edilmiş.',401);
+  const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
+  if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti; yanıt kaydedilemedi.',409);
+  approvedExam(exam);
+  const payload=createStudentPayload(JSON.parse(exam.body));
+  return {row,payload};
+ }
+ function progress(token){
+  const {row,payload}=startedSession(token);
+  return {answers:row.answers?JSON.parse(row.answers):{},questionCount:payload.questions.length,expiresAt:row.expires_at,
+   message:'Anonim ara kayıt. Nihai teslim değildir.'};
+ }
+ function save(token,answers){
+  const {row,payload}=startedSession(token);
+  const checked=validate(payload,answers);
+  const json=JSON.stringify(checked);
+  if(json.length>10000)error('too_large','Yanıt çok büyük.',413);
+  const changed=db.prepare("UPDATE pilot_sessions SET answers=? WHERE id=? AND claim_hash=? AND status='started' AND expires_at>?").run(json,row.id,sha(token),now());
+  if(!changed.changes)error('invalid_session','Oturum artık aktif değil.',401);
+  return {saved:true,expiresAt:row.expires_at,message:'Anonim ara kayıt alındı. Sınav henüz teslim edilmedi.'};
+ }
  function submit(token,answers){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
   const row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
   if(!row||row.status!=='started'||row.expires_at<=now())error('invalid_session','Oturum süresi dolmuş veya teslim edilmiş.',401);
@@ -256,6 +282,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
