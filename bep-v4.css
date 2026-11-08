@@ -1058,3 +1058,66 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
  }
 }
+
+
+/* Phase 15 — resolve remaining V3 sizing contracts found by the Edge probe.
+ * Keep the existing hierarchy and mobile responsiveness. No test thresholds
+ * are relaxed and V3 remains linked pending browser proof.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .dashboard-secondary-shortcuts .dashboard-shortcut strong{
+ font-size:13px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-grid>#exam-editor-card{
+ padding:clamp(17px,2vw,27px)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-editor-card>.portal-card-head{
+ border-bottom:1px solid var(--v4-border)!important;
+ padding-bottom:15px!important;
+ margin-bottom:15px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question{
+ margin-block:14px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question .exam-q-head{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:space-between!important;
+ gap:12px!important;
+ padding-bottom:10px!important;
+ margin-bottom:15px!important;
+ border-bottom:1px solid var(--v4-border)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool:not(.campus-major-module){
+ margin:13px 0!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:13px!important;
+ overflow:hidden!important;
+ background:#fff!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool:not(.campus-major-module)>summary{
+ display:flex!important;
+ flex-direction:column!important;
+ gap:3px!important;
+ cursor:pointer!important;
+ padding:15px 18px!important;
+ font-size:13px!important;
+ font-weight:750!important;
+ background:var(--v4-bg)!important;
+ color:var(--v4-text)!important;
+ border-left:3px solid var(--v4-primary)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool:not(.campus-major-module)>summary small{
+ font-size:11.5px!important;
+ font-weight:450!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool:not(.campus-major-module)>section{
+ margin:0!important;
+ border:0!important;
+ box-shadow:none!important;
+ border-radius:0!important;
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-grid>#exam-editor-card{
+  padding:15px!important;
+ }
+}
