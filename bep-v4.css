@@ -851,3 +851,61 @@ body.institution-page.campus-layout[data-design-version="4"] .campus-summary-act
  display:flex!important;justify-content:center!important;
  text-decoration:none!important;text-align:center!important;white-space:normal!important;
 }
+
+
+/* Phase 11 — migrate the exam workflow structure, not just its colors.
+ * When admin-design-v3.css is disabled, the workflow nav was 86px taller
+ * and shifted the exam grid by 97px. The native controls need a two-row
+ * flex structure: caption + focus button above the five step buttons.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+ display:flex!important;flex-wrap:wrap!important;
+ align-items:center!important;gap:10px!important;
+ position:sticky!important;top:0!important;z-index:18!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-caption{
+ flex:1 1 220px!important;min-width:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps{
+ order:3!important;flex:1 0 100%!important;min-width:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-focus-toggle{
+ margin-left:auto!important;min-height:38px!important;
+ white-space:nowrap!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-workbench-heading h1{
+ font-size:clamp(25px,2.8vw,35px)!important;
+ line-height:1.16!important;
+ letter-spacing:-.045em!important;font-weight:800!important;
+ margin:5px 0 8px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-workbench-heading p{
+ font-size:13px!important;line-height:1.65!important;
+ max-width:65ch!important;margin:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-workbench-heading .portal-btn{
+ flex:0 0 auto!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace.exam-focus-mode .exam-grid{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace.exam-focus-mode .exam-grid>section:first-child{
+ display:none!important;
+}
+@media(max-width:1080px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+  top:64px!important;
+ }
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+  position:static!important;gap:7px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps{
+  display:flex!important;overflow-x:auto!important;flex-wrap:nowrap!important;
+  padding-bottom:4px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-step{
+  flex:0 0 auto!important;
+ }
+}
