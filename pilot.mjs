@@ -232,7 +232,7 @@ function showFinalReview(){
 }
 $('answer-form').addEventListener('submit',async event=>{event.preventDefault();if(!claim)return;const btn=$('send');
  if($('pilot-final-review').hidden){showFinalReview();return;}
- const {answers,empty}=collectAnswers();
+ const {empty}=collectAnswers();
  const warning=empty.length?empty.length+' soru boş veya tamamlanmamış. ':'';
  if(!confirm(warning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
  btn.disabled=true;clearSaveTimer();
@@ -240,8 +240,8 @@ $('answer-form').addEventListener('submit',async event=>{event.preventDefault();
   if(draftPromise)await draftPromise;
   // A failed autosave does not invalidate a direct final submission; submit
   // carries the complete current answer snapshot and is validated by the server.
-  const current=collectAnswers().answers;
-  const r=await post('/api/pilot/submit',{answers:current},claim);claim=null;exam=null;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
+  const {answers}=collectAnswers();
+  const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
  catch(e){announce(e.message,true);btn.disabled=false;}});
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
 $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.max(0,activeQuestionIndex-1);updateQuestionNavigation(true);});
