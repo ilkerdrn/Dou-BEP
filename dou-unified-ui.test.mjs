@@ -44,3 +44,18 @@ test('V4 sidebar accordion remains charcoal with readable menu links despite old
  assert.match(css,/\.dou-nav #dou-nav-sections \.dou-nav-link\.portal-menu:not\(\.current\):not\(\[aria-current="page"\]\)\{[\s\S]*?color:#f0f0ed!important/);
  assert.match(css,/\.dou-nav #dou-nav-sections \.dou-nav-link\.portal-menu\.current,[\s\S]*?background:#d70926!important/);
 });
+
+test('all administrative sidebars share the DersAktif-inspired DOU logo identity',()=>{
+ const adminPages=screens.filter(page=>page!=='pilot.html'&&read('./'+page).includes('class="dou-nav-brand"'));
+ assert.ok(adminPages.length>=8,'expected branded navigation across primary admin pages');
+ for(const page of adminPages){
+  const html=read('./'+page);
+  assert.match(html,/class="dou-brand-mark"[^>]*aria-hidden="true"/,page);
+  assert.match(html,/class="dou-brand-title"/,page);
+  assert.match(html,/BEP Sınav Atölyesi/,page);
+ }
+ assert.match(css,/\.dou-nav \.dou-brand-mark\{[\s\S]*?background:#d70926!important/);
+ assert.match(css,/\.dou-nav \.dou-brand-mark span\{[\s\S]*?color:#fff!important/);
+ assert.match(css,/\.dou-nav \.dou-brand-title strong\{[\s\S]*?font-size:15px!important/);
+ assert.match(css,/\.dou-nav \.campus-profile\{[\s\S]*?background:#292927!important/);
+});
