@@ -109,3 +109,26 @@ test('speech settings preserve six native labels and controls in an accessible r
  assert.match(css,/flex-direction:column!important;gap:5px!important/);
  assert.match(css,/#free-text-status\[data-state="error"\]\{[\s\S]*?border-left-color:#ba3434!important/);
 });
+
+test('shared campus navigation presents the authenticated profile on every admin page',()=>{
+ const js=read('./admin-navigation.js');
+ const pages=screens.filter(page=>read('./'+page).includes('class="portal-side dou-nav"'));
+ assert.ok(pages.length>=12);
+ for(const page of pages)assert.match(read('./'+page),/src="\/admin-navigation\.js"/,page);
+ assert.match(js,/async function syncCampusIdentity\(\)/);
+ assert.match(js,/fetch\('\/api\/session',\{method:'GET',credentials:'same-origin',cache:'no-store'\}\)/);
+ assert.match(js,/result\?\.authenticated&&!result\.mfaSetupRequired\?result\.member:null/);
+ assert.match(js,/if\(!member\|\|!member\.email\|\|!member\.role\)/);
+ assert.match(js,/profile\.hidden=true/);
+ assert.match(js,/profile\.hidden=false/);
+ assert.match(js,/roles=\{admin:'Kurum yöneticisi'/);
+ assert.match(js,/profile\.append\(info\)/);
+ assert.match(js,/updateManagement\(member\.role\)/);
+ assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
+test('all V4 account badges use the same compact one-row geometry with readable role',()=>{
+ assert.match(css,/body\[data-design-version="4"\] \.dou-nav #campus-sidebar-profile\{[\s\S]*?grid-template-columns:40px minmax\(0,1fr\)!important/);
+ assert.match(css,/#campus-sidebar-profile\[hidden\]\{[\s\S]*?display:none!important/);
+ assert.match(css,/#campus-sidebar-profile \.campus-profile-role\{[\s\S]*?white-space:nowrap!important/);
+ assert.match(css,/#campus-sidebar-profile \.campus-profile-name\{[\s\S]*?text-overflow:ellipsis!important/);
+});
