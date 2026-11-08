@@ -1121,3 +1121,44 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
   padding:15px!important;
  }
 }
+
+
+/* Phase 16 — disclosure content sizing was inherited from admin-design-v3.
+ * The first optional tool collapsed from 96px to 58px without it. Carry over
+ * its label stack and summary affordance on both module classes, while keeping
+ * V4 palette/focus colors and native details/summary accessibility.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool>summary{
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:flex-start!important;
+ gap:3px!important;
+ cursor:pointer!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool>summary::after{
+ content:"Göster";
+ margin-left:auto;
+ font-size:11px;
+ font-weight:750;
+ color:var(--v4-primary);
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool[open]>summary::after{
+ content:"Gizle";
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool>summary small{
+ font-weight:450!important;
+ font-size:11.5px!important;
+ color:var(--v4-muted)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool>summary:focus-visible{
+ outline:3px solid var(--v4-focus)!important;
+ outline-offset:-3px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-advanced[open]>summary{
+ margin-bottom:14px!important;
+ border-bottom:1px solid var(--v4-border)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-advanced> :not(summary){
+ margin-inline:14px!important;
+ max-width:calc(100% - 28px)!important;
+}
