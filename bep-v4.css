@@ -1249,3 +1249,35 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
   flex:0 0 auto!important;
  }
 }
+
+
+/* Phase 20 — evidence-driven exam subheading migration.
+ * The previous generic padding override caused a 35–44px regression.
+ * The actual V3 dependency is the heading's text metric and the adjacent
+ * action group using flex; keep the parent padding owned by existing V4.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-subheading h3{
+ color:var(--v4-text)!important;
+ font-size:16px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-add-actions{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:flex-end!important;
+ flex-wrap:wrap!important;
+ gap:9px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-add-actions .portal-btn{
+ min-height:40px!important;
+ white-space:normal!important;
+ border-radius:10px!important;
+}
+@media(max-width:480px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-add-actions{
+  width:100%!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-add-actions .portal-btn{
+  flex:1 1 130px!important;
+  min-width:0!important;
+ }
+}
