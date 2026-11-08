@@ -247,7 +247,32 @@ if(nav){
 const questionList=document.getElementById('exam-questions');
 const questionJump=document.getElementById('exam-question-jump');
 const questionCount=document.getElementById('exam-question-count');
+const questionFind=document.getElementById('exam-question-find-input');
+const questionFindStatus=document.getElementById('exam-question-find-status');
 if(questionList&&questionJump){
+ const applyQuestionFilter=()=>{
+  if(!questionFind)return;
+  const value=questionFind.value.trim();
+  const buttons=[...questionJump.querySelectorAll('[data-question-jump]')];
+  const valid=/^[0-9]+$/.test(value);
+  const number=valid?Number(value):0;
+  const matched=valid&&number>=1&&number<=buttons.length;
+  for(const [index,button] of buttons.entries())button.hidden=!!value&&(!matched||index!==number-1);
+  if(questionFindStatus)questionFindStatus.textContent=!value
+   ?'Numara girerek hızlı geçiş yapabilirsiniz.'
+   :matched?'Soru '+number+' bulundu. Aşağıdaki düğmeyi kullanın.'
+   :'Bu numarada soru bulunamadı.';
+ };
+ if(questionFind){
+  questionFind.addEventListener('input',applyQuestionFilter);
+  questionFind.addEventListener('keydown',event=>{
+   if(event.key!=='Enter')return;
+   const visible=questionJump.querySelector('[data-question-jump]:not([hidden])');
+   if(!questionFind.value.trim()||!visible)return;
+   event.preventDefault();
+   visible.click();
+  });
+ }
  const expandedQuestions=new Set();
  // Question indices are presentation positions. Deleting one question shifts
  // later indices; carry each surviving disclosure to its new position.
@@ -334,6 +359,7 @@ if(questionList&&questionJump){
   }
   // Append once even for long exams; avoid one live DOM mutation per jump.
   questionJump.replaceChildren(jumpItems);
+  applyQuestionFilter();
  };
  new MutationObserver(enhanceQuestions).observe(questionList,{childList:true});
  enhanceQuestions();
