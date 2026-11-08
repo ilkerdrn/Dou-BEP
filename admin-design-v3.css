@@ -1185,3 +1185,143 @@ body.institution-page.campus-layout .dou-nav-toggle:focus-visible{
  outline:3px solid #ad3852!important;
  outline-offset:2px!important;
 }
+
+/* eKampus-inspired composition: profile at left, a large learning card,
+   contextual right-side summary, and progressive exam modules. */
+body.institution-page.campus-layout .campus-profile{
+ display:flex;flex-direction:column;align-items:center;text-align:center;
+ padding:9px 10px 17px;margin:0 0 7px;gap:5px;
+}
+body.institution-page.campus-layout .campus-profile[hidden]{display:none!important}
+body.institution-page.campus-layout .campus-profile-avatar{
+ width:72px;height:72px;display:grid;place-items:center;
+ border-radius:50%;background:#fff;color:#8c202d;
+ font-size:34px;font-weight:700;border:4px solid #fff;
+ box-shadow:0 4px 18px rgba(34,28,34,.11);
+ margin-bottom:7px;
+}
+body.institution-page.campus-layout .campus-profile-name{
+ color:#382630;font-size:13px;font-weight:800;max-width:100%;
+ overflow-wrap:anywhere;
+}
+body.institution-page.campus-layout .campus-profile-role{
+ color:#766a76;font-size:11px;max-width:100%;overflow-wrap:anywhere;
+}
+body.institution-page.campus-layout .campus-dashboard-stage{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,295px);
+ gap:18px;align-items:start;background:#fff;
+ border:1px solid #eee8eb;border-radius:25px;padding:28px;
+ box-shadow:0 6px 22px rgba(45,27,40,.035);
+}
+body.institution-page.campus-layout .campus-dashboard-main{min-width:0}
+body.institution-page.campus-layout .campus-dashboard-stage .dashboard-welcome{
+ border:0!important;box-shadow:none!important;
+ padding:18px 12px 23px!important;border-radius:0!important;
+ min-height:145px;
+}
+body.institution-page.campus-layout .campus-dashboard-stage .dashboard-welcome h2{
+ font-size:clamp(23px,2.5vw,34px)!important;
+}
+body.institution-page.campus-layout .campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:12px!important;margin:0!important;
+}
+body.institution-page.campus-layout .campus-dashboard-stage .dashboard-shortcut{
+ min-height:125px!important;padding:19px!important;
+}
+body.institution-page.campus-layout .campus-dashboard-aside{
+ display:grid;gap:14px;min-width:0;
+}
+body.institution-page.campus-layout .campus-summary-card{
+ border:1px solid #ece6e9;background:#fff;
+ border-radius:15px;padding:20px;min-width:0;
+ box-shadow:0 2px 11px rgba(42,28,37,.035);
+}
+body.institution-page.campus-layout .campus-summary-card h3{
+ font-size:16px;color:#382b34;margin:9px 0 7px;
+}
+body.institution-page.campus-layout .campus-summary-card p{
+ color:#6d6570;font-size:12px;line-height:1.6;margin:0 0 14px;
+}
+body.institution-page.campus-layout .campus-progress-steps{
+ list-style:none;counter-reset:none;padding:0;margin:12px 0 18px;
+ display:grid;gap:9px;
+}
+body.institution-page.campus-layout .campus-progress-steps li{
+ display:flex;gap:10px;align-items:center;
+ border:1px solid #eee9ec;border-radius:9px;
+ padding:10px;font-size:12px;color:#4b4049;
+}
+body.institution-page.campus-layout .campus-progress-steps li span{
+ color:#8b2332;font-weight:800;font-size:11px;
+}
+body.institution-page.campus-layout .campus-summary-action{
+ display:flex!important;justify-content:center;
+ text-decoration:none!important;text-align:center;
+ white-space:normal;
+}
+body.institution-page.campus-layout .campus-notice-card{
+ background:#fcfafb;
+}
+body.institution-page.campus-layout .campus-notice-card>a{
+ color:#852331;font-weight:750;font-size:12px;
+}
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module{
+ background:#fff!important;border:1px solid #eae4e8!important;
+ border-radius:15px!important;
+ margin:17px 0!important;
+ overflow:visible;
+ box-shadow:0 3px 12px rgba(42,29,40,.04);
+}
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module>summary{
+ min-height:56px;display:flex;align-items:center;
+ padding:15px 19px!important;
+ font-size:14px!important;font-weight:800!important;
+ color:#442e3b!important;
+ border-radius:14px;
+ cursor:pointer;
+}
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module>summary:hover{
+ background:#faf5f7!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module[open]>summary{
+ border-bottom:1px solid #eee8eb;border-radius:14px 14px 0 0;
+ color:#822333!important;
+}
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module>section,
+body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module>.editor-command{
+ margin:13px!important;max-width:calc(100% - 26px);
+}
+@media(max-width:1250px){
+ body.institution-page.campus-layout .campus-dashboard-stage{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.institution-page.campus-layout .campus-dashboard-aside{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+}
+@media(max-width:700px){
+ body.institution-page.campus-layout .campus-profile{
+  flex-direction:row;text-align:left;padding:8px 4px;
+ }
+ body.institution-page.campus-layout .campus-profile-avatar{
+  width:42px;height:42px;min-width:42px;
+  font-size:20px;margin:0;
+ }
+ body.institution-page.campus-layout .campus-profile-role{display:none}
+ body.institution-page.campus-layout .campus-dashboard-stage{
+  padding:14px;border-radius:17px;gap:12px;
+ }
+ body.institution-page.campus-layout .campus-dashboard-stage .dashboard-welcome{
+  padding:12px 6px 19px!important;min-height:0;
+ }
+ body.institution-page.campus-layout .campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body.institution-page.campus-layout .campus-dashboard-aside{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-major-module>summary{
+  padding:14px!important;
+ }
+}
