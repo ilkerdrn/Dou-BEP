@@ -110,6 +110,13 @@ $('exam-preflight-body').addEventListener('click',event=>{
  const id=btn.dataset.preflightJump;
  if(!['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'].includes(id))return;
  const target=document.getElementById(id);if(!target)return;
+ // Reveal the owning guided stage before scrolling to a validation finding.
+ // The quality summary lives inside stage 4; no exam data or approval changes.
+ const stageId=id==='exam-quality'?'exam-question-section':id;
+ const stageButton=document.querySelector('.workflow-nav [data-workflow-target="'+stageId+'"]');
+ if(stageButton&&document.getElementById('exam-editor-card')?.classList.contains('exam-guided-view')){
+  stageButton.click();
+ }
  // A collapsed details panel makes scroll/focus appear broken.
  // Reveal ancestors before visiting; never change the draft or its approval.
  for(let parent=target.parentElement;parent;parent=parent.parentElement){
