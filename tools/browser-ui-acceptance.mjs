@@ -910,12 +910,27 @@ async function main(){
  }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
+// Preserve the first actionable test failure. Windows Edge subprocesses can
+// keep the disposable profile locked briefly; temporary cleanup must not mask
+// an assertion failure or incorrectly turn an otherwise passing test into FAIL.
+let primaryError=null;
 try{await main();}
+catch(error){primaryError=error;}
 finally{
- if(ws)ws.close();
+ try{if(ws)ws.close();}catch(error){console.warn('BROWSER CLEANUP websocket: '+error.message);}
  for(const [,p] of pending)p.reject(Error('Browser acceptance cleanup'));pending.clear();
- if(edge){edge.kill();await delay(500);}
+ if(edge){
+  try{edge.kill();await delay(900);}catch(error){
+   console.warn('BROWSER CLEANUP Edge: '+error.message);
+  }
+ }
  if(server)await new Promise(resolve=>server.close(resolve));
  if(store)store.db.close();
- rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:200});
+ try{rmSync(temp,{recursive:true,force:true,maxRetries:5,retryDelay:250});}
+ catch(error){
+  if(['EPERM','EBUSY','ENOTEMPTY','EACCES'].includes(error.code))
+   console.warn('BROWSER CLEANUP WARNING: Temporary Edge profile is locked by Windows: '+temp);
+  else if(!primaryError)primaryError=error;
+ }
 }
+if(primaryError)throw primaryError;
