@@ -153,9 +153,12 @@ async function main(){
  const rootResponse=await fetch(base+'/',{redirect:'manual'});
  pass(rootResponse.status===302&&rootResponse.headers.get('location')==='/kurum',
   'Root URL redirects to the canonical institutional V3 entry');
- const legacyResponse=await fetch(base+'/index.html');
+ const indexResponse=await fetch(base+'/index.html',{redirect:'manual'});
+ pass(indexResponse.status===302&&indexResponse.headers.get('location')==='/kurum',
+  'Explicit index URL also redirects to the unified V3 design');
+ const legacyResponse=await fetch(base+'/eski-sinav-tasarimci');
  pass(legacyResponse.status===200&&(await legacyResponse.text()).includes('app.mjs'),
-  'Legacy editor remains available at its explicit URL during migration');
+  'Legacy editor remains accessible at the migration-only route');
  await navigate(base,'/kurum');
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="guest"'),'Guest auth shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display==="none"'),'Guest does not see administrator navigation');
