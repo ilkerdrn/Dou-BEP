@@ -246,6 +246,7 @@ if(nav){
 // Delegated handlers in institutional-exams.mjs continue to receive all events.
 const questionList=document.getElementById('exam-questions');
 const questionJump=document.getElementById('exam-question-jump');
+const questionCount=document.getElementById('exam-question-count');
 if(questionList&&questionJump){
  const expandedQuestions=new Set();
  // Question indices are presentation positions. Deleting one question shifts
@@ -293,6 +294,9 @@ if(questionList&&questionJump){
   // Do not rebuild a 100-button navigator for changes within the same cards.
   if(cards.length===previousCards.length&&cards.every((card,index)=>card===previousCards[index]))return;
   previousCards=cards;
+  if(questionCount)questionCount.textContent=cards.length===0
+   ?'Henüz soru eklenmedi. Başlamak için Soru ekle düğmesini kullanın.'
+   :'Bu sınavda '+cards.length+' soru var. Sorular arasında aşağıdaki düğmelerle gezinebilirsiniz.';
   questionJump.hidden=cards.length===0;
   // Draft replacement/deletion may change indices: discard stale expansion entries.
   for(const index of [...expandedQuestions]){
