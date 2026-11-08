@@ -513,3 +513,46 @@ body.dou-admin-standalone [hidden]{display:none!important}
   min-width:0;
  }
 }
+
+
+/* Classic portal-shell pages share the palette without replacing their
+   specialized grid/form layout or adding the campus-layout class. */
+body.institution-page:not(.campus-layout){
+ --bep-bg:#f8f4f5;--bep-surface:#fff;--bep-text:#252239;
+ --bep-brand:#8e1428;--bep-border:#ecdfe4;--bep-focus:#a92347;
+ --bep-radius:17px;--bep-shadow:0 8px 26px rgba(90,43,57,.065);
+ background:var(--bep-bg)!important;color:var(--bep-text);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body.institution-page:not(.campus-layout) .portal-main{background:var(--bep-bg)!important;min-width:0}
+body.institution-page:not(.campus-layout) .dou-nav{
+ background:#faf5f6!important;color:#46323e!important;border-right:1px solid #eadfe3!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav-sections{
+ background:white!important;border:1px solid var(--bep-border)!important;
+ border-radius:20px!important;
+}
+body.institution-page:not(.campus-layout) .dou-brand-mark,
+body.institution-page:not(.campus-layout) .dou-nav .dou-create{
+ background:#8e1428!important;border-color:#8e1428!important;color:#fff!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.current,
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link[aria-current="page"]{
+ background:#8e1428!important;color:#fff!important;border-color:#8e1428!important;
+}
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link.current svg,
+body.institution-page:not(.campus-layout) .dou-nav .dou-nav-link[aria-current="page"] svg{color:#fff!important}
+body.institution-page:not(.campus-layout) :is(.portal-card,.bep-import-panel,.dashboard-shortcut){
+ border:1px solid var(--bep-border)!important;background:#fff!important;
+ border-radius:var(--bep-radius)!important;box-shadow:var(--bep-shadow)!important;
+}
+body.institution-page:not(.campus-layout) .portal-btn.primary{
+ background:var(--bep-brand)!important;color:#fff!important;border-color:var(--bep-brand)!important;
+}
+body.institution-page:not(.campus-layout) :is(input,textarea,select){
+ border-radius:11px!important;max-width:100%;
+}
+body.institution-page:not(.campus-layout) :is(a,button,input,select,textarea,summary):focus-visible{
+ outline:3px solid var(--bep-focus)!important;outline-offset:3px!important;
+}
+body.institution-page:not(.campus-layout) [hidden]{display:none!important}
