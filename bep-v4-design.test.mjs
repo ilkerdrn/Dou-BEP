@@ -237,3 +237,16 @@ test('V4 preserves a visible mobile menu toggle independently of legacy V3',()=>
  assert.match(browser,/BROWSER CLEANUP WARNING/);
  assert.match(browser,/if\(primaryError\)throw primaryError/);
 });
+
+
+test('V4 CSS removal requires a strict computed visual parity gate, not only functional Edge checks',()=>{
+ const code=read('./tools/browser-ui-acceptance.mjs');
+ const scripts=JSON.parse(read('./package.json')).scripts;
+ assert.equal(scripts['design:v4:parity'],'node tools/browser-ui-acceptance.mjs --css-parity');
+ assert.match(code,/process\.argv\.includes\('--css-parity'\)/);
+ assert.match(code,/V4 CSS visual parity gate FAILED/);
+ assert.match(code,/changed\.length/);
+ assert.match(code,/BROWSER V4 CSS RETIREMENT PROBE/);
+ for(const page of ['institution.html','institutional-exams.html'])
+  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+});
