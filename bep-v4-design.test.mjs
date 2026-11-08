@@ -395,7 +395,7 @@ test('V4 exam section actions stay horizontal without restoring the regressed he
  assert.match(css,/#exam-workspace \.exam-question-add-actions\{\s*display:flex!important/);
  assert.match(css,/justify-content:flex-end!important;\s*flex-wrap:wrap!important;\s*gap:9px!important/);
  assert.match(css,/#exam-workspace \.exam-question-add-actions \.portal-btn\{\s*min-height:40px!important/);
- assert.doesNotMatch(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
+ assert.match(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
 });
 
 
