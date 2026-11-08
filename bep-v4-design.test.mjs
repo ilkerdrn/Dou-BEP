@@ -62,3 +62,22 @@ test('V4 migration CSS preserves user flows and styles standalone routes consist
  assert.match(css,/@media\(max-width:720px\)/);
  assert.doesNotMatch(css,/@import\s/i,'No remote CSS import');
 });
+
+
+test('V4 authenticated dashboard and exam editor share a restrained task-oriented layout',()=>{
+ const dashboard=read('./institution.html');
+ const editor=read('./institutional-exams.html');
+ const css=read('./bep-v4.css');
+ for(const id of ['workspace-view','login-form','mfa-panel','member-form','audit-panel']){
+  assert.ok(dashboard.includes('id="'+id+'"'),'Preserve institutional workflow '+id);
+ }
+ for(const id of ['exam-workspace','exam-drafts-panel','exam-editor-card','exam-focus-toggle','workflow-next','exam-autosave-state']){
+  assert.ok(editor.includes('id="'+id+'"'),'Preserve exam workflow '+id);
+ }
+ for(const selector of ['.campus-dashboard-stage','.dashboard-welcome','.dashboard-shortcuts','.dashboard-shortcut',
+  '.campus-summary-card','.workflow-steps','.workflow-step.active','.exam-autosave-panel','.exam-grid']){
+  assert.ok(css.includes(selector),'Missing V4 styling for '+selector);
+ }
+ assert.match(css,/@media\(max-width:1120px\)/);
+ assert.match(css,/@media\(max-width:670px\)/);
+});
