@@ -189,8 +189,9 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/accommodations/verify-batch'&&req.method==='POST'){
     const {rows}=await readJson(req,45000);response(res,200,store.accommodationVerifyBatch(actor,rows));return true;
    }
-   const decisionPath=path.match(/^\/api\/accommodations\/([a-f0-9-]{36})(?:\/(history|approve|revoke))?$/);
+   const decisionPath=path.match(/^\/api\/accommodations\/([a-f0-9-]{36})(?:\/(history|approve|revoke|duration-preview))?$/);
    if(decisionPath){const [,id,action]=decisionPath;
+    if(action==='duration-preview'&&req.method==='GET'){response(res,200,store.accommodationDurationPreview(actor,id));return true;}
     if(action==='history'&&req.method==='GET'){response(res,200,{history:store.accommodationHistory(actor,id)});return true;}
     if(!action&&req.method==='PUT'){response(res,200,{item:store.accommodationUpdate(actor,id,await readJson(req))});return true;}
     if(action==='approve'&&req.method==='POST'){const data=await readJson(req);response(res,200,{item:store.accommodationApprove(actor,id,data.revision)});return true;}
