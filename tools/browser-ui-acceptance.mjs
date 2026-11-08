@@ -244,6 +244,24 @@ async function main(){
  pass(navSearch.matchingExam&&navSearch.matchedCount>0,'Turkish menu searches find Sınav when typing sinav');
  pass(navSearch.unmatchedCount===0&&navSearch.noResultsShown,'Unknown menu searches show a clear empty state');
  pass(navSearch.restored===navSearch.all&&navSearch.statusHidden,'Clearing menu search restores all navigation links');
+ const navKeyboard=await evaluate(`(function(){
+  const search=document.getElementById('dou-nav-search');
+  const links=[...document.querySelectorAll('#dou-nav-sections .dou-nav-link')];
+  search.value='sinav';
+  search.dispatchEvent(new Event('input',{bubbles:true}));
+  search.focus();
+  search.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
+  const firstFocused=links.includes(document.activeElement)&&!document.activeElement.hidden;
+  search.focus();
+  search.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+  return {firstFocused,cleared:search.value==='',focusedBack:document.activeElement===search,
+   visible:links.filter(a=>!a.hidden).length,total:links.length};
+ })()`);
+ console.log('BROWSER KEYBOARD NAVIGATION: '+JSON.stringify(navKeyboard));
+ pass(navKeyboard.firstFocused,'ArrowDown from menu search focuses first matching link');
+ pass(navKeyboard.cleared&&navKeyboard.focusedBack&&navKeyboard.visible===navKeyboard.total,
+  'Escape clears a menu search without losing keyboard focus');
+
 
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  // Reference-led layout: real computed colors, not only CSS source assertions.
@@ -484,6 +502,20 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.getElementById("dou-nav-sections")).display!=="none"'),'Mobile menu reveals module links');
  await evaluate('document.querySelector(".dou-nav-toggle").click()');
  pass(await evaluate('document.querySelector(".dou-nav-toggle").getAttribute("aria-expanded")==="false"'),'Mobile menu closes and restores expanded state');
+ const mobileDrawer=await evaluate(`(function(){
+  const toggle=document.querySelector('.dou-nav-toggle');
+  const field=document.getElementById('dou-nav-search');
+  toggle.click();
+  field.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+  const escaped=toggle.getAttribute('aria-expanded')==='false'&&document.activeElement===toggle;
+  toggle.click();
+  document.querySelector('main').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));
+  return {escaped,clickedOutside:toggle.getAttribute('aria-expanded')==='false'};
+ })()`);
+ console.log('BROWSER MOBILE DRAWER DISMISSAL: '+JSON.stringify(mobileDrawer));
+ pass(mobileDrawer.escaped,'Escape closes mobile navigation and returns focus to the toggle');
+ pass(mobileDrawer.clickedOutside,'Outside interaction dismisses the mobile navigation drawer');
+
  for(const width of [320,768,1280]){
   await command('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:width<=768});
   const geom=await evaluate('({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth})');
