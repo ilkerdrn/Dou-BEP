@@ -1,3 +1,5 @@
+**DOU BEP V3 arayüz kabulü:** Otomatik kontrol: `npm.cmd run design:v3:acceptance`. Gerçek NVDA/klavye manuel kabul protokolü: [`docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md`](docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md). Otomatik PASS, gerçek ekran okuyucu kabulü değildir.
+
 **Son sürüm:** v2.81. Sınav oluşturma–onay–teslim zinciri ve gerçek SHA-256 indirme doğrulaması: `README-v2.81.md`.
 
 **Son sürüm:** v2.80. Eşleşmiş sözcük hedefi analizi için `README-v2.80.md` dosyasına bakın.
