@@ -492,6 +492,22 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(route==='/sinav-dosya-aktar'||route==='/erisilebilirlik-kontrol'){
+   const flow=await evaluate(`(function(){
+    const nav=document.querySelector('.bep-task-shortcuts');
+    const links=[...nav.querySelectorAll('a')];
+    return {count:links.length,
+      valid:links.every(a=>a.hash&&document.getElementById(a.hash.slice(1))),
+      firstBg:getComputedStyle(links[0]).backgroundColor,
+      scroll:document.documentElement.scrollWidth,
+      client:document.documentElement.clientWidth};
+   })()`);
+   console.log('BROWSER OFFLINE TASK UX '+label+': '+JSON.stringify(flow));
+   pass(flow.valid&&flow.count===(route==='/sinav-dosya-aktar'?2:4),label+' task shortcuts resolve');
+   pass(flow.firstBg==='rgb(142, 20, 40)',label+' first task has burgundy emphasis');
+   pass(flow.scroll<=flow.client+2,label+' no horizontal overflow');
+  }
+
   if(route==='/sinav-operasyon'||route==='/erisilebilirlik-kabul'){
    const task=await evaluate(`(function(){
      const nav=document.querySelector('.bep-workflow-links');
