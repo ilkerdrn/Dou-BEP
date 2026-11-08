@@ -25,6 +25,12 @@ test('V4 stylesheet inventory is read-only and finds all migrated routes',()=>{
   assert.equal(page.stylesheets.filter(name=>name==='bep-v4.css').length,1,page.page);
  }
  assert.ok(report.stylesheets.every(file=>file.bytes>0),'All declared stylesheets exist');
+ assert.ok(report.stylesheets.every(file=>Number.isInteger(file.importantDeclarations)&&
+  Number.isInteger(file.gradientDeclarations)&&Number.isInteger(file.oldPrimaryColorReferences)),
+  'All legacy cascade risk counters must be numeric');
+ assert.ok(report.stylesheets.find(file=>file.name==='bep-design-system.css').importantDeclarations>0,
+  'Inventory detects legacy important declarations');
+
 });
 
 test('V4 migration audit is not a removal or rewrite script',()=>{
