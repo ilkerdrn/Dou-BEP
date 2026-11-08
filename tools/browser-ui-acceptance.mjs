@@ -559,6 +559,20 @@ async function main(){
    currentVisible:getComputedStyle(initial).display!=='none',
    futureHidden:!!next.closest('[data-workflow-hidden="true"]')};
  })()`);
+ const guidedStructure=await evaluate(`(function(){
+  const editor=document.getElementById('exam-editor-card');
+  const ids=['exam-main-fields','exam-goal-section','exam-library-section','exam-question-section','exam-output-section'];
+  const children=[...editor.children];
+  return ids.map(id=>{
+   const element=document.getElementById(id);
+   let root=element;
+   while(root&&root.parentElement!==editor)root=root.parentElement;
+   return {id,exists:!!element,root:root?.parentElement===editor?root.tagName+'.'+root.className:null,
+    position:root?.parentElement===editor?children.indexOf(root):-1,
+    hidden:element?.hidden||false};
+  });
+ })()`);
+ console.log('BROWSER EXAM GUIDED STRUCTURE: '+JSON.stringify(guidedStructure));
  console.log('BROWSER EXAM GUIDED STAGE: '+JSON.stringify(guidedInitial));
  pass(guidedInitial.active&&guidedInitial.togglePressed&&
       guidedInitial.currentVisible&&guidedInitial.futureHidden,
