@@ -44,7 +44,7 @@ export function exportFixedPhrase(id,output){
  }finally{if(fd!==undefined)closeSync(fd);}
  return {id,output:target,sha256:expected,seconds:m.durationSeconds,experimental:true,validatedIntelligibility:false};
 }
-const isCLI=process.argv[1]&&resolve(process.argv[1])===resolve(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:\/)/,'$1'));
+const isCLI=Boolean(process.argv[1])&&resolve(process.argv[1])===resolve(fileURLToPath(import.meta.url));
 if(isCLI){
  const args=process.argv.slice(2);
  if(args.length!==4||args[0]!=='--id'||args[2]!=='--out'){
