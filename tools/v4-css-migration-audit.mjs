@@ -38,11 +38,19 @@ for(const page of pages){
  entries.push({page,stylesheets:css,legacyFiles,count:css.length});
 }
 const files=[...new Set(entries.flatMap(entry=>entry.stylesheets))].sort();
-const assets=files.map(name=>({
- name,bytes:existsSync(join(root,name))?statSync(join(root,name)).size:null,
- linkedFrom:entries.filter(entry=>entry.stylesheets.includes(name)).map(entry=>entry.page),
- legacy:legacy.has(name)
-}));
+const assets=files.map(name=>{
+ const location=join(root,name);
+ const loaded=existsSync(location);
+ const css=loaded?readFileSync(location,'utf8'):'';
+ return {
+  name,bytes:loaded?statSync(location).size:null,
+  linkedFrom:entries.filter(entry=>entry.stylesheets.includes(name)).map(entry=>entry.page),
+  legacy:legacy.has(name),
+  importantDeclarations:(css.match(/!important\\b/g)||[]).length,
+  gradientDeclarations:(css.match(/(?:linear|radial)-gradient\\(/g)||[]).length,
+  oldPrimaryColorReferences:(css.match(/#8e1428\\b/gi)||[]).length
+ };
+});
 const unresolved=entries.filter(entry=>entry.legacyFiles.length);
 const result={
  status:findings.length?'FAIL':'PASS',checkedPages:entries.length,
@@ -60,7 +68,8 @@ else{
  console.log('Explicit V3 design stylesheet: '+(result.v3ExplicitPages.join(', ')||'none'));
  for(const asset of assets){
   console.log('  '+asset.name+' | '+(asset.bytes===null?'MISSING':asset.bytes+' B')+
-   ' | '+asset.linkedFrom.length+' pages'+(asset.legacy?' | legacy':''));
+   ' | '+asset.linkedFrom.length+' pages'+(asset.legacy?' | legacy':'')+
+   ' | important='+asset.importantDeclarations+' | gradients='+asset.gradientDeclarations);
  }
  for(const finding of findings)console.error('ERROR: '+finding);
  console.log(result.note);
