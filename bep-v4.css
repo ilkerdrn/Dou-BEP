@@ -1413,3 +1413,42 @@ body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="g
 body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro-footer{
  color:#cbd0df!important;
 }
+
+
+/* Phase 27 — real dashboard screenshot review: more readable task cards
+ * without changing routes, the information architecture or exam editor.
+ * The right-hand preparation column is taller than the four shortcuts,
+ * so keep the desktop rhythm tidy and avoid stretching the left cards.
+ */
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage{
+ align-items:start!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .dashboard-shortcut{
+ min-height:136px!important;
+ padding:20px 22px!important;
+ gap:9px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .dashboard-shortcut strong{
+ font-size:15px!important;
+ line-height:1.4!important;
+ font-weight:750!important;
+ color:var(--v4-text)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .dashboard-shortcut small{
+ font-size:12.5px!important;
+ line-height:1.5!important;
+ color:var(--v4-muted)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .campus-summary-card p{
+ font-size:12.5px!important;
+ line-height:1.55!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .campus-progress-steps li{
+ font-size:12.5px!important;
+}
+@media(max-width:670px){
+ body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage .dashboard-shortcut{
+  min-height:118px!important;
+  padding:17px 18px!important;
+ }
+}
