@@ -449,3 +449,22 @@ test('V4 retired institutional routes do not load admin V3 but keep the original
  assert.match(browser,/BROWSER V4 CSS RETIREMENT VERIFIED/);
  assert.match(browser,/status\.v4!==1\|\|status\.legacy!==0/);
 });
+
+
+test('V4 dark institutional login hero has explicit readable foregrounds',()=>{
+ const css=read('./bep-v4.css');
+ const prefix='body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="guest"] #login-view ';
+ for(const item of [
+  ['.login-intro h2','color:#fff!important'],
+  ['.login-intro h2 span','color:#f4b2bf!important'],
+  ['.login-intro>.portal-mini-label','color:#f5aabb!important'],
+  ['.login-intro>p','color:#d7dce9!important'],
+  ['.login-highlights strong','color:#f8f5fa!important'],
+  ['.login-highlights small','color:#d4d9e8!important'],
+  ['.login-intro-footer','color:#cbd0df!important']
+ ]){
+  const start=css.indexOf(prefix+item[0]+'{');
+  assert.ok(start>=0,'Missing dark hero override: '+item[0]);
+  assert.ok(css.slice(start,css.indexOf('}',start)).includes(item[1]),'Wrong hero foreground: '+item[0]);
+ }
+});
