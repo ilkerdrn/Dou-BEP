@@ -492,6 +492,26 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(route==='/sinav-koordinasyon'){
+   const coordinationVisual=await evaluate(`(function(){
+    const hero=document.querySelector('.portal-hero');
+    const heading=hero.querySelector('h1');
+    const menu=[...document.querySelectorAll('.dou-nav .dou-nav-link.portal-menu')].find(item=>!item.hasAttribute('aria-current')&&!item.classList.contains('current'));
+    const search=document.querySelector('.dou-nav-find input');
+    return {
+     heroColor:getComputedStyle(hero).backgroundColor,
+     headingColor:getComputedStyle(heading).color,
+     menuColor:getComputedStyle(menu).color,
+     searchBg:getComputedStyle(search).backgroundColor,
+     searchText:getComputedStyle(search).color
+    };
+   })()`);
+   console.log('BROWSER COORDINATION V3 CONTRAST: '+JSON.stringify(coordinationVisual));
+   pass(coordinationVisual.headingColor==='rgb(34, 36, 58)','Coordination hero headline has dark premium contrast');
+   pass(coordinationVisual.menuColor==='rgb(66, 53, 64)','Inactive coordination navigation remains legible');
+   pass(coordinationVisual.searchBg==='rgb(255, 255, 255)'&&coordinationVisual.searchText==='rgb(37, 34, 57)','Coordination search uses accessible light input');
+  }
+
  }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
