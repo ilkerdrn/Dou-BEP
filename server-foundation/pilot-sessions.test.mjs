@@ -217,10 +217,11 @@ test('recovery refuses other tenants, observers, non-started, expired or revoked
 });
 
 test('HTTP recovery requires authenticated actor and CSRF; student redeems rotated code only once',async()=>{
- const f=fixture(),server=http.createServer(),api=createApiHandler(f.s,{port:0});
- server.on('request',(req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ const f=fixture(),server=http.createServer();
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const port=server.address().port;
+ const api=createApiHandler(f.s,{port});
+ server.on('request',(req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
  const request=async(path,method='GET',body,headers={})=>{
   const response=await fetch('http://127.0.0.1:'+port+'/api'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});
   return {status:response.status,data:await response.json()};
