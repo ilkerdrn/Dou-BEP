@@ -1152,3 +1152,166 @@ body.institution-page.bep-task-page :is(#step-exam,#step-list,#step-review,#step
   padding:16px!important;
  }
 }
+
+
+/* V3 operations + accessibility acceptance: practical, compact, full-width.
+   Native page-specific layouts are preserved; this layer standardizes surfaces. */
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page){
+ --bep-ops-ink:#252239;--bep-ops-muted:#606b7a;
+}
+body.dou-admin-standalone.bep-ops-page .ops-shell,
+body.dou-admin-standalone.bep-accept-page .shell{
+ box-sizing:border-box;
+ width:100%!important;max-width:none!important;
+ margin:0!important;padding:clamp(16px,2vw,30px)!important;
+ min-width:0;
+}
+body.dou-admin-standalone.bep-ops-page .ops-header,
+body.dou-admin-standalone.bep-accept-page .top{
+ background:linear-gradient(110deg,#fff 0%,#fffafb 68%,#f8e7ed 100%)!important;
+ border:1px solid #eadce2!important;border-radius:18px!important;
+ box-shadow:0 7px 24px rgba(76,35,51,.055)!important;
+ padding:clamp(20px,2.4vw,34px)!important;
+ display:flex;align-items:center;flex-wrap:wrap;
+ gap:13px 22px!important;
+}
+body.dou-admin-standalone.bep-ops-page .ops-header>div,
+body.dou-admin-standalone.bep-accept-page .top>div{
+ min-width:0;flex:1 1 480px;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-header,.top) h1{
+ color:#252239!important;
+ font-size:clamp(28px,3vw,42px)!important;line-height:1.17!important;
+ letter-spacing:-.04em!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-header,.top) p:not(.eyebrow){
+ color:#606b7a!important;line-height:1.6!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) .eyebrow{
+ color:#901b37!important;font-size:11px!important;font-weight:850!important;
+ letter-spacing:.12em!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) .bep-workflow-links{
+ display:flex;gap:8px;flex:1 0 100%;flex-wrap:wrap;
+ order:3;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) .bep-workflow-links a{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:42px;padding:9px 14px;
+ color:#782138!important;background:#fff!important;
+ border:1px solid #e3cdd6!important;border-radius:11px!important;
+ font-size:13px;font-weight:800;text-decoration:none!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) .bep-workflow-links a:first-child{
+ color:#fff!important;background:#8e1428!important;border-color:#8e1428!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-header>a,.top>a.back){
+ color:#79213a!important;
+ font-size:13px!important;font-weight:800!important;
+ text-decoration:none!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-warning,.notice){
+ margin:14px 0!important;padding:13px 17px!important;
+ background:#fffaf0!important;color:#624824!important;
+ border:1px solid #eeddb7!important;border-left:4px solid #ad7b32!important;
+ border-radius:12px!important;line-height:1.55!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-panel,.panel,.ops-kpis>section,.overview>div){
+ background:#fff!important;
+ border:1px solid #ebdfe4!important;border-radius:16px!important;
+ box-shadow:0 6px 22px rgba(76,35,51,.055)!important;
+ padding:clamp(17px,2vw,26px)!important;
+ min-width:0;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-kpis,.overview){
+ gap:12px!important;margin:0 0 16px!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-kpis strong,.overview strong){
+ color:#292238!important;font-size:clamp(26px,2.7vw,35px)!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-kpis span,.ops-kpis small,.overview span){
+ color:#626d7e!important;line-height:1.45!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-toolbar,.toolbar){
+ display:flex;flex-wrap:wrap;align-items:center;gap:10px!important;
+ margin:14px 0 17px!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-toolbar select,.toolbar select){
+ min-height:44px!important;background:#fff!important;
+ color:#27243b!important;border:1px solid #d6cbd3!important;
+ border-radius:11px!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-toolbar button,.toolbar button,button[type="submit"]){
+ min-height:44px!important;background:#8e1428!important;
+ color:#fff!important;border:1px solid #8e1428!important;
+ border-radius:11px!important;font-weight:800!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-panel h2,.panel h2){
+ color:#252239!important;font-size:clamp(19px,2vw,24px)!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-table-wrap,.exam-list){
+ min-width:0;
+}
+body.dou-admin-standalone.bep-ops-page .ops-table-wrap{
+ overflow:auto;border:1px solid #ede3e7;border-radius:12px!important;
+}
+body.dou-admin-standalone.bep-ops-page .ops-table-wrap th{
+ background:#fcf7f9!important;color:#3e3040!important;
+ border-bottom:1px solid #eadfe3!important;
+}
+body.dou-admin-standalone.bep-ops-page .ops-table-wrap td{
+ color:#373141!important;border-bottom:1px solid #f0e8eb!important;
+}
+body.dou-admin-standalone.bep-ops-page .ops-links{
+ grid-template-columns:repeat(5,minmax(0,1fr));
+ gap:10px!important;margin:16px 0!important;
+}
+body.dou-admin-standalone.bep-ops-page .ops-links a{
+ background:#fff!important;color:#782138!important;
+ border:1px solid #e9dce2!important;
+ border-radius:12px!important;
+ display:flex;align-items:center;justify-content:center;
+ min-height:66px;padding:13px!important;
+ font-weight:750!important;
+}
+body.dou-admin-standalone.bep-accept-page .exam-item{
+ background:#fff!important;border:1px solid #e6dbe1!important;
+ color:#2e293c!important;border-radius:12px!important;
+}
+body.dou-admin-standalone.bep-accept-page .exam-item:is(:hover,.active){
+ background:#fff3f6!important;border-color:#b75b74!important;
+}
+body.dou-admin-standalone.bep-accept-page .step{
+ border:1px solid #eadfe3!important;border-radius:12px!important;
+ background:#fcf9fa!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(a,button,select,input):focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(#ops-summary,#ops-exam-readiness,#ops-next-actions,#accept-summary,#exam-head){
+ scroll-margin-top:90px;
+}
+@media(max-width:1080px){
+ body.dou-admin-standalone.bep-ops-page .ops-links{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+}
+@media(max-width:760px){
+ body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-header,.top){
+  padding:20px!important;align-items:flex-start!important;
+ }
+ body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) .bep-workflow-links a{
+  flex:1 1 140px;
+ }
+ body.dou-admin-standalone.bep-ops-page .ops-links{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+}
+@media(max-width:480px){
+ body.dou-admin-standalone:is(.bep-ops-page,.bep-accept-page) :is(.ops-shell,.shell){
+  padding:12px!important;
+ }
+ body.dou-admin-standalone.bep-ops-page .ops-links{
+  grid-template-columns:minmax(0,1fr);
+ }
+}
