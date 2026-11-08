@@ -27,6 +27,7 @@ function actorView(){
  $('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
  $('sessions-panel').hidden=!active||restricted;$('mfa-panel').hidden=!active;
  $('mfa-restricted-note').hidden=!restricted;$('mfa-restricted-logout').hidden=!restricted;
+ $('logout-sidebar').hidden=!signedIn;
  const profile=$('campus-sidebar-profile');
  if(profile)profile.hidden=!signedIn;
  if(active){$('actor-name').textContent=state.actor.email;$('actor-meta').textContent=`${state.actor.tenantId} · ${({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||state.actor.role}`;
@@ -83,6 +84,7 @@ $('mfa-confirm-form').addEventListener('submit',async e=>{e.preventDefault();try
 $('mfa-recovery-done').addEventListener('click',()=>{$('mfa-recovery-codes').textContent='';$('mfa-recovery-view').hidden=true;$('mfa-panel').hidden=true;feedback('Yeniden giriş yapabilirsiniz.');});
 $('mfa-disable-form').addEventListener('submit',async e=>{e.preventDefault();if(!confirm('MFA kapatılsın ve tüm oturumlar sonlandırılsın mı?'))return;try{const f=new FormData(e.currentTarget);await api('/security/mfa/disable',{method:'POST',body:{password:f.get('password'),code:f.get('code')}});e.currentTarget.reset();state.actor=null;state.csrf=null;state.mfaSetupRequired=false;actorView();feedback('MFA kapatıldı. Yeniden giriş yapın.');}catch(err){feedback(err.message,true);}});
 $('login-form').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget;const f=new FormData(form);try{const r=await api('/login',{method:'POST',body:{tenantId:f.get('tenantId'),email:f.get('email'),password:f.get('password')}});form.reset();if(r.mfaRequired){state.mfaChallenge=r.challenge;$('login-form').hidden=true;$('mfa-login-form').hidden=false;feedback('Parola doğrulandı. İkinci doğrulamayı tamamlayın.');}else{await applyLogin(r);}}catch(err){feedback(err.message,true);}});
+$('logout-sidebar').addEventListener('click',()=>$('logout').click());
 $('logout').addEventListener('click',async()=>{try{await api('/logout',{method:'POST'});state.actor=null;state.csrf=null;state.mfaSetupRequired=false;actorView();feedback('Oturum kapatıldı.');}catch(err){feedback(err.message,true);}});
 $('filter-exam').addEventListener('click',()=>{state.kind='exam';refresh().catch(err=>feedback(err.message,true));});
 $('filter-rubric').addEventListener('click',()=>{state.kind='rubric';refresh().catch(err=>feedback(err.message,true));});
