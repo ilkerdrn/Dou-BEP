@@ -468,3 +468,15 @@ test('V4 dark institutional login hero has explicit readable foregrounds',()=>{
   assert.ok(css.slice(start,css.indexOf('}',start)).includes(item[1]),'Wrong hero foreground: '+item[0]);
  }
 });
+
+
+test('V4 authenticated dashboard task cards use legible typography on desktop and mobile',()=>{
+ const css=read('./bep-v4.css');
+ const scoped='body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="authenticated"] .campus-dashboard-stage ';
+ assert.ok(css.includes(scoped+'.dashboard-shortcut strong{'),'Task title rule must be authenticated and scoped');
+ assert.ok(css.includes(scoped+'.dashboard-shortcut small{'),'Task description rule must be authenticated and scoped');
+ assert.ok(css.includes(scoped+'.campus-progress-steps li{'),'Progress steps must be readable');
+ assert.ok(css.includes('font-size:15px!important;'),'Task heading must not shrink to caption size');
+ assert.ok(css.includes('font-size:12.5px!important;'),'Task supporting text must remain readable');
+ assert.ok(css.includes('@media(max-width:670px){'),'Mobile layout must be retained');
+});
