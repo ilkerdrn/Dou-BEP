@@ -19,6 +19,7 @@ const password='Local-Anonymous-Browser-Smoke-2026!';
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 let edge=null,server=null,ws=null,store=null;
 let seq=0,checks=0;
+const cssParityFailures=[];
 const pending=new Map();
 const pass=(condition,label)=>{assert.ok(condition,label);checks++;};
 function edgePath(){
@@ -213,9 +214,8 @@ async function probeLegacySheet(page,selectors){
   originalScroll:before.scroll,withoutV3Scroll:after.scroll,changes:changed};
  console.log('BROWSER V4 CSS RETIREMENT PROBE: '+JSON.stringify(result));
  if(process.argv.includes('--css-parity')&&changed.length){
-  const summary=changed.map(entry=>entry.selector).join(', ');
-  throw Error('V4 CSS visual parity gate FAILED on '+page+
-   ': '+changed.length+' geometry/style differences: '+summary);
+  cssParityFailures.push({page,changedElements:changed.length,
+   selectors:changed.map(entry=>entry.selector)});
  }
  return result;
 }
@@ -912,6 +912,15 @@ async function main(){
 
   }
 
+ }
+ if(process.argv.includes('--css-parity')){
+  console.log('BROWSER V4 CSS PARITY SUMMARY: '+JSON.stringify({
+   checkedPages:2,failedPages:cssParityFailures.length,failures:cssParityFailures
+  }));
+  if(cssParityFailures.length){
+   throw Error('V4 CSS visual parity gate FAILED: '+cssParityFailures.map(x=>
+    x.page+' ('+x.changedElements+'): '+x.selectors.join(', ')).join(' | '));
+  }
  }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
