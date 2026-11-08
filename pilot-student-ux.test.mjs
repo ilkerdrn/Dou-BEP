@@ -64,3 +64,17 @@ test('student question map shows answered, empty and review states without revea
  assert.doesNotMatch(js,/post\('\/api\/pilot\/save',\{answers,reviewFlags\}/);
  assert.doesNotMatch(js,/post\('\/api\/pilot\/submit',\{answers,reviewFlags\}/);
 });
+
+test('pre-exam readiness requires two explicit checks before showing questions',()=>{
+ assert.match(html,/id="exam-ready"[^>]*hidden[^>]*aria-labelledby="ready-title"/);
+ assert.match(html,/id="ready-understand"/);
+ assert.match(html,/id="ready-device"/);
+ assert.match(html,/id="ready-start"[^>]*disabled/);
+ assert.match(html,/45 dakikalık pilot oturum süresi işlemeye başladı/);
+ assert.match(js,/function updateReadyStart\(\)/);
+ assert.match(js,/\$\('ready-start'\)\.disabled=!\$\('ready-understand'\)\.checked\|\|!\$\('ready-device'\)\.checked\|\|!claim\|\|!exam/);
+ assert.match(js,/\$\('exam-ready'\)\.hidden=true;\$\('player'\)\.hidden=false/);
+ assert.match(js,/\$\('entry'\)\.hidden=true;\$\('player'\)\.hidden=true;\$\('exam-ready'\)\.hidden=false/);
+ assert.match(js,/\$\('ready-title'\)\.focus\(\)/);
+ assert.doesNotMatch(js,/localStorage|sessionStorage|indexedDB/);
+});
