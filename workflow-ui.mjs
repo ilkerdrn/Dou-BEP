@@ -120,6 +120,11 @@ if (filter && library) {
 // Progressive disclosure is presentation-only. Keep the original section nodes
 // and their IDs intact so every existing editor handler continues to work.
 const optionalExamTools=[
+  // Keep major workflow section nodes and IDs unchanged. Native details make
+  // the teacher workspace navigable without losing any editor listeners.
+  ['exam-goal-section','BEP hedef doğrulama','İçe aktarılan hedefleri kaynakla karşılaştır'],
+  ['exam-library-section','Kazanım ve soru bankası','İçerik seç veya kuruma ait soru ekle'],
+  ['exam-output-section','Onay ve çıktı işlemleri','Kaydet, kaliteyi denetle ve yetkili çıktı al'],
   ['exam-goal-matrix-section','Hedef–soru kapsam matrisi','Kazanım ilişkilerini ve eksik bağlantıları incele'],
   ['exam-guided-panel','Hazır soru şablonları','Şablondan yeni soru oluştur'],
   ['exam-material-library','Görsel materyal kütüphanesi','Geometri ve görsel destekleri kullan'],
@@ -130,6 +135,8 @@ for(const [id,title,description] of optionalExamTools){
  if(!section||!section.parentNode)continue;
  const wrapper=document.createElement('details');
  wrapper.className='exam-optional-tool';
+ if(['exam-goal-section','exam-library-section','exam-output-section'].includes(id))wrapper.classList.add('campus-major-module');
+ if(id==='exam-output-section')wrapper.open=true;
  wrapper.dataset.toolId=id;
  const summary=document.createElement('summary');
  const name=document.createElement('span');
