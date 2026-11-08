@@ -347,3 +347,13 @@ test('manual accessibility findings stay local, omit note contents and support d
  assert.doesNotMatch(ui,/make\('li','pilot-finding',.*note/);
  assert.match(css,/\.pilot-finding\[data-outcome="fail"\]/);
 });
+
+
+test('canonical V3 homepage replaces old entrypoints without deleting the historical editor',()=>{
+ const server=read('./server.mjs');
+ assert.match(server,/if\(path==='\/'\|\|path==='\/index\.html'\)/);
+ assert.match(server,/res\.writeHead\(302,\{'Location':'\/kurum'/);
+ assert.match(server,/['"]\/eski-sinav-tasarimci['"]:\[['"]index\.html['"]/);
+ assert.match(read('./index.html'),/app\.mjs/);
+ assert.match(read('./institution.html'),/bep-design-system\.css/);
+});
