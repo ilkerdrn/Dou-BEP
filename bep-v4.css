@@ -1,0 +1,164 @@
+/* DOU BEP V4 — single institutional foundation (phase 1).
+ * Scope: institution and exam. Transitional: legacy sheets remain until
+ * per-route visual and functional acceptance confirms safe removal.
+ * No remote assets, no JavaScript, no effect on student pilot/audio review.
+ */
+body[data-design-version="4"]{
+ --v4-primary:#7a1f2b;--v4-primary-hover:#621923;--v4-primary-soft:#f5ecef;
+ --v4-bg:#f7f7f8;--v4-surface:#fff;--v4-border:#e6e7eb;
+ --v4-text:#202431;--v4-muted:#596274;--v4-muted-2:#737e8c;
+ --v4-radius:12px;--v4-gap:24px;--v4-focus:#9f3149;
+ --bep-bg:var(--v4-bg);--bep-surface:var(--v4-surface);
+ --bep-text:var(--v4-text);--bep-muted:var(--v4-muted);
+ --bep-brand:var(--v4-primary);--bep-brand-hover:var(--v4-primary-hover);
+ --bep-border:var(--v4-border);--bep-focus:var(--v4-focus);
+ --campus-red:var(--v4-primary);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+ color:var(--v4-text)!important;background:var(--v4-bg)!important;
+ font-size:15px;line-height:1.55;
+}
+body[data-design-version="4"] :is(.portal-shell,.portal-main){
+ min-width:0;background:var(--v4-bg)!important;
+}
+body[data-design-version="4"] .portal-topbar{
+ min-height:68px!important;background:var(--v4-surface)!important;
+ border-bottom:1px solid var(--v4-border)!important;
+ box-shadow:none!important;
+}
+body[data-design-version="4"] .portal-topbar :is(strong,span){
+ color:var(--v4-text)!important;
+}
+body[data-design-version="4"] .portal-content{
+ width:100%!important;max-width:none!important;min-width:0!important;
+ box-sizing:border-box!important;
+}
+body[data-design-version="4"] .dou-nav{
+ background:#fff!important;background-image:none!important;
+ border-right:1px solid var(--v4-border)!important;
+ box-shadow:none!important;color:var(--v4-text)!important;
+}
+body[data-design-version="4"] .dou-nav .dou-nav-brand{
+ border-bottom:1px solid var(--v4-border)!important;
+}
+body[data-design-version="4"] .dou-nav .dou-nav-brand :is(strong,small){
+ color:var(--v4-text)!important;
+}
+body[data-design-version="4"] .dou-nav .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]){
+ color:var(--v4-text)!important;background:transparent!important;
+ border-color:transparent!important;border-radius:9px!important;
+}
+body[data-design-version="4"] .dou-nav .dou-nav-link.portal-menu:hover:not(.current):not([aria-current="page"]){
+ background:var(--v4-primary-soft)!important;color:var(--v4-primary)!important;
+}
+body[data-design-version="4"] .dou-nav :is(.dou-nav-link.current,.dou-nav-link[aria-current="page"]){
+ background:var(--v4-primary)!important;background-image:none!important;
+ color:white!important;border:1px solid var(--v4-primary)!important;
+ box-shadow:none!important;border-radius:9px!important;
+}
+body[data-design-version="4"] .dou-nav :is(.dou-nav-link.current,.dou-nav-link[aria-current="page"]) svg{
+ color:white!important;
+}
+body[data-design-version="4"] .dou-nav .dou-create{
+ background:var(--v4-primary)!important;background-image:none!important;
+ border-color:var(--v4-primary)!important;color:#fff!important;
+ box-shadow:none!important;border-radius:10px!important;min-height:44px;
+}
+body[data-design-version="4"] .dou-nav .dou-nav-group-title,
+body[data-design-version="4"] .dou-nav .dou-nav-find label{
+ color:var(--v4-muted)!important;
+}
+body[data-design-version="4"] .portal-hero{
+ background:var(--v4-surface)!important;background-image:none!important;
+ border:1px solid var(--v4-border)!important;border-radius:var(--v4-radius)!important;
+ box-shadow:none!important;min-height:0!important;
+ padding:clamp(20px,2vw,30px)!important;
+}
+body[data-design-version="4"] .portal-hero-symbol,
+body[data-design-version="4"] #exam-workspace .exam-workbench-heading::after{
+ display:none!important;
+}
+body[data-design-version="4"] :is(.portal-hero h1,#exam-workspace h1,.dashboard-welcome h1){
+ color:var(--v4-text)!important;font-size:clamp(27px,2.5vw,34px)!important;
+ line-height:1.2!important;letter-spacing:-.025em!important;
+}
+body[data-design-version="4"] :is(.portal-hero em,.login-intro h2 span){
+ color:var(--v4-primary)!important;
+ font-style:normal!important;
+}
+body[data-design-version="4"] :is(.portal-mini-label,.portal-overline,.eyebrow){
+ color:var(--v4-primary)!important;letter-spacing:.04em!important;
+}
+body[data-design-version="4"] :is(.portal-card,.campus-summary-card,.dashboard-shortcut,
+ .portal-kpis>div,.dashboard-welcome,#exam-workspace .workflow-nav,
+ #exam-workspace .exam-grid>section,#exam-workspace .exam-optional-tool){
+ background:#fff!important;background-image:none!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:var(--v4-radius)!important;box-shadow:none!important;
+}
+body[data-design-version="4"] :is(.portal-card,.campus-summary-card,.dashboard-shortcut,
+ .dashboard-welcome) :is(h2,h3,strong){
+ color:var(--v4-text)!important;
+}
+body[data-design-version="4"] :is(p,.portal-help,.campus-summary-card p){
+ line-height:1.58;
+}
+body[data-design-version="4"] :is(.portal-form,.exam-grid,#login-form) :is(input,select,textarea),
+body[data-design-version="4"] #dou-nav-search{
+ background:#fff!important;border:1px solid #cdd2db!important;
+ color:var(--v4-text)!important;border-radius:10px!important;
+ min-height:44px;box-shadow:none!important;
+}
+body[data-design-version="4"] :is(.portal-btn.primary,.dou-create){
+ background:var(--v4-primary)!important;background-image:none!important;
+ border:1px solid var(--v4-primary)!important;
+ color:white!important;box-shadow:none!important;border-radius:10px!important;
+ min-height:44px;
+}
+body[data-design-version="4"] .portal-btn.primary:hover{
+ background:var(--v4-primary-hover)!important;
+ border-color:var(--v4-primary-hover)!important;
+}
+body[data-design-version="4"] .portal-btn.secondary{
+ background:#fff!important;color:var(--v4-text)!important;
+ border:1px solid var(--v4-border)!important;box-shadow:none!important;
+ border-radius:10px!important;min-height:44px;
+}
+body[data-design-version="4"] :is(a,button,input,select,textarea,summary):focus-visible{
+ outline:3px solid var(--v4-focus)!important;outline-offset:3px!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-workbench-heading{
+ background:#fff!important;background-image:none!important;
+ border:1px solid var(--v4-border)!important;box-shadow:none!important;
+ border-radius:var(--v4-radius)!important;padding:22px!important;
+}
+body[data-design-version="4"][data-portal-auth="guest"] #login-view{
+ background:#fff!important;box-shadow:none!important;
+}
+body[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro{
+ background:#f5ecef!important;background-image:none!important;
+}
+body[data-design-version="4"][data-portal-auth="guest"] #login-view .login-intro h2{
+ color:var(--v4-text)!important;font-size:clamp(30px,3.2vw,46px)!important;
+ letter-spacing:-.035em!important;
+}
+body[data-design-version="4"][data-portal-auth="guest"] #login-view .login-form-panel{
+ background:#fff!important;
+}
+@media(max-width:1080px){
+ body[data-design-version="4"] .dou-nav{
+  border-right:0!important;border-bottom:1px solid var(--v4-border)!important;
+ }
+}
+@media(max-width:650px){
+ body[data-design-version="4"] .portal-hero{
+  padding:18px!important;
+ }
+ body[data-design-version="4"] :is(.portal-card,.campus-summary-card,.dashboard-shortcut){
+  min-width:0;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body[data-design-version="4"] :is(a,button,input,summary){
+  transition-duration:0s!important;animation-duration:0s!important;
+ }
+}
