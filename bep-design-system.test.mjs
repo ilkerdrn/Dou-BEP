@@ -266,3 +266,16 @@ test('V3 color tokens are canonical and coordination mobile headline does not ge
  const mobile=css.lastIndexOf('font-size:clamp(26px,7vw,33px)!important');
  assert.ok(desktop>=0&&mobile>desktop,'Mobile headline sizing must come after desktop override');
 });
+
+
+test('single full-width layout and offline Turkish menu search contract',()=>{
+ const css=read('./bep-design-system.css');
+ const nav=read('./admin-navigation.js');
+ assert.doesNotMatch(css,/max-width:1440px!important/,'Old content width would conflict with V3');
+ assert.doesNotMatch(css,/max-width:1120px!important/,'Guest login should not be centered');
+ assert.match(css,/body\.institution-page\.campus-layout\[data-portal-auth="guest"\]:has\(#login-view:not\(\[hidden\]\)\) \.portal-content/);
+ assert.match(nav,/\.normalize\('NFKD'\)/);
+ assert.match(nav,/\.replace\(\/ı\/g,'i'\)/);
+ assert.match(nav,/\.replace\(\/ş\/g,'s'\)/);
+ assert.match(nav,/field\.dispatchEvent|field\.addEventListener\('input',filter\)/);
+});
