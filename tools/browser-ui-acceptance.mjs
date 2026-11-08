@@ -153,6 +153,19 @@ async function main(){
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="guest"'),'Guest auth shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display==="none"'),'Guest does not see administrator navigation');
  pass(await evaluate('!document.getElementById("login-view").hidden'),'Guest sees sign-in');
+ const fullScreenLogin=await evaluate(`(function(){
+  const main=document.querySelector('.portal-content').getBoundingClientRect();
+  const card=document.getElementById('login-view').getBoundingClientRect();
+  return {screenWidth:innerWidth,screenHeight:innerHeight,
+    contentWidth:Math.round(main.width),cardWidth:Math.round(card.width),
+    cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),
+    columns:getComputedStyle(document.getElementById('login-view')).gridTemplateColumns};
+ })()`);
+ console.log('BROWSER FULL-VIEWPORT LOGIN: '+JSON.stringify(fullScreenLogin));
+ pass(fullScreenLogin.contentWidth>=fullScreenLogin.screenWidth*.95,'Login content spans full viewport width');
+ pass(fullScreenLogin.cardWidth>=fullScreenLogin.screenWidth*.85,'Login card spans desktop width');
+ pass(fullScreenLogin.contentHeight>=fullScreenLogin.screenHeight,'Login page fills viewport height');
+ pass(fullScreenLogin.columns.split(' ').length===2,'Desktop login has two balanced panels');
  await evaluate(`(function(){
   const form=document.getElementById('login-form');
   form.elements.tenantId.value=${JSON.stringify(tenant)};
