@@ -171,11 +171,26 @@ async function main(){
  pass(fullScreenLogin.cardWidth>=fullScreenLogin.screenWidth*.85,'Login card spans desktop width');
  pass(fullScreenLogin.contentHeight>=fullScreenLogin.screenHeight,'Login page fills viewport height');
  pass(fullScreenLogin.columns.split(' ').length===2,'Desktop login has two balanced panels');
- pass(fullScreenLogin.cardLeft===0&&Math.abs(fullScreenLogin.cardRight-fullScreenLogin.screenWidth)<=2,'Login layout reaches both viewport edges');
+ pass(fullScreenLogin.cardLeft===0&&Math.abs(fullScreenLogin.cardRight-fullScreenLogin.viewportClientWidth)<=2,'Login layout reaches both available viewport edges');
  pass(fullScreenLogin.cardTop===0&&fullScreenLogin.radius==='0px','Login begins at top without outer rounded card');
  pass(fullScreenLogin.cardHeight>=fullScreenLogin.screenHeight,'Login panels cover full viewport height');
  pass(fullScreenLogin.horizontalScroll<=fullScreenLogin.viewportClientWidth+1,'Full-screen login has no horizontal overflow');
- pass(fullScreenLogin.cardTop===0,'Full-screen login starts at top edge');
+ // Check the unauthenticated login on a real phone viewport before signing in.
+ await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+ const guestPhone=await evaluate(`(function(){
+   const card=document.getElementById('login-view');
+   const cardRect=card.getBoundingClientRect();
+   const panelRect=document.querySelector('#login-view .login-form-panel').getBoundingClientRect();
+   return {viewport:innerWidth,available:document.documentElement.clientWidth,
+     scrollWidth:document.documentElement.scrollWidth,left:Math.round(cardRect.left),
+     right:Math.round(cardRect.right),formWidth:Math.round(panelRect.width),
+     columns:getComputedStyle(card).gridTemplateColumns};
+ })()`);
+ console.log('BROWSER MOBILE GUEST LOGIN: '+JSON.stringify(guestPhone));
+ pass(guestPhone.left===0&&Math.abs(guestPhone.right-guestPhone.available)<=2,'Mobile sign-in spans viewport edges');
+ pass(guestPhone.scrollWidth<=guestPhone.available+2,'Mobile sign-in has no horizontal overflow');
+ pass(guestPhone.formWidth<=guestPhone.available+2,'Mobile sign-in form fits available viewport');
+ await command('Emulation.clearDeviceMetricsOverride');
  await evaluate(`(function(){
   const form=document.getElementById('login-form');
   form.elements.tenantId.value=${JSON.stringify(tenant)};
