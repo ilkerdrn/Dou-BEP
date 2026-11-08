@@ -823,3 +823,31 @@ body.institution-page.campus-layout[data-design-version="4"] .dou-nav-toggle:foc
  outline:3px solid var(--v4-focus)!important;
  outline-offset:2px!important;
 }
+
+
+/* Phase 10 — migrate the actual dashboard typography and checklist geometry.
+ * Visual parity proved that missing V3 heading sizing and progress-step
+ * spacing, not only page containers, changed downstream positions.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage .dashboard-welcome h2{
+ font-size:clamp(23px,2.5vw,34px)!important;
+ line-height:1.25!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-progress-steps{
+ list-style:none!important;counter-reset:none!important;
+ padding:0!important;margin:12px 0 18px!important;
+ display:grid!important;gap:9px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-progress-steps li{
+ display:flex!important;gap:10px!important;align-items:center!important;
+ min-width:0!important;border:1px solid var(--v4-border)!important;
+ border-radius:9px!important;padding:10px!important;
+ font-size:12px!important;color:var(--v4-text)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-progress-steps li span{
+ color:var(--v4-primary)!important;font-weight:800!important;font-size:11px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-summary-action{
+ display:flex!important;justify-content:center!important;
+ text-decoration:none!important;text-align:center!important;white-space:normal!important;
+}
