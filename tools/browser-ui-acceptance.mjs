@@ -158,7 +158,7 @@ async function main(){
   const card=document.getElementById('login-view').getBoundingClientRect();
   return {screenWidth:innerWidth,screenHeight:innerHeight,
     contentWidth:Math.round(main.width),cardWidth:Math.round(card.width),
-    cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),
+    cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),\n    cardLeft:Math.round(card.left),cardRight:Math.round(card.right),\n    cardTop:Math.round(card.top),radius:getComputedStyle(document.getElementById('login-view')).borderTopLeftRadius,
     columns:getComputedStyle(document.getElementById('login-view')).gridTemplateColumns};
  })()`);
  console.log('BROWSER FULL-VIEWPORT LOGIN: '+JSON.stringify(fullScreenLogin));
@@ -166,6 +166,9 @@ async function main(){
  pass(fullScreenLogin.cardWidth>=fullScreenLogin.screenWidth*.85,'Login card spans desktop width');
  pass(fullScreenLogin.contentHeight>=fullScreenLogin.screenHeight,'Login page fills viewport height');
  pass(fullScreenLogin.columns.split(' ').length===2,'Desktop login has two balanced panels');
+ pass(fullScreenLogin.cardLeft===0&&Math.abs(fullScreenLogin.cardRight-fullScreenLogin.screenWidth)<=2,'Login layout reaches both viewport edges');
+ pass(fullScreenLogin.cardTop===0&&fullScreenLogin.radius==='0px','Login begins at top without outer rounded card');
+ pass(fullScreenLogin.cardHeight>=fullScreenLogin.screenHeight,'Login panels cover full viewport height');
  await evaluate(`(function(){
   const form=document.getElementById('login-form');
   form.elements.tenantId.value=${JSON.stringify(tenant)};
