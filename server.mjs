@@ -138,6 +138,7 @@ const allowed={
  '/admin-design-v3.css':['admin-design-v3.css','text/css; charset=utf-8'],
  '/bep-design-system.css':['bep-design-system.css','text/css; charset=utf-8'],
  '/bep-v4.css':['bep-v4.css','text/css; charset=utf-8'],
+ '/dou-unified-ui.css':['dou-unified-ui.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
  '/exam-page-health.js':['exam-page-health.js','text/javascript; charset=utf-8'],
  '/institution.mjs':['institution.mjs','text/javascript; charset=utf-8'],
