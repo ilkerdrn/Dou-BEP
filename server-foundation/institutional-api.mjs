@@ -184,6 +184,13 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/batch/authorized-audit'&&req.method==='GET'){
     response(res,200,{items:store.authorizedBatchAudit(actor)});return true;
    }
+   if(path==='/api/accommodations/time-plans'&&req.method==='GET'){
+    response(res,200,{items:store.accommodationTimePlanList(actor)});return true;
+   }
+   if(path==='/api/accommodations/time-plans'&&req.method==='POST'){
+    const body=await readJson(req,3000);
+    response(res,201,{item:store.accommodationTimePlanCreate(actor,body.decisionId,body.coordinationId)});return true;
+   }
    if(path==='/api/accommodations'&&req.method==='GET'){response(res,200,{items:store.accommodationList(actor)});return true;}
    if(path==='/api/accommodations'&&req.method==='POST'){response(res,201,{item:store.accommodationCreate(actor,await readJson(req))});return true;}
    if(path==='/api/accommodations/verify-batch'&&req.method==='POST'){
