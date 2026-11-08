@@ -650,3 +650,28 @@ body.institution-page:not(.campus-layout)[data-design-version="4"] .portal-hero 
 body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav-find input{
  color:var(--v4-text)!important;background:#fff!important;
 }
+
+
+/* Phase 6: replace the last V3 burgundy shortcut accents on standalone modules.
+ * Retain each link destination and all module-specific behavior unchanged.
+ */
+body.dou-admin-standalone[data-design-version="4"]:is(.bep-ops-page,.bep-accept-page)
+ .bep-workflow-links a:first-child,
+body[data-design-version="4"]:is(.bep-pilot-ux,.bep-goals-ux)
+ .bep-section-nav a:first-child,
+body.institution-page.bep-task-page[data-design-version="4"]
+ .bep-task-shortcuts a:first-child,
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"]
+ .bep-lab-shortcuts a:first-child,
+body.dou-admin-standalone[data-design-version="4"]:is(.bep-import-ux,.bep-audit-ux)
+ .bep-task-shortcuts a:first-child{
+ background:var(--v4-primary)!important;
+ background-image:none!important;
+ border-color:var(--v4-primary)!important;
+ color:#fff!important;
+ box-shadow:none!important;
+}
+body[data-design-version="4"] :is(.bep-workflow-links,.bep-section-nav,.bep-task-shortcuts,.bep-lab-shortcuts) a:focus-visible{
+ outline:3px solid var(--v4-focus)!important;
+ outline-offset:3px!important;
+}
