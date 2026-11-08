@@ -110,7 +110,7 @@
  // Return from a visible result to its search field without tabbing backwards
  // across the whole sidebar. Do not intercept normal arrow-key behavior in inputs.
  panel.addEventListener('keydown',event=>{
-  if(event.key!=='ArrowUp'||!field)return;
+  if(event.key!=='ArrowUp'||!field||!searchActive)return;
   const link=event.target.closest('.dou-nav-link');
   if(!link||link.hidden)return;
   const visible=[...panel.querySelectorAll('.dou-nav-link')].filter(item=>
