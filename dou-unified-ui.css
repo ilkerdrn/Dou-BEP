@@ -792,3 +792,25 @@ body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-me
   .ops-kpis,.coord-kpis,.overview,.batch-steps
  ){grid-template-columns:1fr}
 }
+
+/* Standalone navigation already contains the DOU logo. Hide redundant
+   decorative mark in secondary headers; preserve page titles and links. */
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header .brand>.mark{
+ display:none!important;
+}
+/* Scoped typography and full-width form rhythms on legacy task modules. */
+body.institution-page.bep-task-page[data-design-version="4"] .portal-content,
+body.institution-page.bep-goals-ux[data-design-version="4"] .portal-content{
+ max-width:none!important;min-width:0!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .coord-card,.batch-card,.bep-import-panel,.source-card,.ops-panel,.panel
+) :is(h2,h3){
+ color:#1d1d1b!important;line-height:1.25!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-toolbar select,.coord-form input,.coord-form select,.batch-field select,
+ .decision-fields input,.decision-filters select,.source-grid input
+):focus-visible{
+ outline:3px solid #156bb4!important;outline-offset:3px!important;
+}
