@@ -621,3 +621,174 @@ body[data-design-version="4"] .dou-nav #campus-sidebar-profile .campus-profile-r
 }
 /* Allow keyboard users to see the full account email on focus/hover via title
    without exposing any additional account information in the DOM. */
+
+/* Module parity audit 2026-11: one DersAktif design across named menu routes.
+   Keep semantic alerts, validation, existing approved/revoked indicators, and
+   user high-contrast mode. No universal button:hover / role changes. */
+body[data-design-version="4"]:not(.high):not(.high-contrast){
+ --adm-ink:#1d1d1b;--adm-muted:#626269;--adm-bg:#f5f5f2;
+ --adm-line:#e6e5e1;--adm-accent:#d70926;--adm-accent-dark:#b50720;
+ --red:#d70926;--ink:#1d1d1b;--paper:#f5f5f2;--line:#e6e5e1;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .portal-card,.coord-card,.batch-card,.ops-panel,.source-card,.bep-import-panel,
+ .panel,.pilot-block,.card,.coord-kpis>div,.ops-kpis>section,.overview>div,
+ .batch-steps span,.bep-task-panel,.bep-workflow-panel
+){
+ border-color:#e6e5e1!important;border-radius:12px!important;
+ box-shadow:none!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .portal-card,.coord-card,.batch-card,.ops-panel,.source-card,.bep-import-panel,
+ .panel,.pilot-block,.card,.coord-kpis>div,.ops-kpis>section,.overview>div,
+ .batch-steps span
+){
+ background:#fff!important;background-image:none!important;
+ color:#1d1d1b!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-shell,.shell,.source-wrap,.portal-main,.portal-content,.pilot-audit,
+ .bep-speech-ux main,.bep-pilot-ux main
+){color:#1d1d1b}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-header h1,.top h1,.source-wrap h1,.portal-hero h1,
+ .card.hero h1,.pilot-hero h1,.bep-import-panel h2,.ops-panel h2
+){color:#1d1d1b!important;letter-spacing:-.028em!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .eyebrow,.portal-overline,.portal-mini-label,.pilot-kicker,
+ .dou-free-text-eyebrow
+){color:#bb0822!important;font-weight:800!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .coord-card p,.batch-card p,.ops-header p:not(.eyebrow),
+ .top p,.source-wrap p,.portal-help,.muted
+){color:#626269;line-height:1.6}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .coord-form input,.coord-form select,.coord-filters input,.coord-filters select,
+ .batch-field select,.decision-fields input,.decision-filters input,.decision-filters select,
+ .ops-toolbar select,.toolbar select,.source-grid input,.source-grid select,
+ .bep-import-panel input:not([type="checkbox"]),.bep-import-panel select,
+ .card input:not([type="checkbox"]):not([type="radio"]),.card select,.card textarea
+){
+ background:#fff!important;color:#1d1d1b!important;
+ border:1px solid #cbcbc7!important;border-radius:10px!important;
+ min-height:44px;box-shadow:none!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .coord-form label,.coord-filters label,.decision-fields label,
+ .decision-filters label,.batch-field,.source-grid label
+){color:#2d2d29!important;font-weight:700}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-toolbar button,.coord-actions button,.batch-actions button,
+ .source-actions button,.toolbar button,.decision-actions button,
+ .reader-actions button:not(.ghost),.dou-free-text-actions button:not(.ghost)
+):not(:disabled){
+ border-radius:10px!important;min-height:44px;
+ background:#d70926!important;background-image:none!important;
+ border-color:#d70926!important;color:#fff!important;box-shadow:none!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-toolbar button,.coord-actions button,.batch-actions button,
+ .source-actions button,.toolbar button,.decision-actions button
+):not(:disabled):hover{
+ background:#b50720!important;border-color:#b50720!important
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-header a,.ops-links a,.ops-section-head a,.top .back,.source-wrap>a
+){color:#a4071c!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-header,.top,.portal-hero,.card.hero,.pilot-hero,.ops-panel
+){background-image:none!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-header,.top
+){border-bottom-color:#e6e5e1!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-kpis strong,.coord-kpis strong,.overview strong
+){color:#1d1d1b!important;font-variant-numeric:tabular-nums}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .ops-kpis span,.coord-kpis span,.overview span
+){color:#626269!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .status.live,.decision-status.approved
+){color:#08755e!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .decision-status.revoked
+){color:#ab2727!important}
+/* Standalone modules were carrying an extra branded header inside the
+   permanent sidebar layout: neutralize that duplicate without removing links. */
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header{
+ min-height:65px!important;padding:12px clamp(18px,2.5vw,34px)!important;
+ background:#fff!important;background-image:none!important;color:#1d1d1b!important;
+ border-bottom:1px solid #e6e5e1!important;border-top:0!important;
+ box-shadow:none!important;
+}
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header .brand{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ gap:10px!important;color:#1d1d1b!important;font-weight:800!important;
+ letter-spacing:0!important;
+}
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header .mark{
+ width:34px!important;height:34px!important;border-radius:9px!important;
+ background:#d70926!important;margin:0!important;
+ font-size:10px!important;box-shadow:none!important;
+}
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header .pill{
+ background:#f5f5f2!important;color:#44443f!important;
+ border:1px solid #e6e5e1!important;box-shadow:none!important;
+}
+body.dou-admin-standalone[data-design-version="4"]:not(.high):not(.high-contrast)>header nav a{
+ color:#a4071c!important;font-weight:750!important;
+}
+/* Each module's in-page quick navigation is a neutral tab row.
+   Explicit current/first-step accents remain red. */
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .bep-workflow-links,.bep-section-nav,.bep-task-shortcuts,.bep-lab-shortcuts,
+ .coord-quick-nav
+){
+ display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .bep-workflow-links,.bep-section-nav,.bep-task-shortcuts,.bep-lab-shortcuts,
+ .coord-quick-nav
+) a{
+ border:1px solid #e6e5e1!important;border-radius:10px!important;
+ box-shadow:none!important;font-weight:750!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .bep-workflow-links,.bep-section-nav,.bep-task-shortcuts,.bep-lab-shortcuts,
+ .coord-quick-nav
+) a:not(:first-child){
+ background:#fff!important;color:#353531!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .bep-workflow-links,.bep-section-nav,.bep-task-shortcuts,.bep-lab-shortcuts,
+ .coord-quick-nav
+) a:first-child{
+ background:#d70926!important;border-color:#d70926!important;color:#fff!important;
+}
+/* Warning blocks keep amber semantics; only remove pink / bluish decorators. */
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .coord-warning,.ops-warning,.batch-alert,.notice[role="note"]
+){
+ border-color:#efd5b1!important;background:#fff9ed!important;
+ color:#5c3d13!important;border-radius:11px!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .reader-panel,.pilot-hero
+){border-color:#e6e5e1!important;background:#fff!important}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+ .pilot-hero-pill,.dou-free-text-marker
+){background:#f5f5f2!important;color:#454540!important;border-color:#e6e5e1!important}
+/* All campus navigation links should stay readable at 100% zoom. */
+body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu{
+ opacity:1!important;
+}
+@media(max-width:760px){
+ body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+  .ops-kpis,.coord-kpis,.overview,.batch-steps
+ ){grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:480px){
+ body[data-design-version="4"]:not(.high):not(.high-contrast) :is(
+  .ops-kpis,.coord-kpis,.overview,.batch-steps
+ ){grid-template-columns:1fr}
+}
