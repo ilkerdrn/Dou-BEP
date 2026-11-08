@@ -191,6 +191,10 @@ if(nav){
    return at;
   });
   const valid=stageStarts.every((at,index)=>at>=0&&(index===0||at>stageStarts[index-1]));
+  // DOM-only diagnostics for the isolated browser acceptance run.
+  // Never log draft content, user identifiers or question answers.
+  editor.dataset.workflowStagePositions=stageStarts.join(',');
+  editor.dataset.workflowStageValid=String(valid);
   if(valid){
    const stageFor=index=>{
     let stage=-1;
