@@ -144,7 +144,7 @@ export function pilotSessions(db,{StoreError,log}){
    const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),now(),row.id,now());
    if(!changed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
-   return {token,expiresAt:row.expires_at,exam:payload};
+   return {token,expiresAt:row.expires_at,exam:payload,...(row.answers?{answers:JSON.parse(row.answers)}:{})};
   }catch(err){
    if(err?.code==='invalid_code'){
     recordFailure(key,time,REDEEM_CODE_LIMIT,15*60*1000,REDEEM_LOCK_MS);
