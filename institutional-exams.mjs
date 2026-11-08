@@ -89,9 +89,18 @@ const examSelection=createExamSelection({
 });
 function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
 const field=(key,label,value,tag='input',extra='')=>`<label>${esc(label)}${tag==='textarea'?`<textarea data-field="${key}" rows="${extra||3}">${esc(value)}</textarea>`:`<input data-field="${key}" value="${esc(value)}" ${extra}>`}</label>`;
+function qualityQuestionTarget(message){
+ const match=/^(\\d+)\\.\\s*soru\\s*:/iu.exec(String(message||''));
+ if(!match)return null;
+ const index=Number(match[1])-1;
+ return Number.isSafeInteger(index)&&index>=0&&index<(state.exam?.questions?.length||0)?index:null;
+}
 function renderQuality(x){
  const report=reviewExam(x),issues=report.issues;
- $('exam-quality').innerHTML=`<strong>Kalite denetimi: ${report.errorCount} hata · ${report.warningCount} uyarı</strong>${issues.slice(0,9).map(q=>`<p class="exam-issue ${q.level}">${esc(q.level==='error'?'Hata':'Uyarı')}: ${esc(q.text)}</p>`).join('')||'<p>Biçimsel hata yok. Pedagojik uygunluğu öğretmen değerlendirir.</p>'}`;
+ $('exam-quality').innerHTML=`<strong>Kalite denetimi: ${report.errorCount} hata · ${report.warningCount} uyarı</strong>${issues.slice(0,9).map(q=>{
+  const index=qualityQuestionTarget(q.text);
+  return `<div class="exam-issue ${q.level}"><p>${esc(q.level==='error'?'Hata':'Uyarı')}: ${esc(q.text)}</p>${index===null?'':`<button type="button" class="portal-btn secondary" data-quality-question="${index}" aria-label="${index+1}. soruyu düzenlemeye git">Soru ${index+1}'e git</button>`}</div>`;
+ }).join('')||'<p>Biçimsel hata yok. Pedagojik uygunluğu öğretmen değerlendirir.</p>'}`;
  const audioIssues=auditAudioAccess(x);if(audioIssues.length)$('exam-quality').insertAdjacentHTML('beforeend','<p><b>Sesli sınav için ek kontrol:</b></p>'+audioIssues.map(a=>'<p class="exam-issue error">'+esc(a.text)+'</p>').join(''));
  return report;
 }
