@@ -244,6 +244,21 @@ async function main(){
  pass(navSearch.matchingExam&&navSearch.matchedCount>0,'Turkish menu searches find Sınav when typing sinav');
  pass(navSearch.unmatchedCount===0&&navSearch.noResultsShown,'Unknown menu searches show a clear empty state');
  pass(navSearch.restored===navSearch.all&&navSearch.statusHidden,'Clearing menu search restores all navigation links');
+ const navVisibility=await evaluate(`(function(){
+  const field=document.getElementById('dou-nav-search');
+  const panel=document.getElementById('dou-nav-sections');
+  field.value='sinav';field.dispatchEvent(new Event('input',{bubbles:true}));
+  const links=[...panel.querySelectorAll('.dou-nav-link')];
+  const hidden=links.filter(link=>link.hidden);
+  const hiddenComputed=hidden.every(link=>getComputedStyle(link).display==='none');
+  const visible=links.filter(link=>!link.hidden&&getComputedStyle(link).display!=='none').length;
+  field.value='';field.dispatchEvent(new Event('input',{bubbles:true}));
+  return {hidden:hidden.length,hiddenComputed,visible};
+ })()`);
+ console.log('BROWSER FILTERED MENU VISIBILITY: '+JSON.stringify(navVisibility));
+ pass(navVisibility.hidden>0&&navVisibility.hiddenComputed,'Filtered navigation links are actually hidden by CSS');
+ pass(navVisibility.visible>0,'Matching navigation links remain visually available');
+
  const navKeyboard=await evaluate(`(function(){
   const search=document.getElementById('dou-nav-search');
   const links=[...document.querySelectorAll('#dou-nav-sections .dou-nav-link')];
@@ -259,6 +274,20 @@ async function main(){
  })()`);
  console.log('BROWSER KEYBOARD NAVIGATION: '+JSON.stringify(navKeyboard));
  pass(navKeyboard.firstFocused,'ArrowDown from menu search focuses first matching link');
+ const navKeyboardBack=await evaluate(`(function(){
+  const field=document.getElementById('dou-nav-search');
+  field.value='sinav';field.dispatchEvent(new Event('input',{bubbles:true}));field.focus();
+  field.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
+  const selected=document.activeElement;
+  selected.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true,cancelable:true}));
+  const returned=document.activeElement===field;
+  field.value='';field.dispatchEvent(new Event('input',{bubbles:true}));
+  return {returned,shortcut:field.getAttribute('aria-keyshortcuts')};
+ })()`);
+ console.log('BROWSER SEARCH RETURN FOCUS: '+JSON.stringify(navKeyboardBack));
+ pass(navKeyboardBack.returned,'ArrowUp from first filtered result returns to menu search');
+ pass(navKeyboardBack.shortcut==='/', 'Search field advertises slash keyboard shortcut');
+
  pass(navKeyboard.cleared&&navKeyboard.focusedBack&&navKeyboard.visible===navKeyboard.total,
   'Escape clears a menu search without losing keyboard focus');
 
