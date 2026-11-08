@@ -387,3 +387,13 @@ test('V4 parity trace inspects the two nested blocks that accumulate height drif
  assert.ok(browser.includes('\\\".exam-subheading\\\"'));
  assert.ok(browser.includes('\\\".exam-preflight\\\"'));
 });
+
+
+test('V4 exam section actions stay horizontal without restoring the regressed heading padding',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/#exam-workspace \.exam-subheading h3\{\s*color:var\(--v4-text\)!important;\s*font-size:16px!important/);
+ assert.match(css,/#exam-workspace \.exam-question-add-actions\{\s*display:flex!important/);
+ assert.match(css,/justify-content:flex-end!important;\s*flex-wrap:wrap!important;\s*gap:9px!important/);
+ assert.match(css,/#exam-workspace \.exam-question-add-actions \.portal-btn\{\s*min-height:40px!important/);
+ assert.doesNotMatch(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
+});
