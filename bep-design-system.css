@@ -1430,3 +1430,120 @@ body.dou-admin-standalone.bep-import-ux :is(#source-setup,#source-result){
   flex:1 1 148px;
  }
 }
+
+
+/* V3 pilot and BEP goals: clear workflows and readable corporate surfaces.
+   Keep student pilot and independent audio review outside this admin layer. */
+body.bep-pilot-ux main#dou-content,
+body.bep-goals-ux .portal-content{
+ width:100%!important;max-width:none!important;min-width:0;
+ margin:0!important;padding:clamp(14px,1.8vw,28px)!important;
+ box-sizing:border-box;
+}
+body:is(.bep-pilot-ux,.bep-goals-ux) .bep-section-nav{
+ display:flex;flex-wrap:wrap;align-items:center;gap:9px;
+ background:#fff!important;border:1px solid #e9dce2!important;
+ border-radius:14px!important;padding:12px!important;
+ margin:0 0 15px!important;
+}
+body:is(.bep-pilot-ux,.bep-goals-ux) .bep-section-nav a{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:9px 15px;min-height:42px;
+ color:#782138!important;background:#fff!important;
+ border:1px solid #e3ccd5!important;border-radius:10px!important;
+ text-decoration:none!important;font-size:13px!important;font-weight:800!important;
+}
+body:is(.bep-pilot-ux,.bep-goals-ux) .bep-section-nav a:first-child{
+ background:#8e1428!important;color:#fff!important;border-color:#8e1428!important;
+}
+body:is(.bep-pilot-ux,.bep-goals-ux) .bep-section-nav a:focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.bep-pilot-ux main#dou-content .card,
+body.bep-goals-ux .bep-import-panel{
+ background:#fff!important;border:1px solid #eadfe4!important;
+ border-radius:16px!important;
+ box-shadow:0 6px 22px rgba(75,39,54,.06)!important;
+ padding:clamp(18px,2vw,28px)!important;
+ min-width:0;
+}
+body.bep-pilot-ux main#dou-content .hero,
+body.bep-goals-ux .portal-hero{
+ background:linear-gradient(110deg,#fff 0%,#fffafb 67%,#f9e9ee 100%)!important;
+ border:1px solid #eadce2!important;min-height:0!important;
+ padding:clamp(20px,2.4vw,34px)!important;margin:0 0 14px!important;
+}
+body.bep-pilot-ux main#dou-content .hero :is(h1,p),
+body.bep-goals-ux .portal-hero :is(h1,h1 em,p){
+ color:#272239!important;text-shadow:none!important;
+}
+body.bep-pilot-ux main#dou-content .hero h1,
+body.bep-goals-ux .portal-hero h1{
+ font-size:clamp(27px,3vw,39px)!important;line-height:1.16!important;
+ letter-spacing:-.035em!important;
+}
+body.bep-pilot-ux main#dou-content .eyebrow,
+body.bep-goals-ux .portal-mini-label{
+ color:#8e1428!important;font-weight:850!important;
+}
+body.bep-pilot-ux main#dou-content .card :is(h2,h3),
+body.bep-goals-ux .bep-import-panel :is(h2,h3){
+ color:#272339!important;letter-spacing:-.025em;
+}
+body.bep-pilot-ux main#dou-content .grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:15px!important;margin:0 0 16px!important;
+}
+body.bep-pilot-ux main#dou-content #workspace>.card{
+ margin:0 0 16px!important;
+}
+body.bep-pilot-ux main#dou-content :is(input,textarea,select),
+body.bep-goals-ux .bep-import-panel :is(input:not([type="checkbox"]),textarea,select){
+ max-width:100%;min-width:0;box-sizing:border-box;
+ color:#292439!important;background:#fff!important;
+ border:1px solid #d8cdd6!important;border-radius:11px!important;
+}
+body.bep-pilot-ux main#dou-content :is(button:not(.ghost),#create,#review-save),
+body.bep-goals-ux .bep-import-panel .portal-btn.primary{
+ background:#8e1428!important;color:#fff!important;
+ border:1px solid #8e1428!important;border-radius:11px!important;
+ min-height:44px!important;font-weight:800!important;
+}
+body.bep-pilot-ux main#dou-content button.ghost,
+body.bep-goals-ux .bep-import-panel .portal-btn.secondary{
+ background:#fff!important;color:#782138!important;
+ border:1px solid #e3ccd5!important;border-radius:11px!important;
+ min-height:44px!important;
+}
+body.bep-pilot-ux main#dou-content .hint,
+body.bep-goals-ux .bep-tip{
+ background:#fffbf2!important;color:#624b2c!important;
+ border:1px solid #eeddb9!important;border-radius:12px!important;
+ padding:12px 15px!important;
+}
+body.bep-goals-ux .bep-import-grid{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ align-items:start;gap:16px!important;width:100%;min-width:0;
+}
+body.bep-goals-ux .bep-import-panel textarea{
+ width:100%!important;min-height:180px;
+}
+body.bep-goals-ux :is(#bep-step-source,#bep-step-review),
+body.bep-pilot-ux :is(#pilot-session-create,#pilot-session-list,#cohort-heading){
+ scroll-margin-top:90px;
+}
+@media(max-width:850px){
+ body.bep-pilot-ux main#dou-content .grid,
+ body.bep-goals-ux .bep-import-grid{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+}
+@media(max-width:520px){
+ body:is(.bep-pilot-ux,.bep-goals-ux) .bep-section-nav a{
+  flex:1 1 150px;
+ }
+ body.bep-pilot-ux main#dou-content,
+ body.bep-goals-ux .portal-content{
+  padding:12px!important;
+ }
+}
