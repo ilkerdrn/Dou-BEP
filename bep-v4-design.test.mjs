@@ -357,3 +357,13 @@ test('V4 exam overview spacing and module header surface do not depend on V3',()
 
 
 
+
+
+test('V4 visual gate reports exact nested exam drift without changing strict comparisons',()=>{
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ const css=read('./bep-v4.css');
+ assert.match(browser,/BROWSER V4 EXAM CHILD METRIC TRACE/);
+ assert.match(browser,/const traceChanges=\[\]/);
+ assert.match(browser,/V4 CSS visual parity gate FAILED/);
+ assert.ok(!css.includes('/* Phase 18 — edit-card heading metrics'), 'Regressing header override must remain reverted');
+});
