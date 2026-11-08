@@ -17,13 +17,37 @@ async function boot(){try{const ses=await api('/session');state.actor=ses.member
  }catch(e){$('decision-login').hidden=false;$('decision-workspace').hidden=true;notice(e.message,true);}}
 $('decision-form').addEventListener('submit',async event=>{event.preventDefault();const f=new FormData(event.currentTarget);const payload={term:f.get('term'),courseCode:f.get('courseCode'),examLabel:f.get('examLabel'),candidateCode:f.get('candidateCode'),extraMinutes:Number(f.get('extraMinutes')),adjustments:f.getAll('adjustment')};
  $('decision-save').disabled=true;try{if(state.edit)await api('/accommodations/'+state.edit.id,'PUT',{...payload,revision:state.edit.revision});else await api('/accommodations','POST',payload);reset();await refresh();notice('Taslak kaydedildi. Farklı bir yetkilinin onayı bekleniyor.');}catch(e){notice(e.message,true);}finally{$('decision-save').disabled=false;}});
+function renderDurationPreview(result){
+ $('decision-duration-panel').hidden=false;
+ $('decision-duration-result').textContent=result.ready
+  ?'Doğrulanan süre: '+result.baseMinutes+' dk temel + '+result.extraMinutes+' dk onaylı ek süre = '+result.totalMinutes+' dk planlanan toplam. Bu yalnızca önizlemedir.'
+  :result.message;
+ const choices=Array.isArray(result.choices)?result.choices:[];
+ const selector=$('decision-duration-sitting');
+ selector.replaceChildren();
+ for(const option of choices){
+  const element=document.createElement('option');
+  element.value=option.id;
+  element.textContent=option.startsAt+' · '+option.baseMinutes+' dk temel süre';
+  selector.append(element);
+ }
+ $('decision-duration-choices').hidden=!choices.length;
+}
+$('decision-duration-apply').addEventListener('click',async()=>{
+ if(!state.durationDecisionId)return;
+ const btn=$('decision-duration-apply');btn.disabled=true;
+ try{
+  const id=encodeURIComponent($('decision-duration-sitting').value);
+  const result=await api('/accommodations/'+state.durationDecisionId+'/duration-preview?coordinationId='+id);
+  renderDurationPreview(result);
+ }catch(e){notice(e.message,true);}
+ finally{btn.disabled=false;}
+});
 $('decision-rows').addEventListener('click',async event=>{const b=event.target.closest('button');if(!b)return;const id=b.dataset.history||b.dataset.duration||b.dataset.edit||b.dataset.approve||b.dataset.revoke,item=state.items.find(x=>x.id===id);if(!item)return;
  try{if(b.dataset.duration){
+  state.durationDecisionId=id;
   const result=await api('/accommodations/'+id+'/duration-preview');
-  $('decision-duration-panel').hidden=false;
-  $('decision-duration-result').textContent=result.ready
-   ?'Doğrulanan süre: '+result.baseMinutes+' dk temel + '+result.extraMinutes+' dk onaylı ek süre = '+result.totalMinutes+' dk planlanan toplam. Bu yalnızca önizlemedir.'
-   :result.message;
+  renderDurationPreview(result);
   $('decision-duration-panel').scrollIntoView({block:'nearest'});
   return;
  }
