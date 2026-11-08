@@ -100,7 +100,7 @@ body.dou-admin-standalone.pilot-audit-page {background:#f4f6fa;color:#17253a}
 @media(prefers-reduced-motion:reduce){.pilot-audit .check-item{transition:none!important}}
 @media(forced-colors:active){.pilot-audit .check-item,.pilot-audit .pilot-stat,.pilot-audit .pilot-actions{border:1px solid CanvasText!important}.pilot-audit .pilot-check-badge{border:1px solid CanvasText!important}}
 @media print{body.dou-admin-standalone.pilot-audit-page{padding-left:0!important}.pilot-audit-page>header,.pilot-audit-page>.dou-nav,.pilot-filterbar,.pilot-actions,#pilot-export-error{display:none!important}.pilot-audit-page .pilot-audit{max-width:none!important;padding:0!important}.pilot-audit .pilot-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}.pilot-audit .card,.pilot-audit .check-item{box-shadow:none!important}.pilot-audit .check-item{min-height:0!important}.pilot-audit .pilot-hero{background:white!important}.pilot-audit .pilot-check-grid .check-item[hidden]{display:flex!important}}
-</style><link rel="stylesheet" href="/bep-design-system.css"></head><body class="dou-admin-standalone pilot-audit-page">
+</style><link rel="stylesheet" href="/bep-design-system.css"></head><body class="dou-admin-standalone pilot-audit-page bep-audit-ux">
 <a class="dou-skip" href="#dou-content">İçeriğe geç</a>
 <aside class="portal-side dou-nav" aria-label="BEP ana menü">
 <div class="dou-nav-brand"><div class="dou-brand-mark" aria-hidden="true"><span>DOU</span><i></i></div><div class="dou-brand-title"><strong>BEP Sınav Atölyesi</strong><small>Kurumsal çalışma alanı</small></div><button class="dou-nav-toggle" type="button" aria-label="Menüyü aç veya kapat" aria-controls="dou-nav-sections" aria-expanded="false"><span></span><span></span><span></span></button></div>
@@ -130,7 +130,7 @@ body.dou-admin-standalone.pilot-audit-page {background:#f4f6fa;color:#17253a}
 </aside>
 
 <header><div class="brand"><span class="mark" aria-hidden="true">DOU</span>BEP SINAV ATÖLYESİ <span class="pill">KALİTE DENETİMİ</span></div><nav><a href="/pilot-yonetim">Demo oturumlarına dön</a></nav></header>
-<main id="dou-content" class="pilot-audit">
+<main id="dou-content" class="pilot-audit"><nav class="bep-task-shortcuts" aria-label="Kontrol süreci aşamaları"><a href="#pilot-env-title">1. Test ortamı</a><a href="#pilot-summary-title">2. İlerleme</a><a href="#pilot-checks-title">3. Kontroller</a><a href="#pilot-rule-title">4. Sonuçlar</a></nav>
   <section class="card pilot-hero" aria-labelledby="pilot-title">
     <div class="pilot-kicker">DOU BEP · KALİTE GÜVENCESİ</div>
     <div class="pilot-hero-heading"><div>
