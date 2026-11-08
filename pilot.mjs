@@ -98,8 +98,25 @@ function render(){const area=$('student-questions');area.replaceChildren();
  }
  reviewFlags.clear();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
+function updateReadyStart(){
+ $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam;
+}
+$('ready-understand').addEventListener('change',updateReadyStart);
+$('ready-device').addEventListener('change',updateReadyStart);
+$('ready-start').addEventListener('click',()=>{
+ if(!claim||!exam||$('ready-start').disabled)return;
+ $('exam-ready').hidden=true;$('player').hidden=false;
+ announce('Sınav soruları açıldı. Sınav süresi kodu kullandığınızda başlamıştı.');
+ douReader?.refreshVoices();
+ const heading=$('player').querySelector('h2');
+ heading.setAttribute('tabindex','-1');heading.focus();
+});
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();$('entry').hidden=true;$('player').hidden=false;announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
+ $('ready-understand').checked=false;$('ready-device').checked=false;
+ $('ready-exam-details').textContent=exam.title+' · '+exam.subject+' · '+exam.questions.length+' soru · Pilot süre sınırı 45 dakika.';
+ updateReadyStart();announce('Kod kabul edildi. Önce sınav hazırlık bilgilerini kontrol edin.');
+ $('ready-title').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 $('answer-form').addEventListener('change',event=>{if(event.target.matches('input[type="radio"],select'))updateAnswerProgress();});
 // Anonymous pilot draft data stays on the localhost server; the bearer token
