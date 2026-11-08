@@ -352,6 +352,24 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
  pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Verified institutional member sees sidebar profile');
+ const adminNav=await evaluate(`(function(){
+  const group=document.getElementById('dou-nav-management');
+  const admin=group?.querySelector('[href="/kurum#admin-panel"]');
+  const audit=group?.querySelector('[href="/kurum#audit-panel"]');
+  const adminPanel=document.getElementById('admin-panel');
+  const auditPanel=document.getElementById('audit-panel');
+  return {groupVisible:!!group&&!group.hidden&&getComputedStyle(group).display!=='none',
+   adminVisible:!!admin&&!admin.hidden&&getComputedStyle(admin).display!=='none',
+   auditVisible:!!audit&&!audit.hidden&&getComputedStyle(audit).display!=='none',
+   adminTarget:!!adminPanel&&!adminPanel.hidden,
+   auditTarget:!!auditPanel&&!auditPanel.hidden};
+ })()`);
+ console.log('BROWSER V4 MANAGEMENT NAVIGATION: '+JSON.stringify(adminNav));
+ pass(adminNav.groupVisible&&adminNav.adminVisible&&adminNav.auditVisible,
+  'Authenticated admin has visible user-management and audit sidebar links');
+ pass(adminNav.adminTarget&&adminNav.auditTarget,
+  'Management sidebar links point to active authorized dashboard panels');
+
  pass(await evaluate('document.querySelector(".campus-dashboard-stage .campus-dashboard-aside")!==null'),'Dashboard has right contextual summary');
  pass(await evaluate('document.querySelectorAll(".campus-progress-steps li").length===4'),'Dashboard displays four teacher workflow steps');
  const sidebarFlow=await evaluate(`(function(){
