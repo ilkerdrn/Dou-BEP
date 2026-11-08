@@ -765,3 +765,37 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .wo
   padding:18px!important;
  }
 }
+
+
+/* Phase 8 — authentication boundary must not depend on admin-design-v3.css.
+ * The portal and direct exam URL start in 'checking'; guest/checking states
+ * never expose or briefly flash the authenticated navigation/top bar.
+ * This is presentation-only; server session/MFA enforcement stays unchanged.
+ */
+body.institution-page.campus-layout[data-design-version="4"]:is(
+ [data-portal-auth="checking"],[data-portal-auth="guest"],
+ [data-exam-auth="checking"],[data-exam-auth="guest"]
+) .portal-shell{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"]:is(
+ [data-portal-auth="checking"],[data-portal-auth="guest"],
+ [data-exam-auth="checking"],[data-exam-auth="guest"]
+) :is(.dou-nav,.portal-topbar){
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"]:is(
+ [data-portal-auth="checking"],[data-portal-auth="guest"],
+ [data-exam-auth="checking"],[data-exam-auth="guest"]
+) .portal-main{
+ width:100%!important;min-width:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"]:is(
+ [data-exam-auth="checking"],[data-exam-auth="guest"]
+) .exam-hero{
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"]
+ #exam-login-required{
+ display:block;
+}
