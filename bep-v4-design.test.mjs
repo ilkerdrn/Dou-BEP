@@ -163,7 +163,8 @@ test('V4 provides opt-in isolated CSS retirement comparison before removing V3 l
  const guide=read('./docs/V4-CSS-RETIREMENT-GATE.md');
  assert.equal(scripts['design:v4:css-probe'],'node tools/browser-ui-acceptance.mjs --css-probe');
  assert.match(browser,/async function probeLegacySheet\(page,selectors\)/);
- assert.match(browser,/if\(process\.argv\.includes\('--css-probe'\)\)/);
+ assert.ok(browser.includes("process.argv.includes('--css-probe')||process.argv.includes('--css-parity')"),'CSS probe and parity flags must both trigger the probe');
+ assert.equal(scripts['design:v4:parity'],'node tools/browser-ui-acceptance.mjs --css-parity');
  assert.match(browser,/BROWSER V4 CSS RETIREMENT PROBE/);
  assert.match(browser,/document\.querySelector\('\+JSON\.stringify\(query\)\+'\)\.disabled=false/);
  assert.match(browser,/BROWSER V4 CSS PROBE RESTORE DIAGNOSTIC/);
