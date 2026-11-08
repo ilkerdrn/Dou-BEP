@@ -4,17 +4,17 @@
  * Locally served: no fonts, images, scripts or remote dependencies.
  */
 :root{
- --dou-ui-primary:#7a1f2b;
- --dou-ui-primary-hover:#621923;
- --dou-ui-primary-soft:#f5ecef;
- --dou-ui-canvas:#f7f7f8;
+ --dou-ui-primary:#d70926;
+ --dou-ui-primary-hover:#b50720;
+ --dou-ui-primary-soft:#fff0f2;
+ --dou-ui-canvas:#f5f5f2;
  --dou-ui-surface:#ffffff;
- --dou-ui-text:#202431;
- --dou-ui-muted:#596274;
- --dou-ui-stroke:#e3e5ea;
+ --dou-ui-text:#1d1d1b;
+ --dou-ui-muted:#626269;
+ --dou-ui-stroke:#e6e5e1;
  --dou-ui-focus:#156bb4;
  --dou-ui-radius:12px;
- --dou-ui-shadow:0 5px 20px rgba(20,30,48,.045);
+ --dou-ui-shadow:0 6px 20px rgba(29,29,27,.045);
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 body:not(.high):not(.high-contrast){
@@ -119,4 +119,58 @@ body:not(.high):not(.high-contrast).bep-student-pilot .option:has(input:checked)
 }
 @media(prefers-reduced-motion:reduce){
  *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+
+/* DersAktif-based administration shell: charcoal navigation, quiet neutral
+   surfaces and a restrained, identifiable campus-red action color. */
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav{
+ background:#1d1d1b!important;
+ background-image:none!important;
+ color:#fff!important;
+ border-right:1px solid #30302e!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav :is(.dou-nav-brand,.dou-nav-group){
+ border-color:#393937!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav :is(.dou-nav-brand strong,.dou-nav-brand small,.dou-nav-link.portal-menu,.dou-nav-link.portal-menu span){
+ color:#f2f2f0!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav :is(.dou-nav-group-title,.dou-nav-find label,.dou-nav-version,.dou-nav-offline){
+ color:#b8b8b5!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]):hover{
+ background:#363634!important;color:#fff!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav :is(.dou-nav-link.current,.dou-nav-link[aria-current="page"]){
+ background:#d70926!important;border-color:#d70926!important;color:#fff!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav .dou-create{
+ background:#d70926!important;border-color:#d70926!important;color:#fff!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav #dou-nav-search{
+ background:#30302e!important;border-color:#666661!important;color:#fff!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav .dou-sidebar-logout{
+ color:#fff!important;border-color:#7e7e7a!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(.portal-main,.portal-content,.campus-dashboard-stage){
+ background:var(--dou-ui-canvas)!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(.portal-topbar,.portal-card,.campus-summary-card,.dashboard-shortcut,.dashboard-welcome,.portal-hero){
+ background:#fff!important;border-color:var(--dou-ui-stroke)!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(.portal-btn.primary,.dou-create){
+ background:#d70926!important;border-color:#d70926!important;color:#fff!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(.portal-mini-label,.portal-overline,.eyebrow){
+ color:#c00823!important;
+}
+body[data-design-version="4"]:not(.high):not(.high-contrast) :is(.portal-hero h1,.dashboard-welcome h1,#exam-workspace h1){
+ color:#1d1d1b!important;letter-spacing:-.035em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .mark{
+ background:#d70926!important;box-shadow:none!important;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .hero h1{
+ color:#1d1d1b;letter-spacing:-.035em;
 }
