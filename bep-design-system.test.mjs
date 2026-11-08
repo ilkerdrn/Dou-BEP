@@ -252,3 +252,17 @@ test('offline reader and speech laboratories preserve their controls and skip ta
  const css=read('./bep-design-system.css');
  assert.match(css,/body\.dou-admin-standalone\.bep-speech-ux/);
 });
+
+
+test('V3 color tokens are canonical and coordination mobile headline does not get overwritten',()=>{
+ const css=read('./bep-design-system.css');
+ const blocks=[...css.matchAll(/body\.institution-page\.campus-layout\{([^{}]*)\}/g)];
+ assert.ok(blocks.length>=2,'Base semantics and palette blocks must exist');
+ for(const token of ['--bep-bg','--bep-surface','--bep-text','--bep-muted','--bep-brand','--bep-brand-hover','--bep-border','--bep-focus','--bep-radius','--bep-shadow']){
+  const declarations=blocks.filter(m=>m[1].split('\n').some(line=>line.trim().startsWith(token+':')));
+  assert.equal(declarations.length,1,'Repeated V3 base token '+token);
+ }
+ const desktop=css.lastIndexOf('font-size:clamp(25px,2.65vw,36px)!important');
+ const mobile=css.lastIndexOf('font-size:clamp(26px,7vw,33px)!important');
+ assert.ok(desktop>=0&&mobile>desktop,'Mobile headline sizing must come after desktop override');
+});
