@@ -223,3 +223,17 @@ test('V4 guest and pending authentication never rely on V3 to hide admin navigat
  assert.match(portal,/<body[^>]+data-portal-auth="checking"/);
  assert.match(exam,/<body[^>]+data-exam-auth="checking"/);
 });
+
+
+test('V4 preserves a visible mobile menu toggle independently of legacy V3',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/body\.institution-page\.campus-layout\[data-design-version="4"\] \.dou-nav-toggle\{/);
+ assert.match(css,/color:#801b2a!important/);
+ assert.match(css,/background:#fff!important/);
+ assert.match(css,/\.dou-nav-toggle span\{\s*background:currentColor!important/);
+ assert.match(browser,/Mobile menu has contrasting burgundy icon on white surface/);
+ assert.match(browser,/let primaryError=null/);
+ assert.match(browser,/BROWSER CLEANUP WARNING/);
+ assert.match(browser,/if\(primaryError\)throw primaryError/);
+});
