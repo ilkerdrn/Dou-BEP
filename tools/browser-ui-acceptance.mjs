@@ -664,6 +664,12 @@ async function main(){
  pass(longExam.count===24,'Long exam renders 24 editable questions');
  await waitUntil(()=>evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]").length===24'),'Question navigation synchronized with 24-card editor');
  pass(await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[23]!==null'),'Last question jump is available');
+ await evaluate(`(function(){const field=document.getElementById('exam-question-find-input');field.value='23';field.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+ pass(await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]:not([hidden])").length===1'),'Question number search filters only navigation buttons');
+ pass(await evaluate('document.getElementById("exam-question-find-status").textContent.includes("Soru 23 bulundu")'),'Question search announces a matching number');
+ pass(await evaluate('document.querySelectorAll("#exam-questions > .exam-question").length===24'),'Question search leaves all original cards intact');
+ await evaluate(`(function(){const field=document.getElementById('exam-question-find-input');field.value='';field.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+ pass(await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]:not([hidden])").length===24'),'Clearing question search restores navigation');
  await evaluate('document.querySelectorAll("#exam-question-jump [data-question-jump]")[23].click()');
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="23"'),'Jump to last long-exam question moves focus to correct card');
  // A nested DOM mutation must not recreate navigation buttons or remove focus.
