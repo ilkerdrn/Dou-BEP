@@ -78,7 +78,7 @@ $('pilot-toggle-review').addEventListener('click',()=>{
  if(!exam)return;
  if(reviewFlags.has(activeQuestionIndex))reviewFlags.delete(activeQuestionIndex);
  else reviewFlags.add(activeQuestionIndex);
- updateQuestionMap();
+ resetFinalReview();updateQuestionMap();
 });
 function updateAnswerProgress(){
  if(!exam)return;
@@ -96,7 +96,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);area.append(box);
  }
- reviewFlags.clear();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
+ reviewFlags.clear();resetFinalReview();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
 function updateReadyStart(){
  $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam;
@@ -118,7 +118,13 @@ $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();
  updateReadyStart();announce('Kod kabul edildi. Önce sınav hazırlık bilgilerini kontrol edin.');
  $('ready-title').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
-$('answer-form').addEventListener('change',event=>{if(event.target.matches('input[type="radio"],select'))updateAnswerProgress();});
+function resetFinalReview(){
+ $('pilot-final-review').hidden=true;
+ $('send').textContent='Teslim özetini kontrol et';
+}
+$('answer-form').addEventListener('change',event=>{
+ if(event.target.matches('input[type="radio"],select')){resetFinalReview();updateAnswerProgress();}
+});
 // Anonymous pilot draft data stays on the localhost server; the bearer token
 // stays only in this tab's JavaScript memory, never in browser storage.
 async function getProgress(){
@@ -167,7 +173,32 @@ $('pilot-first-empty').addEventListener('click',()=>{
  activeQuestionIndex=empty[0];$('one-question').checked=true;updateQuestionNavigation(true);
  announce('İlk boş veya tamamlanmamış soru: '+(activeQuestionIndex+1)+'.');
 });
+$('pilot-cancel-final').addEventListener('click',()=>{
+ resetFinalReview();
+ $('question-navigation').scrollIntoView({block:'start'});
+});
+function showFinalReview(){
+ const {empty}=collectAnswers(),unanswered=new Set(empty),list=$('pilot-final-questions');
+ list.replaceChildren();
+ const flagged=[...reviewFlags].sort((a,b)=>a-b);
+ const answered=exam.questions.length-empty.length;
+ $('pilot-final-summary').textContent=answered+' soru yanıtlandı, '+empty.length+' soru boş veya eksik, '+flagged.length+' soru tekrar bakılacak olarak işaretli.';
+ for(let i=0;i<exam.questions.length;i++){
+  const button=el('button','Soru '+(i+1)+' · '+(unanswered.has(i)?'Boş':'Yanıtlandı')+(reviewFlags.has(i)?' · Tekrar bak':''));
+  button.type='button';button.className='pilot-final-jump ghost';
+  button.addEventListener('click',()=>{
+   resetFinalReview();activeQuestionIndex=i;$('one-question').checked=true;
+   updateQuestionNavigation(true);
+   $('student-questions').scrollIntoView({block:'start'});
+  });
+  list.append(button);
+ }
+ $('pilot-final-review').hidden=false;
+ $('send').textContent='Kesin teslim et';
+ $('pilot-final-title').focus();
+}
 $('answer-form').addEventListener('submit',async event=>{event.preventDefault();if(!claim)return;const btn=$('send');
+ if($('pilot-final-review').hidden){showFinalReview();return;}
  const {answers,empty}=collectAnswers();
  const warning=empty.length?empty.length+' soru boş veya tamamlanmamış. ':'';
  if(!confirm(warning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
