@@ -18,8 +18,7 @@ test('V4 stylesheet inventory is read-only and finds all migrated routes',()=>{
  assert.equal(report.checkedPages,16);
  assert.deepEqual(report.findings,[]);
  assert.ok(report.legacyPages>0,'Legacy dependencies cannot be removed without browser comparison');
- assert.ok(report.v3ExplicitPages.includes('institution.html'));
- assert.ok(report.v3ExplicitPages.includes('institutional-exams.html'));
+ assert.deepEqual(report.v3ExplicitPages,[],'Retired V3 stylesheet must not be linked from any V4 page');
  for(const page of report.pages){
   assert.equal(page.stylesheets.at(-1),'bep-v4.css',page.page);
   assert.equal(page.stylesheets.filter(name=>name==='bep-v4.css').length,1,page.page);
