@@ -81,7 +81,7 @@ export function pilotSessions(db,{StoreError,log}){
   return row;
  }
  function state(row){if(row.status==='revoked')return 'revoked';if(row.expires_at<=now()&&row.status!=='submitted')return 'expired';return row.status;}
- function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.answers?JSON.parse(row.answers):null}:{})};}
+ function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.status==='submitted'&&row.answers?JSON.parse(row.answers):null}:{})};}
  function issue(actor,examId){permit(actor);cleanup();if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
   if(!exam)error('not_found','Sınav bulunamadı.',404);
