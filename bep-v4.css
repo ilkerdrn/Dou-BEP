@@ -473,3 +473,98 @@ body[data-design-version="4"] #exam-workspace .exam-list-controls label{
   padding:17px!important;
  }
 }
+
+
+/* Phase 5 — exam authoring: balanced library/editor columns, compact toolbar,
+ * and consistent scroll/focus behavior without touching forms or saved drafts.
+ */
+body[data-design-version="4"] #exam-workspace .exam-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ align-items:start!important;gap:18px!important;min-width:0!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-grid>#exam-drafts-panel,
+body[data-design-version="4"] #exam-workspace .exam-grid>#exam-editor-card{
+ min-width:0!important;margin:0!important;
+ background:#fff!important;background-image:none!important;
+ border:1px solid var(--v4-border)!important;border-radius:12px!important;
+ box-shadow:none!important;padding:20px!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-grid>#exam-drafts-panel{
+ position:static!important;overflow:visible!important;
+ max-height:none!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-grid>#exam-editor-card{
+ width:auto!important;max-width:none!important;
+}
+body[data-design-version="4"] #exam-workspace .portal-card-head{
+ display:flex!important;align-items:flex-start!important;
+ justify-content:space-between!important;flex-wrap:wrap!important;
+ gap:12px!important;padding-bottom:14px!important;
+ margin-bottom:14px!important;border-bottom:1px solid var(--v4-border)!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-recovery-actions,
+body[data-design-version="4"] #exam-workspace .exam-toolbar{
+ display:flex!important;gap:8px!important;flex-wrap:wrap!important;
+ align-items:center!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-list-controls{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ gap:12px!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-list-controls label{
+ min-width:0!important;display:grid!important;gap:6px!important;
+ font-size:13px!important;font-weight:600!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-list-controls :is(input,select){
+ width:100%!important;max-width:100%!important;min-width:0!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-autosave-panel{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ gap:10px!important;padding:12px 14px!important;
+ background:#f8f9fa!important;color:var(--v4-text)!important;
+}
+body[data-design-version="4"] #exam-workspace #exam-autosave-state{
+ min-width:0!important;overflow-wrap:anywhere;
+ font-size:13px!important;color:var(--v4-muted)!important;
+}
+body[data-design-version="4"] #exam-workspace #exam-status{
+ display:inline-flex!important;align-items:center!important;
+ min-height:26px!important;border-radius:6px!important;
+ padding:3px 9px!important;box-shadow:none!important;
+}
+body[data-design-version="4"] #exam-workspace .workflow-steps{
+ display:flex!important;flex-wrap:wrap!important;
+ overflow-x:visible!important;gap:8px!important;
+}
+body[data-design-version="4"] #exam-workspace .workflow-steps .workflow-step{
+ flex:0 1 auto!important;min-width:0!important;
+}
+body[data-design-version="4"] #exam-workspace .workflow-pager{
+ display:flex!important;flex-wrap:wrap!important;
+ align-items:center!important;gap:10px!important;
+}
+body[data-design-version="4"] #exam-workspace :is(#exam-main-fields,#exam-goal-section,
+ #exam-library-section,#exam-question-section,#exam-output-section){
+ scroll-margin-top:85px;
+}
+@media(min-width:1200px){
+ body[data-design-version="4"] #exam-workspace:not(.exam-focus-mode) .exam-grid{
+  grid-template-columns:minmax(250px,285px) minmax(0,1fr)!important;
+ }
+}
+@media(max-width:760px){
+ body[data-design-version="4"] #exam-workspace .exam-grid{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body[data-design-version="4"] #exam-workspace .exam-grid>#exam-drafts-panel,
+ body[data-design-version="4"] #exam-workspace .exam-grid>#exam-editor-card{
+  padding:15px!important;
+ }
+ body[data-design-version="4"] #exam-workspace .workflow-steps{
+  flex-wrap:nowrap!important;overflow-x:auto!important;
+  scrollbar-width:thin;overscroll-behavior-inline:contain;
+ }
+ body[data-design-version="4"] #exam-workspace .workflow-steps .workflow-step{
+  flex:0 0 auto!important;
+ }
+}
