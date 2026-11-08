@@ -8,7 +8,7 @@ const html=read('accommodation-admin.html');
 const ui=read('accommodation-admin.mjs');
 
 test('time planning preview is read-only, approval-bound and tenant-scoped',()=>{
- assert.match(decision,/function durationPreview\(actor,id\)/);
+ assert.match(decision,/function durationPreview\(actor,id,coordinationId=null\)/);
  assert.match(decision,/permit\(actor,'accommodation\.view'\)/);
  assert.match(decision,/const decision=select\(actor,id\)/);
  assert.match(decision,/decision\.approved_sha256!==decision\.content_sha256\|\|digest\(data\)!==decision\.content_sha256/);
@@ -21,7 +21,7 @@ test('time planning preview is read-only, approval-bound and tenant-scoped',()=>
 });
 test('admin previews approved decisions without modifying pilot entitlement or student storage',()=>{
  assert.match(api,/duration-preview/);
- assert.match(api,/store\.accommodationDurationPreview\(actor,id\)/);
+ assert.match(api,/store\.accommodationDurationPreview\(actor,id,sitting\)/);
  assert.match(html,/id="decision-duration-result"[^>]*role="status"[^>]*aria-live="polite"/);
  assert.match(ui,/x\.status==='approved'/);
  assert.match(ui,/data-duration/);
