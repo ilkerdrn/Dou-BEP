@@ -480,3 +480,30 @@ test('V4 authenticated dashboard task cards use legible typography on desktop an
  assert.ok(css.includes('font-size:12.5px!important;'),'Task supporting text must remain readable');
  assert.ok(css.includes('@media(max-width:670px){'),'Mobile layout must be retained');
 });
+
+
+test('V4 management sidebar exposes existing administration only to permitted roles',()=>{
+ const nav=read('./admin-navigation.js');
+ const dashboard=read('./institution.html');
+ const exam=read('./institutional-exams.html');
+ const app=read('./institution.mjs');
+ const examApp=read('./institutional-exams.mjs');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ const css=read('./bep-v4.css');
+ for(const html of [dashboard,exam]){
+  assert.match(html,/id="dou-nav-management" hidden/);
+  assert.match(html,/href="\/kurum#admin-panel" data-admin-nav-roles="admin"/);
+  assert.match(html,/href="\/kurum#audit-panel" data-admin-nav-roles="admin,coordinator,reviewer"/);
+ }
+ assert.match(nav,/const allowed=link=>/);
+ assert.match(nav,/normalize\(link.textContent\).includes\(q\)/);
+ assert.match(nav,/document\.addEventListener\('dou-nav-role'/);
+ assert.match(nav,/updateManagement\(document\.documentElement\.dataset\.navRole\|\|null\)/);
+ assert.match(app,/document\.documentElement\.dataset\.navRole=signedIn\?state\.actor\.role:''/);
+ assert.match(examApp,/document\.documentElement\.dataset\.navRole=s\.member\.role/);
+ assert.match(app,/focusInstitutionalSection/);
+ assert.match(dashboard,/id="admin-panel" tabindex="-1" hidden/);
+ assert.match(dashboard,/id="audit-panel" tabindex="-1" hidden/);
+ assert.match(css,/#dou-nav-management\[hidden\]/);
+ assert.match(browser,/BROWSER V4 MANAGEMENT NAVIGATION/);
+});
