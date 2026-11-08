@@ -1,0 +1,146 @@
+/* DOU BEP V3 — single visual contract for institution and exam workspaces.
+   Transitional consolidation: legacy CSS retained until visual regression gates prove parity.
+   No changes to authentication, role enforcement or data handling.
+*/
+body.institution-page.campus-layout{
+ --bep-bg:#f5f6f9;
+ --bep-surface:#ffffff;
+ --bep-surface-alt:#faf8fa;
+ --bep-text:#1c293b;
+ --bep-muted:#617083;
+ --bep-brand:#8d263d;
+ --bep-brand-hover:#701b30;
+ --bep-border:#e2e5eb;
+ --bep-focus:#bd3e67;
+ --bep-radius:14px;
+ --bep-shadow:0 10px 32px rgba(25,33,49,.07);
+ color:var(--bep-text);
+ background:var(--bep-bg)!important;
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body.institution-page.campus-layout .portal-main{
+ min-width:0;
+ background:var(--bep-bg)!important;
+}
+body.institution-page.campus-layout .portal-content{
+ width:100%;
+ max-width:1440px!important;
+ margin-inline:auto!important;
+}
+body.institution-page.campus-layout .portal-card,
+body.institution-page.campus-layout .campus-summary-card,
+body.institution-page.campus-layout .dashboard-shortcut,
+body.institution-page.campus-layout .portal-kpis>div{
+ background:var(--bep-surface)!important;
+ color:var(--bep-text)!important;
+ border:1px solid var(--bep-border)!important;
+ border-radius:var(--bep-radius)!important;
+ box-shadow:var(--bep-shadow)!important;
+}
+body.institution-page.campus-layout :is(.portal-card,.campus-summary-card,.dashboard-shortcut) :is(h2,h3,strong){
+ color:var(--bep-text);
+}
+body.institution-page.campus-layout :is(.portal-help,.dashboard-shortcut small,.campus-summary-card p){
+ color:var(--bep-muted)!important;
+ line-height:1.6;
+}
+body.institution-page.campus-layout .portal-mini-label{
+ color:var(--bep-brand)!important;
+ font-weight:750;
+ letter-spacing:.075em;
+}
+body.institution-page.campus-layout :is(.portal-form,.exam-grid) :is(input,textarea,select){
+ background:var(--bep-surface)!important;
+ color:var(--bep-text)!important;
+ border:1px solid #cdd5e0!important;
+ border-radius:11px!important;
+ min-height:44px;
+ max-width:100%;
+}
+body.institution-page.campus-layout :is(.portal-form,.exam-grid) label{
+ color:var(--bep-text)!important;
+}
+body.institution-page.campus-layout .portal-btn.primary{
+ background:var(--bep-brand)!important;
+ border-color:var(--bep-brand)!important;
+ color:#fff!important;
+ border-radius:11px!important;
+ min-height:44px;
+}
+body.institution-page.campus-layout .portal-btn.primary:hover{
+ background:var(--bep-brand-hover)!important;
+ border-color:var(--bep-brand-hover)!important;
+}
+body.institution-page.campus-layout .portal-btn.secondary{
+ background:var(--bep-surface)!important;
+ color:var(--bep-text)!important;
+ border:1px solid var(--bep-border)!important;
+ border-radius:11px!important;
+ min-height:44px;
+}
+body.institution-page.campus-layout :is(a,button,input,textarea,select,summary):focus-visible{
+ outline:3px solid var(--bep-focus)!important;
+ outline-offset:3px!important;
+}
+body.institution-page.campus-layout :is(button,input,select,textarea)[disabled]{
+ cursor:not-allowed;
+}
+body.institution-page.campus-layout [hidden]{
+ display:none!important;
+}
+/* Guest screens share a calm backdrop and prioritize a legible sign-in form. */
+body.institution-page.campus-layout[data-portal-auth="guest"] .portal-content{
+ max-width:1120px!important;
+}
+body.institution-page.campus-layout[data-portal-auth="guest"] #login-view.portal-login-card{
+ border:1px solid var(--bep-border)!important;
+ border-radius:22px!important;
+ box-shadow:0 24px 72px rgba(25,33,49,.12)!important;
+}
+body.institution-page.campus-layout[data-portal-auth="guest"] #login-view .login-form-panel{
+ background:var(--bep-surface)!important;
+}
+body.institution-page.campus-layout[data-portal-auth="guest"] #login-view #login-form .portal-btn.primary{
+ width:100%;
+}
+body.institution-page.campus-layout #portal-message.portal-error{
+ background:#fff0f2!important;
+ border:1px solid #e9aebc!important;
+ color:#861a34!important;
+}
+body.institution-page.campus-layout #portal-message.portal-success{
+ background:#eaf6ef!important;
+ border:1px solid #b9dbc8!important;
+ color:#205e43!important;
+}
+/* Exam workflow keeps its own interaction states but uses the same surfaces. */
+body.institution-page.campus-layout #exam-workspace :is(.exam-optional-tool,.workflow-nav,.exam-grid>section){
+ border-radius:var(--bep-radius);
+ border-color:var(--bep-border);
+}
+body.institution-page.campus-layout #exam-workspace :is(button,input,select,textarea){
+ scroll-margin-top:80px;
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout .portal-content{
+  padding-inline:14px!important;
+ }
+ body.institution-page.campus-layout :is(.portal-card,.campus-summary-card){
+  min-width:0;
+ }
+ body.institution-page.campus-layout .portal-btn{
+  white-space:normal;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.institution-page.campus-layout :is(a,button,input,summary){
+  transition-duration:0s!important;
+ }
+}
+/* Dark palette foundation. Activated only when a future explicit UI preference
+   is wired and user-tested; avoids switching colors behind existing components. */
+body.institution-page.campus-layout[data-bep-theme="dark"]{
+ --bep-bg:#101622;--bep-surface:#1b2432;--bep-surface-alt:#202c3d;
+ --bep-text:#f1f4f9;--bep-muted:#b5c0cf;--bep-brand:#d87492;
+ --bep-brand-hover:#ed92aa;--bep-border:#39475d;--bep-focus:#ffb0ca;
+}
