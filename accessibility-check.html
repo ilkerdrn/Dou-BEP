@@ -169,6 +169,15 @@ body.dou-admin-standalone.pilot-audit-page {background:#f4f6fa;color:#17253a}
     </div>
     <div class="pilot-progress-area"><label for="pilot-progress" class="pilot-progress-label">Kontrol ilerlemesi</label><span class="pilot-progress-value" id="pilot-progress-text">0 / 12 değerlendirildi</span><progress id="pilot-progress" value="0" max="12">0 / 12</progress></div>
     <p id="pilot-check-count" role="status" aria-live="polite">0 geçti · 0 sorun · 12 test edilmedi.</p>
+    <div class="pilot-findings" aria-labelledby="pilot-findings-title">
+      <div class="pilot-findings-head">
+        <div><h3 id="pilot-findings-title">Dikkat gerektiren kontroller</h3><p>İşaretlenen sorunları ve henüz yapılmayan kontrolleri gösterir. Teknik notlar burada tekrarlanmaz.</p></div>
+        <button type="button" id="pilot-jump-fail" class="secondary" disabled>İlk sorunlu kontrole git</button>
+      </div>
+      <p id="pilot-findings-status" class="pilot-findings-status" aria-live="polite">Henüz değerlendirilmemiş 12 kontrol var.</p>
+      <ul id="pilot-findings-list" class="pilot-findings-list" aria-label="Sorunlu ve bekleyen kontrol başlıkları"></ul>
+      <p class="pilot-findings-disclaimer">Bu yalnızca bu sekmedeki manuel işaretlemelerin özetidir; erişilebilirlik uygunluğu veya sertifika değildir.</p>
+    </div>
   </section>
   <section class="card pilot-block" aria-labelledby="pilot-checks-title">
     <div class="pilot-check-tools"><div class="pilot-toolbar-left"><div><h2 id="pilot-checks-title">Pilot doğrulama adımları</h2><p>Her kart için sonuç seç; istersen teknik gözlem ekle.</p></div><button type="button" class="pilot-jump" id="pilot-jump" aria-label="İlk bekleyen kontrolün sonuç seçimine git">İlk bekleyene git</button></div>
