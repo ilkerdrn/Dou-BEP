@@ -524,3 +524,19 @@ test('V4 navigation supports task search, first-result Enter and expanded author
  }
  assert.match(browser,/BROWSER V4 MANAGEMENT SEARCH UX/);
 });
+
+
+test('V4 exam workflow explains the next step without modifying exam data or buttons',()=>{
+ const page=read('./institutional-exams.html');
+ const behavior=read('./workflow-ui.mjs');
+ const css=read('./bep-v4.css');
+ assert.match(page,/id="workflow-next-hint"[^>]*aria-live="polite"/);
+ assert.match(page,/id="workflow-prev"/);
+ assert.match(page,/id="workflow-next"/);
+ assert.match(behavior,/const nextHint=document\.getElementById\('workflow-next-hint'\)/);
+ assert.match(behavior,/const following=steps\[selectedIndex\+1\]/);
+ assert.match(behavior,/if\(nextHint&&selectedIndex>=0\)/);
+ assert.match(behavior,/nextHint\.textContent=following/);
+ assert.match(css,/#exam-workspace \.workflow-next-hint\{/);
+ assert.match(css,/@media\(max-width:670px\)/);
+});
