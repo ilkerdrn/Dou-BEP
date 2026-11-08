@@ -478,7 +478,11 @@ async function main(){
   '.exam-grid','#exam-drafts-panel','#exam-editor-card',
   '.exam-list-controls','.editor-ribbon','.exam-autosave-panel',
   '.exam-question','.exam-question-advanced','.portal-card-head',
-  '#exam-main-fields','.workflow-pager','.exam-optional-tool'
+  '#exam-main-fields','.workflow-pager','.exam-optional-tool',
+  '.exam-optional-tool>summary','.exam-optional-tool.campus-major-module>summary',
+  '#exam-editor-card>.portal-card-head','.exam-question .exam-q-head',
+  '.exam-question-advanced>summary','.exam-optional-tool>summary small',
+  '.exam-main-fields','.exam-two'
  ]);
 
  await evaluate('document.getElementById("workflow-next").click()');
