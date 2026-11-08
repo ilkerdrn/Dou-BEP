@@ -45,7 +45,12 @@
     "speech:continuity-audit": "node tools/dou-speech-continuity-audit.mjs",
     "exam:closure": "node tools/exam-closure-smoke.mjs",
     "reader:pronunciation:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pronunciation-check.ps1",
-    "reader:acceptance:windows": "powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/dou-reader-windows-acceptance.ps1"
+    "reader:acceptance:windows": "powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/dou-reader-windows-acceptance.ps1",
+    "ui:browser": "node tools/browser-ui-acceptance.mjs",
+    "reader:voice:diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-voice-readiness.ps1",
+    "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
+    "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
+    "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs"
   },
   "engines": {
     "node": ">=22.13"

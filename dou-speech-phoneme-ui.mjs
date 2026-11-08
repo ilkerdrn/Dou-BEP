@@ -46,6 +46,7 @@ async function play(){
    markPhonemePlayback(session,trial.id);
    status('Ses tamamlandı. Duyduğunuz sözcüğü seçebilirsiniz.');
    display();
+   $('phoneme-choice-0').focus();
   },{once:true});
   sound.addEventListener('error',()=>{
    if(sound!==active||generation!==playbackGeneration)return;
@@ -83,8 +84,14 @@ function renderLocalConfusion(){
 $('phoneme-play').addEventListener('click',play);
 $('phoneme-stop').addEventListener('click',()=>{stop();status('Ses durduruldu. Sonuna kadar dinlemeden yeni yanıt açılamaz.');display();});
 for(let i=0;i<2;i++)$('phoneme-choice-'+i).addEventListener('click',()=>{
+ if(active)return; // Never accept a selection while replay audio is active.
  const trial=session.trials[index];
- try{stop();submitPhonemeChoice(session,trial.id,trial.options[i]);status('Yanıt cihaz belleğinde işlendi.');display();}
+ try{
+  stop();submitPhonemeChoice(session,trial.id,trial.options[i]);
+  status('Yanıt cihaz belleğinde işlendi.');display();
+  if(index<TRIAL_COUNT-1)$('phoneme-next').focus();
+  else $('phoneme-export').focus();
+ }
  catch{status('Önce sesi sonuna kadar dinleyin.');}
 });
 $('phoneme-next').addEventListener('click',()=>{

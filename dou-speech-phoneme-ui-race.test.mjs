@@ -6,11 +6,12 @@ import {webcrypto} from 'node:crypto';
 // The exercise module is imported only after its DOM dependencies are prepared.
 test('Blind listening: stale completion/error after Stop cannot unlock the next trial',async()=>{
  const elements=new Map();
+ let focusedId=null;
  const makeElement=()=>({
    disabled:false,textContent:'',listeners:new Map(),
    addEventListener(name,callback){this.listeners.set(name,callback);},
    click(){return this.listeners.get('click')?.();},
-   focus(){},append(){}
+   focus(){for(const [id,element] of elements)if(element===this)focusedId=id;},append(){}
  });
  const documentEvents=new Map();
  globalThis.document={
@@ -61,6 +62,7 @@ test('Blind listening: stale completion/error after Stop cannot unlock the next 
  sounds[1].resolve();
  await pending2;
  sounds[1].emit('ended');
+ assert.equal(focusedId,'phoneme-choice-0');
  assert.equal(c0().disabled,false);
  assert.equal(c1().disabled,false);
  assert.equal(elements.get('phoneme-play').disabled,false);
@@ -69,6 +71,9 @@ test('Blind listening: stale completion/error after Stop cannot unlock the next 
  assert.equal(sounds.length,3);
  assert.equal(c0().disabled,true);
  assert.equal(c1().disabled,true);
+ // Event handlers must also reject a click while audio plays, even when invoked programmatically.
+ c0().click();
+ assert.equal(elements.get('phoneme-next').disabled,true);
  // Leaving the browser tab stops the current sound and invalidates its events.
  document.hidden=true;
  documentEvents.get('visibilitychange')();
@@ -83,6 +88,7 @@ test('Blind listening: stale completion/error after Stop cannot unlock the next 
  await c0().click();
  assert.equal(c0().disabled,true);
  assert.equal(elements.get('phoneme-next').disabled,false);
+ assert.equal(focusedId,'phoneme-next');
  await elements.get('phoneme-next').click();
  assert.equal(c0().disabled,true);
  assert.equal(c1().disabled,true);

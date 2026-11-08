@@ -17,9 +17,33 @@
  });
  function normalize(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKC').trim();}
  const groups=[...panel.querySelectorAll('.dou-nav-group')];
+ // Native disclosure keeps every menu link in the DOM (including without JS).
+ // The active group and the primary workspace group start expanded.
+ for(const [index,group] of groups.entries()){
+  const label=group.querySelector('.dou-nav-group-title');
+  if(!label)continue;
+  const details=document.createElement('details');
+  details.className='dou-nav-disclosure';
+  const summary=document.createElement('summary');
+  summary.className='dou-nav-group-title';
+  summary.textContent=label.textContent;
+  const links=document.createElement('div');
+  links.className='dou-nav-group-links';
+  const items=[...group.querySelectorAll('.dou-nav-link')];
+  for(const link of items)links.appendChild(link);
+  details.append(summary,links);
+  details.open=index===0||items.some(link=>link.matches('[aria-current="page"],.current'));
+  label.replaceWith(details);
+ }
+ let searchActive=false;
+ const savedOpen=new Map();
  function filter(){
   if(!field)return;
   const q=normalize(field.value);
+  if(q&&!searchActive){
+   for(const group of groups)savedOpen.set(group,!!group.querySelector('.dou-nav-disclosure')?.open);
+   searchActive=true;
+  }
   let visible=0;
   for(const group of groups){
    let inGroup=0;
@@ -29,6 +53,15 @@
     if(match){visible++;inGroup++;}
    }
    group.hidden=!!q&&inGroup===0;
+   const disclosure=group.querySelector('.dou-nav-disclosure');
+   if(disclosure&&q)disclosure.open=inGroup>0;
+  }
+  if(!q&&searchActive){
+   for(const group of groups){
+    const disclosure=group.querySelector('.dou-nav-disclosure');
+    if(disclosure&&savedOpen.has(group))disclosure.open=savedOpen.get(group);
+   }
+   searchActive=false;savedOpen.clear();
   }
   if(status){
    status.hidden=!q;

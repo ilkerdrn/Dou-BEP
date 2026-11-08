@@ -1,3 +1,4 @@
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createAutosaveManager} from './autosave-manager.mjs';
@@ -53,4 +54,9 @@ test('v2.52 stop invalidates in-flight callback state',async()=>{
  f.mgr.changed();const call=f.mgr.flush();assert.equal(valid(),true);
  f.mgr.stop();assert.equal(valid(),false);assert.equal(f.mgr.isSaving(),false);
  finish({revision:2});assert.equal(await call,null);
+});
+
+test('browser default clock uses window-compatible timeout receiver',()=>{
+ const source=readFileSync(new URL('./autosave-manager.mjs',import.meta.url),'utf8');
+ assert.match(source,/clock=\{set:\(fn,ms\)=>globalThis\.setTimeout\(fn,ms\),clear:id=>globalThis\.clearTimeout\(id\)\}/);
 });

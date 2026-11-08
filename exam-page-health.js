@@ -34,14 +34,20 @@
    loading.hidden=true;recovery.hidden=false;
    reason.textContent='Uygulama açılışında hata oluştu. Yeniden deneyin veya kurum paneline dönün.';
   });
-  const interval=setInterval(()=>{if(complete())clearInterval(interval);},250);
-  setTimeout(()=>{
-   clearInterval(interval);
+  // A slow first load may complete after the eight-second advisory timeout.
+  // Keep observing the editor's terminal state so a late success clears the
+  // recovery panel instead of leaving a false "blank editor" warning visible.
+  const observer=new MutationObserver(()=>{
+   if(complete())observer.disconnect();
+  });
+  observer.observe(document.documentElement,{attributes:true,attributeFilter:['data-exam-app-ready']});
+  const timeout=setTimeout(()=>{
    if(!complete()){
     loading.hidden=true;recovery.hidden=false;
-    reason.textContent='Sınav editörü başlatılamadı. Sunucunun çalıştığını kontrol edip yeniden deneyin.';
+    reason.textContent='Sınav editörü henüz açılmadı. Sunucuyu kontrol edin; açılış tamamlanırsa bu uyarı kapanır.';
    }
   },8000);
+  if(complete()){observer.disconnect();clearTimeout(timeout);}
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
