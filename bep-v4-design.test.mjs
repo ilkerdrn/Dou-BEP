@@ -400,3 +400,15 @@ test('V4 exam section actions stay horizontal without restoring the regressed he
 
 
 
+
+
+test('V4 isolates exam editor title style and traces all remaining nested parity sources',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/#exam-workspace #exam-editor-title\{\s*font-size:clamp\(19px,2vw,25px\)!important;\s*font-weight:780!important/);
+ for(const selector of [
+  '#exam-editor-card>.portal-card-head','#exam-preflight-body',
+  '#exam-output-section','.editor-export-panel'
+ ])assert.ok(browser.includes(selector),'Nested parity source not tracked: '+selector);
+ assert.match(browser,/V4 CSS visual parity gate FAILED/);
+});
