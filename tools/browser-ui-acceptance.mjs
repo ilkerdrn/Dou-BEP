@@ -634,6 +634,40 @@ async function main(){
   }
 
   if(route==='/erisilebilirlik-kontrol'){
+   const findings=await evaluate(`(function(){
+    const list=document.getElementById('pilot-findings-list');
+    const jump=document.getElementById('pilot-jump-fail');
+    const first=document.getElementById('status-0');
+    const second=document.getElementById('status-1');
+    const note=document.getElementById('note-0');
+    const baseline={length:list.children.length,disabled:jump.disabled};
+    first.value='fail';first.dispatchEvent(new Event('change',{bubbles:true}));
+    second.value='pass';second.dispatchEvent(new Event('change',{bubbles:true}));
+    note.value='ANONIM-GOZLEM-ONLY';note.dispatchEvent(new Event('input',{bubbles:true}));
+    const updated={length:list.children.length,
+      failing:list.querySelectorAll('[data-outcome="fail"]').length,
+      pending:list.querySelectorAll('[data-outcome="not-tested"]').length,
+      noNotes:!list.textContent.includes('ANONIM-GOZLEM-ONLY'),
+      buttonEnabled:!jump.disabled,
+      status:document.getElementById('pilot-findings-status').textContent};
+    jump.click();
+    const focusIsFail=document.activeElement===first;
+    first.value='not-tested';first.dispatchEvent(new Event('change',{bubbles:true}));
+    second.value='not-tested';second.dispatchEvent(new Event('change',{bubbles:true}));
+    note.value='';note.dispatchEvent(new Event('input',{bubbles:true}));
+    return {baseline,updated,focusIsFail,resetList:list.children.length,resetDisabled:jump.disabled,
+      scroll:document.documentElement.scrollWidth,client:document.documentElement.clientWidth};
+   })()`);
+   console.log('BROWSER ACCESSIBILITY FINDINGS UX: '+JSON.stringify(findings));
+   pass(findings.baseline.length===12&&findings.baseline.disabled,'Initial findings show 12 pending checks without a failed-item action');
+   pass(findings.updated.length===11&&findings.updated.failing===1&&findings.updated.pending===10,
+    'Findings show failed and pending items and exclude passed items');
+   pass(findings.updated.noNotes&&findings.updated.buttonEnabled,'Findings exclude private notes and enable failed-item navigation');
+   pass(findings.focusIsFail,'Failed-item action focuses the corresponding checklist select');
+   pass(findings.resetList===12&&findings.resetDisabled,'Reset selections restores a pending-only overview');
+   pass(findings.scroll<=findings.client+2,'Findings overview has no horizontal overflow');
+  }
+  if(route==='/erisilebilirlik-kontrol'){
    const guide=await evaluate(`(function(){
     const details=document.getElementById('pilot-manual-guide');
     const summary=details.querySelector('summary');
