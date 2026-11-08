@@ -77,3 +77,16 @@ test('v2.41 standalone accessible HTML never falls back to remote or unspecified
  assert.match(html,/Never fall back to a remote/);
  assert.match(html,/if\(!tr\)\{sayStatus/);
 });
+
+test('offline learner can review unanswered questions before a local-only download',()=>{
+ const html=generateAccessibleExamHtml(demo());
+ assert.match(html,/id="answer-progress"/);
+ assert.match(html,/id="jump-unanswered"/);
+ assert.match(html,/function answered\(q\)/);
+ assert.match(html,/function updateReview\(\)/);
+ assert.match(html,/data\.questions\.findIndex\(q=>!answered\(q\)\)/);
+ assert.match(html,/Soru \+\(index\+1\)/);
+ assert.match(html,/soru henüz boş/);
+ assert.match(html,/Otomatik gönderim yapılmaz/);
+ assert.doesNotMatch(html,/\b(?:localStorage|sessionStorage)\.(?:setItem|getItem)|\bfetch\s*\(/);
+});
