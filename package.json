@@ -53,7 +53,7 @@
     "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs",
     "design:v3:check": "node --test bep-design-system.test.mjs",
     "design:v3:acceptance": "npm run design:v3:check && npm run ui:browser",
-    "design:v4:check": "node --test bep-v4-design.test.mjs",
+    "design:v4:check": "node --test bep-v4-design.test.mjs tools/v4-css-migration-audit.test.mjs && npm run design:v4:inventory",
     "design:v4:acceptance": "npm run design:v4:check && npm run ui:browser",
     "design:v4:inventory": "node tools/v4-css-migration-audit.mjs --strict"
   },
