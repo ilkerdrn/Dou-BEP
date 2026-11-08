@@ -549,6 +549,21 @@ async function main(){
   '.exam-main-fields','.exam-two'
  ]);
 
+ const guidedInitial=await evaluate(`(function(){
+  const editor=document.getElementById('exam-editor-card');
+  const toggle=document.getElementById('workflow-view-toggle');
+  const initial=document.getElementById('exam-main-fields');
+  const next=document.getElementById('exam-goal-section');
+  return {active:editor.classList.contains('exam-guided-view'),
+   togglePressed:toggle.getAttribute('aria-pressed')==='true',
+   currentVisible:getComputedStyle(initial).display!=='none',
+   futureHidden:getComputedStyle(next).display==='none'};
+ })()`);
+ console.log('BROWSER EXAM GUIDED STAGE: '+JSON.stringify(guidedInitial));
+ pass(guidedInitial.active&&guidedInitial.togglePressed&&
+      guidedInitial.currentVisible&&guidedInitial.futureHidden,
+      'Guided editor starts with only the current stage displayed');
+
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
@@ -560,6 +575,10 @@ async function main(){
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("5 / 5")'),'Final review navigation updates step counter');
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("Onay ve çıktı")'),'Screen reader receives final review announcement');
  pass(await evaluate('document.activeElement===document.getElementById("exam-output-section")||document.getElementById("exam-output-section").contains(document.activeElement)'),'Focus transfers inside final review section');
+ await evaluate('document.getElementById("workflow-view-toggle").click()');
+ pass(await evaluate('!document.getElementById("exam-editor-card").classList.contains("exam-guided-view")&&
+  getComputedStyle(document.getElementById("exam-goal-section")).display!=="none"'),
+  'Advanced editor reveals all original fields for full workflow regression');
  await evaluate('document.querySelector(\'[data-workflow-target="exam-main-fields"]\').click()');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
  pass(await evaluate('document.getElementById("exam-drafts-panel").inert'),'Focus mode makes hidden drafts inert');
