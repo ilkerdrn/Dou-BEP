@@ -1,28 +1,34 @@
-# DOU BEP V3 — Birleşik tasarım geçişi (Aşama 1)
+# DOU BEP V3 — Birleşik Tasarım Kapsamı
 
-## Durum
-Bu dal, mevcut DOU BEP kurum ve sınav hazırlama sayfalarını ortak `bep-design-system.css` sözleşmesine bağlar. Var olan dört stil dosyası, henüz regresyon karşılaştırması tamamlanmadığından geçiş süresince korunmuştur. Bu aşama CSS tekilleştirmesinin tamamı değildir.
+## Kullanılan referans
+Kullanıcının onayladığı bordo-beyaz kurumsal sınav hazırlama ekranı: açık pembe zemin, beyaz kartlar, bordo seçili menü, yumuşak sınırlar, sade form alanları ve beş adımlı sınav iş akışı.
 
-## Değişiklikler
-- Ortak renk, yüzey, metin, sınır, odak, radius ve gölge değişkenleri.
-- Giriş / yönetim / sınav ekranları için ortak bileşen davranışı.
-- Mevcut giriş, MFA, yetkilendirme, sınav ve veritabanı kodları değişmedi.
-- Sunucu statik dosya izin listesine ortak stil eklendi.
-- İki sayfa yeni CSS'yi en son yükler.
-- Sınav sayfasının eski v2.67 başlığı güncellendi.
+## Uygulanan geçiş
+- Kurum paneli ve sınav editörünün ana kart, menü, form, buton, adım ve durum tasarımı bordo-beyaz görsel dile göre güncellendi.
+- Aynı görsel sözleşme diğer **14 yönetim/araç ekranına** taşındı (toplam 16 yönetim ekranı).
+- Modüllerin mevcut tekil CSS dosyaları ve JavaScript işlevleri korundu; ortak `bep-design-system.css` bütün ilgili sayfalarda son yüklenir.
+- `institution-page.campus-layout`, klasik `institution-page` ve `dou-admin-standalone` gövdeleri için ayrı, güvenli ortak CSS kapsamları oluşturuldu.
+- Öğrencinin anonim sınav sayfası (`pilot.html`) ile bağımsız ses inceleme sayfası (`review-audio.html`) yönetim yerleşimine zorlanmadı.
+- Veritabanları, kullanıcı hesapları, sınav kayıtları, API, MFA ve Speech üretim kodu değiştirilmedi.
 
-## Doğrulama (izole, veritabanına yazmaz)
+## Teknik kontrol
 ```powershell
 npm.cmd run design:v3:check
 npm.cmd run ui:browser
 ```
+V3 statik sözleşme testleri 16 sayfada stil sırasını, navigasyonu, ayrı tutulan öğrenci araçlarını, temel giriş/MFA öğelerini ve CSS blok bütünlüğünü denetler.
 
-## Birleştirme öncesi kabul koşulları
-1. Kurum giriş / MFA / çıkış ve sınav yazarı görünümünde masaüstü ve mobil kontrol.
-2. 320, 390, 768, 1280 pikselde yatay kayma ve odak görünürlüğü.
-3. Ekran okuyucu manuel kontrolü; otomatik Edge testi tam WCAG sertifikası değildir.
-4. Tarayıcı testleri başarılı olduktan sonra yalnız gerçekten gereksiz kalan eski CSS kurallarını aşamalı kaldırma.
-5. Kaynaklar, yerel demo veritabanları, WAV laboratuvarı, auth ve MFA ayrı korunur.
+## Sınırlar
+Bu uygulama **görsel standartlaştırma** aşamasıdır; eski CSS katmanları henüz tamamen kaldırılmadı. Güvenli temizlik için bağımlılık ve tarayıcı regresyon testi gerekir. Birleştirme ve prod sürüm onayı henüz yapılmadı. Koyu tema renklerinin varlığı, çalışan koyu mod düğmesi olduğu anlamına gelmez. Otomatik testler görsel erişilebilirlik sertifikası veya gerçek kullanıcılı sınav kabulü yerine geçmez.
 
-## Sınırlamalar
-Henüz ana dala birleştirilmedi; üretim tasarım onayı verilmedi. Koyu tema değişkenleri yalnız temel hazırlıktır, kullanıcı denetimli karanlık mod henüz etkin değildir. Gerçek sınav/öğrenci verisiyle test yapmayın.
+## Yerel test ve çalışma
+```powershell
+Set-Location 'D:\Projects\DOU-BEP-DESIGN-20261105-153242'
+git pull --ff-only origin feature/bep-v3-unified-design-20261108
+npm.cmd run design:v3:check
+npm.cmd run ui:browser
+$env:BEP_DB_PATH = Join-Path (Get-Location) '.local-demo\pilot.sqlite'
+$env:PORT = '4180'
+npm.cmd start
+```
+Not: Port doluysa başka port seçilebilir; aynı demo SQLite veritabanına aynı anda yazan iki uygulamadan kaçınılmalıdır. Yerel değişiklikler varsa `git pull` öncesi koruyun.
