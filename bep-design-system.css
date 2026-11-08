@@ -424,3 +424,92 @@ body.institution-page.campus-layout .dashboard-shortcut:hover{
 @media(prefers-reduced-motion:reduce){
  body.institution-page.campus-layout .dashboard-shortcut{transform:none!important}
 }
+
+
+/* Unified visual system for legacy standalone administrative tools.
+   Keep each module's existing layout and behavioral widgets intact. */
+body.dou-admin-standalone{
+ --bep-bg:#f8f4f5;--bep-surface:#fff;--bep-surface-alt:#fcf8f9;
+ --bep-text:#252239;--bep-muted:#697084;--bep-brand:#8e1428;
+ --bep-brand-hover:#721023;--bep-border:#ecdfe4;--bep-focus:#a92347;
+ --bep-radius:17px;--bep-shadow:0 8px 26px rgba(90,43,57,.065);
+ --campus-red:#8e1428;--campus-red-hover:#721023;
+ --campus-background:#faf5f6;
+ background:var(--bep-bg)!important;color:var(--bep-text);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body.dou-admin-standalone .dou-nav{
+ background:linear-gradient(180deg,#fcf8f9,#faf5f6)!important;
+ color:#47303c!important;border-right:1px solid #eadfe3!important;
+}
+body.dou-admin-standalone .dou-brand-mark{
+ background:linear-gradient(145deg,#a01c35,#770d21)!important;
+ border-color:transparent!important;color:#fff!important;border-radius:12px!important;
+}
+body.dou-admin-standalone .dou-brand-title strong{
+ color:#901529!important;font-weight:850!important;
+}
+body.dou-admin-standalone .dou-nav .dou-create{
+ background:linear-gradient(112deg,#a31632,#811326)!important;
+ color:#fff!important;border:1px solid #8f172d!important;
+ border-radius:12px!important;font-weight:800!important;
+ box-shadow:0 6px 17px rgba(136,20,39,.18)!important;
+}
+body.dou-admin-standalone .dou-nav-sections{
+ background:#fff!important;border:1px solid #eee2e6!important;
+ border-radius:20px!important;box-shadow:var(--bep-shadow)!important;
+}
+body.dou-admin-standalone .dou-nav .dou-nav-link.portal-menu{
+ color:#46323e!important;border-radius:11px!important;
+}
+body.dou-admin-standalone .dou-nav .dou-nav-link.current,
+body.dou-admin-standalone .dou-nav .dou-nav-link[aria-current="page"]{
+ background:linear-gradient(112deg,#a31632,#811326)!important;
+ border-color:#8f172d!important;color:#fff!important;
+ box-shadow:0 6px 17px rgba(136,20,39,.18)!important;
+}
+body.dou-admin-standalone .dou-nav .dou-nav-link.current svg,
+body.dou-admin-standalone .dou-nav .dou-nav-link[aria-current="page"] svg{
+ color:#fff!important;
+}
+body.dou-admin-standalone :is(.portal-card,.source-card,.bep-import-panel){
+ background:var(--bep-surface)!important;
+ border:1px solid var(--bep-border)!important;
+ border-radius:var(--bep-radius)!important;
+ box-shadow:var(--bep-shadow)!important;
+}
+body.dou-admin-standalone :is(.portal-topbar,.admin-topbar){
+ background:#fffbfc!important;border-bottom:1px solid var(--bep-border)!important;
+}
+body.dou-admin-standalone :is(.portal-btn.primary,.dou-create){
+ background:var(--bep-brand)!important;border-color:var(--bep-brand)!important;
+ color:#fff!important;border-radius:11px!important;
+}
+body.dou-admin-standalone .portal-btn.primary:hover{
+ background:var(--bep-brand-hover)!important;
+}
+body.dou-admin-standalone .portal-btn.secondary{
+ background:#fff!important;border:1px solid #dfdbe3!important;
+ color:#343049!important;border-radius:11px!important;
+}
+body.dou-admin-standalone :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select){
+ border:1px solid #d7d8e0!important;border-radius:11px!important;
+ background:#fff!important;color:#293146!important;max-width:100%;
+}
+body.dou-admin-standalone :is(a,button,input,textarea,select,summary):focus-visible{
+ outline:3px solid var(--bep-focus)!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone .portal-mini-label{
+ color:#971b36!important;letter-spacing:.1em!important;font-weight:850!important;
+}
+body.dou-admin-standalone [hidden]{display:none!important}
+@media(max-width:1080px){
+ body.dou-admin-standalone .dou-nav{
+  border-right:0!important;border-bottom:1px solid var(--bep-border)!important;
+ }
+}
+@media(max-width:640px){
+ body.dou-admin-standalone :is(.portal-card,.source-card,.bep-import-panel){
+  min-width:0;
+ }
+}
