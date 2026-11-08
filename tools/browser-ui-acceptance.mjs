@@ -510,6 +510,23 @@ async function main(){
    pass(coordinationVisual.headingColor==='rgb(34, 36, 58)','Coordination hero headline has dark premium contrast');
    pass(coordinationVisual.menuColor==='rgb(66, 53, 64)','Inactive coordination navigation remains legible');
    pass(coordinationVisual.searchBg==='rgb(255, 255, 255)'&&coordinationVisual.searchText==='rgb(37, 34, 57)','Coordination search uses accessible light input');
+   const schedulingUx=await evaluate(`(function(){
+    const nav=document.querySelector('.coord-quick-nav');
+    const links=[...nav.querySelectorAll('a')];
+    const form=document.getElementById('coord-form');
+    return {
+     shortcuts:links.map(a=>a.getAttribute('href')),
+     groups:form.querySelectorAll('.coord-form-divider').length,
+     fields:form.querySelectorAll('[name]').length,
+     focusable:links.every(a=>getComputedStyle(a).display!=='none'),
+     heroHeight:Math.round(document.querySelector('.portal-hero').getBoundingClientRect().height)
+    };
+   })()`);
+   console.log('BROWSER COORDINATION USABILITY: '+JSON.stringify(schedulingUx));
+   pass(schedulingUx.shortcuts.join(',')==='#coord-form-title,#coord-schedule-title','Coordination shortcuts point to form and calendar');
+   pass(schedulingUx.groups===3&&schedulingUx.fields>=11,'Coordination groups remain legible and all form inputs are present');
+   pass(schedulingUx.focusable,'Coordination quick actions remain visible');
+
   }
 
  }
