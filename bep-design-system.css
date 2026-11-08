@@ -1628,3 +1628,39 @@ body.dou-admin-standalone.bep-speech-ux main :is([id="free-text-lab"],[id="reade
   flex:1 1 145px;
  }
 }
+
+
+/* V3 manual NVDA guide on the isolated accessibility test page. */
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide{
+ background:#fff!important;border:1px solid #eadfe4!important;
+ border-radius:15px!important;padding:0!important;margin:0 0 15px!important;
+ box-shadow:0 5px 18px rgba(75,39,54,.04)!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide>summary{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+ padding:16px 20px;min-height:50px;cursor:pointer;
+ font-weight:800;color:#742039!important;line-height:1.5;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide>summary:focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide[open]>summary{
+ border-bottom:1px solid #eadfe4;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide-body{
+ padding:16px 20px 20px;color:#3a3446;line-height:1.7;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide-body ol{
+ padding-inline-start:24px;margin:12px 0;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide-body li{
+ margin-bottom:9px;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-guide-body kbd{
+ display:inline-block;border:1px solid #ddd2d8;background:#faf6f8;
+ border-radius:5px;padding:0 6px;font:inherit;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-manual-warning{
+ background:#fffaf0;border-left:4px solid #a9803d;
+ padding:11px 14px;border-radius:8px;color:#624b2b;
+}
