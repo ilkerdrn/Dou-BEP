@@ -333,3 +333,15 @@ test('V4 exam nested content sizing and dashboard shortcuts are independent of V
  assert.match(css,/\.exam-optional-tool:not\(\.campus-major-module\)\{\s*margin:13px 0!important/);
  assert.match(css,/\.exam-optional-tool:not\(\.campus-major-module\)>summary\{\s*display:flex!important/);
 });
+
+
+test('V4 owns optional exam disclosure label stack and open state independently of V3',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/\.exam-optional-tool>summary\{\s*display:flex!important;\s*flex-direction:column!important/);
+ assert.match(css,/\.exam-optional-tool>summary::after\{\s*content:"Göster"/);
+ assert.match(css,/\.exam-optional-tool\[open\]>summary::after\{\s*content:"Gizle"/);
+ assert.match(css,/\.exam-question-advanced\[open\]>summary\{\s*margin-bottom:14px!important/);
+ assert.ok(browser.includes("'.exam-optional-tool>summary'"));
+ assert.ok(browser.includes("'.exam-optional-tool.campus-major-module>summary'"));
+});
