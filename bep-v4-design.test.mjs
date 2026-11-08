@@ -371,7 +371,7 @@ test('V4 visual gate reports exact nested exam drift without changing strict com
 
 test('V4 nested exam flow includes measured layout contracts from V3 retirement trace',()=>{
  const css=read('./bep-v4.css');
- assert.match(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
+ assert.doesNotMatch(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/,'Do not restore measured 44px expansion');
  assert.match(css,/#exam-workspace \.exam-question-jump\{\s*display:flex!important/);
  assert.match(css,/#exam-workspace \.exam-question-jump\[hidden\]\{\s*display:none!important/);
  assert.match(css,/#exam-workspace \.exam-preflight\{\s*margin-top:24px!important/);
