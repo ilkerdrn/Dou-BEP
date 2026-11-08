@@ -106,6 +106,26 @@ export function pilotSessions(db,{StoreError,log}){
   db.prepare("UPDATE pilot_sessions SET status='revoked',claim_hash=NULL WHERE id=? AND tenant_id=?").run(id,actor.tenantId);log(actor,'pilot.revoked',id);return {ok:true};
  }
  function remove(actor,id){rowFor(actor,id);db.prepare('DELETE FROM pilot_sessions WHERE id=? AND tenant_id=?').run(id,actor.tenantId);log(actor,'pilot.deleted',id);return {ok:true};}
+ function recoverIssue(actor,id){
+  const row=rowFor(actor,id);
+  if(row.status!=='started'||row.expires_at<=now())
+   error('not_recoverable','Yalnızca süresi dolmamış, devam eden bir pilot oturumu kurtarılabilir.',409);
+  const exam=db.prepare('SELECT * FROM exams WHERE tenant_id=? AND id=?').get(actor.tenantId,row.exam_id);
+  if(!exam||exam.status!=='approved'||exam.revision!==row.revision)
+   error('exam_changed','Sınav sürümü değişti; oturum kurtarılamaz.',409);
+  approvedExam(exam);
+  // Preserve anonymous server-side answers and the ORIGINAL expiry. Rotate both
+  // capabilities atomically: the old bearer and original code become invalid.
+  const raw=randomBytes(10).toString('hex').toUpperCase();
+  const code=raw.match(/.{1,5}/g).join('-');
+  const updated=db.prepare("UPDATE pilot_sessions SET code_hash=?,claim_hash=NULL,status='issued' WHERE id=? AND tenant_id=? AND status='started' AND expires_at>?")
+   .run(sha(raw),id,actor.tenantId,now());
+  if(!updated.changes)error('not_recoverable','Oturum durumu değişti; tekrar inceleyin.',409);
+  log(actor,'pilot.recovery.issued',id);
+  return {id,code,expiresAt:row.expires_at,status:'issued',
+   notice:'Eski öğrenci oturumu artık geçersizdir. Kurtarma kodu yalnızca bir kez kullanılabilir; süre uzatılmaz.'};
+ }
+
  function redeem(code){
   const raw=typeof code==='string'?code.trim().toUpperCase().replace(/-/g,''):'';
   const time=now(),key=sha('pilot-code:'+raw.slice(0,80));
@@ -282,6 +302,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
+ return {pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
