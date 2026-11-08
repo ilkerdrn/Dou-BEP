@@ -228,3 +228,60 @@ body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-me
 body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-disclosure>summary{
  cursor:pointer;min-height:36px;display:list-item;
 }
+
+/* DersAktif identity treatment — one brand lockup across institution,
+   exams and every standalone administration page. No external logo assets. */
+body.institution-page[data-design-version="4"] .dou-nav .dou-nav-brand,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-nav-brand{
+ display:flex!important;align-items:center!important;gap:12px!important;
+ min-width:0!important;padding:20px 9px 18px!important;
+ border-bottom:1px solid #3b3b38!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-mark,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-mark{
+ width:46px!important;height:46px!important;flex:0 0 46px!important;
+ display:grid!important;place-items:center!important;
+ position:relative!important;border-radius:13px!important;
+ background:#d70926!important;background-image:none!important;
+ border:1px solid rgba(255,255,255,.15)!important;
+ box-shadow:none!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-mark span,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-mark span{
+ color:#fff!important;font-size:14px!important;line-height:1!important;
+ font-weight:900!important;letter-spacing:-.045em!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-mark i,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-mark i{
+ position:absolute!important;top:6px!important;right:6px!important;
+ width:6px!important;height:6px!important;border-radius:50%!important;
+ background:#fff!important;opacity:.95!important;box-shadow:none!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-title,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-title{
+ min-width:0!important;display:flex!important;flex-direction:column!important;
+ gap:4px!important;line-height:1.2!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-title strong,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-title strong{
+ color:#fff!important;font-size:15px!important;line-height:1.2!important;
+ font-weight:800!important;letter-spacing:-.025em!important;
+ overflow-wrap:normal!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .dou-brand-title small,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-brand-title small{
+ color:#c5c5c2!important;font-size:10px!important;font-weight:550!important;
+ letter-spacing:.005em!important;line-height:1.4!important;
+}
+/* The logged-in identity card must not inherit the old bright/pink framing. */
+body.institution-page[data-design-version="4"] .dou-nav .campus-profile{
+ background:#292927!important;color:#fff!important;
+ border:1px solid #42423e!important;box-shadow:none!important;
+ border-radius:11px!important;
+}
+body.institution-page[data-design-version="4"] .dou-nav .campus-profile :is(.campus-profile-name,.campus-profile-role){
+ color:#f0f0ed!important;
+}
+@media(max-width:380px){
+ body[data-design-version="4"] .dou-nav .dou-brand-title strong{font-size:13.5px!important}
+}
