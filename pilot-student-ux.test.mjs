@@ -72,7 +72,7 @@ test('pre-exam readiness requires two explicit checks before showing questions',
  assert.match(html,/id="ready-start"[^>]*disabled/);
  assert.match(html,/45 dakikalık pilot oturum süresi işlemeye başladı/);
  assert.match(js,/function updateReadyStart\(\)/);
- assert.match(js,/\$\('ready-start'\)\.disabled=!\$\('ready-understand'\)\.checked\|\|!\$\('ready-device'\)\.checked\|\|!claim\|\|!exam/);
+ assert.match(js,/\$\('ready-start'\)\.disabled=!\$\('ready-understand'\)\.checked\|\|!\$\('ready-device'\)\.checked\|\|!claim\|\|!exam\|\|pilotTimeState\(pilotExpiresAt\)\.phase==='expired'/);
  assert.match(js,/\$\('exam-ready'\)\.hidden=true;\$\('player'\)\.hidden=false/);
  assert.match(js,/\$\('entry'\)\.hidden=true;\$\('player'\)\.hidden=true;\$\('exam-ready'\)\.hidden=false/);
  assert.match(js,/\$\('ready-title'\)\.focus\(\)/);
@@ -107,4 +107,16 @@ test('automatic draft saves are debounced, serialized and never expose the beare
  assert.match(js,/const \{answers\}=collectAnswers\(\);\s*const r=await post\('\/api\/pilot\/submit',\{answers\},claim\)/);
  assert.match(js,/window\.addEventListener\('pagehide',\(\)=>\{clearSaveTimer\(\);claim=null/);
  assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
+
+test('student timer displays server expiry in preparation and test without automatic submission',()=>{
+ assert.match(html,/id="pilot-ready-time"[^>]*role="status"/);
+ assert.match(html,/id="pilot-time-text"[^>]*role="timer"[^>]*aria-live="off"/);
+ assert.match(html,/id="pilot-time-warning"[^>]*role="status"[^>]*aria-live="polite"/);
+ assert.match(js,/import \{pilotTimeState\} from '\.\/pilot-time\.mjs'/);
+ assert.match(js,/startPilotClock\(r\.expiresAt\)/);
+ assert.match(js,/setInterval\(renderPilotClock,1000\)/);
+ assert.match(js,/state\.phase==='expired'/);
+ assert.match(js,/stopPilotClock\(\);douReader\?\.stop\(\)/);
+ assert.doesNotMatch(js,/post\('\/api\/pilot\/submit',\{answers\},claim\);\s*setInterval/);
 });
