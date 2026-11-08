@@ -383,3 +383,37 @@ body.institution-page.campus-layout[data-design-version="4"] .portal-pill{
 body.institution-page.campus-layout[data-design-version="4"] :is(.portal-btn.primary,.dou-create):hover{
  background:#b50720!important;border-color:#b50720!important;
 }
+
+/* DersAktif exam wizard: target actual .workflow-step > span markup.
+ * Legacy V3 gave inactive numbers a burgundy tint and active numbers a
+ * different dark red; high-specificity selectors override both precisely. */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps .workflow-step{
+ background:#fff!important;background-image:none!important;
+ border:1px solid #e6e5e1!important;color:#292927!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps .workflow-step>span{
+ display:grid!important;place-items:center!important;
+ background:#f1f1ee!important;color:#666660!important;
+ border:1px solid #e6e5e1!important;
+ border-radius:8px!important;box-shadow:none!important;
+ font-weight:800!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps .workflow-step:hover:not([aria-current="step"]):not(.active){
+ background:#fff6f7!important;border-color:#f5c1ca!important;
+ color:#a50820!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps .workflow-step:is(.active,[aria-current="step"]){
+ background:#d70926!important;background-image:none!important;
+ border-color:#d70926!important;color:#fff!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav .workflow-steps .workflow-step:is(.active,[aria-current="step"])>span{
+ background:rgba(255,255,255,.2)!important;
+ border-color:rgba(255,255,255,.12)!important;
+ color:#fff!important;box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workspace-step-number{
+ background:#fff0f2!important;color:#b50720!important;
+ border:1px solid #f6c4cc!important;
+}
