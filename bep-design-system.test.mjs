@@ -206,3 +206,24 @@ test('document import and accessibility checklist keep their functional controls
  assert.match(css,/\.bep-import-ux/);
  assert.match(css,/\.bep-audit-ux/);
 });
+
+
+test('pilot and BEP goal import provide focused navigation without losing controls',()=>{
+ const pages=[
+  ['pilot-admin.html','bep-pilot-ux',['pilot-session-create','pilot-session-list','cohort-heading'],['exams','create','sessions','cohort-load','review-form']],
+  ['bep-import.html','bep-goals-ux',['bep-step-source','bep-step-review'],['bep-file','bep-text','bep-preview','bep-confirm','bep-create']]
+ ];
+ for(const [path,scope,targets,controls] of pages){
+  const html=read('./'+path);
+  assert.ok(html.includes(scope),path+' missing page scope');
+  assert.match(html,/class="bep-section-nav"/);
+  for(const id of targets){
+   assert.ok(html.includes('id="'+id+'"'),path+' missing destination '+id);
+   assert.ok(html.includes('href="#'+id+'"'),path+' missing navigation for '+id);
+  }
+  for(const id of controls) assert.ok(html.includes('id="'+id+'"'),path+' lost control '+id);
+ }
+ const css=read('./bep-design-system.css');
+ assert.match(css,/\.bep-pilot-ux/);
+ assert.match(css,/\.bep-goals-ux/);
+});
