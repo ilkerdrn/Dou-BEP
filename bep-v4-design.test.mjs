@@ -367,3 +367,15 @@ test('V4 visual gate reports exact nested exam drift without changing strict com
  assert.match(browser,/V4 CSS visual parity gate FAILED/);
  assert.ok(!css.includes('/* Phase 18 — edit-card heading metrics'), 'Regressing header override must remain reverted');
 });
+
+
+test('V4 nested exam flow includes measured layout contracts from V3 retirement trace',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/#exam-workspace \.exam-subheading\{\s*padding-bottom:8px!important/);
+ assert.match(css,/#exam-workspace \.exam-question-jump\{\s*display:flex!important/);
+ assert.match(css,/#exam-workspace \.exam-question-jump\[hidden\]\{\s*display:none!important/);
+ assert.match(css,/#exam-workspace \.exam-preflight\{\s*margin-top:24px!important/);
+ assert.match(css,/#exam-workspace \.exam-optional-tool\.campus-major-module>section,/);
+ assert.match(css,/min-height:43px!important;\s*line-height:1\.45!important/);
+ assert.match(css,/#exam-workspace \.exam-grid textarea\{\s*min-height:82px!important/);
+});
