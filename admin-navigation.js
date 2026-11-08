@@ -137,6 +137,7 @@
  document.addEventListener('pointerdown',event=>{
   if(nav.classList.contains('dou-nav-open')&&!nav.contains(event.target))close();
  });
+ updateManagement(document.documentElement.dataset.navRole||null);
  const media=window.matchMedia('(min-width: 1081px)');
  if(media.addEventListener)media.addEventListener('change',close);
 })();
