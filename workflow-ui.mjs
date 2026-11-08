@@ -6,6 +6,7 @@ if (nav) {
   const previous=document.getElementById('workflow-prev');
   const next=document.getElementById('workflow-next');
   const stepCount=document.getElementById('workflow-step-count');
+  const nextHint=document.getElementById('workflow-next-hint');
   const announcement=document.getElementById('workflow-announcement');
   const revealAndVisit = button => {
     const target=findTarget(button);
@@ -26,6 +27,12 @@ if (nav) {
     if(previous)previous.disabled=selectedIndex<=0;
     if(next)next.disabled=selectedIndex<0||selectedIndex>=steps.length-1;
     if(stepCount&&selectedIndex>=0)stepCount.textContent='Adım '+(selectedIndex+1)+' / '+steps.length;
+    if(nextHint&&selectedIndex>=0){
+      const following=steps[selectedIndex+1];
+      nextHint.textContent=following
+        ?'Sıradaki: '+following.textContent.replace(/^\s*\d+\s*/,'').trim()
+        :'Tüm hazırlama bölümlerini ziyaret ettiniz; kalite ve onayı kontrol edin.';
+    }
     for (const step of steps) {
       const selected = step === button;
       step.classList.toggle('active',selected);
