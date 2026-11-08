@@ -330,3 +330,20 @@ test('offline accessibility checklist includes distinct human NVDA guidance with
  }
  assert.match(css,/\.pilot-manual-guide>summary:focus-visible/);
 });
+
+
+test('manual accessibility findings stay local, omit note contents and support direct focus',()=>{
+ const html=read('./accessibility-check.html');
+ const ui=read('./accessibility-check.mjs');
+ const css=read('./bep-design-system.css');
+ for(const id of ['pilot-findings-list','pilot-findings-status','pilot-jump-fail','pilot-findings-title']){
+  assert.ok(html.includes('id="'+id+'"'),'Missing safe findings view element '+id);
+ }
+ assert.match(ui,/const findings=\$\('pilot-findings-list'\)/);
+ assert.match(ui,/for\(const outcome of \['fail','not-tested'\]\)/);
+ assert.match(ui,/findings\.replaceChildren\(\)/);
+ assert.match(ui,/\$\('pilot-jump-fail'\)\.disabled=failed===0/);
+ assert.match(ui,/\$\('status-'\+index\)\.focus\(\)/);
+ assert.doesNotMatch(ui,/make\('li','pilot-finding',.*note/);
+ assert.match(css,/\.pilot-finding\[data-outcome="fail"\]/);
+});
