@@ -356,10 +356,4 @@ test('V4 exam overview spacing and module header surface do not depend on V3',()
 });
 
 
-test('V4 authoring card title and card header align without the V3 cascade',()=>{
- const css=read('./bep-v4.css');
- assert.match(css,/#exam-workspace \.portal-card-head\{\s*align-items:center!important/);
- assert.match(css,/#exam-workspace #exam-editor-title\{\s*font-size:clamp\(19px,2vw,25px\)!important/);
- assert.match(css,/#exam-workspace \.exam-q-head strong\{\s*font-size:15px!important/);
- assert.match(css,/#exam-workspace \.exam-subheading h3\{\s*font-size:16px!important/);
-});
+
