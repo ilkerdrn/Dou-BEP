@@ -557,7 +557,7 @@ async function main(){
   return {active:editor.classList.contains('exam-guided-view'),
    togglePressed:toggle.getAttribute('aria-pressed')==='true',
    currentVisible:getComputedStyle(initial).display!=='none',
-   futureHidden:getComputedStyle(next).display==='none'};
+   futureHidden:!!next.closest('[data-workflow-hidden="true"]')};
  })()`);
  console.log('BROWSER EXAM GUIDED STAGE: '+JSON.stringify(guidedInitial));
  pass(guidedInitial.active&&guidedInitial.togglePressed&&
@@ -577,7 +577,7 @@ async function main(){
  pass(await evaluate('document.activeElement===document.getElementById("exam-output-section")||document.getElementById("exam-output-section").contains(document.activeElement)'),'Focus transfers inside final review section');
  await evaluate('document.getElementById("workflow-view-toggle").click()');
  pass(await evaluate('!document.getElementById("exam-editor-card").classList.contains("exam-guided-view")&&
-  getComputedStyle(document.getElementById("exam-goal-section")).display!=="none"'),
+  !document.getElementById("exam-goal-section").closest('[data-workflow-hidden="true"]')'),
   'Advanced editor reveals all original fields for full workflow regression');
  await evaluate('document.querySelector(\'[data-workflow-target="exam-main-fields"]\').click()');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
