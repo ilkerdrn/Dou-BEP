@@ -412,3 +412,17 @@ test('V4 isolates exam editor title style and traces all remaining nested parity
  ])assert.ok(browser.includes(selector),'Nested parity source not tracked: '+selector);
  assert.match(browser,/V4 CSS visual parity gate FAILED/);
 });
+
+
+test('V4 preflight next-action layout and final output trace remain V3-independent',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/#exam-workspace \.preflight-next-action\{\s*display:flex!important/);
+ assert.match(css,/justify-content:space-between!important;\s*align-items:center!important;\s*flex-wrap:wrap!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action>div\{\s*flex:1 1 220px!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action strong\{\s*display:block!important/);
+ assert.match(css,/#exam-workspace \.preflight-next-action p\{\s*margin:0!important/);
+ assert.ok(browser.includes('#exam-editor-card>.portal-card:last-child'));
+ assert.ok(browser.includes('#exam-preflight-body>.preflight-next-action'));
+ assert.match(browser,/V4 CSS visual parity gate FAILED/);
+});
