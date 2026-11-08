@@ -93,6 +93,22 @@ async function evaluate(expression){
 async function navigate(base,path){
  await command('Page.navigate',{url:base+path});
  await waitUntil(()=>evaluate('document.readyState==="complete"'),'Page loaded '+path);
+ if(process.argv.includes('--without-v3')){
+  // Experiment only: toggle stylesheet in disposable Edge DOM, not source files.
+  // Guest/authenticated routes may not all load this stylesheet.
+  const count=await evaluate(`(function(){
+   const el=document.querySelector('link[href="/admin-design-v3.css"]');
+   if(!el)return 0;
+   el.disabled=true;
+   return 1;
+  })()`);
+  if(count){
+   await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+   const disabled=await evaluate('document.querySelector(\'link[href="/admin-design-v3.css"]\')?.disabled===true');
+   if(!disabled)throw Error('Isolated V3 stylesheet did not stay disabled: '+path);
+   console.log('BROWSER V4 WITHOUT V3: '+path+' (isolated DOM, no repository changes)');
+  }
+ }
 }
 // Screenshots are opt-in and restricted to this synthetic fixture.
 // Captures are never made on a user's logged-in browser profile or actual DB.
