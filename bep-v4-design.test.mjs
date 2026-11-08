@@ -114,3 +114,16 @@ test('V4 exam editor explicitly defines responsive desktop and mobile column beh
  assert.match(browser,/BROWSER V4 EDITOR WORKBENCH/);
  assert.match(browser,/V4 mobile exam list stacks above authoring editor/);
 });
+
+
+test('V4 campus overrides the more specific V3 gradient and legacy brand declaration',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/body\.institution-page\.campus-layout\[data-design-version="4"\]/);
+ assert.match(css,/body\.institution-page\.campus-layout\[data-design-version="4"\] \.dou-nav/);
+ assert.match(css,/background-image:none!important/);
+ assert.match(css,/--bep-brand:var\(--v4-primary\)/);
+ assert.match(css,/\.dou-nav \.dou-nav-link\[aria-current="page"\]/);
+ const source=read('./bep-design-system.css');
+ assert.match(source,/body\.institution-page\.campus-layout\{/);
+ assert.match(source,/--bep-brand:#8e1428/);
+});
