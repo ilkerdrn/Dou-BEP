@@ -50,7 +50,8 @@
     "reader:voice:diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-voice-readiness.ps1",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
     "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
-    "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs"
+    "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs",
+    "design:v3:check": "node --test bep-design-system.test.mjs"
   },
   "engines": {
     "node": ">=22.13"
