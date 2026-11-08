@@ -86,6 +86,32 @@ export function createDecisionRepository(db,{StoreError,log}){
    .run(Date.now(),id,actor.tenantId,revision);event(actor,select(actor,id),'revoked');db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
   return view(select(actor,id));
  }
+ function durationPreview(actor,id){
+  permit(actor,'accommodation.view');
+  const decision=select(actor,id),data=rowData(decision);
+  if(decision.status!=='approved'||!decision.approved_at||!decision.approved_by||
+     decision.approved_sha256!==decision.content_sha256||digest(data)!==decision.content_sha256)
+   return {ready:false,reason:'decision_not_approved',message:'Bu kararın onayı veya içerik bütünlüğü doğrulanamadı. Süre planı uygulanamaz.'};
+  // Multiple sittings of the same exam are ambiguous. Do not silently choose a
+  // room/time and do not reveal other candidates or personal information.
+  const matches=db.prepare(`SELECT id,starts_at,duration_minutes,exam_id,exam_revision FROM exam_coordination
+   WHERE tenant_id=? AND term=? AND course_code=? AND exam_label=?
+   ORDER BY starts_at ASC LIMIT 2`).all(actor.tenantId,data.term,data.courseCode,data.examLabel);
+  if(matches.length!==1)return {ready:false,reason:matches.length?'ambiguous_session':'session_missing',
+   message:matches.length?'Aynı ders ve sınav için birden fazla oturum var. Önce oturum eşleştirmesini netleştirin.':'Bu karar için eşleşen sınav koordinasyon oturumu yok.'};
+  const sitting=matches[0];
+  if(!sitting.exam_id||!Number.isInteger(sitting.exam_revision))
+   return {ready:false,reason:'exam_unmapped',message:'Koordinasyon oturumu onaylı bir sınav sürümüne bağlı değil.'};
+  const exam=db.prepare('SELECT status,revision FROM exams WHERE id=? AND tenant_id=?')
+   .get(sitting.exam_id,actor.tenantId);
+  if(!exam||exam.status!=='approved'||exam.revision!==sitting.exam_revision)
+   return {ready:false,reason:'exam_not_ready',message:'Bağlı sınav onaylı değil veya sürümü değişmiş.'};
+  const baseMinutes=sitting.duration_minutes;
+  const totalMinutes=baseMinutes+data.extraMinutes;
+  return {ready:true,reason:'verified_preview',decisionId:decision.id,decisionRevision:decision.revision,
+   coordinationId:sitting.id,startsAt:sitting.starts_at,baseMinutes,extraMinutes:data.extraMinutes,totalMinutes,
+   message:'Onaylı anonim karar ve eşleşen sınav için planlama önizlemesi. Öğrenciye otomatik süre verilmez.'};
+ }
  function verifyBatch(actor,rows){permit(actor,'accommodation.verify');if(!Array.isArray(rows)||!rows.length||rows.length>100)error('invalid_batch','1–100 anonim kayıt gereklidir.',422);
   const seen=new Set(),results=[];
   for(const input of rows){let data;try{data=normalizeDecision(input);}catch(e){error('invalid_batch',e.message,422);}
@@ -97,5 +123,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview};
 }
