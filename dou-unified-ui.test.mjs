@@ -78,3 +78,13 @@ test('V4 design tokens no longer inherit burgundy brand for campus buttons or ta
  assert.match(css,/\.portal-tabs button.selected[\s\S]*?background:#d70926!important/);
  assert.match(css,/\.dashboard-shortcut-icon,.portal-outline-label[\s\S]*?background:#fff0f2!important/);
 });
+
+test('five real exam workflow number badges no longer inherit V3 burgundy',()=>{
+ const html=read('./institutional-exams.html');
+ assert.equal((html.match(/class="workflow-step(?: active)?"/g)||[]).length,5);
+ assert.match(html,/class="workflow-step active"[^>]*aria-current="step"><span>01<\/span>/);
+ assert.match(css,/#exam-workspace \.workflow-nav \.workflow-steps \.workflow-step>span\{[\s\S]*?background:#f1f1ee!important;color:#666660!important/);
+ assert.match(css,/#exam-workspace \.workflow-nav \.workflow-steps \.workflow-step:is\(\.active,\[aria-current="step"\]\)\{[\s\S]*?background:#d70926!important/);
+ assert.match(css,/#exam-workspace \.workflow-nav \.workflow-steps \.workflow-step:is\(\.active,\[aria-current="step"\]\)>span\{[\s\S]*?background:rgba\(255,255,255,\.2\)!important/);
+ assert.match(css,/#exam-workspace \.workspace-step-number\{[\s\S]*?background:#fff0f2!important;color:#b50720!important/);
+});
