@@ -151,6 +151,9 @@ async function probeLegacySheet(page,selectors){
  }finally{
   await evaluate('document.querySelector('+JSON.stringify(query)+').disabled=false');
  }
+ const restored=await evaluate(expression);
+ if(JSON.stringify(restored)!==JSON.stringify(before))
+  throw Error('V4 CSS probe did not restore initial visual metrics on '+page);
  const changed=[];
  for(const selector of selectors){
   const a=before.nodes[selector],b=after.nodes[selector];
