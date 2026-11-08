@@ -59,3 +59,22 @@ test('all administrative sidebars share the DersAktif-inspired DOU logo identity
  assert.match(css,/\.dou-nav \.dou-brand-title strong\{[\s\S]*?font-size:15px!important/);
  assert.match(css,/\.dou-nav \.campus-profile\{[\s\S]*?background:#292927!important/);
 });
+
+test('campus admin identity is a compact grouped profile, never a loose legacy symbol',()=>{
+ const html=read('./institution.html');
+ const js=read('./institution.mjs');
+ assert.match(html,/id="campus-sidebar-profile"[^>]*hidden/);
+ assert.match(html,/id="campus-profile-avatar"[^>]*>K<\/span>/);
+ assert.match(html,/class="campus-profile-info"/);
+ assert.match(html,/class="campus-profile-label">AKTİF HESAP/);
+ assert.match(js,/\$\('campus-profile-avatar'\)\.textContent=/);
+ assert.match(css,/#campus-sidebar-profile\{[\s\S]*?grid-template-columns:40px minmax\(0,1fr\)!important/);
+ assert.match(css,/#campus-sidebar-profile\[hidden\]\{display:none!important\}/);
+ assert.match(css,/#campus-sidebar-profile \.campus-profile-avatar\{[\s\S]*?background:#d70926!important/);
+});
+test('V4 design tokens no longer inherit burgundy brand for campus buttons or tabs',()=>{
+ assert.match(css,/--v4-primary:#d70926;--v4-primary-hover:#b50720/);
+ assert.match(css,/--bep-brand:#d70926;--bep-brand-hover:#b50720/);
+ assert.match(css,/\.portal-tabs button.selected[\s\S]*?background:#d70926!important/);
+ assert.match(css,/\.dashboard-shortcut-icon,.portal-outline-label[\s\S]*?background:#fff0f2!important/);
+});
