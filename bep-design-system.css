@@ -710,3 +710,26 @@ body.institution-page.campus-layout[data-portal-auth="guest"] .portal-footer{
   padding:12px 10px 30px!important;
  }
 }
+
+
+/* Final cascade fix: legacy :has(#login-view) rule carried an ID specificity
+   and reintroduced a 4vh top gutter despite the edge-to-edge layout. */
+body.institution-page.campus-layout[data-portal-auth="guest"]:has(#login-view:not([hidden])) .portal-content{
+ padding:0!important;
+ padding-block:0!important;
+ padding-inline:0!important;
+ margin:0!important;
+ max-width:none!important;
+ width:100%!important;
+}
+body.institution-page.campus-layout[data-portal-auth="guest"]:has(#login-view:not([hidden])) #login-view.portal-login-card{
+ margin:0!important;
+ width:100%!important;
+ max-width:none!important;
+ border-radius:0!important;
+}
+@media(max-width:900px){
+ body.institution-page.campus-layout[data-portal-auth="guest"]:has(#login-view:not([hidden])) .portal-content{
+  padding:0!important;
+ }
+}
