@@ -1562,3 +1562,16 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #ex
  max-width:100%!important;
  white-space:normal!important;
 }
+
+/* Visible, keyboard-accessible sign-out in the authenticated campus sidebar. */
+body.institution-page[data-design-version="4"] .dou-nav-bottom .dou-sidebar-logout{
+ display:flex!important;align-items:center;justify-content:center;gap:10px;
+ width:100%;min-height:44px;margin:0 0 14px;padding:10px 14px;
+ border:1px solid currentColor;border-radius:10px;background:transparent;
+ color:inherit;font:inherit;font-weight:700;cursor:pointer;
+}
+body.institution-page[data-design-version="4"] .dou-nav-bottom .dou-sidebar-logout[hidden]{display:none!important}
+body.institution-page[data-design-version="4"] .dou-nav-bottom .dou-sidebar-logout:hover{background:rgba(128,27,42,.09)}
+body.institution-page[data-design-version="4"] .dou-nav-bottom .dou-sidebar-logout:focus-visible{
+ outline:3px solid #2477bb;outline-offset:3px;
+}
