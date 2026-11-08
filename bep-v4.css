@@ -631,3 +631,22 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .wo
  border-color:var(--v4-primary)!important;
  color:#fff!important;
 }
+
+
+/* V4 coordination workspace: old page-specific styles used a transparent
+ * hero and inherited V3 text colors. Explicitly create one readable surface. */
+body.institution-page:not(.campus-layout)[data-design-version="4"] .portal-hero{
+ background:#fff!important;background-image:none!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:var(--v4-radius)!important;
+ box-shadow:none!important;color:var(--v4-text)!important;
+}
+body.institution-page:not(.campus-layout)[data-design-version="4"] .portal-hero h1{
+ color:var(--v4-text)!important;
+}
+body.institution-page:not(.campus-layout)[data-design-version="4"] .portal-hero p{
+ color:var(--v4-muted)!important;
+}
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav-find input{
+ color:var(--v4-text)!important;background:#fff!important;
+}
