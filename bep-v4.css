@@ -1545,3 +1545,20 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #ex
  color:var(--v4-muted)!important;font-size:12px!important;line-height:1.4!important;
 }
 body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-question-jump [hidden]{display:none!important;}
+
+/* Actionable quality findings: original validation text is preserved. */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-quality .exam-issue{
+ padding:12px 14px!important;
+ margin:10px 0!important;
+ border-radius:10px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-quality .exam-issue p{
+ margin:0 0 8px!important;
+ line-height:1.55!important;
+ overflow-wrap:anywhere!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-quality [data-quality-question]{
+ min-height:40px!important;
+ max-width:100%!important;
+ white-space:normal!important;
+}
