@@ -22,15 +22,17 @@ const modules=[
  ['Dinleme Testi','dou-speech-listening.html','/dou-speech-listening'],
  ['Ses Anlaşılabilirliği','dou-speech-intelligibility.html','/dou-speech-intelligibility']
 ];
-test('all 16 navigable admin modules load one final locally served design stylesheet',()=>{
+test('all 16 navigable admin modules load one final locally served design stylesheet',async t=>{
  const server=read('server.mjs');
  for(const [name,file,url] of modules){
-  const html=read(file);
-  assert.equal((html.match(/href="\/dou-unified-ui\.css"/g)||[]).length,1,name);
-  assert.ok(html.indexOf('/dou-unified-ui.css')>html.indexOf('/bep-v4.css'),name);
-  assert.match(html,/data-design-version="4"/,name);
-  assert.match(html,/src="\/admin-navigation\.js"/,name);
-  assert.ok(server.includes("'"+url+"'"),name+' route unavailable');
+  await t.test(name,()=>{
+   const html=read(file);
+   assert.equal((html.match(/href="\/dou-unified-ui\.css"/g)||[]).length,1,name);
+   assert.ok(html.indexOf('/dou-unified-ui.css')>html.indexOf('/bep-v4.css'),name);
+   assert.match(html,/data-design-version="4"/,name);
+   assert.match(html,/src="\/admin-navigation\.js"/,name);
+   assert.ok(server.includes("'"+url+"'"),name+' route unavailable');
+  });
  }
 });
 test('existing module-specific layouts are covered by common neutral cards and fields',()=>{
