@@ -99,7 +99,7 @@ async function navigate(base,path){
 async function captureSyntheticScreenshot(name){
  const dest=process.env.BEP_UI_CAPTURE_DIR;
  if(!dest)return;
- if(!["dashboard-desktop","dashboard-mobile","exam-desktop","exam-mobile","exam-questions-mobile","exam-quality-mobile","exam-output-mobile","exam-questions-desktop","exam-output-desktop"].includes(name))throw Error('Unknown screenshot name');
+ if(!["dashboard-desktop","dashboard-mobile","exam-desktop","exam-mobile","exam-questions-mobile","exam-quality-mobile","exam-output-mobile","exam-questions-desktop","exam-output-desktop","dashboard-without-v3","exam-without-v3"].includes(name))throw Error('Unknown screenshot name');
  const result=await command('Page.captureScreenshot',{format:'png',captureBeyondViewport:false,fromSurface:true});
  const bytes=Buffer.from(result.data||'','base64');
  if(bytes.length<1000||bytes.length>10_000_000)throw Error('Invalid synthetic screenshot size');
@@ -122,6 +122,54 @@ async function captureSyntheticSection(id,name){
  await delay(130);
  await captureSyntheticScreenshot(name);
 }
+
+/**
+ * Optional V4 CSS retirement measurement, ONLY on disposable browser fixture.
+ * Disables one stylesheet in the test DOM, captures computed style + geometry,
+ * and restores it. No source stylesheets, sessions or user data are modified.
+ */
+async function probeLegacySheet(page,selectors){
+ const href='/admin-design-v3.css';
+ const query='link[href="'+href+'"]';
+ const sheetCount=await evaluate('document.querySelectorAll('+JSON.stringify(query)+').length');
+ if(sheetCount!==1)throw Error('Expected one V3 design stylesheet on '+page);
+ const expression='(function(){const list='+JSON.stringify(selectors)+';'+
+  'const nodes=Object.fromEntries(list.map(selector=>{const el=document.querySelector(selector);'+
+  'if(!el)return [selector,null];const r=el.getBoundingClientRect(),s=getComputedStyle(el);'+
+  'return [selector,{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),'+
+  'height:Math.round(r.height),display:s.display,color:s.color,backgroundColor:s.backgroundColor,'+
+  'backgroundImage:s.backgroundImage,fontSize:s.fontSize,padding:s.padding,'+
+  'gridTemplateColumns:s.gridTemplateColumns}]}));'+
+  'return {nodes,scroll:document.documentElement.scrollWidth,'+
+  'viewport:document.documentElement.clientWidth}})()';
+ const before=await evaluate(expression);
+ await evaluate('document.querySelector('+JSON.stringify(query)+').disabled=true');
+ let after;
+ try{
+  after=await evaluate(expression);
+  if(process.env.BEP_UI_CAPTURE_DIR)await captureSyntheticScreenshot(page+'-without-v3');
+ }finally{
+  await evaluate('document.querySelector('+JSON.stringify(query)+').disabled=false');
+ }
+ const changed=[];
+ for(const selector of selectors){
+  const a=before.nodes[selector],b=after.nodes[selector];
+  if(!a||!b){changed.push({selector,issue:'missing element'});continue;}
+  const delta={};
+  for(const key of Object.keys(a)){
+   if(['x','y','width','height'].includes(key)){
+    if(Math.abs(a[key]-b[key])>2)delta[key]=[a[key],b[key]];
+   }else if(a[key]!==b[key])delta[key]=[a[key],b[key]];
+  }
+  if(Object.keys(delta).length)changed.push({selector,delta});
+ }
+ if(before.scroll!==after.scroll)changed.push({selector:'document.scrollWidth',delta:[before.scroll,after.scroll]});
+ const result={page,stylesheet:href,changedElements:changed.length,
+  originalScroll:before.scroll,withoutV3Scroll:after.scroll,changes:changed};
+ console.log('BROWSER V4 CSS RETIREMENT PROBE: '+JSON.stringify(result));
+ return result;
+}
+
 async function main(){
  const port=await freePort();
  process.env.PORT=String(port);
@@ -318,6 +366,11 @@ async function main(){
  pass(campusVisual.selected==='none'&&campusVisual.selectedText==='rgb(255, 255, 255)','V4 selected menu uses solid high-contrast burgundy');
  pass(campusVisual.card==='none','V4 dashboard welcome uses a plain institutional surface');
  await captureSyntheticScreenshot('dashboard-desktop');
+ if(process.argv.includes('--css-probe'))await probeLegacySheet('dashboard',[
+  '.dou-nav','.portal-main','.portal-topbar','.dashboard-welcome',
+  '.dashboard-shortcuts','.dashboard-shortcut','.campus-summary-card'
+ ]);
+
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
  pass(await evaluate('document.body.dataset.examAuth==="authenticated"'),'Exam editor authorizes fixture session');
@@ -364,6 +417,12 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundImage==="none"'),'V4 exam editor uses the same neutral navigation shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundImage==="none"'),'V4 exam menu active indicator has no decorative gradient');
  await captureSyntheticScreenshot('exam-desktop');
+ if(process.argv.includes('--css-probe'))await probeLegacySheet('exam',[
+  '.dou-nav','.portal-main','.exam-workbench-heading','.workflow-nav',
+  '.exam-grid','#exam-drafts-panel','#exam-editor-card',
+  '.exam-list-controls','.editor-ribbon','.exam-autosave-panel'
+ ]);
+
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
