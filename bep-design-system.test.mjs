@@ -160,3 +160,29 @@ test('batch and accommodation screens have accessible shortcuts and preserved wo
  assert.match(css,/\.bep-task-shortcuts a:focus-visible/);
  assert.match(css,/@media\(max-width:480px\)/);
 });
+
+
+test('operations and acceptance pages preserve controls and link to local sections',()=>{
+ const screens=[
+  ['operations.html',['ops-summary','ops-exam-readiness','ops-next-actions'],['ops-refresh','ops-rows','ops-term','ops-app']],
+  ['acceptance.html',['accept-summary','exam-head'],['review-form','review-submit','exam-list','status-filter']]
+ ];
+ for(const [file,anchors,controls] of screens){
+  const html=read('./'+file);
+  assert.match(html,/class="bep-workflow-links"/,file+' must provide task navigation');
+  for(const id of anchors){
+   assert.ok(html.includes('href="#'+id+'"'),'Missing task shortcut '+id);
+   assert.ok(html.includes('id="'+id+'"'),'Missing task destination '+id);
+  }
+  for(const id of controls){
+   assert.ok(html.includes('id="'+id+'"'),'Missing existing control '+id);
+  }
+ }
+ const acceptance=read('./acceptance.html');
+ assert.equal((acceptance.match(/id="dou-content"/g)||[]).length,1);
+ assert.doesNotMatch(acceptance,/id="dou-content" id=/);
+ const css=read('./bep-design-system.css');
+ assert.match(css,/\.bep-ops-page/);
+ assert.match(css,/\.bep-accept-page/);
+ assert.match(css,/\.bep-workflow-links a:first-child/);
+});
