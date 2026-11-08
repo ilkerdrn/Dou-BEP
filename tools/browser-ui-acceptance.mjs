@@ -221,6 +221,30 @@ async function main(){
  })()`);
  console.log('BROWSER CAMPUS SIDEBAR FLOW: '+JSON.stringify(sidebarFlow));
  pass(sidebarFlow.footerTop>=sidebarFlow.linksEnd-2,'Desktop sidebar footer does not overlap expanded menu groups');
+ // Search should work with or without Turkish diacritics, including an empty result.
+ const navSearch=await evaluate(`(function(){
+  const field=document.getElementById('dou-nav-search');
+  const panel=document.getElementById('dou-nav-sections');
+  const all=[...panel.querySelectorAll('.dou-nav-link')];
+  const submit=value=>{
+   field.value=value;
+   field.dispatchEvent(new Event('input',{bubbles:true}));
+   return all.filter(link=>!link.hidden).map(link=>link.textContent.trim());
+  };
+  const matched=submit('sinav');
+  const status=document.getElementById('dou-nav-find-status');
+  const unmatched=submit('xyz-no-module-available');
+  const noResultsShown=!status.hidden&&status.textContent.includes('Eşleşen');
+  const restored=submit('');
+  return {matchedCount:matched.length,matchingExam:matched.some(name=>name.includes('Sınav')),
+    unmatchedCount:unmatched.length,noResultsShown,
+    restored:restored.length,all:all.length,statusHidden:status.hidden};
+ })()`);
+ console.log('BROWSER TURKISH NAV SEARCH: '+JSON.stringify(navSearch));
+ pass(navSearch.matchingExam&&navSearch.matchedCount>0,'Turkish menu searches find Sınav when typing sinav');
+ pass(navSearch.unmatchedCount===0&&navSearch.noResultsShown,'Unknown menu searches show a clear empty state');
+ pass(navSearch.restored===navSearch.all&&navSearch.statusHidden,'Clearing menu search restores all navigation links');
+
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  // Reference-led layout: real computed colors, not only CSS source assertions.
  const campusVisual=await evaluate(`({
