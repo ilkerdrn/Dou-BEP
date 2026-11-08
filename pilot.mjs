@@ -123,7 +123,9 @@ function resetFinalReview(){
  $('send').textContent='Teslim özetini kontrol et';
 }
 $('answer-form').addEventListener('change',event=>{
- if(event.target.matches('input[type="radio"],select')){resetFinalReview();updateAnswerProgress();}
+ if(event.target.matches('input[type="radio"],select')){
+  resetFinalReview();updateAnswerProgress();scheduleAutoSave();
+ }
 });
 // Anonymous pilot draft data stays on the localhost server; the bearer token
 // stays only in this tab's JavaScript memory, never in browser storage.
@@ -131,21 +133,51 @@ async function getProgress(){
  const r=await fetch('/api/pilot/progress',{method:'GET',credentials:'omit',headers:{Authorization:'Bearer '+claim},cache:'no-store'});
  const result=await r.json();if(!r.ok)throw Error(result.message||'Ara kayıt alınamadı.');return result;
 }
-let draftBusy=false;
-async function saveDraft(){
- if(!claim||!exam||draftBusy)return;
- draftBusy=true;$('pilot-save').disabled=true;
- try{
-  const {answers}=collectAnswers();
-  await post('/api/pilot/save',{answers},claim);
-  $('pilot-save-status').textContent='Anonim yanıtlar sunucuda ara kaydedildi. Henüz teslim edilmedi.';
- }catch(e){$('pilot-save-status').textContent='Ara kayıt başarısız: '+e.message;}
- finally{draftBusy=false;$('pilot-save').disabled=false;}
+// One in-flight save at a time. A newer answer revision triggers a follow-up save,
+// so a slower response can never overwrite newer choices on the server.
+let draftBusy=false,saveTimer=null,answerRevision=0,savedRevision=0,draftPromise=null;
+function clearSaveTimer(){
+ if(saveTimer!==null){clearTimeout(saveTimer);saveTimer=null;}
 }
-$('pilot-save').addEventListener('click',saveDraft);
+function scheduleAutoSave(){
+ if(!claim||!exam)return;
+ answerRevision++;
+ clearSaveTimer();
+ $('pilot-save-status').textContent='Değişiklik var · otomatik ara kayıt bekleniyor…';
+ saveTimer=setTimeout(()=>{saveTimer=null;void saveDraft();},1200);
+}
+async function saveDraft(){
+ clearSaveTimer();
+ if(!claim||!exam)return;
+ if(draftPromise)return draftPromise;
+ draftPromise=(async()=>{
+  draftBusy=true;
+  $('pilot-save').disabled=true;
+  $('pilot-restore').disabled=true;
+  try{
+   do{
+    const revision=answerRevision,token=claim;
+    const {answers}=collectAnswers();
+    $('pilot-save-status').textContent='Yanıtlar otomatik kaydediliyor…';
+    await post('/api/pilot/save',{answers},token);
+    savedRevision=revision;
+   }while(claim&&exam&&savedRevision<answerRevision);
+   if(claim&&exam)$('pilot-save-status').textContent='Tüm güncel yanıtlar yerel sunucuya kaydedildi. Henüz teslim edilmedi.';
+  }catch(e){
+   if(claim&&exam)$('pilot-save-status').textContent='Ara kayıt başarısız: '+e.message+'. Yanıtlar bu açık sekmede duruyor; tekrar kaydetmeyi deneyin.';
+  }finally{
+   draftBusy=false;draftPromise=null;
+   $('pilot-save').disabled=false;
+   $('pilot-restore').disabled=false;
+  }
+ })();
+ return draftPromise;
+}
+$('pilot-save').addEventListener('click',()=>{void saveDraft();});
 $('pilot-restore').addEventListener('click',async()=>{
  if(!claim||!exam||draftBusy)return;
  if(!confirm('Bu sekmedeki mevcut seçimleri son sunucu ara kaydıyla değiştirmek istiyor musunuz?'))return;
+ clearSaveTimer();
  $('pilot-restore').disabled=true;
  try{
   const data=await getProgress();
@@ -162,7 +194,8 @@ $('pilot-restore').addEventListener('click',async()=>{
     }
    }
   }
-  updateAnswerProgress();$('pilot-save-status').textContent='Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.';
+  answerRevision++;savedRevision=answerRevision;
+  resetFinalReview();updateAnswerProgress();$('pilot-save-status').textContent='Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.';
  }catch(e){$('pilot-save-status').textContent='Geri yükleme başarısız: '+e.message;}
  finally{$('pilot-restore').disabled=false;}
 });
@@ -202,7 +235,13 @@ $('answer-form').addEventListener('submit',async event=>{event.preventDefault();
  const {answers,empty}=collectAnswers();
  const warning=empty.length?empty.length+' soru boş veya tamamlanmamış. ':'';
  if(!confirm(warning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
- btn.disabled=true;try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
+ btn.disabled=true;clearSaveTimer();
+ try{
+  if(draftPromise)await draftPromise;
+  // A failed autosave does not invalidate a direct final submission; submit
+  // carries the complete current answer snapshot and is validated by the server.
+  const current=collectAnswers().answers;
+  const r=await post('/api/pilot/submit',{answers:current},claim);claim=null;exam=null;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
  catch(e){announce(e.message,true);btn.disabled=false;}});
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
 $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.max(0,activeQuestionIndex-1);updateQuestionNavigation(true);});
@@ -210,7 +249,7 @@ $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(ex
 $('size').addEventListener('change',()=>document.documentElement.style.setProperty('--student-size',$('size').value+'px'));
 $('contrast').addEventListener('change',()=>document.body.classList.toggle('high',$('contrast').checked));
 $('stop-voice').addEventListener('click',()=>{douReader?.stop();announce('Seslendirme durduruldu.');});
-window.addEventListener('pagehide',()=>{claim=null;douReader?.stop();});
+window.addEventListener('pagehide',()=>{clearSaveTimer();claim=null;douReader?.stop();});
 
 // The reader is deliberately scoped to the current anonymized pilot question only.
 douReader=attachPilotReader({doc:document,win:window,
