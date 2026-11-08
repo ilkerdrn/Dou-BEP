@@ -105,7 +105,7 @@ test('automatic draft saves are debounced, serialized and never expose the beare
  assert.match(js,/await post\('\/api\/pilot\/save',\{answers\},token\)/);
  assert.match(js,/if\(draftPromise\)await draftPromise/);
  assert.match(js,/const \{answers\}=collectAnswers\(\);\s*const r=await post\('\/api\/pilot\/submit',\{answers\},claim\)/);
- assert.match(js,/window\.addEventListener\('pagehide',\(\)=>\{clearSaveTimer\(\);claim=null/);
+ assert.match(js,/window\.addEventListener\('pagehide',\(\)=>\{clearSaveTimer\(\);stopPilotClock\(\);claim=null/);
  assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
 
