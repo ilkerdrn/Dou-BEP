@@ -176,3 +176,42 @@ test('HTTP bearer-only draft save and restore protect anonymous session across r
   assert.equal((await request('/pilot/progress','GET',undefined,token)).status,401);
  }finally{await new Promise(resolve=>server.close(resolve));f.close();}
 });
+
+test('teacher recovery rotates bearer and one-use code while preserving saved answers and original expiry',()=>{
+ const f=fixture();try{
+  const issued=f.s.pilotIssue(f.a,f.rec.id),claimed=f.s.pilotRedeem(issued.code);
+  const answers={q1:'B',q2:'A'};
+  f.s.pilotSave(claimed.token,answers);
+  const recovered=f.s.pilotRecoverIssue(f.a,issued.id);
+  assert.match(recovered.code,/^[0-9A-F]{5}(?:-[0-9A-F]{5}){3}$/);
+  assert.equal(recovered.expiresAt,issued.expiresAt);
+  assert.equal(recovered.answers,undefined);
+  assert.throws(()=>f.s.pilotSave(claimed.token,answers),{code:'invalid_session'});
+  assert.throws(()=>f.s.pilotSubmit(claimed.token,answers),{code:'invalid_session'});
+  assert.throws(()=>f.s.pilotRedeem(issued.code),{code:'invalid_code'});
+  const resumed=f.s.pilotRedeem(recovered.code);
+  assert.deepEqual(resumed.answers,answers);
+  assert.deepEqual(f.s.pilotProgress(resumed.token).answers,answers);
+  assert.throws(()=>f.s.pilotRedeem(recovered.code),{code:'invalid_code'});
+  const result=f.s.pilotSubmit(resumed.token,{...answers,q3:'A'});
+  assert.equal(result.ok,true);
+  assert.throws(()=>f.s.pilotRecoverIssue(f.a,issued.id),{code:'not_recoverable'});
+ }finally{f.close();}
+});
+test('recovery refuses other tenants, observers, non-started, expired or revoked sessions',()=>{
+ const f=fixture();try{
+  const issued=f.s.pilotIssue(f.a,f.rec.id);
+  assert.throws(()=>f.s.pilotRecoverIssue(f.a,issued.id),{code:'not_recoverable'});
+  const student=f.s.pilotRedeem(issued.code);
+  assert.throws(()=>f.s.pilotRecoverIssue(f.b,issued.id),{code:'not_found'});
+  const observer=f.s.addMember(f.a,{email:'observer-recovery@a.test',role:'observer',password});
+  const obs=f.s.requireActor(f.s.signIn({tenantId:'a-okul',email:'observer-recovery@a.test',password}).token);
+  assert.throws(()=>f.s.pilotRecoverIssue(obs,issued.id),{code:'forbidden'});
+  const recovered=f.s.pilotRecoverIssue(f.a,issued.id);
+  f.s.db.prepare('UPDATE pilot_sessions SET expires_at=? WHERE id=?').run(Date.now()-100,issued.id);
+  assert.throws(()=>f.s.pilotRedeem(recovered.code),{code:'invalid_code'});
+  assert.throws(()=>f.s.pilotRecoverIssue(f.a,issued.id),{code:'not_recoverable'});
+  const second=f.s.pilotIssue(f.a,f.rec.id);f.s.pilotRedeem(second.code);f.s.pilotRevoke(f.a,second.id);
+  assert.throws(()=>f.s.pilotRecoverIssue(f.a,second.id),{code:'not_recoverable'});
+ }finally{f.close();}
+});
