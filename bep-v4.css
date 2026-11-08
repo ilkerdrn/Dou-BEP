@@ -909,3 +909,29 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace.exa
   flex:0 0 auto!important;
  }
 }
+
+
+/* Phase 12 — retain readable dashboard content rhythm with legacy disabled.
+ * Measured parity: welcome card differed by only 3px and summary by 10px.
+ * Carry over text metrics, not gradients or old burgundy colors.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .campus-dashboard-stage .dashboard-welcome p{
+ max-width:62ch!important;
+ font-size:13.5px!important;
+ line-height:1.65!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-summary-card h3{
+ font-size:16px!important;line-height:normal!important;
+ margin:9px 0 7px!important;color:var(--v4-text)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-summary-card p{
+ font-size:12px!important;line-height:1.6!important;
+ margin:0 0 14px!important;color:var(--v4-muted)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-notice-card{
+ background:#fcfafb!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .campus-notice-card>a{
+ color:var(--v4-primary)!important;font-size:12px!important;
+ font-weight:750!important;
+}
