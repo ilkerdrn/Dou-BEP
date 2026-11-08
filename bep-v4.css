@@ -1347,3 +1347,38 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .pr
   justify-content:center!important;
  }
 }
+
+
+/* Phase 25 — the final 49px exam height delta is explained by two actual
+ * V3 contracts in the Edge child trace:
+ *   #exam-output-section: 8px shorter without its 20px top margin.
+ *   .exam-related-imports: 41px shorter without a bordered details box,
+ *   its collapsed summary padding, and 16px top margin.
+ * Preserve native details/summary and the modern V4 token palette.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-output-section{
+ margin-top:20px!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:15px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-related-imports{
+ margin:16px 0 0!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:11px!important;
+ background:#f8fafc!important;
+ padding:0 14px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-related-imports>summary{
+ cursor:pointer!important;
+ font-size:12px!important;
+ font-weight:730!important;
+ color:var(--v4-text)!important;
+ padding:13px 2px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-related-imports>summary:focus-visible{
+ outline:3px solid var(--v4-focus)!important;
+ outline-offset:2px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-related-imports[open]{
+ padding-bottom:12px!important;
+}
