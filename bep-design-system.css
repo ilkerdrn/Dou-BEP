@@ -1664,3 +1664,62 @@ body.dou-admin-standalone.bep-audit-ux .pilot-manual-warning{
  background:#fffaf0;border-left:4px solid #a9803d;
  padding:11px 14px;border-radius:8px;color:#624b2b;
 }
+
+
+/* V3 accessibility findings: safe, local and readable across devices. */
+body.dou-admin-standalone.bep-audit-ux .pilot-findings{
+ margin:16px 0 0;padding:16px 19px;
+ border:1px solid #e9dce2;border-radius:14px;background:#fcf9fa;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-head{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:14px;flex-wrap:wrap;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-head h3{
+ font-size:17px!important;margin:0 0 5px;color:#292439!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-head p,
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-disclaimer{
+ color:#5d6676;font-size:13px;line-height:1.55;margin:5px 0;
+}
+body.dou-admin-standalone.bep-audit-ux #pilot-jump-fail{
+ border:1px solid #8e1428!important;border-radius:10px!important;
+ padding:10px 14px;min-height:44px;
+ color:#8e1428!important;background:white!important;font-weight:800;
+}
+body.dou-admin-standalone.bep-audit-ux #pilot-jump-fail:disabled{
+ opacity:.5!important;cursor:not-allowed;
+}
+body.dou-admin-standalone.bep-audit-ux #pilot-jump-fail:focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-status{
+ font-weight:750;color:#5c3141;margin:12px 0!important;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-findings-list{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;list-style:none;padding:0;margin:0 0 10px;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-finding{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:12px;padding:11px 13px;border:1px solid #e8dde1;
+ background:#fff;border-radius:10px;min-width:0;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-finding-title{
+ color:#302b3d;font-size:13px;font-weight:650;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-finding-state{
+ white-space:nowrap;font-size:11px;font-weight:800;
+ color:#5c6574;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-finding[data-outcome="fail"]{
+ border-color:#edc6ca;background:#fff5f6;
+}
+body.dou-admin-standalone.bep-audit-ux .pilot-finding[data-outcome="fail"] .pilot-finding-state{
+ color:#93273d;
+}
+@media(max-width:750px){
+ body.dou-admin-standalone.bep-audit-ux .pilot-findings-list{
+  grid-template-columns:minmax(0,1fr);
+ }
+}
