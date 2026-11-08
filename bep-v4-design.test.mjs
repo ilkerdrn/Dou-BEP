@@ -166,7 +166,9 @@ test('V4 provides opt-in isolated CSS retirement comparison before removing V3 l
  assert.match(browser,/if\(process\.argv\.includes\('--css-probe'\)\)/);
  assert.match(browser,/BROWSER V4 CSS RETIREMENT PROBE/);
  assert.match(browser,/document\.querySelector\('\+JSON\.stringify\(query\)\+'\)\.disabled=false/);
- assert.match(browser,/CSS probe did not restore initial visual metrics/);
+ assert.match(browser,/BROWSER V4 CSS PROBE RESTORE DIAGNOSTIC/);
+ assert.match(browser,/requestAnimationFrame/);
+ assert.match(browser,/restoreIssues/);
  assert.match(guide,/admin-design-v3\.css/);
  for(const page of ['institution.html','institutional-exams.html']){
   assert.match(read('./'+page),/href="\/admin-design-v3\.css"/,'Do not remove before comparison');
