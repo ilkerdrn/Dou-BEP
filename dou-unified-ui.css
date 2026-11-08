@@ -417,3 +417,141 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .wo
  background:#fff0f2!important;color:#b50720!important;
  border:1px solid #f6c4cc!important;
 }
+
+/* DOU Reader | DersAktif visual alignment.
+ * Preserve the offline speech engine, native controls and focus indicators. */
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"]:not(.high){
+ background:#f5f5f2!important;color:#1d1d1b!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar{
+ display:flex!important;justify-content:space-between!important;align-items:center!important;
+ gap:16px!important;min-height:72px!important;padding:14px clamp(20px,2.5vw,36px)!important;
+ border-bottom:1px solid #e6e5e1!important;border-top:0!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;color:#1d1d1b!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar .brand{
+ display:flex!important;align-items:center!important;flex-wrap:wrap!important;
+ justify-content:flex-start!important;gap:14px!important;color:#1d1d1b!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar-title{
+ display:flex!important;flex-direction:column!important;gap:3px!important;line-height:1.25!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar-title strong{
+ color:#1d1d1b!important;font-size:16px!important;font-weight:800!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar-title small{
+ color:#626269!important;font-size:11px!important;font-weight:550!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar .pill{
+ background:#f1f1ee!important;color:#454540!important;
+ border:1px solid #e6e5e1!important;box-shadow:none!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar nav a{
+ color:#a4071c!important;font-weight:750!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] main#main{
+ background:#f5f5f2!important;min-width:0!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] main#main :is(.card,.reader-panel){
+ border:1px solid #e6e5e1!important;border-radius:14px!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] main#main .card.hero{
+ border-top:3px solid #d70926!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] main#main .card.hero :is(h1,h2){
+ color:#1d1d1b!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] main#main .dou-free-text-lab{
+ padding:clamp(20px,2.2vw,30px)!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-heading{
+ display:flex!important;gap:16px!important;align-items:flex-start!important;
+ flex-wrap:wrap!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-heading>div{
+ flex:1 1 400px!important;min-width:0!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-eyebrow{
+ color:#bb0822!important;letter-spacing:.07em!important;font-weight:800!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-heading :is(h2,strong){
+ color:#1d1d1b!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-heading p{
+ color:#53534e!important;max-width:76ch!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-marker{
+ border:1px solid #e6e5e1!important;background:#f5f5f2!important;
+ color:#43433f!important;box-shadow:none!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid{
+ display:grid!important;grid-template-columns:minmax(0,1.35fr) minmax(260px,1fr)!important;
+ gap:clamp(18px,2.2vw,30px)!important;align-items:start!important;
+ margin-top:22px!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid>div{
+ min-width:0!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid label{
+ color:#292925!important;font-weight:750!important;font-size:13px!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid :is(select,textarea){
+ background:#fff!important;border:1px solid #d1d1cd!important;
+ color:#1d1d1b!important;border-radius:11px!important;
+ box-shadow:none!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid textarea{
+ min-height:190px!important;line-height:1.65!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-controls{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:8px 14px!important;align-items:start!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-controls label{
+ grid-column:auto!important;align-self:end!important;margin:0!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-controls select{
+ grid-column:auto!important;margin:0 0 8px!important;
+ min-width:0!important;width:100%!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-controls p{
+ grid-column:1/-1!important;margin-top:8px!important;
+ color:#626269!important;line-height:1.55!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-meta{
+ color:#626269!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] :is(.dou-free-text-pronunciation:not(:empty),#free-text-status,.reader-panel #reader-status){
+ background:#f5f5f2!important;color:#33332f!important;
+ border-left:3px solid #d70926!important;border-radius:8px!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] #free-text-status[data-state="error"]{
+ background:#fff2f2!important;border-left-color:#ba3434!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-actions button:not(.ghost),
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .reader-actions button:not(.ghost){
+ background:#d70926!important;border-color:#d70926!important;color:#fff!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-actions button.ghost,
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .reader-actions button.ghost{
+ background:#fff!important;border-color:#d4d4cf!important;color:#292925!important;
+}
+body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] :is(.bep-lab-shortcuts a,.dou-free-text-actions button,.reader-actions button):focus-visible{
+ outline:3px solid #156bb4!important;outline-offset:3px!important;
+}
+@media(max-width:1050px){
+ body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-grid{
+  grid-template-columns:1fr!important;
+ }
+}
+@media(max-width:680px){
+ body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .dou-free-text-controls{
+  grid-template-columns:1fr!important;
+ }
+ body.dou-admin-standalone.bep-speech-ux[data-design-version="4"] .bep-reader-topbar{
+  flex-wrap:wrap!important;
+ }
+}
