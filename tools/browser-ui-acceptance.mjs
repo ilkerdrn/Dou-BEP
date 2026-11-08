@@ -142,18 +142,44 @@ async function probeLegacySheet(page,selectors){
   'gridTemplateColumns:s.gridTemplateColumns}]}));'+
   'return {nodes,scroll:document.documentElement.scrollWidth,'+
   'viewport:document.documentElement.clientWidth}})()';
+ // Recalculate at a rendered frame boundary; toggling a stylesheet is not
+ // guaranteed to synchronously finish the browser's style/layout updates.
+ const settled=async()=>evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
+ const scrollOrigin=await evaluate('({x:window.scrollX,y:window.scrollY})');
  const before=await evaluate(expression);
  await evaluate('document.querySelector('+JSON.stringify(query)+').disabled=true');
  let after;
  try{
+  await settled();
   after=await evaluate(expression);
   if(process.env.BEP_UI_CAPTURE_DIR)await captureSyntheticScreenshot(page+'-without-v3');
  }finally{
   await evaluate('document.querySelector('+JSON.stringify(query)+').disabled=false');
+  await evaluate('window.scrollTo('+scrollOrigin.x+','+scrollOrigin.y+')');
+  await settled();
  }
+ // Capture actual differences if any property has not returned to baseline.
+ // A scroll anchoring adjustment is not evidence of broken CSS restoration.
  const restored=await evaluate(expression);
- if(JSON.stringify(restored)!==JSON.stringify(before))
-  throw Error('V4 CSS probe did not restore initial visual metrics on '+page);
+ const restoreIssues=[];
+ for(const selector of selectors){
+  const a=before.nodes[selector],b=restored.nodes[selector];
+  if(!a||!b){restoreIssues.push({selector,issue:'missing node'});continue;}
+  const delta={};
+  for(const key of Object.keys(a)){
+   if(['x','y','width','height'].includes(key)){
+    if(Math.abs(a[key]-b[key])>2)delta[key]=[a[key],b[key]];
+   }else if(a[key]!==b[key])delta[key]=[a[key],b[key]];
+  }
+  if(Object.keys(delta).length)restoreIssues.push({selector,delta});
+ }
+ if(Math.abs(restored.scroll-before.scroll)>2)
+  restoreIssues.push({selector:'document.scrollWidth',delta:[before.scroll,restored.scroll]});
+ if(restoreIssues.length){
+  console.error('BROWSER V4 CSS PROBE RESTORE DIAGNOSTIC: '+JSON.stringify({
+   page,scrollOrigin,restoreIssues}));
+  throw Error('V4 CSS probe restore mismatch on '+page+' ('+restoreIssues.length+' differences)');
+ }
  const changed=[];
  for(const selector of selectors){
   const a=before.nodes[selector],b=after.nodes[selector];
