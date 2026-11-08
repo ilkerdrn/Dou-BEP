@@ -90,7 +90,7 @@ const examSelection=createExamSelection({
 function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
 const field=(key,label,value,tag='input',extra='')=>`<label>${esc(label)}${tag==='textarea'?`<textarea data-field="${key}" rows="${extra||3}">${esc(value)}</textarea>`:`<input data-field="${key}" value="${esc(value)}" ${extra}>`}</label>`;
 function qualityQuestionTarget(message){
- const match=/^(\\d+)\\.\\s*soru\\s*:/iu.exec(String(message||''));
+ const match=/^(\d+)\.\s*soru\s*:/iu.exec(String(message||''));
  if(!match)return null;
  const index=Number(match[1])-1;
  return Number.isSafeInteger(index)&&index>=0&&index<(state.exam?.questions?.length||0)?index:null;
