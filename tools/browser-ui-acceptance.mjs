@@ -780,10 +780,10 @@ async function main(){
      searchText:getComputedStyle(search).color
     };
    })()`);
-   console.log('BROWSER COORDINATION V3 CONTRAST: '+JSON.stringify(coordinationVisual));
-   pass(coordinationVisual.headingColor==='rgb(34, 36, 58)','Coordination hero headline has dark premium contrast');
+   console.log('BROWSER COORDINATION V4 CONTRAST: '+JSON.stringify(coordinationVisual));
+   pass(coordinationVisual.heroColor==='rgb(255, 255, 255)'&&coordinationVisual.headingColor==='rgb(32, 36, 49)','V4 coordination has neutral white header and legible dark headline');
    pass(coordinationVisual.menuColor==='rgb(66, 53, 64)','Inactive coordination navigation remains legible');
-   pass(coordinationVisual.searchBg==='rgb(255, 255, 255)'&&coordinationVisual.searchText==='rgb(37, 34, 57)','Coordination search uses accessible light input');
+   pass(coordinationVisual.searchBg==='rgb(255, 255, 255)'&&coordinationVisual.searchText==='rgb(32, 36, 49)','V4 coordination search has accessible neutral input');
    const schedulingUx=await evaluate(`(function(){
     const nav=document.querySelector('.coord-quick-nav');
     const links=[...nav.querySelectorAll('a')];
