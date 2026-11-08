@@ -379,3 +379,11 @@ test('V4 nested exam flow includes measured layout contracts from V3 retirement 
  assert.match(css,/min-height:43px!important;\s*line-height:1\.45!important/);
  assert.match(css,/#exam-workspace \.exam-grid textarea\{\s*min-height:82px!important/);
 });
+
+
+test('V4 parity trace inspects the two nested blocks that accumulate height drift',()=>{
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(browser,/BROWSER V4 EXAM CHILD METRIC TRACE/);
+ assert.ok(browser.includes('\\\".exam-subheading\\\"'));
+ assert.ok(browser.includes('\\\".exam-preflight\\\"'));
+});
