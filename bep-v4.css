@@ -1191,3 +1191,65 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
 body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>summary:hover{
  background:#f3f4f6!important;
 }
+
+
+/* Phase 19 — measured nested exam drift, using the child metrics probe.
+ * Copy layout-critical dimensions rather than obsolete V3 colors or shadows.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-subheading{
+ padding-bottom:8px!important;
+ border-bottom:1px solid var(--v4-border)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump{
+ display:flex!important;
+ align-items:center!important;
+ flex-wrap:wrap!important;
+ gap:7px!important;
+ padding:10px 12px!important;
+ margin:13px 0 17px!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:13px!important;
+ background:#f6f8fc!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump[hidden]{
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump-button{
+ border:1px solid var(--v4-border)!important;
+ border-radius:9px!important;
+ background:#fff!important;
+ color:var(--v4-text)!important;
+ font:inherit!important;
+ font-size:12px!important;
+ font-weight:700!important;
+ padding:9px 12px!important;
+ min-height:38px!important;
+ cursor:pointer!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-preflight{
+ margin-top:24px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>section,
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>.editor-command{
+ margin:13px!important;
+ max-width:calc(100% - 26px)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .portal-form :is(input,select,textarea),
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-grid :is(input,select,textarea){
+ padding:11px 12px!important;
+ min-height:43px!important;
+ line-height:1.45!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-grid textarea{
+ min-height:82px!important;
+ resize:vertical;
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump{
+  flex-wrap:nowrap!important;
+  overflow-x:auto!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump-button{
+  flex:0 0 auto!important;
+ }
+}
