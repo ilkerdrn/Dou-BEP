@@ -168,6 +168,13 @@ async function main(){
  pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Verified institutional member sees sidebar profile');
  pass(await evaluate('document.querySelector(".campus-dashboard-stage .campus-dashboard-aside")!==null'),'Dashboard has right contextual summary');
  pass(await evaluate('document.querySelectorAll(".campus-progress-steps li").length===4'),'Dashboard displays four teacher workflow steps');
+ const sidebarFlow=await evaluate(`(function(){
+  const links=document.querySelector('.dou-nav-sections').getBoundingClientRect();
+  const footer=document.querySelector('.dou-nav-bottom').getBoundingClientRect();
+  return {linksEnd:Math.round(links.bottom),footerTop:Math.round(footer.top)};
+ })()`);
+ console.log('BROWSER CAMPUS SIDEBAR FLOW: '+JSON.stringify(sidebarFlow));
+ pass(sidebarFlow.footerTop>=sidebarFlow.linksEnd-2,'Desktop sidebar footer does not overlap expanded menu groups');
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  // Reference-led layout: real computed colors, not only CSS source assertions.
  const campusVisual=await evaluate(`({
