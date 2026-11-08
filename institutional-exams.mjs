@@ -104,6 +104,26 @@ function renderQuality(x){
  const audioIssues=auditAudioAccess(x);if(audioIssues.length)$('exam-quality').insertAdjacentHTML('beforeend','<p><b>Sesli sınav için ek kontrol:</b></p>'+audioIssues.map(a=>'<p class="exam-issue error">'+esc(a.text)+'</p>').join(''));
  return report;
 }
+// Quality findings are presentation-only links. The authoritative audit and
+// approval gates remain unchanged; never infer a question from unnumbered text.
+$('exam-quality').addEventListener('click',event=>{
+ const button=event.target.closest('[data-quality-question]');
+ if(!button||!$('exam-quality').contains(button))return;
+ const index=Number(button.dataset.qualityQuestion);
+ if(!Number.isSafeInteger(index)||index<0||index>=state.exam.questions.length)return;
+ const stageButton=document.querySelector('.workflow-nav [data-workflow-target="exam-question-section"]');
+ if(stageButton&&$('exam-editor-card').classList.contains('exam-guided-view'))stageButton.click();
+ const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+index+'"]');
+ if(!card)return;
+ const message=button.closest('.exam-issue')?.querySelector('p')?.textContent||'';
+ const fieldKey=/puan/i.test(message)?'points':/kazanım/i.test(message)?'objective':/seçenek|şık/i.test(message)?'options':/yanıt|cevap|işlem/i.test(message)?'answer':/sade yönerge|alternatif metin/i.test(message)?'simplifiedPrompt':'prompt';
+ const field=card.querySelector('[data-qkey="'+fieldKey+'"]');
+ if(field?.closest('details'))field.closest('details').open=true;
+ const focusTarget=field||card.querySelector('.exam-q-head strong')||card;
+ focusTarget.scrollIntoView({block:'center',behavior:'auto'});
+ if(!focusTarget.matches('input,textarea,select,button'))focusTarget.setAttribute('tabindex','-1');
+ focusTarget.focus({preventScroll:true});
+});
 function renderPreflight(){
  const x=state.exam;if(!x)return;
  const report=getExamPreflight(x,{saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'});
