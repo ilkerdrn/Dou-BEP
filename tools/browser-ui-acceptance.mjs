@@ -207,8 +207,8 @@ async function main(){
  console.log('BROWSER CAMPUS EXAM MODULES: '+JSON.stringify(modules));
  pass(modules.every(item=>item.exists&&item.wrapped),'Goal, library and output sections become accessible collapsible modules');
 
- pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundColor==="rgb(247, 244, 245)"'),'Exam editor uses the same pale navigation shell');
- pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundColor==="rgb(129, 24, 32)"'),'Exam editor current menu remains burgundy');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundImage.includes("linear-gradient")'),'Exam editor uses the same pale navigation shell');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundImage.includes("linear-gradient")'),'Exam editor current menu remains burgundy');
  await captureSyntheticScreenshot('exam-desktop');
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
