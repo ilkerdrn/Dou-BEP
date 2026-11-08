@@ -935,3 +935,31 @@ body.institution-page.campus-layout[data-design-version="4"] .campus-notice-card
  color:var(--v4-primary)!important;font-size:12px!important;
  font-weight:750!important;
 }
+
+
+/* Phase 13 — collapsed secondary dashboard tools need their own V4 box
+ * metrics. Previously their outside margin/border came from the V3 sheet,
+ * causing a 31px change in the overall portal height.
+ */
+body.institution-page.campus-layout[data-design-version="4"] .dashboard-more-tools{
+ background:#fff!important;
+ border:1px solid var(--v4-border)!important;
+ border-radius:14px!important;
+ margin:0 0 21px!important;
+ overflow:hidden!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dashboard-more-tools>summary{
+ cursor:pointer!important;
+ padding:15px 20px!important;
+ font-size:13px!important;
+ font-weight:750!important;
+ color:var(--v4-text)!important;
+ display:list-item!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dashboard-more-tools>summary:hover{
+ background:var(--v4-bg)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dashboard-more-count{
+ font-size:11px!important;font-weight:650!important;
+ margin-left:10px!important;color:var(--v4-muted)!important;
+}
