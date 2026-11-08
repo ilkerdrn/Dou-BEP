@@ -115,3 +115,20 @@ test('classic coordination theme retains legible sidebar and light hero',()=>{
  assert.match(html,/class="coord-kpis"/);
  assert.match(html,/id="coord-form"/);
 });
+
+
+test('coordination uses three readable form groups and working anchor destinations',()=>{
+ const html=read('./coordination.html');
+ const css=read('./bep-design-system.css');
+ assert.equal((html.match(/class="coord-form-divider coord-wide"/g)||[]).length,3);
+ for(const id of ['coord-form-title','coord-schedule-title']){
+  assert.ok(html.includes('id="'+id+'"'),'Missing navigation anchor '+id);
+  assert.ok(html.includes('href="#'+id+'"'),'Missing shortcut to '+id);
+ }
+ for(const field of ['term','department','program','courseCode','courseName',
+  'examLabel','startsAt','durationMinutes','instructorCode','roomCode','examId']){
+  assert.ok(html.includes('name="'+field+'"'),'Lost form field '+field);
+ }
+ assert.match(css,/\.coord-quick-nav a:focus-visible/);
+ assert.match(css,/\.coord-form-divider/);
+});
