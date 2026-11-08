@@ -969,3 +969,33 @@ body.bep-pilot-ux[data-design-version="4"] #pilot-code-expiry{
   grid-template-columns:1fr;
  }
 }
+
+/* Informational pilot expiry, independently enforced by the server. */
+body.bep-student-pilot .pilot-time-strip{
+ display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+ margin:12px 0;padding:14px 16px;border:1px solid #d6d6d0;
+ border-radius:11px;background:#f5f5f2;color:#1d1d1b;
+}
+body.bep-student-pilot .pilot-time-strip strong{
+ font-weight:800;font-variant-numeric:tabular-nums;
+}
+body.bep-student-pilot .pilot-time-status{
+ padding:12px 14px;border-radius:10px;border:1px solid #d6d6d0;
+ font-weight:700;font-variant-numeric:tabular-nums;
+}
+body.bep-student-pilot .pilot-time-strip strong[data-phase="warning"]{
+ color:#8a4310;
+}
+body.bep-student-pilot .pilot-time-strip strong[data-phase="expired"]{
+ color:#9e1327;
+}
+body.bep-student-pilot .pilot-time-warning{
+ font-weight:750;
+}
+body.bep-student-pilot.high .pilot-time-strip,
+body.bep-student-pilot.high .pilot-time-status{
+ color:#fff;background:#000;border:2px solid #fff;
+}
+body.bep-student-pilot.high .pilot-time-strip strong[data-phase]{
+ color:#fff;
+}
