@@ -159,7 +159,8 @@ async function probeLegacySheet(page,selectors){
   'gridTemplateColumns:s.gridTemplateColumns,margin:s.margin,lineHeight:s.lineHeight,'+
   'flexDirection:s.flexDirection,flexWrap:s.flexWrap,alignItems:s.alignItems,'+
   'minHeight:s.minHeight,overflow:s.overflow}]}));'+
-  'return {nodes,scroll:document.documentElement.scrollWidth,'+
+  "const roots=[\"#exam-main-fields\",\"#exam-editor-card\",\".exam-question\",\".exam-optional-tool\"];const trace=Object.fromEntries(roots.map(selector=>{const root=document.querySelector(selector);if(!root)return [selector,[]];return [selector,Array.from(root.children).slice(0,45).map((el,i)=>{const rect=el.getBoundingClientRect(),style=getComputedStyle(el);return {index:i,tag:el.tagName,className:typeof el.className===\"string\"?el.className.slice(0,70):\"\",y:Math.round(rect.y),height:Math.round(rect.height),display:style.display,margin:style.margin,padding:style.padding,fontSize:style.fontSize,lineHeight:style.lineHeight};})];}));"+
+  'return {nodes,trace,scroll:document.documentElement.scrollWidth,'+
   'viewport:document.documentElement.clientWidth}})()';
  // Recalculate at a rendered frame boundary; toggling a stylesheet is not
  // guaranteed to synchronously finish the browser's style/layout updates.
@@ -215,6 +216,26 @@ async function probeLegacySheet(page,selectors){
  const result={page,stylesheet:href,changedElements:changed.length,
   originalScroll:before.scroll,withoutV3Scroll:after.scroll,changes:changed};
  console.log('BROWSER V4 CSS RETIREMENT PROBE: '+JSON.stringify(result));
+ if(page==='exam'&&process.argv.includes('--css-parity')){
+  const traceChanges=[];
+  for(const [root,items] of Object.entries(before.trace||{})){
+   const without=after.trace?.[root]||[];
+   for(let i=0;i<items.length;i++){
+    const previous=items[i],next=without[i];
+    if(!next){traceChanges.push({root,index:i,issue:'child missing'});continue;}
+    const delta={};
+    for(const key of ['y','height']){
+     if(Math.abs(previous[key]-next[key])>2)delta[key]=[previous[key],next[key]];
+    }
+    for(const key of ['display','margin','padding','fontSize','lineHeight']){
+     if(previous[key]!==next[key])delta[key]=[previous[key],next[key]];
+    }
+    if(Object.keys(delta).length)traceChanges.push({root,index:i,tag:previous.tag,className:previous.className,delta});
+   }
+  }
+  console.log('BROWSER V4 EXAM CHILD METRIC TRACE: '+JSON.stringify(traceChanges.slice(0,50)));
+ }
+
  if(process.argv.includes('--css-parity')&&changed.length){
   cssParityFailures.push({page,changedElements:changed.length,
    selectors:changed.map(entry=>entry.selector)});
