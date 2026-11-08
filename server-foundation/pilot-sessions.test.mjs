@@ -215,3 +215,34 @@ test('recovery refuses other tenants, observers, non-started, expired or revoked
   assert.throws(()=>f.s.pilotRecoverIssue(f.a,second.id),{code:'not_recoverable'});
  }finally{f.close();}
 });
+
+test('HTTP recovery requires authenticated actor and CSRF; student redeems rotated code only once',async()=>{
+ const f=fixture(),server=http.createServer(),api=createApiHandler(f.s,{port:0});
+ server.on('request',(req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const port=server.address().port;
+ const request=async(path,method='GET',body,headers={})=>{
+  const response=await fetch('http://127.0.0.1:'+port+'/api'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});
+  return {status:response.status,data:await response.json()};
+ };
+ try{
+  const original=f.s.pilotIssue(f.a,f.rec.id);
+  const claimed=f.s.pilotRedeem(original.code);
+  f.s.pilotSave(claimed.token,{q1:'B'});
+  const route='/pilot/'+original.id+'/recover';
+  const bad=await request(route,'POST',{});
+  assert.equal(bad.status,401);
+  const cookie={Cookie:'bep_session='+f.la.token};
+  assert.notEqual((await request(route,'POST',{},cookie)).status,201);
+  const authorized={...cookie,'X-CSRF-Token':f.la.csrf};
+  const recovered=await request(route,'POST',{},authorized);
+  assert.equal(recovered.status,201);
+  assert.equal(recovered.data.item.expiresAt,original.expiresAt);
+  assert.equal(recovered.data.item.answers,undefined);
+  assert.equal((await request('/pilot/progress','GET',undefined,{Authorization:'Bearer '+claimed.token})).status,401);
+  const resumed=await request('/pilot/redeem','POST',{code:recovered.data.item.code});
+  assert.equal(resumed.status,200);
+  assert.deepEqual(resumed.data.answers,{q1:'B'});
+  assert.notEqual((await request('/pilot/redeem','POST',{code:recovered.data.item.code})).status,200);
+ }finally{await new Promise(resolve=>server.close(resolve));f.close();}
+});
