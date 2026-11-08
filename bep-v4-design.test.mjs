@@ -492,11 +492,11 @@ test('V4 management sidebar exposes existing administration only to permitted ro
  const css=read('./bep-v4.css');
  for(const html of [dashboard,exam]){
   assert.match(html,/id="dou-nav-management" hidden/);
-  assert.match(html,/href="\/kurum#admin-panel" data-admin-nav-roles="admin"/);
-  assert.match(html,/href="\/kurum#audit-panel" data-admin-nav-roles="admin,coordinator,reviewer"/);
+  assert.match(html,/href="\/kurum#admin-panel" data-nav-keywords="[^"]+" data-admin-nav-roles="admin"/);
+  assert.match(html,/href="\/kurum#audit-panel" data-nav-keywords="[^"]+" data-admin-nav-roles="admin,coordinator,reviewer"/);
  }
  assert.match(nav,/const allowed=link=>/);
- assert.match(nav,/normalize\(link.textContent\).includes\(q\)/);
+ assert.match(nav,/normalize\(link.textContent\+\x27 \x27\+\(link.dataset.navKeywords\|\|\x27\x27\)\).includes\(q\)/);
  assert.match(nav,/document\.addEventListener\('dou-nav-role'/);
  assert.match(nav,/updateManagement\(document\.documentElement\.dataset\.navRole\|\|null\)/);
  assert.match(app,/document\.documentElement\.dataset\.navRole=signedIn\?state\.actor\.role:''/);
@@ -506,4 +506,21 @@ test('V4 management sidebar exposes existing administration only to permitted ro
  assert.match(dashboard,/id="audit-panel" tabindex="-1" hidden/);
  assert.match(css,/#dou-nav-management\[hidden\]/);
  assert.match(browser,/BROWSER V4 MANAGEMENT NAVIGATION/);
+});
+
+test('V4 navigation supports task search, first-result Enter and expanded authorized management',()=>{
+ const nav=read('./admin-navigation.js');
+ const dashboard=read('./institution.html');
+ const editor=read('./institutional-exams.html');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(nav,/firstVisibleResult=\(\)=>/);
+ assert.match(nav,/e\.key==='Enter'\|\|e\.key==='ArrowDown'/);
+ assert.match(nav,/if\(e\.key==='Enter'\)first\.click\(\)/);
+ assert.match(nav,/if\(disclosure\)disclosure\.open=!management\.hidden/);
+ for(const html of [dashboard,editor]){
+  assert.match(html,/placeholder="Modül ara \(Enter ile aç\)…"/);
+  assert.match(html,/data-nav-keywords="yonetim kullanici ogretmen hesap rol personel admin"/);
+  assert.match(html,/data-nav-keywords="hazir sinavlar onay islem takip"/);
+ }
+ assert.match(browser,/BROWSER V4 MANAGEMENT SEARCH UX/);
 });
