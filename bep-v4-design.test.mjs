@@ -127,3 +127,15 @@ test('V4 campus overrides the more specific V3 gradient and legacy brand declara
  assert.match(source,/body\.institution-page\.campus-layout\{/);
  assert.match(source,/--bep-brand:#8e1428/);
 });
+
+
+test('V4 coordination removes transparent hero and checks current palette in browser',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/body\.institution-page:not\(\.campus-layout\)\[data-design-version="4"\] \.portal-hero\{/);
+ assert.match(css,/background:#fff!important;background-image:none!important/);
+ assert.match(browser,/BROWSER COORDINATION V4 CONTRAST/);
+ assert.match(browser,/coordinationVisual\.heroColor==='rgb\(255, 255, 255\)'/);
+ assert.match(browser,/coordinationVisual\.headingColor==='rgb\(32, 36, 49\)'/);
+ assert.doesNotMatch(browser,/BROWSER COORDINATION V3 CONTRAST/);
+});
