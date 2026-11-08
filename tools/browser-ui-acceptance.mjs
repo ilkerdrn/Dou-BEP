@@ -492,6 +492,27 @@ async function main(){
   })()`);
   pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
   pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  if(route==='/sinav-operasyon'||route==='/erisilebilirlik-kabul'){
+   const task=await evaluate(`(function(){
+     const nav=document.querySelector('.bep-workflow-links');
+     const anchors=[...nav.querySelectorAll('a')];
+     const main=document.querySelector('main').getBoundingClientRect();
+     const available=document.documentElement.clientWidth;
+     return {
+      links:anchors.length,
+      valid:anchors.every(a=>document.getElementById(a.hash.slice(1))),
+      mainWidth:Math.round(main.width),
+      available,
+      accent:getComputedStyle(anchors[0]).backgroundColor,
+      scroll:document.documentElement.scrollWidth
+     };
+   })()`);
+   console.log('BROWSER WORKSPACE USABILITY '+label+': '+JSON.stringify(task));
+   pass(task.valid&&task.links>=(route==='/sinav-operasyon'?3:2),label+' navigation links resolve');
+   pass(task.accent==='rgb(142, 20, 40)',label+' uses premium burgundy primary action');
+   pass(task.scroll<=task.available+2,label+' has no horizontal overflow');
+  }
+
   if(route==='/toplu-sinav'||route==='/uyarlama-kararlari'){
    const ux=await evaluate(`(function(){
     const nav=document.querySelector('.bep-task-shortcuts');
