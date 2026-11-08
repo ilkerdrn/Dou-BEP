@@ -156,7 +156,9 @@ async function probeLegacySheet(page,selectors){
   'return [selector,{x:Math.round(r.x),y:Math.round(r.y),width:Math.round(r.width),'+
   'height:Math.round(r.height),display:s.display,color:s.color,backgroundColor:s.backgroundColor,'+
   'backgroundImage:s.backgroundImage,fontSize:s.fontSize,padding:s.padding,'+
-  'gridTemplateColumns:s.gridTemplateColumns}]}));'+
+  'gridTemplateColumns:s.gridTemplateColumns,margin:s.margin,lineHeight:s.lineHeight,'+
+  'flexDirection:s.flexDirection,flexWrap:s.flexWrap,alignItems:s.alignItems,'+
+  'minHeight:s.minHeight,overflow:s.overflow}]}));'+
   'return {nodes,scroll:document.documentElement.scrollWidth,'+
   'viewport:document.documentElement.clientWidth}})()';
  // Recalculate at a rendered frame boundary; toggling a stylesheet is not
@@ -418,7 +420,10 @@ async function main(){
  await captureSyntheticScreenshot('dashboard-desktop');
  if(process.argv.includes('--css-probe')||process.argv.includes('--css-parity'))await probeLegacySheet('dashboard',[
   '.dou-nav','.portal-main','.portal-topbar','.dashboard-welcome',
-  '.dashboard-shortcuts','.dashboard-shortcut','.campus-summary-card'
+  '.dashboard-shortcuts','.dashboard-shortcut','.campus-summary-card',
+  '.dashboard-more-tools','.dashboard-more-tools>summary','.dashboard-secondary-shortcuts',
+  '.campus-dashboard-stage','.campus-dashboard-main','.campus-dashboard-aside',
+  '.campus-progress-steps','.campus-progress-steps li'
  ]);
 
  await navigate(base,'/kurumsal-sinav');
@@ -469,8 +474,11 @@ async function main(){
  await captureSyntheticScreenshot('exam-desktop');
  if(process.argv.includes('--css-probe')||process.argv.includes('--css-parity'))await probeLegacySheet('exam',[
   '.dou-nav','.portal-main','.exam-workbench-heading','.workflow-nav',
+  '.workflow-caption','.workflow-steps','.workflow-step','.exam-focus-toggle',
   '.exam-grid','#exam-drafts-panel','#exam-editor-card',
-  '.exam-list-controls','.editor-ribbon','.exam-autosave-panel'
+  '.exam-list-controls','.editor-ribbon','.exam-autosave-panel',
+  '.exam-question','.exam-question-advanced','.portal-card-head',
+  '#exam-main-fields','.workflow-pager','.exam-optional-tool'
  ]);
 
  await evaluate('document.getElementById("workflow-next").click()');
