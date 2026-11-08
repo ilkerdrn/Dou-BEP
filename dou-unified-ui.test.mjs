@@ -88,3 +88,24 @@ test('five real exam workflow number badges no longer inherit V3 burgundy',()=>{
  assert.match(css,/#exam-workspace \.workflow-nav \.workflow-steps \.workflow-step:is\(\.active,\[aria-current="step"\]\)>span\{[\s\S]*?background:rgba\(255,255,255,\.2\)!important/);
  assert.match(css,/#exam-workspace \.workspace-step-number\{[\s\S]*?background:#fff0f2!important;color:#b50720!important/);
 });
+
+test('DOU Reader uses one sidebar logo and a clean lab title without a duplicate DOU tile',()=>{
+ const html=read('./dou-reader-demo.html');
+ assert.match(html,/<header class="bep-reader-topbar">/);
+ assert.match(html,/<strong>DOU Reader<\/strong>/);
+ assert.doesNotMatch(html,/<header><div class="brand"><span class="mark"/);
+ assert.match(html,/href="\/pilot">Öğrenci sınav ekranı<\/a>/);
+ assert.match(css,/\.bep-reader-topbar\{[\s\S]*?background:#fff!important/);
+});
+test('speech settings preserve six native labels and controls in an accessible responsive grid',()=>{
+ const html=read('./dou-reader-demo.html');
+ const controls=html.match(/<div class="dou-free-text-controls">([\s\S]*?)<\/div>/)?.[1]||'';
+ assert.equal((controls.match(/<label for=/g)||[]).length,6);
+ assert.equal((controls.match(/<select id=/g)||[]).length,6);
+ assert.match(css,/\.dou-free-text-controls\{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)!important/);
+ assert.match(css,/\.dou-free-text-controls label:nth-of-type\(odd\)/);
+ assert.match(css,/\.dou-free-text-controls select:nth-of-type\(even\)/);
+ assert.match(css,/@media\(max-width:680px\)/);
+ assert.match(css,/flex-direction:column!important;gap:5px!important/);
+ assert.match(css,/#free-text-status\[data-state="error"\]\{[\s\S]*?border-left-color:#ba3434!important/);
+});
