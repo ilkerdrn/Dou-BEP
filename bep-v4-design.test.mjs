@@ -81,3 +81,18 @@ test('V4 authenticated dashboard and exam editor share a restrained task-oriente
  assert.match(css,/@media\(max-width:1120px\)/);
  assert.match(css,/@media\(max-width:670px\)/);
 });
+
+
+test('V4 acceptance checks real browser styling instead of old gradient contract',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ const scripts=JSON.parse(read('./package.json')).scripts;
+ assert.equal(scripts['design:v4:acceptance'],'npm run design:v4:check && npm run ui:browser');
+ assert.match(css,/data-portal-auth="authenticated"\] \.portal-hero/);
+ assert.match(css,/data-exam-auth="authenticated"\] \.exam-hero/);
+ assert.match(css,/\.dashboard-more-tools/);
+ assert.match(browser,/V4 institutional burgundy token is active/);
+ assert.match(browser,/V4 dashboard sidebar is neutral/);
+ assert.match(browser,/V4 design stylesheet is last/);
+ assert.doesNotMatch(browser,/V3 CSS is last/);
+});
