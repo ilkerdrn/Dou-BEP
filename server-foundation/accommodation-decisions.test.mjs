@@ -109,6 +109,15 @@ test('approved anonymous decision derives a read-only duration preview only from
   const second=s.coordinationCreate(a,{...plan,startsAt:'2026-11-15T13:30',roomCode:'LAB02',instructorCode:'HOC02'});
   assert.ok(second.id);
   assert.equal(s.accommodationDurationPreview(a,row.id).reason,'ambiguous_session');
+  const choices=s.accommodationDurationPreview(a,row.id).choices;
+  assert.equal(choices.length,2);
+  assert.equal(choices.some(x=>x.id===second.id),true);
+  const explicit=s.accommodationDurationPreview(a,row.id,second.id);
+  assert.equal(explicit.ready,true);
+  assert.equal(explicit.totalMinutes,85);
+  assert.equal(explicit.coordinationId,second.id);
+  assert.equal(s.accommodationDurationPreview(a,row.id,'00000000-0000-0000-0000-000000000000').reason,'session_mismatch');
+  assert.throws(()=>s.accommodationDurationPreview(a,row.id,'../other'),{code:'bad_id'});
   assert.throws(()=>s.accommodationDurationPreview(f.adminB,row.id),{code:'missing'});
   s.accommodationRevoke(r,row.id,row.revision);
   assert.equal(s.accommodationDurationPreview(a,row.id).reason,'decision_not_approved');
