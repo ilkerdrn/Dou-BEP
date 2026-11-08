@@ -9,7 +9,18 @@ function stateLabel(s){return {issued:'Kullanılabilir',started:'Sınav açıld�
 async function refresh(){const [exams,pilots]=await Promise.all([api('/exams'),api('/pilot')]);const current=$('exams').value;const menu=$('exams');menu.replaceChildren();const eligible=exams.items.filter(x=>x.status==='approved');for(const item of eligible){const op=el('option',item.title+' · Sürüm '+item.revision);op.value=item.id;menu.append(op);}if(eligible.some(x=>x.id===current))menu.value=current;$('create').disabled=!eligible.length;menu.disabled=!eligible.length;$('pilot-empty-exams').hidden=eligible.length>0;$('pilot-exam-help').textContent=eligible.length?eligible.length+' onaylı sınav bulundu. Kod vermek istediğiniz sınavı seçin.':'Kod oluşturmak için önce bir sınavın onaylanması gerekiyor.';
  const region=$('sessions');region.replaceChildren();if(!pilots.items.length)region.append(el('p','Henüz pilot oturumu oluşturulmadı.'));
  for(const item of pilots.items){const section=el('div');section.className='session-item';section.append(el('strong',stateLabel(item.status)+' · '+item.id.slice(0,8).toUpperCase()),el('small','Sınav: '+item.examId.slice(0,8)+' · Oluşturuldu: '+new Date(item.createdAt).toLocaleString('tr-TR')+' · Bitiş: '+new Date(item.expiresAt).toLocaleTimeString('tr-TR')));
- const buttons=el('div');buttons.className='inline';buttons.append(action('İncele',()=>show(item.id)));if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){await api('/pilot/'+item.id+'/revoke','POST',{});await refresh();}}));buttons.append(action('Kaydı sil',async()=>{if(confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?')){await api('/pilot/'+item.id,'DELETE');$('details').hidden=true;await refresh();}},'danger'));section.append(buttons);region.append(section);
+ const buttons=el('div');buttons.className='inline';buttons.append(action('İncele',()=>show(item.id)));
+ if(item.status==='started')buttons.append(action('Kurtarma kodu oluştur',async()=>{
+  if(!confirm('Bu oturumun mevcut öğrenci erişimi iptal edilip yeni tek kullanımlık kod oluşturulsun mu? Süre uzamayacak; yalnız yerel ara kaydedilmiş yanıtlar korunacak.'))return;
+  const result=await api('/pilot/'+item.id+'/recover','POST',{});
+  lastCode=result.item.code;
+  $('code').textContent=lastCode;
+  $('new-code').hidden=false;
+  $('pilot-code-expiry').textContent='Kurtarma kodu son geçerlilik: '+new Date(result.item.expiresAt).toLocaleString('tr-TR')+'. Orijinal oturum süresi uzamaz. Eski öğrenci oturumu geçersizdir.';
+  msg('Kurtarma kodu yalnızca bir kez gösterildi. Öğrenciye güvenli şekilde iletin.');
+  $('new-code').scrollIntoView({block:'nearest'});
+  await refresh();
+ }));if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){await api('/pilot/'+item.id+'/revoke','POST',{});await refresh();}}));buttons.append(action('Kaydı sil',async()=>{if(confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?')){await api('/pilot/'+item.id,'DELETE');$('details').hidden=true;await refresh();}},'danger'));section.append(buttons);region.append(section);
  }
 }
 function renderReview(review){
