@@ -31,6 +31,13 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,200,store.pilotRedeem(body.code));return true;
    }
+   if((path==='/api/pilot/progress'&&req.method==='GET')||(path==='/api/pilot/save'&&req.method==='POST')){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    if(req.method==='GET')response(res,200,store.pilotProgress(match[1]));
+    else {const body=await readJson(req,15000);response(res,200,store.pilotSave(match[1],body.answers));}
+    return true;
+   }
    if(path==='/api/pilot/submit'&&req.method==='POST'){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
