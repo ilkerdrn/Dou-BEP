@@ -1292,3 +1292,13 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
  padding-bottom:8px!important;
  border-bottom:1px solid var(--v4-border)!important;
 }
+
+
+/* Phase 23 — isolate only the exam title typography inherited from V3.
+ * The previous mixed title/header/section override caused a regression;
+ * this one-rule change is independently measured by the next Edge probe.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-editor-title{
+ font-size:clamp(19px,2vw,25px)!important;
+ font-weight:780!important;
+}
