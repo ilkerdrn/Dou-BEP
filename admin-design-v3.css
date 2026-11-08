@@ -1325,3 +1325,23 @@ body.institution-page.campus-layout #exam-workspace .exam-optional-tool.campus-m
   padding:14px!important;
  }
 }
+
+/* The disclosure menu grows with its open groups; the sidebar itself scrolls.
+   Do not allow flex:1/min-height:0 to place footer over overflowing links. */
+@media(min-width:1081px){
+ body.institution-page.campus-layout .dou-nav{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-gutter:stable;
+ }
+ body.institution-page.campus-layout .dou-nav-sections{
+  flex:0 0 auto!important;
+  min-height:max-content!important;
+ }
+ body.institution-page.campus-layout .dou-nav-bottom{
+  flex:0 0 auto!important;
+  position:static!important;
+  margin-top:14px!important;
+  padding-bottom:16px!important;
+ }
+}
