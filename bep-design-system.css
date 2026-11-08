@@ -1547,3 +1547,96 @@ body.bep-pilot-ux :is(#pilot-session-create,#pilot-session-list,#cohort-heading)
   padding:12px!important;
  }
 }
+
+
+/* V3 offline speech tooling: restrained premium admin presentation.
+   Never style standalone student pilot or modify audio/test semantics. */
+body.dou-admin-standalone.bep-speech-ux{
+ --bep-lab-border:#e8dfe4;--bep-lab-ink:#292439;
+ color:var(--bep-lab-ink)!important;background:#f8f4f5!important;
+}
+body.dou-admin-standalone.bep-speech-ux main{
+ width:100%!important;max-width:none!important;min-width:0;
+ margin:0!important;padding:clamp(14px,2vw,28px)!important;
+ box-sizing:border-box;
+}
+body.dou-admin-standalone.bep-speech-ux main.portal-main{
+ display:block!important;
+}
+body.dou-admin-standalone.bep-speech-ux main .portal-content{
+ width:100%!important;max-width:none!important;
+ padding:0!important;margin:0!important;box-sizing:border-box;
+}
+body.dou-admin-standalone.bep-speech-ux .bep-lab-shortcuts{
+ display:flex;flex-wrap:wrap;gap:9px;
+ margin:0 0 16px!important;padding:12px!important;
+ background:#fff!important;border:1px solid var(--bep-lab-border)!important;
+ border-radius:14px!important;
+}
+body.dou-admin-standalone.bep-speech-ux .bep-lab-shortcuts a{
+ display:inline-flex;align-items:center;justify-content:center;
+ min-height:42px;padding:9px 14px;
+ background:#fff!important;color:#782138!important;
+ border:1px solid #e1cad3!important;border-radius:10px!important;
+ text-decoration:none!important;font-size:13px!important;font-weight:800!important;
+}
+body.dou-admin-standalone.bep-speech-ux .bep-lab-shortcuts a:first-child{
+ background:#8e1428!important;border-color:#8e1428!important;color:#fff!important;
+}
+body.dou-admin-standalone.bep-speech-ux main .card{
+ background:#fff!important;border:1px solid var(--bep-lab-border)!important;
+ box-shadow:0 5px 19px rgba(75,39,54,.05)!important;
+ border-radius:16px!important;
+ padding:clamp(17px,2vw,28px)!important;
+ margin-bottom:15px!important;min-width:0;
+}
+body.dou-admin-standalone.bep-speech-ux main .card.hero{
+ background:linear-gradient(112deg,#fff 0%,#fffafc 72%,#f9e9ee 100%)!important;
+ border-color:#e9dce2!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(h1,h2,h3){
+ color:#292439!important;letter-spacing:-.025em;
+}
+body.dou-admin-standalone.bep-speech-ux main h1{
+ font-size:clamp(26px,2.9vw,39px)!important;line-height:1.17!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(p,.muted){
+ color:#5b6575!important;line-height:1.65;
+}
+body.dou-admin-standalone.bep-speech-ux main .eyebrow{
+ color:#8e1428!important;font-weight:850!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(input:not([type="checkbox"]),select,textarea){
+ background:#fff!important;color:#292439!important;
+ border:1px solid #d8cbd3!important;
+ border-radius:11px!important;max-width:100%;
+ min-width:0;box-sizing:border-box;
+}
+body.dou-admin-standalone.bep-speech-ux main .reader-actions{
+ display:flex;flex-wrap:wrap;gap:9px!important;align-items:center;
+}
+body.dou-admin-standalone.bep-speech-ux main .reader-actions button{
+ min-height:43px!important;border-radius:11px!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(button,.reader-actions button):not(.ghost):not([disabled]){
+ background:#8e1428!important;color:#fff!important;
+ border:1px solid #8e1428!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(button,.reader-actions button).ghost{
+ background:#fff!important;color:#782138!important;
+ border:1px solid #e2ccd5!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is(a,button,input,textarea,select):focus-visible{
+ outline:3px solid #a92347!important;outline-offset:3px!important;
+}
+body.dou-admin-standalone.bep-speech-ux main :is([id="free-text-lab"],[id="reader-title"],[id="synth-title"],[id="ident-title"],[id="phoneme-matrix"],[id="pool-files"],[id="pool-results"],[id="study-title"],[id="study-export"],[id="rec-protocol"],[id="rec-breakdown-area"],[id="audit-heading"]){
+ scroll-margin-top:85px;
+}
+@media(max-width:650px){
+ body.dou-admin-standalone.bep-speech-ux main{
+  padding:12px!important;
+ }
+ body.dou-admin-standalone.bep-speech-ux .bep-lab-shortcuts a{
+  flex:1 1 145px;
+ }
+}
