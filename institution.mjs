@@ -23,7 +23,11 @@ function actorView(){
  $('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
  $('sessions-panel').hidden=!active||restricted;$('mfa-panel').hidden=!active;
  $('mfa-restricted-note').hidden=!restricted;$('mfa-restricted-logout').hidden=!restricted;
+ const profile=$('campus-sidebar-profile');
+ if(profile)profile.hidden=!signedIn;
  if(active){$('actor-name').textContent=state.actor.email;$('actor-meta').textContent=`${state.actor.tenantId} · ${({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||state.actor.role}`;
+  $('campus-profile-name').textContent=state.actor.email.split('@')[0]||'Kurum kullanıcısı';
+  $('campus-profile-role').textContent=({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||'Kurum üyesi';
   const canEdit=['admin','coordinator','teacher'].includes(state.actor.role);
   $('upload-form').hidden=!canEdit;$('admin-panel').hidden=state.actor.role!=='admin';$('audit-panel').hidden=!['admin','coordinator','reviewer'].includes(state.actor.role);
  }
