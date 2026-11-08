@@ -208,3 +208,18 @@ test('V4 can exercise existing browser acceptance with V3 disabled only in the d
   assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
  }
 });
+
+
+test('V4 guest and pending authentication never rely on V3 to hide admin navigation',()=>{
+ const css=read('./bep-v4.css');
+ for(const state of ['data-portal-auth="checking"','data-portal-auth="guest"',
+  'data-exam-auth="checking"','data-exam-auth="guest"']){
+  assert.ok(css.includes('['+state+']'),'Missing explicit V4 auth boundary: '+state);
+ }
+ assert.match(css,/\) :is\(\.dou-nav,\.portal-topbar\)\{\s*display:none!important/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\)!important/);
+ assert.match(css,/\[data-exam-auth="guest"\]\s+#exam-login-required\{\s*display:block/);
+ const portal=read('./institution.html'),exam=read('./institutional-exams.html');
+ assert.match(portal,/<body[^>]+data-portal-auth="checking"/);
+ assert.match(exam,/<body[^>]+data-exam-auth="checking"/);
+});
