@@ -123,3 +123,32 @@ test('approved anonymous decision derives a read-only duration preview only from
   assert.equal(s.accommodationDurationPreview(a,row.id).reason,'decision_not_approved');
  }finally{f.dispose();}
 });
+
+test('duration plan snapshots stay isolated, cannot grant student time, and turn stale after revocation',()=>{
+ const f=make();try{
+  const {s,adminA:a,reviewer:r}=f;
+  const decision=s.accommodationCreate(a,sample);
+  assert.throws(()=>s.accommodationTimePlanCreate(a,decision.id,'00000000-0000-0000-0000-000000000000'),{code:'not_ready'});
+  s.accommodationApprove(r,decision.id,decision.revision);
+  const source=createDemo();source.profile='';
+  source.questions=source.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
+  const exam=s.createExam(a,{exam:source});
+  s.approveExam(a,exam.id,{revision:1,confirmed:true});
+  const plan={term:'2026-GUZ',department:'TEKNOLOJI',program:'BILGISAYAR',courseCode:'BLP103',
+   courseName:'İşletim Sistemleri',examLabel:'VIZE',startsAt:'2026-11-15T09:30',
+   durationMinutes:70,instructorCode:'HOC01',roomCode:'LAB01',examId:exam.id,examRevision:1};
+  const sitting=s.coordinationCreate(a,plan);
+  assert.throws(()=>s.accommodationTimePlanCreate(f.teacher,decision.id,sitting.id),{code:'forbidden'});
+  const created=s.accommodationTimePlanCreate(a,decision.id,sitting.id);
+  assert.equal(created.status,'verified');
+  assert.equal(created.totalMinutes,85);
+  assert.equal(created.candidateCode,undefined);
+  assert.equal(created.entitlement,undefined);
+  assert.equal(s.accommodationTimePlanList(f.adminB).length,0);
+  assert.equal(s.accommodationTimePlanList(a).length,1);
+  assert.throws(()=>s.accommodationTimePlanCreate(a,decision.id,sitting.id),{code:'duplicate'});
+  s.accommodationRevoke(r,decision.id,decision.revision);
+  assert.equal(s.accommodationTimePlanList(a)[0].status,'recheck');
+  assert.throws(()=>s.accommodationTimePlanCreate(a,decision.id,sitting.id),{code:'not_ready'});
+ }finally{f.dispose();}
+});
