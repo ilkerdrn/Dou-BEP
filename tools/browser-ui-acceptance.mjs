@@ -178,15 +178,17 @@ async function main(){
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  // Reference-led layout: real computed colors, not only CSS source assertions.
  const campusVisual=await evaluate(`({
-  sidebar:getComputedStyle(document.querySelector('.dou-nav')).backgroundColor,
-  selected:getComputedStyle(document.querySelector('.dou-nav-link[aria-current="page"]')).backgroundColor,
+  sidebar:getComputedStyle(document.querySelector('.dou-nav')).backgroundImage,
+  selected:getComputedStyle(document.querySelector('.dou-nav-link[aria-current="page"]')).backgroundImage,
   selectedText:getComputedStyle(document.querySelector('.dou-nav-link[aria-current="page"]')).color,
-  card:getComputedStyle(document.querySelector('.dashboard-welcome')).backgroundColor
+  card:getComputedStyle(document.querySelector('.dashboard-welcome')).backgroundImage,
+  brand:getComputedStyle(document.body).getPropertyValue('--bep-brand').trim()
  })`);
  console.log('BROWSER CAMPUS DASHBOARD STYLE: '+JSON.stringify(campusVisual));
- pass(campusVisual.sidebar==='rgb(247, 244, 245)','Dashboard sidebar adopts reference-inspired pale surface');
- pass(campusVisual.selected==='rgb(129, 24, 32)'&&campusVisual.selectedText==='rgb(255, 255, 255)','Active dashboard navigation uses contrasting burgundy');
- pass(campusVisual.card==='rgb(255, 255, 255)','Dashboard welcome remains white card');
+ pass(campusVisual.sidebar.includes('linear-gradient'),'Dashboard uses warm pale unified sidebar');
+ pass(campusVisual.brand==='#8e1428','V3 burgundy palette is active');
+ pass(campusVisual.selected.includes('linear-gradient')&&campusVisual.selectedText==='rgb(255, 255, 255)','Active nav uses high-contrast burgundy design');
+ pass(campusVisual.card.includes('linear-gradient'),'Dashboard welcome adopts V3 card surface');
  await captureSyntheticScreenshot('dashboard-desktop');
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
@@ -409,6 +411,33 @@ async function main(){
   const geom=await evaluate('({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth})');
   console.log('BROWSER LAYOUT DASHBOARD '+width+': '+JSON.stringify(geom));
   pass(geom.scrollWidth<=geom.viewport+2,'Dashboard has no document overflow at '+width+'px');
+ }
+ // Every administrative tool must use the exact same final stylesheet.
+ // This browser run uses the temporary anonymous fixture, never the real DB.
+ for(const [route,label] of [
+  ['/toplu-sinav','batch'],['/uyarlama-kararlari','accommodations'],
+  ['/sinav-koordinasyon','coordination'],['/sinav-operasyon','operations'],
+  ['/erisilebilirlik-kabul','acceptance'],['/pilot-yonetim','pilot-admin'],
+  ['/sinav-dosya-aktar','source-import'],['/bep-import','goal-import'],
+  ['/erisilebilirlik-kontrol','accessibility-check'],
+  ['/dou-reader-demo','reader-demo'],
+  ['/dou-speech-phoneme','speech-phoneme'],
+  ['/dou-speech-pool','speech-pool'],
+  ['/dou-speech-listening','speech-listening'],
+  ['/dou-speech-intelligibility','speech-intelligibility']
+ ]){
+  await navigate(base,route);
+  const result=await evaluate(`(function(){
+    const links=[...document.querySelectorAll('link[rel="stylesheet"]')];
+    const last=links.at(-1);
+    return {
+      stylesheet:last?.getAttribute('href')||'',
+      nav:!!document.querySelector('.dou-nav'),
+      palette:getComputedStyle(document.body).getPropertyValue('--bep-brand').trim()
+    };
+  })()`);
+  pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
+  pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
  }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
