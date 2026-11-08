@@ -78,3 +78,19 @@ test('pre-exam readiness requires two explicit checks before showing questions',
  assert.match(js,/\$\('ready-title'\)\.focus\(\)/);
  assert.doesNotMatch(js,/localStorage|sessionStorage|indexedDB/);
 });
+
+test('final submission requires a separate question status review and allows returning to unanswered questions',()=>{
+ assert.match(html,/id="pilot-final-review"[^>]*aria-labelledby="pilot-final-title" hidden/);
+ assert.match(html,/id="pilot-final-summary"[^>]*role="status"[^>]*aria-live="polite"/);
+ assert.match(html,/id="pilot-final-questions"[^>]*aria-label="Soru durumları"/);
+ assert.match(html,/id="pilot-cancel-final"[^>]*type="button"/);
+ assert.match(js,/function showFinalReview\(\)/);
+ assert.match(js,/if\(\$\('pilot-final-review'\)\.hidden\)\{showFinalReview\(\);return;\}/);
+ assert.match(js,/button\.addEventListener\('click',\(\)=>\{\s*resetFinalReview\(\);activeQuestionIndex=i/);
+ assert.match(js,/const answered=exam\.questions\.length-empty\.length/);
+ assert.match(js,/const flagged=\[\.\.\.reviewFlags\]\.sort/);
+ assert.match(js,/if\(!confirm\(warning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
+ assert.match(js,/post\('\/api\/pilot\/submit',\{answers\},claim\)/);
+ assert.match(js,/if\(event\.target\.matches\('input\[type="radio"\],select'\)\)\{resetFinalReview\(\);updateAnswerProgress\(\);\}/);
+ assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
