@@ -10,6 +10,7 @@ import {synthesizeTurkishArticulationPreview} from '../dou-speech-waveform.mjs';
 import {inspectSpeechWaveform} from '../dou-speech-quality.mjs';
 import {FIXED_LAB_CASES,studyFixedLabCase} from './dou-speech-fixed-phrase-bench.mjs';
 import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 
 const usage='Kullanım: node tools/dou-speech-fixed-phrase-export.mjs --id greeting|sibilants|nasals|stops|vowels --out <yeni-dosya.wav>';
 export function exportFixedPhrase(id,output){
