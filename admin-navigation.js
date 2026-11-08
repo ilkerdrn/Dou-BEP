@@ -81,10 +81,25 @@
  }
  if(field){
   field.addEventListener('input',filter);
-  field.addEventListener('keydown',e=>{if(e.key==='Escape'&&field.value){field.value='';filter();e.stopPropagation();}});
+  field.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&field.value){
+    field.value='';filter();e.preventDefault();e.stopPropagation();
+   }
+   // A keyboard user can search, then move directly to the first visible result.
+   if(e.key==='ArrowDown'){
+    const first=[...panel.querySelectorAll('.dou-nav-link')].find(link=>
+     !link.hidden&&!link.closest('.dou-nav-group')?.hidden&&
+     link.closest('.dou-nav-disclosure')?.open!==false);
+    if(first){e.preventDefault();first.focus();}
+   }
+  });
  }
  document.addEventListener('keydown',event=>{
-  if(event.key==='Escape')close();
+  if(event.key==='Escape'&&nav.classList.contains('dou-nav-open')){
+   const inside=nav.contains(document.activeElement);
+   close();
+   if(inside&&window.matchMedia('(max-width:1080px)').matches)toggle.focus();
+  }
   if(event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&field&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||'')&&!document.activeElement?.isContentEditable){
    event.preventDefault();
    if(window.matchMedia('(max-width:1080px)').matches){nav.classList.add('dou-nav-open');toggle.setAttribute('aria-expanded','true');}
@@ -92,6 +107,10 @@
   }
  });
  panel.addEventListener('click',event=>{if(event.target.closest('a'))close();});
+ // On a narrow viewport the navigation behaves like a dismissible drawer.
+ document.addEventListener('pointerdown',event=>{
+  if(nav.classList.contains('dou-nav-open')&&!nav.contains(event.target))close();
+ });
  const media=window.matchMedia('(min-width: 1081px)');
  if(media.addEventListener)media.addEventListener('change',close);
 })();
