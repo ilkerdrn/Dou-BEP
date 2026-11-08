@@ -55,3 +55,36 @@ test('approved burgundy reference has consistent navigation, workflow and editor
  for(const char of css){if(char==='{')depth++;if(char==='}')depth--;assert.ok(depth>=0,'Unbalanced CSS block');}
  assert.equal(depth,0,'Unclosed CSS block');
 });
+
+
+const ADMIN_SCREENS = [
+ 'institution.html','institutional-exams.html','batch-exams.html',
+ 'accommodation-admin.html','coordination.html','operations.html',
+ 'acceptance.html','pilot-admin.html','exam-source-import.html',
+ 'bep-import.html','accessibility-check.html','dou-reader-demo.html',
+ 'dou-speech-phoneme.html','dou-speech-pool.html',
+ 'dou-speech-listening.html','dou-speech-intelligibility.html'
+];
+test('all V3 administrative pages use a single final design layer',()=>{
+ for(const file of ADMIN_SCREENS){
+  const source=read('./'+file);
+  const styles=[...source.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(m=>m[1]);
+  assert.equal(styles.at(-1),'/bep-design-system.css',file+' must load V3 last');
+  assert.equal(styles.filter(x=>x==='/bep-design-system.css').length,1,file+' must not repeat CSS');
+  assert.match(source,/<body[^>]*class="[^"]*(institution-page|dou-admin-standalone)/,file);
+  assert.match(source,/class="portal-side dou-nav"/,file+' must retain navigation');
+  assert.match(source,/src="\/admin-navigation.js"/,file+' must retain navigation script');
+ }
+});
+test('student-facing pilot and independent audio review stay isolated',()=>{
+ for(const file of ['pilot.html','review-audio.html']){
+  const html=read('./'+file);
+  assert.doesNotMatch(html,/bep-design-system\.css/);
+ }
+});
+test('V3 CSS covers legacy standalone, campus and portal layout families',()=>{
+ const css=read('./bep-design-system.css');
+ assert.match(css,/body\.dou-admin-standalone/);
+ assert.match(css,/body\.institution-page\.campus-layout/);
+ assert.match(css,/body\.institution-page:not\(\.campus-layout\)/);
+});
