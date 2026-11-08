@@ -345,3 +345,12 @@ test('V4 owns optional exam disclosure label stack and open state independently 
  assert.ok(browser.includes("'.exam-optional-tool>summary'"));
  assert.ok(browser.includes("'.exam-optional-tool.campus-major-module>summary'"));
 });
+
+
+test('V4 exam overview spacing and module header surface do not depend on V3',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/\.exam-overview\{\s*margin:0 0 15px!important/);
+ assert.match(css,/#exam-workspace :is\(\.exam-main-fields,\.exam-two\)\{\s*gap:13px!important/);
+ assert.match(css,/\.exam-optional-tool\.campus-major-module>summary\{\s*background:#f7f9fd!important/);
+ assert.match(css,/\.exam-overview>summary span\{\s*font-size:12px!important/);
+});
