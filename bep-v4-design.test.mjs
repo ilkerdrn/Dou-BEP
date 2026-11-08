@@ -263,3 +263,18 @@ test('V4 dashboard owns welcome heading and progress checklist geometry without 
  assert.match(browser,/const cssParityFailures=\[\]/);
  assert.match(browser,/if\(cssParityFailures\.length\)/);
 });
+
+
+test('V4 exam step navigation retains V3-independent two-row flex structure and focus mode',()=>{
+ const css=read('./bep-v4.css');
+ for(const required of [
+  '#exam-workspace .workflow-nav .workflow-caption',
+  '#exam-workspace .workflow-nav .workflow-steps',
+  '#exam-workspace .exam-focus-toggle',
+  '#exam-workspace.exam-focus-mode .exam-grid>section:first-child'
+ ])assert.ok(css.includes(required),'Missing V4-owned layout: '+required);
+ assert.match(css,/order:3!important;flex:1 0 100%!important/);
+ assert.match(css,/display:flex!important;flex-wrap:wrap!important/);
+ assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/\.workflow-step\{\s*flex:0 0 auto!important/);
+});
