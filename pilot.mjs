@@ -1,6 +1,8 @@
 import {attachPilotReader} from './dou-reader-panel.mjs';
 /** One-time anonymous pilot. Token lives only in JS memory. No identity, audio, or browser storage. */
 const $=id=>document.getElementById(id);let claim=null,exam=null,activeQuestionIndex=0;
+// Review flags are an optional local navigation aid, never part of submitted answers.
+const reviewFlags=new Set();
 function announce(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
@@ -30,6 +32,7 @@ function updateQuestionNavigation(focus=false){
  $('next-question').disabled=!single||activeQuestionIndex>=cards.length-1;
  douReader?.syncQuestion();
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length}`:`${cards.length} soru birlikte gösteriliyor`;
+ updateQuestionMap();
  if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();}
 }
 function collectAnswers(){
@@ -47,12 +50,43 @@ function collectAnswers(){
  }
  return {answers,empty};
 }
+function updateQuestionMap(){
+ if(!exam)return;
+ const {empty}=collectAnswers(),unanswered=new Set(empty);
+ const map=$('pilot-question-map');
+ map.replaceChildren();
+ for(let i=0;i<exam.questions.length;i++){
+  const flagged=reviewFlags.has(i),answered=!unanswered.has(i);
+  const button=el('button',String(i+1));
+  button.type='button';button.className='pilot-question-jump';
+  button.dataset.status=flagged?'review':answered?'answered':'empty';
+  button.setAttribute('aria-label','Soru '+(i+1)+': '+(answered?'yanıtlandı':'boş')+(flagged?', tekrar bakılacak':''));
+  if(i===activeQuestionIndex)button.setAttribute('aria-current','step');
+  button.addEventListener('click',()=>{
+   activeQuestionIndex=i;$('one-question').checked=true;
+   updateQuestionNavigation(true);
+  });
+  map.append(button);
+ }
+ const marked=reviewFlags.has(activeQuestionIndex);
+ const toggle=$('pilot-toggle-review');
+ toggle.setAttribute('aria-pressed',String(marked));
+ toggle.textContent=marked?'Tekrar bakılacak işaretini kaldır':'Bu soruyu tekrar bakılacak olarak işaretle';
+ $('pilot-review-count').textContent=reviewFlags.size?reviewFlags.size+' soru tekrar bakılacak.':'Tekrar bakılacak soru yok.';
+}
+$('pilot-toggle-review').addEventListener('click',()=>{
+ if(!exam)return;
+ if(reviewFlags.has(activeQuestionIndex))reviewFlags.delete(activeQuestionIndex);
+ else reviewFlags.add(activeQuestionIndex);
+ updateQuestionMap();
+});
 function updateAnswerProgress(){
  if(!exam)return;
  const {empty}=collectAnswers();
  const answered=exam.questions.length-empty.length;
  $('pilot-answer-progress').textContent=answered+' / '+exam.questions.length+' soru yanıtlandı. '+empty.length+' soru boş.';
  $('pilot-first-empty').disabled=empty.length===0;
+ updateQuestionMap();
 }
 function render(){const area=$('student-questions');area.replaceChildren();
  for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
@@ -62,7 +96,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);area.append(box);
  }
- activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
+ reviewFlags.clear();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
  try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();$('entry').hidden=true;$('player').hidden=false;announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
