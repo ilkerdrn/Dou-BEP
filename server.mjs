@@ -135,6 +135,7 @@ const allowed={
  '/institution.html':['institution.html','text/html; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-design-v3.css':['admin-design-v3.css','text/css; charset=utf-8'],
+ '/bep-design-system.css':['bep-design-system.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
  '/exam-page-health.js':['exam-page-health.js','text/javascript; charset=utf-8'],
  '/institution.mjs':['institution.mjs','text/javascript; charset=utf-8'],
