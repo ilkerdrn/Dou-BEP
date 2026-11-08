@@ -88,3 +88,14 @@ test('V3 CSS covers legacy standalone, campus and portal layout families',()=>{
  assert.match(css,/body\.institution-page\.campus-layout/);
  assert.match(css,/body\.institution-page:not\(\.campus-layout\)/);
 });
+
+
+test('premium full-screen login has no external gutters or floating outer card',()=>{
+ const css=read('./bep-design-system.css');
+ assert.match(css,/data-portal-auth="guest"\] #login-view\.portal-login-card\{/);
+ assert.match(css,/min-height:100dvh!important/);
+ assert.match(css,/max-width:none!important/);
+ assert.match(css,/border-radius:0!important/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
+ assert.match(css,/@media\(max-width:900px\)/);
+});
