@@ -60,7 +60,7 @@ test('student question map shows answered, empty and review states without revea
  assert.match(js,/button\.dataset\.status=flagged\?'review':answered\?'answered':'empty'/);
  assert.match(js,/button\.setAttribute\('aria-label','Soru '\+\(i\+1\)/);
  assert.match(js,/button\.setAttribute\('aria-current','step'\)/);
- assert.match(js,/reviewFlags\.clear\(\);activeQuestionIndex=0/);
+ assert.match(js,/reviewFlags\.clear\(\);resetFinalReview\(\);activeQuestionIndex=0/);
  assert.doesNotMatch(js,/post\('\/api\/pilot\/save',\{answers,reviewFlags\}/);
  assert.doesNotMatch(js,/post\('\/api\/pilot\/submit',\{answers,reviewFlags\}/);
 });
