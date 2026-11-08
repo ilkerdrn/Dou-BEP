@@ -96,3 +96,20 @@ test('V4 acceptance checks real browser styling instead of old gradient contract
  assert.match(browser,/V4 design stylesheet is last/);
  assert.doesNotMatch(browser,/V3 CSS is last/);
 });
+
+
+test('V4 exam editor explicitly defines responsive desktop and mobile column behavior',()=>{
+ const css=read('./bep-v4.css');
+ const ui=read('./institutional-exams.html');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ for(const id of ['exam-drafts-panel','exam-editor-card','exam-list-controls','exam-autosave-state','exam-recovery-choose']){
+  assert.ok(ui.includes('id="'+id+'"'),'Editor control must be preserved: '+id);
+ }
+ assert.match(css,/@media\(min-width:1200px\)/);
+ assert.match(css,/grid-template-columns:minmax\(250px,285px\) minmax\(0,1fr\)!important/);
+ assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/\.exam-grid>#exam-drafts-panel/);
+ assert.match(css,/\.exam-grid>#exam-editor-card/);
+ assert.match(browser,/BROWSER V4 EDITOR WORKBENCH/);
+ assert.match(browser,/V4 mobile exam list stacks above authoring editor/);
+});
