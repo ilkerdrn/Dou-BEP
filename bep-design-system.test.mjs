@@ -290,3 +290,14 @@ test('shared navigation supports keyboard search and safe mobile drawer dismissa
  assert.match(nav,/addEventListener\('pointerdown'/,'Outside click should dismiss mobile drawer');
  assert.match(nav,/nav\.contains\(event\.target\)/,'Inside interactions must not dismiss mobile drawer');
 });
+
+
+test('navigation search supports bidirectional keyboard focus and visible filtering',()=>{
+ const js=read('./admin-navigation.js');
+ const css=read('./admin-premium.css');
+ assert.match(js,/setAttribute\('aria-keyshortcuts','\/'\)/);
+ assert.match(js,/event\.key!=='ArrowUp'/);
+ assert.match(js,/visible\[0\]===link/);
+ assert.match(js,/field\.focus\(\)/);
+ assert.match(css,/\.dou-nav \.dou-nav-link\[hidden\]\{display:none!important\}/);
+});
