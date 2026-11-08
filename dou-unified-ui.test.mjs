@@ -8,7 +8,9 @@ const screens=[
  'institution.html','institutional-exams.html','pilot-admin.html','pilot.html',
  'coordination.html','operations.html','batch-exams.html','accommodation-admin.html',
  'acceptance.html','exam-source-import.html','bep-import.html',
- 'accessibility-check.html','dou-reader-demo.html'
+ 'accessibility-check.html','dou-reader-demo.html',
+ 'index.html','review-audio.html','dou-speech-phoneme.html',
+ 'dou-speech-listening.html','dou-speech-pool.html','dou-speech-intelligibility.html'
 ];
 
 test('every primary campus page loads one shared local design contract last',()=>{
