@@ -1,0 +1,122 @@
+/* DOU BEP unified institutional UI — transitional shared layer.
+ * A single set of visual tokens across admin, assessment, pilot and reader screens.
+ * Student high-contrast mode, role guards and existing interaction logic stay intact.
+ * Locally served: no fonts, images, scripts or remote dependencies.
+ */
+:root{
+ --dou-ui-primary:#7a1f2b;
+ --dou-ui-primary-hover:#621923;
+ --dou-ui-primary-soft:#f5ecef;
+ --dou-ui-canvas:#f7f7f8;
+ --dou-ui-surface:#ffffff;
+ --dou-ui-text:#202431;
+ --dou-ui-muted:#596274;
+ --dou-ui-stroke:#e3e5ea;
+ --dou-ui-focus:#156bb4;
+ --dou-ui-radius:12px;
+ --dou-ui-shadow:0 5px 20px rgba(20,30,48,.045);
+ font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body:not(.high):not(.high-contrast){
+ --v4-primary:var(--dou-ui-primary);
+ --v4-primary-hover:var(--dou-ui-primary-hover);
+ --v4-primary-soft:var(--dou-ui-primary-soft);
+ --v4-bg:var(--dou-ui-canvas);
+ --v4-surface:var(--dou-ui-surface);
+ --v4-border:var(--dou-ui-stroke);
+ --v4-text:var(--dou-ui-text);
+ --v4-muted:var(--dou-ui-muted);
+ --bep-brand:var(--dou-ui-primary);
+ --bep-bg:var(--dou-ui-canvas);
+ --bep-surface:var(--dou-ui-surface);
+ --bep-text:var(--dou-ui-text);
+ --bep-border:var(--dou-ui-stroke);
+ --bep-muted:var(--dou-ui-muted);
+}
+body:not(.high):not(.high-contrast) :is(.card,.portal-card,.dashboard-shortcut,.campus-summary-card,.question,.reader-panel,.review-question){
+ border-radius:var(--dou-ui-radius);
+ border-color:var(--dou-ui-stroke);
+ box-shadow:var(--dou-ui-shadow);
+}
+body:not(.high):not(.high-contrast) :is(button,.portal-btn,input,select,textarea){
+ font-family:inherit;
+}
+body:not(.high):not(.high-contrast) :is(input,select,textarea){
+ max-width:100%;
+ border-radius:10px;
+}
+body:not(.high):not(.high-contrast) :is(button,.portal-btn){
+ border-radius:10px;
+ min-height:44px;
+}
+body:not(.high):not(.high-contrast) :is(button,input,textarea,select,a,summary):focus-visible{
+ outline:3px solid var(--dou-ui-focus)!important;
+ outline-offset:3px;
+}
+body:not(.high):not(.high-contrast) :is(.eyebrow,.portal-mini-label,.portal-overline){
+ color:var(--dou-ui-primary);
+ font-weight:750;
+ letter-spacing:.055em;
+}
+body:not(.high):not(.high-contrast) :is(.portal-help,.muted){
+ line-height:1.6;
+}
+body:not(.high):not(.high-contrast) .pill{
+ background:var(--dou-ui-primary-soft);
+ color:var(--dou-ui-primary);
+}
+body:not(.high):not(.high-contrast) .dou-nav{
+ --bep-brand:var(--dou-ui-primary);
+}
+body:not(.high):not(.high-contrast) :is(.notice,.portal-error,.portal-success)[role="status"]{
+ overflow-wrap:anywhere;
+}
+body:not(.high):not(.high-contrast) :is(.card,.portal-card,.reader-panel,.question){
+ min-width:0;
+}
+body:not(.high):not(.high-contrast) :is(button,.portal-btn,input,select,textarea){
+ touch-action:manipulation;
+}
+body:not(.high):not(.high-contrast).bep-student-pilot{
+ background:var(--dou-ui-canvas);
+ color:var(--dou-ui-text);
+}
+body:not(.high):not(.high-contrast).bep-student-pilot header{
+ background:var(--dou-ui-surface);
+ border-bottom:1px solid var(--dou-ui-stroke);
+ color:var(--dou-ui-text);
+ box-shadow:none;
+}
+body:not(.high):not(.high-contrast).bep-student-pilot header .brand,
+body:not(.high):not(.high-contrast).bep-student-pilot header .brand small{
+ color:var(--dou-ui-text);
+}
+body:not(.high):not(.high-contrast).bep-student-pilot .card{
+ background:var(--dou-ui-surface);
+ border:1px solid var(--dou-ui-stroke);
+ box-shadow:var(--dou-ui-shadow);
+}
+body:not(.high):not(.high-contrast).bep-student-pilot .hero{
+ background:var(--dou-ui-surface);
+ border-top:3px solid var(--dou-ui-primary);
+}
+body:not(.high):not(.high-contrast).bep-student-pilot button:not(.ghost):not(.danger){
+ background:var(--dou-ui-primary);
+ border-color:var(--dou-ui-primary);
+ color:white;
+}
+body:not(.high):not(.high-contrast).bep-student-pilot button.ghost{
+ background:#fff;color:var(--dou-ui-primary);
+ border-color:var(--dou-ui-primary);
+}
+body:not(.high):not(.high-contrast).bep-student-pilot .option:has(input:checked){
+ background:var(--dou-ui-primary-soft);
+ border-color:var(--dou-ui-primary);
+}
+@media(max-width:720px){
+ body:not(.high):not(.high-contrast) :is(.card,.portal-card,.reader-panel){padding-inline:clamp(14px,4vw,20px)}
+ body:not(.high):not(.high-contrast) .inline{row-gap:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ *{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
