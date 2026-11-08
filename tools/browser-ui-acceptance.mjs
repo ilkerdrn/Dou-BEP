@@ -635,7 +635,7 @@ async function main(){
    console.log('BROWSER OFFLINE SPEECH LAB UX '+label+': '+JSON.stringify(lab));
    pass(lab.destinationsValid&&lab.shortcuts>=2,label+' shortcuts navigate to existing controls');
    pass(lab.skipValid,label+' keyboard skip link reaches main content');
-   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(lab.firstBg)&&lab.firstColor==='rgb(255, 255, 255)',label+' retains readable primary navigation');
+   pass(lab.firstBg==='rgb(122, 31, 43)'&&lab.firstColor==='rgb(255, 255, 255)',label+' retains readable primary navigation');
    pass(lab.docWidth<=lab.availableWidth+2,label+' has no horizontal overflow');
   }
 
@@ -651,9 +651,9 @@ async function main(){
        contentWidth:Math.round(main.width),available:document.documentElement.clientWidth,
        scroll:document.documentElement.scrollWidth};
    })()`);
-   console.log('BROWSER V3 PILOT / BEP IMPORT '+label+': '+JSON.stringify(layout));
+   console.log('BROWSER V4 PILOT / BEP IMPORT '+label+': '+JSON.stringify(layout));
    pass(layout.valid&&layout.links===(route==='/pilot-yonetim'?3:2),label+' shortcuts target existing workflow panels');
-   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(layout.firstBg)&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
+   pass(layout.firstBg==='rgb(122, 31, 43)'&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
    pass(layout.scroll<=layout.available+2,label+' has no horizontal overflow');
   }
 
@@ -669,7 +669,7 @@ async function main(){
    })()`);
    console.log('BROWSER OFFLINE TASK UX '+label+': '+JSON.stringify(flow));
    pass(flow.valid&&flow.count===(route==='/sinav-dosya-aktar'?2:4),label+' task shortcuts resolve');
-   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(flow.firstBg),label+' first task has burgundy emphasis');
+   pass(flow.firstBg==='rgb(122, 31, 43)',label+' first task has burgundy emphasis');
    pass(flow.scroll<=flow.client+2,label+' no horizontal overflow');
   }
 
@@ -743,7 +743,7 @@ async function main(){
    })()`);
    console.log('BROWSER WORKSPACE USABILITY '+label+': '+JSON.stringify(task));
    pass(task.valid&&task.links>=(route==='/sinav-operasyon'?3:2),label+' navigation links resolve');
-   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(task.accent),label+' uses readable burgundy primary action');
+   pass(task.accent==='rgb(122, 31, 43)',label+' uses readable burgundy primary action');
    pass(task.scroll<=task.available+2,label+' has no horizontal overflow');
   }
 
