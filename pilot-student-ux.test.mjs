@@ -34,3 +34,19 @@ test('new review UI retains anonymous single-use backend and does not persist to
  assert.match(api,/store\.pilotSubmit\(match\[1\],body\.answers\)/);
  assert.match(store,/status='submitted',answers=\?,submitted_at=\?,claim_hash=NULL/);
 });
+
+test('anonymous learner can save and restore choices explicitly without browser storage',()=>{
+ assert.match(html,/id="pilot-save-status"[^>]*role="status"/);
+ assert.match(html,/id="pilot-save"/);
+ assert.match(html,/id="pilot-restore"/);
+ assert.match(js,/post\('\/api\/pilot\/save',\{answers\},claim\)/);
+ assert.match(js,/fetch\('\/api\/pilot\/progress'/);
+ assert.match(js,/credentials:'omit'/);
+ assert.match(js,/cache:'no-store'/);
+ assert.match(js,/form\.reset\(\)/);
+ assert.match(js,/if\(!confirm\('Bu sekmedeki mevcut seçimleri son sunucu ara kaydıyla değiştirmek istiyor musunuz\?'\)\)return/);
+ assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+ assert.match(api,/store\.pilotSave\(match\[1\],body\.answers\)/);
+ assert.match(api,/store\.pilotProgress\(match\[1\]\)/);
+ assert.match(store,/row\.status==='submitted'&&row\.answers/);
+});
