@@ -250,3 +250,16 @@ test('V4 CSS removal requires a strict computed visual parity gate, not only fun
  for(const page of ['institution.html','institutional-exams.html'])
   assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
 });
+
+
+test('V4 dashboard owns welcome heading and progress checklist geometry without V3',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(css,/\.campus-dashboard-stage \.dashboard-welcome h2\{\s*font-size:clamp\(23px,2\.5vw,34px\)!important/);
+ assert.match(css,/\.campus-progress-steps\{\s*list-style:none!important/);
+ assert.match(css,/\.campus-progress-steps li\{\s*display:flex!important/);
+ assert.match(css,/\.campus-progress-steps li span\{\s*color:var\(--v4-primary\)!important/);
+ assert.match(browser,/BROWSER V4 CSS PARITY SUMMARY/);
+ assert.match(browser,/const cssParityFailures=\[\]/);
+ assert.match(browser,/if\(cssParityFailures\.length\)/);
+});
