@@ -51,7 +51,8 @@
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
     "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
     "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs",
-    "design:v3:check": "node --test bep-design-system.test.mjs"
+    "design:v3:check": "node --test bep-design-system.test.mjs",
+    "design:v3:acceptance": "npm run design:v3:check && npm run ui:browser"
   },
   "engines": {
     "node": ">=22.13"
