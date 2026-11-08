@@ -1,9 +1,10 @@
 // Visual workflow helpers only. No network, cookies, credentials, or personal data storage.
 const nav = document.querySelector('.workflow-nav');
+// Both navigation and the guided editor need the same step list.
+const steps = nav ? Array.from(nav.querySelectorAll('[data-workflow-target]')) : [];
 let updateGuidedView=()=>{};
 let guidedModeEnabled=false;
 if (nav) {
-  const steps = Array.from(nav.querySelectorAll('[data-workflow-target]'));
   const findTarget = button => document.getElementById(button.dataset.workflowTarget);
   const previous=document.getElementById('workflow-prev');
   const next=document.getElementById('workflow-next');
