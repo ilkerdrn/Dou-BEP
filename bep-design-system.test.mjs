@@ -186,3 +186,23 @@ test('operations and acceptance pages preserve controls and link to local sectio
  assert.match(css,/\.bep-accept-page/);
  assert.match(css,/\.bep-workflow-links a:first-child/);
 });
+
+
+test('document import and accessibility checklist keep their functional controls and anchor targets',()=>{
+ for(const [file,cssClass,anchors,controls] of [
+  ['exam-source-import.html','bep-import-ux',['source-setup','source-result'],['source-file','source-preview','source-confirm','source-save']],
+  ['accessibility-check.html','bep-audit-ux',['pilot-env-title','pilot-summary-title','pilot-checks-title','pilot-rule-title'],['pilot-reader','pilot-progress','checks','pilot-export-json','pilot-import-json']]
+ ]){
+  const html=read('./'+file);
+  assert.match(html,/class="bep-task-shortcuts"/);
+  assert.ok(html.includes(cssClass),file+' missing V3 page scope');
+  for(const id of anchors){
+   assert.ok(html.includes('id="'+id+'"'),file+' lost anchor '+id);
+   assert.ok(html.includes('href="#'+id+'"'),file+' lost shortcut '+id);
+  }
+  for(const id of controls)assert.ok(html.includes('id="'+id+'"'),file+' lost control '+id);
+ }
+ const css=read('./bep-design-system.css');
+ assert.match(css,/\.bep-import-ux/);
+ assert.match(css,/\.bep-audit-ux/);
+});
