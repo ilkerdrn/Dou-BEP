@@ -227,3 +227,28 @@ test('pilot and BEP goal import provide focused navigation without losing contro
  assert.match(css,/\.bep-pilot-ux/);
  assert.match(css,/\.bep-goals-ux/);
 });
+
+
+test('offline reader and speech laboratories preserve their controls and skip targets',()=>{
+ const labs=[
+  ['dou-reader-demo.html',['free-text-lab','reader-title','synth-title'],['free-text-input','free-text-rate']],
+  ['dou-speech-phoneme.html',['ident-title','phoneme-matrix'],['phoneme-play','phoneme-choice-0']],
+  ['dou-speech-pool.html',['pool-files','pool-results'],['pool-analyze','pool-download']],
+  ['dou-speech-listening.html',['study-title','study-export'],['play-A','play-B']],
+  ['dou-speech-intelligibility.html',['rec-protocol','rec-breakdown-area','audit-heading'],['rec-play','rec-choices']]
+ ];
+ for(const [file,targets,controls] of labs){
+  const html=read('./'+file);
+  assert.match(html,/class="dou-admin-standalone bep-speech-ux"/);
+  assert.match(html,/class="bep-lab-shortcuts"/);
+  for(const id of targets){
+   assert.ok(html.includes('id="'+id+'"'),file+' missing destination '+id);
+   assert.ok(html.includes('href="#'+id+'"'),file+' missing shortcut '+id);
+  }
+  for(const id of controls) assert.ok(html.includes('id="'+id+'"'),file+' missing control '+id);
+  const skip=html.match(/class="dou-skip" href="#([^"]+)"/);
+  assert.ok(skip&&html.includes('id="'+skip[1]+'"'),file+' skip link must resolve');
+ }
+ const css=read('./bep-design-system.css');
+ assert.match(css,/body\.dou-admin-standalone\.bep-speech-ux/);
+});
