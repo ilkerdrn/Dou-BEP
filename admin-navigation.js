@@ -15,7 +15,18 @@
   toggle.setAttribute('aria-expanded',String(next));
   if(next&&field)field.focus();
  });
- function normalize(value){return String(value||'').toLocaleLowerCase('tr-TR').normalize('NFKC').trim();}
+ // Search is accent tolerant so typing "sinav", "ogretmen" or "donem"
+ // still finds Turkish navigation labels without changing their visible spelling.
+ function normalize(value){
+  return String(value||'')
+   .toLocaleLowerCase('tr-TR')
+   .normalize('NFKD')
+   .replace(/[\u0300-\u036f]/g,'')
+   .replace(/ı/g,'i')
+   .replace(/ç/g,'c').replace(/ğ/g,'g').replace(/ö/g,'o')
+   .replace(/ş/g,'s').replace(/ü/g,'u')
+   .replace(/\s+/g,' ').trim();
+ }
  const groups=[...panel.querySelectorAll('.dou-nav-group')];
  // Native disclosure keeps every menu link in the DOM (including without JS).
  // The active group and the primary workspace group start expanded.
