@@ -18,6 +18,10 @@ function actorView(){
  // CSS hides the full menu immediately on first paint; the DOM state follows auth.
  const signedIn=active&&!restricted;
  document.body.dataset.portalAuth=signedIn?'authenticated':'guest';
+ // Sidebar administration links follow the same server-verified role as panels.
+ document.documentElement.dataset.navRole=signedIn?state.actor.role:'';
+ document.dispatchEvent(new CustomEvent('dou-nav-role',{detail:{role:signedIn?state.actor.role:null}}));
+
  const navigation=document.querySelector('.dou-nav');
  if(navigation)navigation.inert=!signedIn;
  $('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
@@ -57,11 +61,21 @@ $('revoke-other-sessions').addEventListener('click',async()=>{
  if(!confirm('Bu cihaz dışındaki tüm oturumlar kapatılsın mı?'))return;
  try{const r=await api('/security/sessions/others',{method:'DELETE'});await refreshSessions();feedback(`${r.revoked} diğer oturum kapatıldı.`);}catch(err){feedback(err.message,true);}
 });
-async function init(){try{const s=await api('/session');state.actor=s.authenticated?s.member:null;state.csrf=s.csrf||null;state.mfaSetupRequired=!!(s.authenticated&&s.mfaSetupRequired===true);actorView();if(state.actor){await refreshMfa();if(!state.mfaSetupRequired){await refresh();await refreshSessions();}}}catch(err){actorView();feedback(err.message,true);}}
+function focusInstitutionalSection(){
+ const id=location.hash.slice(1);
+ if(!['admin-panel','audit-panel'].includes(id))return;
+ const section=$(id);
+ if(!section||section.hidden)return;
+ if(id==='admin-panel'&&state.actor?.role!=='admin')return;
+ if(id==='audit-panel'&&!['admin','coordinator','reviewer'].includes(state.actor?.role))return;
+ requestAnimationFrame(()=>{section.scrollIntoView({block:'start'});section.focus({preventScroll:true});});
+}
+window.addEventListener('hashchange',focusInstitutionalSection);
+async function init(){try{const s=await api('/session');state.actor=s.authenticated?s.member:null;state.csrf=s.csrf||null;state.mfaSetupRequired=!!(s.authenticated&&s.mfaSetupRequired===true);actorView();if(state.actor){await refreshMfa();if(!state.mfaSetupRequired){await refresh();await refreshSessions();focusInstitutionalSection();}}}catch(err){actorView();feedback(err.message,true);}}
 async function refreshMfa(){if(!state.actor)return;const s=await api('/security/mfa');$('mfa-status').textContent=s.enabled?`MFA etkin · ${s.recoveryRemaining} kurtarma kodu kullanılabilir.`:(s.configured?'MFA henüz etkin değil.':'Sunucu MFA anahtarı yapılandırılmamış.');$('mfa-setup-form').hidden=s.enabled||!s.configured;$('mfa-disable-form').hidden=!s.enabled||state.mfaPolicyRequired;
  if(state.actor.role==='admin'&&!state.mfaSetupRequired){const policy=await api('/security/mfa/policy');state.mfaPolicyRequired=policy.required;$('mfa-policy-status').textContent=policy.required?'Tüm çalışanlar için MFA zorunlu.':'MFA isteğe bağlı. Kurumsal zorunluluk için önce kendi MFA hesabınızı etkinleştirin.';$('mfa-policy-form').querySelector('[name=required]').value=String(policy.required);$('mfa-disable-form').hidden=!s.enabled||policy.required;}
  }
-function applyLogin(r){state.actor=r.member;state.csrf=r.csrf;state.mfaSetupRequired=r.mfaSetupRequired===true;state.mfaChallenge=null;$('mfa-login-form').hidden=true;$('login-form').hidden=false;actorView();feedback(state.mfaSetupRequired?'Kurum MFA kurulumu zorunlu. Yalnızca güvenlik kurulumu açık.':'Kurum oturumu açıldı.');return state.mfaSetupRequired?refreshMfa():Promise.all([refresh(),refreshSessions(),refreshMfa()]);}
+function applyLogin(r){state.actor=r.member;state.csrf=r.csrf;state.mfaSetupRequired=r.mfaSetupRequired===true;state.mfaChallenge=null;$('mfa-login-form').hidden=true;$('login-form').hidden=false;actorView();feedback(state.mfaSetupRequired?'Kurum MFA kurulumu zorunlu. Yalnızca güvenlik kurulumu açık.':'Kurum oturumu açıldı.');return state.mfaSetupRequired?refreshMfa():Promise.all([refresh(),refreshSessions(),refreshMfa()]).then(focusInstitutionalSection);}
 $('mfa-login-form').addEventListener('submit',async e=>{e.preventDefault();try{const code=new FormData(e.currentTarget).get('code');const r=await api('/login/mfa',{method:'POST',body:{challenge:state.mfaChallenge,code}});e.currentTarget.reset();await applyLogin(r);}catch(err){feedback(err.message,true);}});
 $('mfa-login-cancel').addEventListener('click',()=>{state.mfaChallenge=null;$('mfa-login-form').reset();$('mfa-login-form').hidden=true;$('login-form').hidden=false;feedback('Doğrulama iptal edildi.');});
 $('mfa-setup-form').addEventListener('submit',async e=>{e.preventDefault();try{const secret=await api('/security/mfa/setup',{method:'POST',body:{password:new FormData(e.currentTarget).get('password')}});$('mfa-secret').textContent=secret.secret;$('mfa-setup-view').hidden=false;e.currentTarget.reset();feedback('Kurulum sırrı tek sefer gösterildi. Kodla etkinleştirin.');}catch(err){feedback(err.message,true);}});
