@@ -102,9 +102,10 @@ export function createDecisionRepository(db,{StoreError,log}){
      .all(actor.tenantId,data.term,data.courseCode,data.examLabel,coordinationId)
    :db.prepare(`SELECT id,starts_at,duration_minutes,exam_id,exam_revision FROM exam_coordination
      WHERE tenant_id=? AND term=? AND course_code=? AND exam_label=?
-     ORDER BY starts_at ASC LIMIT 2`).all(actor.tenantId,data.term,data.courseCode,data.examLabel);
+     ORDER BY starts_at ASC LIMIT 25`).all(actor.tenantId,data.term,data.courseCode,data.examLabel);
   if(matches.length!==1)return {ready:false,reason:coordinationId?'session_mismatch':matches.length?'ambiguous_session':'session_missing',
-   message:coordinationId?'Seçilen oturum kararın dönemi, dersi ve sınavıyla eşleşmiyor.':matches.length?'Bu ders ve sınav için birden fazla oturum var. Süreyi hesaplamak için koordinasyon oturumunu açıkça seçin.':'Bu karar için eşleşen sınav koordinasyon oturumu yok.'};
+   message:coordinationId?'Seçilen oturum kararın dönemi, dersi ve sınavıyla eşleşmiyor.':matches.length?'Bu ders ve sınav için birden fazla oturum var. Süreyi hesaplamak için koordinasyon oturumunu açıkça seçin.':'Bu karar için eşleşen sınav koordinasyon oturumu yok.',
+   ...(!coordinationId&&matches.length?{choices:matches.map(m=>({id:m.id,startsAt:m.starts_at,baseMinutes:m.duration_minutes}))}:{})};
   const sitting=matches[0];
   if(!sitting.exam_id||!Number.isInteger(sitting.exam_revision))
    return {ready:false,reason:'exam_unmapped',message:'Koordinasyon oturumu onaylı bir sınav sürümüne bağlı değil.'};
