@@ -57,7 +57,8 @@
     "design:v4:acceptance": "npm run design:v4:check && npm run ui:browser",
     "design:v4:inventory": "node tools/v4-css-migration-audit.mjs --strict",
     "design:v4:css-probe": "node tools/browser-ui-acceptance.mjs --css-probe",
-    "design:v4:without-v3": "node tools/browser-ui-acceptance.mjs --without-v3"
+    "design:v4:without-v3": "node tools/browser-ui-acceptance.mjs --without-v3",
+    "design:v4:parity": "node tools/browser-ui-acceptance.mjs --css-parity"
   },
   "engines": {
     "node": ">=22.13"
