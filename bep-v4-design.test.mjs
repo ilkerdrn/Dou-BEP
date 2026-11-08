@@ -426,3 +426,13 @@ test('V4 preflight next-action layout and final output trace remain V3-independe
  assert.ok(browser.includes('#exam-preflight-body>.preflight-next-action'));
  assert.match(browser,/V4 CSS visual parity gate FAILED/);
 });
+
+
+test('V4 final output section and related imports preserve their measured disclosure geometry',()=>{
+ const css=read('./bep-v4.css');
+ assert.match(css,/#exam-workspace #exam-output-section\{\s*margin-top:20px!important/);
+ assert.match(css,/#exam-workspace \.exam-related-imports\{\s*margin:16px 0 0!important/);
+ assert.match(css,/#exam-workspace \.exam-related-imports>summary\{\s*cursor:pointer!important/);
+ assert.match(css,/#exam-workspace \.exam-related-imports\[open\]\{\s*padding-bottom:12px!important/);
+ assert.match(css,/#exam-workspace \.exam-related-imports>summary:focus-visible\{\s*outline:3px solid var\(--v4-focus\)!important/);
+});
