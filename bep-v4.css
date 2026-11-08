@@ -568,3 +568,66 @@ body[data-design-version="4"] #exam-workspace :is(#exam-main-fields,#exam-goal-s
   flex:0 0 auto!important;
  }
 }
+
+
+/* V4 cascade repair: old V3 selectors include .institution-page.campus-layout
+ * and !important. A later stylesheet is not enough unless V4 also wins
+ * specificity. Keep this narrow to the actual campus navigation shell.
+ */
+body.institution-page.campus-layout[data-design-version="4"],
+body.institution-page:not(.campus-layout)[data-design-version="4"],
+body.dou-admin-standalone[data-design-version="4"]{
+ --bep-brand:var(--v4-primary);
+ --bep-brand-hover:var(--v4-primary-hover);
+ --bep-bg:var(--v4-bg);
+ --bep-surface:var(--v4-surface);
+ --bep-surface-alt:#faf9fa;
+ --bep-text:var(--v4-text);
+ --bep-muted:var(--v4-muted);
+ --bep-border:var(--v4-border);
+ --bep-focus:var(--v4-focus);
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav{
+ background:#fff!important;
+ background-image:none!important;
+ background-color:#fff!important;
+ color:var(--v4-text)!important;
+ border-right:1px solid var(--v4-border)!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav .dou-nav-link.current,
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav .dou-nav-link[aria-current="page"],
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav .dou-nav-link.current,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav .dou-nav-link[aria-current="page"],
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-nav-link.current,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-nav-link[aria-current="page"]{
+ background:var(--v4-primary)!important;
+ background-image:none!important;
+ color:#fff!important;
+ border:1px solid var(--v4-primary)!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav .dou-create,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav .dou-create,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav .dou-create{
+ background:var(--v4-primary)!important;
+ background-image:none!important;
+ color:#fff!important;
+ border-color:var(--v4-primary)!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .portal-btn.primary{
+ background:var(--v4-primary)!important;
+ background-image:none!important;
+ border-color:var(--v4-primary)!important;
+ color:#fff!important;
+ box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-step[aria-current="step"]{
+ background:var(--v4-primary)!important;
+ background-image:none!important;
+ border-color:var(--v4-primary)!important;
+ color:#fff!important;
+}
