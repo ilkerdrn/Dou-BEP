@@ -98,7 +98,7 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/pilot'&&req.method==='POST'){
     const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId)});return true;
    }
-   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv))?$/);
+   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|recover|review|review.csv))?$/);
    if(pilotId){
     if(!pilotId[2]&&req.method==='GET'){response(res,200,{item:store.pilotView(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review'&&req.method==='GET'){response(res,200,{review:store.pilotReviewGet(actor,pilotId[1])});return true;}
@@ -110,6 +110,7 @@ export function createApiHandler(store,{port=4173}={}){
      res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="bep-anonim-degerlendirme.csv"',
       'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(csv);return true;
     }
+    if(pilotId[2]==='recover'&&req.method==='POST'){response(res,201,{item:store.pilotRecoverIssue(actor,pilotId[1])});return true;}
     if(pilotId[2]==='revoke'&&req.method==='POST'){response(res,200,store.pilotRevoke(actor,pilotId[1]));return true;}
     if(!pilotId[2]&&req.method==='DELETE'){response(res,200,store.pilotDelete(actor,pilotId[1]));return true;}
    }
