@@ -174,3 +174,23 @@ test('V4 provides opt-in isolated CSS retirement comparison before removing V3 l
   assert.match(read('./'+page),/href="\/admin-design-v3\.css"/,'Do not remove before comparison');
  }
 });
+
+
+test('V4 owns dashboard and exam geometry before the V3 stylesheet can be retired',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ for(const selector of [
+  '.campus-dashboard-stage .dashboard-welcome',
+  '.campus-dashboard-stage>.campus-dashboard-main>.dashboard-shortcuts',
+  '.campus-dashboard-stage .dashboard-shortcut',
+  '#exam-workspace .exam-workbench-heading',
+  '#exam-workspace .workflow-nav'
+ ])assert.ok(css.includes(selector),'Explicit V4 geometry rule missing: '+selector);
+ assert.match(css,/body\.institution-page\.campus-layout\[data-design-version="4"\] \.portal-topbar/);
+ assert.match(css,/@media\(min-width:1121px\)/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(265px,310px\)!important/);
+ assert.match(browser,/BROWSER V4 CSS RETIREMENT PROBE/);
+ // Preserve V3 in markup until the real Edge toggle has measured zero remaining differences.
+ for(const page of ['institution.html','institutional-exams.html'])
+  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+});
