@@ -86,19 +86,25 @@ export function createDecisionRepository(db,{StoreError,log}){
    .run(Date.now(),id,actor.tenantId,revision);event(actor,select(actor,id),'revoked');db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
   return view(select(actor,id));
  }
- function durationPreview(actor,id){
+ function durationPreview(actor,id,coordinationId=null){
   permit(actor,'accommodation.view');
+  if(coordinationId!==null&&(typeof coordinationId!=='string'||!ID.test(coordinationId)))
+   error('bad_id','Geçersiz koordinasyon oturumu kimliği.',400);
   const decision=select(actor,id),data=rowData(decision);
   if(decision.status!=='approved'||!decision.approved_at||!decision.approved_by||
      decision.approved_sha256!==decision.content_sha256||digest(data)!==decision.content_sha256)
    return {ready:false,reason:'decision_not_approved',message:'Bu kararın onayı veya içerik bütünlüğü doğrulanamadı. Süre planı uygulanamaz.'};
-  // Multiple sittings of the same exam are ambiguous. Do not silently choose a
-  // room/time and do not reveal other candidates or personal information.
-  const matches=db.prepare(`SELECT id,starts_at,duration_minutes,exam_id,exam_revision FROM exam_coordination
-   WHERE tenant_id=? AND term=? AND course_code=? AND exam_label=?
-   ORDER BY starts_at ASC LIMIT 2`).all(actor.tenantId,data.term,data.courseCode,data.examLabel);
-  if(matches.length!==1)return {ready:false,reason:matches.length?'ambiguous_session':'session_missing',
-   message:matches.length?'Aynı ders ve sınav için birden fazla oturum var. Önce oturum eşleştirmesini netleştirin.':'Bu karar için eşleşen sınav koordinasyon oturumu yok.'};
+  // Multiple sittings are never auto-selected. An explicitly selected sitting
+  // must match tenant, term, course and exam label exactly.
+  const matches=coordinationId
+   ?db.prepare(`SELECT id,starts_at,duration_minutes,exam_id,exam_revision FROM exam_coordination
+     WHERE tenant_id=? AND term=? AND course_code=? AND exam_label=? AND id=?`)
+     .all(actor.tenantId,data.term,data.courseCode,data.examLabel,coordinationId)
+   :db.prepare(`SELECT id,starts_at,duration_minutes,exam_id,exam_revision FROM exam_coordination
+     WHERE tenant_id=? AND term=? AND course_code=? AND exam_label=?
+     ORDER BY starts_at ASC LIMIT 2`).all(actor.tenantId,data.term,data.courseCode,data.examLabel);
+  if(matches.length!==1)return {ready:false,reason:coordinationId?'session_mismatch':matches.length?'ambiguous_session':'session_missing',
+   message:coordinationId?'Seçilen oturum kararın dönemi, dersi ve sınavıyla eşleşmiyor.':matches.length?'Bu ders ve sınav için birden fazla oturum var. Süreyi hesaplamak için koordinasyon oturumunu açıkça seçin.':'Bu karar için eşleşen sınav koordinasyon oturumu yok.'};
   const sitting=matches[0];
   if(!sitting.exam_id||!Number.isInteger(sitting.exam_revision))
    return {ready:false,reason:'exam_unmapped',message:'Koordinasyon oturumu onaylı bir sınav sürümüne bağlı değil.'};
