@@ -194,3 +194,17 @@ test('V4 owns dashboard and exam geometry before the V3 stylesheet can be retire
  for(const page of ['institution.html','institutional-exams.html'])
   assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
 });
+
+
+test('V4 can exercise existing browser acceptance with V3 disabled only in the disposable test DOM',()=>{
+ const code=read('./tools/browser-ui-acceptance.mjs');
+ const scripts=JSON.parse(read('./package.json')).scripts;
+ assert.equal(scripts['design:v4:without-v3'],'node tools/browser-ui-acceptance.mjs --without-v3');
+ assert.match(code,/process\.argv\.includes\('--without-v3'\)/);
+ assert.match(code,/BROWSER V4 WITHOUT V3/);
+ assert.match(code,/el\.disabled=true/);
+ assert.match(code,/requestAnimationFrame/);
+ for(const page of ['institution.html','institutional-exams.html']){
+  assert.match(read('./'+page),/href="\/admin-design-v3\.css"/);
+ }
+});
