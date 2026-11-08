@@ -139,3 +139,19 @@ test('V4 coordination removes transparent hero and checks current palette in bro
  assert.match(browser,/coordinationVisual\.headingColor==='rgb\(32, 36, 49\)'/);
  assert.doesNotMatch(browser,/BROWSER COORDINATION V3 CONTRAST/);
 });
+
+
+test('V4 shortcut branding excludes old V3 primary color across migrated modules',()=>{
+ const css=read('./bep-v4.css');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ for(const selector of ['.bep-workflow-links a:first-child','.bep-section-nav a:first-child',
+   '.bep-task-shortcuts a:first-child','.bep-lab-shortcuts a:first-child']){
+  assert.ok(css.includes(selector),'V4 primary shortcut missing: '+selector);
+ }
+ assert.match(css,/background:var\(--v4-primary\)!important/);
+ assert.match(browser,/lab\.firstBg==='rgb\(122, 31, 43\)'/);
+ assert.match(browser,/layout\.firstBg==='rgb\(122, 31, 43\)'/);
+ assert.match(browser,/flow\.firstBg==='rgb\(122, 31, 43\)'/);
+ assert.match(browser,/task\.accent==='rgb\(122, 31, 43\)'/);
+ assert.doesNotMatch(browser,/\['rgb\(142, 20, 40\)','rgb\(122, 31, 43\)'\]/);
+});
