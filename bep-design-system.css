@@ -12,10 +12,11 @@ body.institution-page.campus-layout .portal-main{
  min-width:0;
  background:var(--bep-bg)!important;
 }
+/* Full-width container is finalized by the responsive V3 rules below.
+   Avoid the obsolete 1440px centering constraint in this foundational layer. */
 body.institution-page.campus-layout .portal-content{
  width:100%;
- max-width:1440px!important;
- margin-inline:auto!important;
+ min-width:0;
 }
 body.institution-page.campus-layout .portal-card,
 body.institution-page.campus-layout .campus-summary-card,
@@ -79,9 +80,6 @@ body.institution-page.campus-layout [hidden]{
  display:none!important;
 }
 /* Guest screens share a calm backdrop and prioritize a legible sign-in form. */
-body.institution-page.campus-layout[data-portal-auth="guest"] .portal-content{
- max-width:1120px!important;
-}
 body.institution-page.campus-layout[data-portal-auth="guest"] #login-view.portal-login-card{
  border:1px solid var(--bep-border)!important;
  border-radius:22px!important;
