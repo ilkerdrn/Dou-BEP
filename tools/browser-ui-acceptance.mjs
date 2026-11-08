@@ -200,6 +200,14 @@ async function main(){
  })()`);
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Authenticated workspace');
  pass(await evaluate('!document.getElementById("workspace-view").hidden'),'Authenticated dashboard visible');
+ const dashboardWidth=await evaluate(`(function(){
+  const main=document.querySelector('.portal-main').getBoundingClientRect();
+  const content=document.querySelector('.portal-content').getBoundingClientRect();
+  return {main:Math.round(main.width),content:Math.round(content.width)};
+ })()`);
+ console.log('BROWSER DASHBOARD FULL-WIDTH: '+JSON.stringify(dashboardWidth));
+ pass(dashboardWidth.content>=dashboardWidth.main-2,'Dashboard content occupies available main column');
+
  pass(await evaluate('Boolean(document.getElementById("workspace-view").compareDocumentPosition(document.getElementById("mfa-panel")) & Node.DOCUMENT_POSITION_FOLLOWING)'),'Primary teacher workspace precedes optional MFA settings');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
@@ -232,6 +240,14 @@ async function main(){
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
  pass(await evaluate('document.body.dataset.examAuth==="authenticated"'),'Exam editor authorizes fixture session');
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
+ const examWidth=await evaluate(`(function(){
+  const main=document.querySelector('.portal-main').getBoundingClientRect();
+  const content=document.querySelector('.portal-content').getBoundingClientRect();
+  return {main:Math.round(main.width),content:Math.round(content.width)};
+ })()`);
+ console.log('BROWSER EXAM FULL-WIDTH: '+JSON.stringify(examWidth));
+ pass(examWidth.content>=examWidth.main-2,'Exam workspace occupies available main column');
+
  pass(await evaluate('getComputedStyle(document.querySelector(".exam-hero")).display==="none"'),'Promotional hero hidden in editor');
  pass(await evaluate('document.getElementById("workflow-next")!==null'),'Step pager exists');
  pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Exam editor shows authenticated institution profile');
