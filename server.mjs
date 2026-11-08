@@ -170,6 +170,12 @@ export function createServer(){return http.createServer(async(req,res)=>{
   if(![`localhost:${port}`,`127.0.0.1:${port}`,'localhost','127.0.0.1'].includes(req.headers.host)){
    res.writeHead(403).end('Host rejected');return;
   }
+  // One canonical public entry point: use the V3 institutional experience.
+  // Preserve /index.html and its source for legacy workflows until migrated.
+  if(path==='/'){
+   res.writeHead(302,{'Location':'/kurum',...securityHeaders});
+   res.end();return;
+  }
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
   try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}
