@@ -1196,10 +1196,6 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
 /* Phase 19 — measured nested exam drift, using the child metrics probe.
  * Copy layout-critical dimensions rather than obsolete V3 colors or shadows.
  */
-body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-subheading{
- padding-bottom:8px!important;
- border-bottom:1px solid var(--v4-border)!important;
-}
 body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-question-jump{
  display:flex!important;
  align-items:center!important;
