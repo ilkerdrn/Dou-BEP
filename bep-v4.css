@@ -1162,3 +1162,32 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
  margin-inline:14px!important;
  max-width:calc(100% - 28px)!important;
 }
+
+
+/* Phase 17 — the measured 13px editor-start offset comes from the collapsed
+ * exam overview, whose outside margin was still supplied by admin V3.
+ * Restore the actual flow instead of applying compensating transforms.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-overview{
+ margin:0 0 15px!important;
+ overflow:hidden!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-overview>summary{
+ font-size:13px!important;
+ font-weight:750!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-overview>summary span{
+ font-size:12px!important;
+ font-weight:450!important;
+ margin-left:8px!important;
+ color:var(--v4-muted)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace :is(.exam-main-fields,.exam-two){
+ gap:13px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>summary{
+ background:#f7f9fd!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>summary:hover{
+ background:#f3f4f6!important;
+}
