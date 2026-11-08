@@ -1452,3 +1452,16 @@ body.institution-page.campus-layout[data-design-version="4"][data-portal-auth="a
   padding:17px 18px!important;
  }
 }
+
+
+/* Phase 28 — account administration is shown in the shared sidebar only
+ * after an authenticated role check. CSS must never reveal a hidden group
+ * or hidden restricted link even if a legacy flex/display rule wins. */
+body[data-design-version="4"] .dou-nav #dou-nav-management[hidden],
+body[data-design-version="4"] .dou-nav #dou-nav-management .dou-nav-link[hidden]{
+ display:none!important;
+}
+body[data-design-version="4"] #admin-panel,
+body[data-design-version="4"] #audit-panel{
+ scroll-margin-top:88px;
+}
