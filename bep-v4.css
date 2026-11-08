@@ -1281,3 +1281,14 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
   min-width:0!important;
  }
 }
+
+
+/* Phase 22 — V3-free section heading, now safe after Phase 20 restored
+ * horizontal question actions. Browser trace showed 68 -> 59px and
+ * 50 -> 41px: exactly the missing 8px padding + 1px border.
+ * Do not change the heading's flex children or intrinsic typography.
+ */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-subheading{
+ padding-bottom:8px!important;
+ border-bottom:1px solid var(--v4-border)!important;
+}
