@@ -554,7 +554,10 @@ async function main(){
   const toggle=document.getElementById('workflow-view-toggle');
   const initial=document.getElementById('exam-main-fields');
   const next=document.getElementById('exam-goal-section');
-  return {active:editor.classList.contains('exam-guided-view'),
+  return {positions:editor.dataset.workflowStagePositions||null,
+   valid:editor.dataset.workflowStageValid||null,
+   toggleHidden:toggle.hidden,
+   active:editor.classList.contains('exam-guided-view'),
    togglePressed:toggle.getAttribute('aria-pressed')==='true',
    currentVisible:getComputedStyle(initial).display!=='none',
    futureHidden:!!next.closest('[data-workflow-hidden="true"]')};
