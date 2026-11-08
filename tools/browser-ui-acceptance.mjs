@@ -161,6 +161,9 @@ async function main(){
     cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),
     cardLeft:Math.round(card.left),cardRight:Math.round(card.right),
     cardTop:Math.round(card.top),radius:getComputedStyle(document.getElementById('login-view')).borderTopLeftRadius,
+    viewportClientWidth:document.documentElement.clientWidth,
+    horizontalScroll:document.documentElement.scrollWidth,
+    bodyScrollHeight:document.documentElement.scrollHeight,
     columns:getComputedStyle(document.getElementById('login-view')).gridTemplateColumns};
  })()`);
  console.log('BROWSER FULL-VIEWPORT LOGIN: '+JSON.stringify(fullScreenLogin));
@@ -171,6 +174,8 @@ async function main(){
  pass(fullScreenLogin.cardLeft===0&&Math.abs(fullScreenLogin.cardRight-fullScreenLogin.screenWidth)<=2,'Login layout reaches both viewport edges');
  pass(fullScreenLogin.cardTop===0&&fullScreenLogin.radius==='0px','Login begins at top without outer rounded card');
  pass(fullScreenLogin.cardHeight>=fullScreenLogin.screenHeight,'Login panels cover full viewport height');
+ pass(fullScreenLogin.horizontalScroll<=fullScreenLogin.viewportClientWidth+1,'Full-screen login has no horizontal overflow');
+ pass(fullScreenLogin.cardTop===0,'Full-screen login starts at top edge');
  await evaluate(`(function(){
   const form=document.getElementById('login-form');
   form.elements.tenantId.value=${JSON.stringify(tenant)};
