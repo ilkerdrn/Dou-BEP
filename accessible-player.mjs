@@ -153,15 +153,28 @@ function speakText(text,description){if(!speakerSupported){sayStatus('Bu tarayı
  utterance=u;phase='playing';$('pause').disabled=false;$('pause').textContent='Duraklat';synth.speak(u);sayStatus(description+' okunuyor.');
 }
 function speak(){const q=data.questions[index];if(q.audioAllowed===false){sayStatus('Bu soru için uygulama içi sesli okuma öğretmen tarafından kapatılmıştır. Metni ekran okuyucu yine okuyabilir.');return;}speakText(readText(q),'Soru '+q.number);}
-function optionControl(q,o){const lbl=element('label',{class:'answer-choice'});const input=element('input',{type:'radio',name:'response-'+q.id,value:o.id});input.checked=responses[q.id]===o.id;input.addEventListener('change',()=>{responses[q.id]=o.id;sayStatus('Seçim kaydedildi, yalnızca bu tarayıcı sekmesinde geçerli.');});lbl.append(input,element('span',{},o.id+' — '+o.label));return lbl;}
+function answered(q){
+ const value=responses[q.id];
+ if(q.type==='matching')return q.left.every(item=>typeof value?.[item.id]==='string'&&value[item.id].trim());
+ return typeof value==='string'&&value.trim().length>0;
+}
+function updateReview(){
+ const remaining=data.questions.filter(q=>!answered(q));
+ const done=data.questions.length-remaining.length;
+ $('answer-progress').textContent=done+' / '+data.questions.length+' soru yanıtlandı. '+remaining.length+' soru boş.';
+ $('jump-unanswered').disabled=remaining.length===0;
+ $('jump-unanswered').textContent=remaining.length?'İlk boş soruya git':'Boş soru kalmadı';
+ $('save-answers').textContent=remaining.length?'Yanıtları TXT indir ('+remaining.length+' boş)':'Yanıtları TXT olarak indir';
+}
+function optionControl(q,o){const lbl=element('label',{class:'answer-choice'});const input=element('input',{type:'radio',name:'response-'+q.id,value:o.id});input.checked=responses[q.id]===o.id;input.addEventListener('change',()=>{responses[q.id]=o.id;updateReview();sayStatus('Seçim kaydedildi, yalnızca bu tarayıcı sekmesinde geçerli.');});lbl.append(input,element('span',{},o.id+' — '+o.label));return lbl;}
 function render(){stop();const q=data.questions[index];$('progress').textContent='Soru '+(index+1)+' / '+data.questions.length;
  $('back').disabled=index===0;$('next').disabled=index===data.questions.length-1;
  $('prompt').textContent=q.prompt;$('question-area').classList.toggle('large-target',q.largeTargets===true);$('listen').disabled=q.audioAllowed===false;$('audio-rule').textContent=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır. Ekran okuyucu ayrı çalışabilir.':'';$('written-cue').hidden=!q.writtenCue;$('written-cue').textContent=q.writtenCue?'Ek yazılı yönerge: '+q.writtenCue:'';$('visual').hidden=!q.visualDescription;$('visual').textContent=q.visualDescription?'Görsel betimlemesi: '+q.visualDescription:'';
  const a=$('answer');a.replaceChildren();
  if(q.options){const fs=element('fieldset');fs.append(element('legend',{},'Yanıtınızı seçin'));q.options.forEach(o=>fs.append(optionControl(q,o)));a.append(fs);}
- else if(q.type==='short'){const lbl=element('label',{},'Yanıtınız (bu oturumda geçicidir)');const ta=element('textarea',{rows:'4',autocomplete:'off',spellcheck:'false'});ta.value=responses[q.id]||'';ta.addEventListener('input',()=>{responses[q.id]=ta.value;});lbl.append(ta);a.append(lbl);}
- else if(q.type==='matching'){const fs=element('fieldset');fs.append(element('legend',{},'Her satır için ikinci listeden bir seçenek seçin'));for(const l of q.left){const lbl=element('label',{class:'match-row'},l.id+'. '+l.label);const s=element('select');s.append(element('option',{value:''},'Bir yanıt seçin'));for(const r of q.right)s.append(element('option',{value:r.id},r.id+'. '+r.label));s.value=responses[q.id]?.[l.id]||'';s.addEventListener('change',()=>{responses[q.id]??={};responses[q.id][l.id]=s.value;});lbl.append(s);fs.append(lbl);}a.append(fs);}
- renderRecording();$('prompt').focus();sayStatus('Soru '+(index+1)+' açıldı. Soruyu dinlemek için Sesli oku düğmesini seçin.');
+ else if(q.type==='short'){const lbl=element('label',{},'Yanıtınız (bu oturumda geçicidir)');const ta=element('textarea',{rows:'4',autocomplete:'off',spellcheck:'false'});ta.value=responses[q.id]||'';ta.addEventListener('input',()=>{responses[q.id]=ta.value;updateReview();});lbl.append(ta);a.append(lbl);}
+ else if(q.type==='matching'){const fs=element('fieldset');fs.append(element('legend',{},'Her satır için ikinci listeden bir seçenek seçin'));for(const l of q.left){const lbl=element('label',{class:'match-row'},l.id+'. '+l.label);const s=element('select');s.append(element('option',{value:''},'Bir yanıt seçin'));for(const r of q.right)s.append(element('option',{value:r.id},r.id+'. '+r.label));s.value=responses[q.id]?.[l.id]||'';s.addEventListener('change',()=>{responses[q.id]??={};responses[q.id][l.id]=s.value;updateReview();});lbl.append(s);fs.append(lbl);}a.append(fs);}
+ renderRecording();updateReview();$('prompt').focus();sayStatus('Soru '+(index+1)+' açıldı. Soruyu dinlemek için Sesli oku düğmesini seçin.');
 }
 $('listen').addEventListener('click',speak);
 $('read-intro').addEventListener('click',()=>speakText(data.title+'. '+data.subject+'. '+(data.instruction||'Her soruyu dikkatle dinleyiniz.'),'Sınav yönergesi'));
@@ -169,6 +182,11 @@ $('stop').addEventListener('click',()=>{stop();sayStatus('Okuma durduruldu.');})
 $('pause').addEventListener('click',()=>{if(!speakerSupported)return;if(phase==='playing'){synth.pause();phase='paused';$('pause').textContent='Devam et';sayStatus('Okuma duraklatıldı.');}else if(phase==='paused'){synth.resume();phase='playing';$('pause').textContent='Duraklat';sayStatus('Okuma devam ediyor.');}});
 $('back').addEventListener('click',()=>{if(index>0){index--;render();}});
 $('next').addEventListener('click',()=>{if(index<data.questions.length-1){index++;render();}});
+$('jump-unanswered').addEventListener('click',()=>{
+ const first=data.questions.findIndex(q=>!answered(q));
+ if(first<0)return;
+ index=first;render();sayStatus('İlk boş soru: '+(index+1)+'.');
+});
 $('font').addEventListener('change',()=>{document.documentElement.style.setProperty('--text-size',$('font').value+'px');});
 $('contrast').addEventListener('change',()=>{document.body.classList.toggle('high-contrast',$('contrast').checked);});
 window.addEventListener('pagehide',()=>{stop();stopRecording(false);for(const key of [...recordings.keys()])revokeRecording(key);});
@@ -194,7 +212,8 @@ function answerLines(){
  return lines.join('\n');
 }
 $('save-answers').addEventListener('click',()=>{
- if(!confirm('Yanıtlarınızı yalnızca bu cihaza metin dosyası olarak indirmek istiyor musunuz? Dosya korunmuyor. Ad, kimlik veya sağlık bilgisi yazmayın.'))return;
+ const unanswered=data.questions.filter(q=>!answered(q)).length;
+ if(!confirm((unanswered?unanswered+' soru henüz boş. ':'')+'Yanıtlarınızı yalnızca bu cihaza metin dosyası olarak indirmek istiyor musunuz? Dosya korunmuyor. Ad, kimlik veya sağlık bilgisi yazmayın.'))return;
  const blob=new Blob(['\ufeff'+answerLines()],{type:'text/plain;charset=utf-8'});
  const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='anonim-sinav-yanitlari.txt';document.body.append(link);link.click();link.remove();
  setTimeout(()=>URL.revokeObjectURL(url),2000);sayStatus('Yanıt dosyası bu cihaza indirildi. Otomatik gönderim yapılmadı.');
@@ -228,6 +247,6 @@ export function generateAccessibleExamHtml(raw,{allowVoiceResponse=false}={}){
  <div class="toolbar"><button id="record-start" type="button" disabled>● Yanıtımı sesle kaydet</button><button type="button" class="secondary" id="record-stop" disabled>■ Kaydı bitir</button><button type="button" class="secondary" id="record-download" disabled>Ses kaydını indir</button><button type="button" class="secondary" id="record-delete" disabled>Ses kaydını sil</button></div>
  <p id="record-feedback" role="status" aria-live="polite"></p><audio id="record-audio" controls preload="none" hidden aria-label="Kendi yanıtımı dinle"></audio>
  </section><div class="navigation"><button type="button" class="secondary" id="back">← Önceki soru</button><button type="button" id="next">Sonraki soru →</button></div></section>
- <section class="card" aria-label="Yanıt dosyası ve gizlilik"><h2>Yanıtlarınızı kontrol edin</h2><p>Yazılı yanıtlar ve indirilmemiş ses kayıtları yalnızca bu sekmede geçici tutulur. İsteğe bağlı olarak şifresiz bir metin dosyasını bu cihaza indirebilirsiniz. Bu dosya kişisel bilgiler içerebilir; gerçek öğrenci verileriyle kullanmayın. Öğretmene otomatik gönderilmez.</p><div class="toolbar"><button type="button" id="save-answers">Yanıtları TXT olarak indir</button><button type="button" class="secondary" id="clear-answers">Yanıtları temizle</button></div></section>
+ <section class="card" aria-label="Yanıt dosyası ve gizlilik"><h2>Yanıtlarınızı kontrol edin</h2><p id="answer-progress" role="status" aria-live="polite" aria-atomic="true">Yanıt durumu hesaplanıyor.</p><button type="button" class="secondary" id="jump-unanswered">İlk boş soruya git</button><p>Yazılı yanıtlar ve indirilmemiş ses kayıtları yalnızca bu sekmede geçici tutulur. İsteğe bağlı olarak şifresiz bir metin dosyasını bu cihaza indirebilirsiniz. Bu dosya kişisel bilgiler içerebilir; gerçek öğrenci verileriyle kullanmayın. Öğretmene otomatik gönderilmez.</p><div class="toolbar"><button type="button" id="save-answers">Yanıtları TXT olarak indir</button><button type="button" class="secondary" id="clear-answers">Yanıtları temizle</button></div></section>
  </main><script type="application/json" id="exam-data">${json}</script><script>${playerScript}</script></body></html>`;
 }
