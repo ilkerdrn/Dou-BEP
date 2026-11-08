@@ -165,6 +165,9 @@ async function main(){
  pass(await evaluate('Boolean(document.getElementById("workspace-view").compareDocumentPosition(document.getElementById("mfa-panel")) & Node.DOCUMENT_POSITION_FOLLOWING)'),'Primary teacher workspace precedes optional MFA settings');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).display!=="none"'),'Authenticated navigation visible');
  pass(await evaluate('document.querySelectorAll(".dashboard-shortcuts > .dashboard-shortcut").length>=4'),'Dashboard shortcuts rendered');
+ pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Verified institutional member sees sidebar profile');
+ pass(await evaluate('document.querySelector(".campus-dashboard-stage .campus-dashboard-aside")!==null'),'Dashboard has right contextual summary');
+ pass(await evaluate('document.querySelectorAll(".campus-progress-steps li").length===4'),'Dashboard displays four teacher workflow steps');
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
  // Reference-led layout: real computed colors, not only CSS source assertions.
  const campusVisual=await evaluate(`({
@@ -184,6 +187,17 @@ async function main(){
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
  pass(await evaluate('getComputedStyle(document.querySelector(".exam-hero")).display==="none"'),'Promotional hero hidden in editor');
  pass(await evaluate('document.getElementById("workflow-next")!==null'),'Step pager exists');
+ pass(await evaluate('!document.getElementById("campus-sidebar-profile").hidden'),'Exam editor shows authenticated institution profile');
+ const modules=await evaluate(`(function(){
+  return ['exam-goal-section','exam-library-section','exam-output-section'].map(id=>{
+    const section=document.getElementById(id);
+    const parent=section?.closest('details.campus-major-module');
+    return {id,exists:!!section,wrapped:!!parent,summary:parent?.querySelector(':scope > summary')?.textContent||''};
+  });
+ })()`);
+ console.log('BROWSER CAMPUS EXAM MODULES: '+JSON.stringify(modules));
+ pass(modules.every(item=>item.exists&&item.wrapped),'Goal, library and output sections become accessible collapsible modules');
+
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundColor==="rgb(247, 244, 245)"'),'Exam editor uses the same pale navigation shell');
  pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundColor==="rgb(129, 24, 32)"'),'Exam editor current menu remains burgundy');
  await captureSyntheticScreenshot('exam-desktop');
