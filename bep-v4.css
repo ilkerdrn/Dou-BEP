@@ -1191,23 +1191,3 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .ex
 body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-optional-tool.campus-major-module>summary:hover{
  background:#f3f4f6!important;
 }
-
-
-/* Phase 18 — edit-card heading metrics exposed by strict V3 parity.
- * V3 set the authoring title's font and aligned card headings centrally.
- * Preserve these geometry-affecting semantics while keeping V4 colors.
- */
-body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .portal-card-head{
- align-items:center!important;
-}
-body.institution-page.campus-layout[data-design-version="4"] #exam-workspace #exam-editor-title{
- font-size:clamp(19px,2vw,25px)!important;
- font-weight:780!important;
-}
-body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-q-head strong{
- font-size:15px!important;
-}
-body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .exam-subheading h3{
- font-size:16px!important;
- color:var(--v4-text)!important;
-}
