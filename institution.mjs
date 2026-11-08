@@ -32,6 +32,7 @@ function actorView(){
  if(profile)profile.hidden=!signedIn;
  if(active){$('actor-name').textContent=state.actor.email;$('actor-meta').textContent=`${state.actor.tenantId} · ${({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||state.actor.role}`;
   $('campus-profile-name').textContent=state.actor.email.split('@')[0]||'Kurum kullanıcısı';
+  $('campus-profile-avatar').textContent=(state.actor.email.split('@')[0]||'K').slice(0,1).toLocaleUpperCase('tr-TR');
   $('campus-profile-role').textContent=({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||'Kurum üyesi';
   const canEdit=['admin','coordinator','teacher'].includes(state.actor.role);
   $('upload-form').hidden=!canEdit;$('admin-panel').hidden=state.actor.role!=='admin';$('audit-panel').hidden=!['admin','coordinator','reviewer'].includes(state.actor.role);
