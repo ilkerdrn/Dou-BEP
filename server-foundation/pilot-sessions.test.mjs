@@ -155,3 +155,24 @@ test('draft save rejects expired or revoked anonymous pilot capabilities',()=>{
   assert.throws(()=>f.s.pilotSave(active.token,{q1:'A'}),{code:'invalid_session'});
  }finally{f.close();}
 });
+
+test('HTTP bearer-only draft save and restore protect anonymous session across requests',async()=>{
+ const f=fixture(),port=41952,api=createApiHandler(f.s,{port});
+ const server=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
+ const request=async(path,method='GET',body,token)=>{
+  const r=await fetch('http://127.0.0.1:'+port+'/api'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
+  return {status:r.status,data:await r.json()};
+ };
+ try{
+  const code=f.s.pilotIssue(f.a,f.rec.id).code,token=f.s.pilotRedeem(code).token;
+  assert.equal((await request('/pilot/progress')).status,401);
+  assert.equal((await request('/pilot/save','POST',{answers:{q1:'A'}})).status,401);
+  assert.equal((await request('/pilot/save','POST',{answers:{q1:'A'}},token)).status,200);
+  const restored=await request('/pilot/progress','GET',undefined,token);
+  assert.equal(restored.status,200);assert.deepEqual(restored.data.answers,{q1:'A'});
+  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'B'}},token)).status,200);
+  assert.equal((await request('/pilot/save','POST',{answers:{q1:'A'}},token)).status,401);
+  assert.equal((await request('/pilot/progress','GET',undefined,token)).status,401);
+ }finally{await new Promise(resolve=>server.close(resolve));f.close();}
+});
