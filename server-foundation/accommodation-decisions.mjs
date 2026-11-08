@@ -119,6 +119,65 @@ export function createDecisionRepository(db,{StoreError,log}){
    coordinationId:sitting.id,startsAt:sitting.starts_at,baseMinutes,extraMinutes:data.extraMinutes,totalMinutes,
    message:'Onaylı anonim karar ve eşleşen sınav için planlama önizlemesi. Öğrenciye otomatik süre verilmez.'};
  }
+ // Planning-only assignment snapshot: not a student entitlement or pilot clock.
+ // Always revalidate against the live approved decision and exam before display.
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_time_plans(
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  decision_id TEXT NOT NULL REFERENCES accommodation_decisions(id),
+  coordination_id TEXT NOT NULL REFERENCES exam_coordination(id),
+  decision_revision INTEGER NOT NULL, decision_sha256 TEXT NOT NULL,
+  base_minutes INTEGER NOT NULL, extra_minutes INTEGER NOT NULL,
+  total_minutes INTEGER NOT NULL, exam_id TEXT NOT NULL REFERENCES exams(id),
+  exam_revision INTEGER NOT NULL, created_by TEXT NOT NULL REFERENCES members(id),
+  created_at INTEGER NOT NULL,
+  UNIQUE(tenant_id,decision_id,coordination_id)
+ );CREATE INDEX IF NOT EXISTS idx_time_plans_tenant ON accommodation_time_plans(tenant_id,created_at);`);
+ function planView(actor,row){
+  const preview=durationPreview(actor,row.decision_id,row.coordination_id);
+  const sitting=db.prepare('SELECT exam_id,exam_revision FROM exam_coordination WHERE tenant_id=? AND id=?')
+   .get(actor.tenantId,row.coordination_id);
+  const valid=preview.ready&&preview.decisionRevision===row.decision_revision&&
+   preview.baseMinutes===row.base_minutes&&preview.extraMinutes===row.extra_minutes&&
+   preview.totalMinutes===row.total_minutes&&sitting?.exam_id===row.exam_id&&
+   sitting?.exam_revision===row.exam_revision&&
+   db.prepare('SELECT content_sha256 FROM accommodation_decisions WHERE tenant_id=? AND id=?')
+    .get(actor.tenantId,row.decision_id)?.content_sha256===row.decision_sha256;
+  return {id:row.id,decisionId:row.decision_id,coordinationId:row.coordination_id,
+   baseMinutes:row.base_minutes,extraMinutes:row.extra_minutes,totalMinutes:row.total_minutes,
+   createdAt:row.created_at,status:valid?'verified':'recheck',
+   message:valid?'Onaylı süre planı doğrulandı. Öğrenci süresine uygulanmadı.':'Karar veya sınav değişmiş. Plan yeniden incelenmeli; öğrenciye uygulanamaz.'};
+ }
+ function planCreate(actor,decisionId,coordinationId){
+  permit(actor,'accommodation.manage');
+  if(typeof coordinationId!=='string'||!ID.test(coordinationId))
+   error('bad_id','Koordinasyon oturumunu açıkça seçin.');
+  const preview=durationPreview(actor,decisionId,coordinationId);
+  if(!preview.ready)error('not_ready',preview.message,409);
+  const decision=select(actor,decisionId);
+  const sitting=db.prepare('SELECT exam_id,exam_revision FROM exam_coordination WHERE tenant_id=? AND id=?')
+   .get(actor.tenantId,coordinationId);
+  if(db.prepare('SELECT COUNT(*) AS n FROM accommodation_time_plans WHERE tenant_id=?').get(actor.tenantId).n>=500)
+   error('quota','Kurumun planlama kaydı sınırı doldu.',409);
+  const id=randomUUID();
+  try{
+   db.prepare(`INSERT INTO accommodation_time_plans(
+    id,tenant_id,decision_id,coordination_id,decision_revision,decision_sha256,
+    base_minutes,extra_minutes,total_minutes,exam_id,exam_revision,created_by,created_at
+   ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id,actor.tenantId,decisionId,coordinationId,decision.revision,decision.content_sha256,
+      preview.baseMinutes,preview.extraMinutes,preview.totalMinutes,sitting.exam_id,sitting.exam_revision,actor.id,Date.now());
+  }catch(e){
+   if(e.code==='ERR_SQLITE_CONSTRAINT_UNIQUE')error('duplicate','Bu karar ve oturum için plan zaten kaydedilmiş.',409);
+   throw e;
+  }
+  log(actor,'accommodation.time_plan.created',id);
+  return planView(actor,db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,id));
+ }
+ function planList(actor){
+  permit(actor,'accommodation.view');
+  return db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100')
+   .all(actor.tenantId).map(row=>planView(actor,row));
+ }
  function verifyBatch(actor,rows){permit(actor,'accommodation.verify');if(!Array.isArray(rows)||!rows.length||rows.length>100)error('invalid_batch','1–100 anonim kayıt gereklidir.',422);
   const seen=new Set(),results=[];
   for(const input of rows){let data;try{data=normalizeDecision(input);}catch(e){error('invalid_batch',e.message,422);}
@@ -130,5 +189,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList};
 }
