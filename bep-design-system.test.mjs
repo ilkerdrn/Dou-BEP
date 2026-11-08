@@ -99,3 +99,19 @@ test('premium full-screen login has no external gutters or floating outer card',
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
  assert.match(css,/@media\(max-width:900px\)/);
 });
+
+
+test('classic coordination theme retains legible sidebar and light hero',()=>{
+ const css=read('./bep-design-system.css');
+ const html=read('./coordination.html');
+ for(const selector of [
+  '.dou-nav-link.portal-menu:not(.current):not([aria-current="page"])',
+  '.dou-nav-find input',
+  '.portal-hero h1',
+  '.coord-kpis>div',
+  '.coord-table th'
+ ]) assert.ok(css.includes(selector),'Missing classic theme correction: '+selector);
+ assert.match(html,/class="portal-hero"/);
+ assert.match(html,/class="coord-kpis"/);
+ assert.match(html,/id="coord-form"/);
+});
