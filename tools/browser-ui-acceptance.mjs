@@ -633,6 +633,25 @@ async function main(){
    pass(flow.scroll<=flow.client+2,label+' no horizontal overflow');
   }
 
+  if(route==='/erisilebilirlik-kontrol'){
+   const guide=await evaluate(`(function(){
+    const details=document.getElementById('pilot-manual-guide');
+    const summary=details.querySelector('summary');
+    const initiallyClosed=!details.open;
+    summary.click();
+    const opened=details.open;
+    const guideText=details.textContent;
+    summary.click();
+    return {initiallyClosed,opened,closedAgain:!details.open,
+      hasNVDA:guideText.includes('NVDA'),
+      hasPrivateWarning:guideText.includes('kimlik'),
+      controlsIntact:!!document.getElementById('pilot-export-json')&&!!document.getElementById('pilot-import-json')};
+   })()`);
+   console.log('BROWSER MANUAL NVDA GUIDE: '+JSON.stringify(guide));
+   pass(guide.initiallyClosed&&guide.opened&&guide.closedAgain,'Manual NVDA guide opens and closes natively');
+   pass(guide.hasNVDA&&guide.hasPrivateWarning&&guide.controlsIntact,'Manual guidance and offline checklist controls remain available');
+  }
+
   if(route==='/sinav-operasyon'||route==='/erisilebilirlik-kabul'){
    const task=await evaluate(`(function(){
      const nav=document.querySelector('.bep-workflow-links');
