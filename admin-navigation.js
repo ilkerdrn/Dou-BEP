@@ -147,6 +147,69 @@
  document.addEventListener('pointerdown',event=>{
   if(nav.classList.contains('dou-nav-open')&&!nav.contains(event.target))close();
  });
+ // One authenticated identity component for all campus modules.
+ // Never infer a role from a URL, saved browser state or demo email.
+ // An absent/MFA-restricted session must not reveal profile or management links.
+ async function syncCampusIdentity(){
+  let result;
+  try{
+   const response=await fetch('/api/session',{method:'GET',credentials:'same-origin',cache:'no-store'});
+   if(!response.ok)return;
+   result=await response.json();
+  }catch{return;}
+  const member=result?.authenticated&&!result.mfaSetupRequired?result.member:null;
+  let profile=nav.querySelector('#campus-sidebar-profile');
+  if(!member||!member.email||!member.role){
+   if(profile)profile.hidden=true;
+   updateManagement(null);
+   return;
+  }
+  if(!profile){
+   profile=document.createElement('div');
+   profile.className='campus-profile';
+   profile.id='campus-sidebar-profile';
+   profile.setAttribute('aria-label','Aktif kurum profili');
+   profile.hidden=true;
+   const actions=nav.querySelector('.dou-nav-actions');
+   if(actions)actions.before(profile);else nav.querySelector('.dou-nav-brand')?.after(profile);
+  }
+  let avatar=profile.querySelector('.campus-profile-avatar');
+  if(!avatar){
+   avatar=document.createElement('span');
+   avatar.className='campus-profile-avatar';
+   profile.prepend(avatar);
+  }
+  avatar.setAttribute('aria-hidden','true');
+  avatar.id='campus-profile-avatar';
+  let info=profile.querySelector('.campus-profile-info');
+  if(!info){
+   info=document.createElement('div');
+   info.className='campus-profile-info';
+   const label=document.createElement('span');
+   label.className='campus-profile-label';
+   label.textContent='AKTİF HESAP';
+   info.append(label);
+   const name=profile.querySelector('.campus-profile-name');
+   const role=profile.querySelector('.campus-profile-role');
+   if(name)info.append(name);
+   if(role)info.append(role);
+   profile.append(info);
+  }
+  let name=info.querySelector('.campus-profile-name');
+  if(!name){name=document.createElement('strong');name.className='campus-profile-name';name.id='campus-profile-name';info.append(name);}
+  let role=info.querySelector('.campus-profile-role');
+  if(!role){role=document.createElement('span');role.className='campus-profile-role';role.id='campus-profile-role';info.append(role);}
+  const display=member.email.split('@')[0]||'Kurum kullanıcısı';
+  const roles={admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'};
+  avatar.textContent=display.slice(0,1).toLocaleUpperCase('tr-TR');
+  name.textContent=display;
+  name.title=member.email;
+  role.textContent=roles[member.role]||'Kurum üyesi';
+  profile.hidden=false;
+  document.documentElement.dataset.navRole=member.role;
+  updateManagement(member.role);
+ }
+ void syncCampusIdentity();
  updateManagement(document.documentElement.dataset.navRole||null);
  const media=window.matchMedia('(min-width: 1081px)');
  if(media.addEventListener)media.addEventListener('change',close);
