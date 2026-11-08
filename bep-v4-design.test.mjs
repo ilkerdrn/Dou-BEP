@@ -540,3 +540,26 @@ test('V4 exam workflow explains the next step without modifying exam data or but
  assert.match(css,/#exam-workspace \.workflow-next-hint\{/);
  assert.match(css,/@media\(max-width:670px\)/);
 });
+
+
+test('V4 exam authoring is a reversible five-step guided view, not a destructive rewrite',()=>{
+ const html=read('./institutional-exams.html');
+ const ui=read('./workflow-ui.mjs');
+ const css=read('./bep-v4.css');
+ const edge=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(html,/id="workflow-view-toggle"[^>]*aria-pressed="true"/);
+ assert.match(html,/id="exam-main-fields"/);
+ assert.match(html,/id="exam-goal-section"/);
+ assert.match(html,/id="exam-library-section"/);
+ assert.match(html,/id="exam-question-section"/);
+ assert.match(html,/id="exam-output-section"/);
+ assert.match(ui,/const stageIds=\['exam-main-fields','exam-goal-section','exam-library-section',/);
+ assert.match(ui,/const hide=guided&&stage>=0&&stage!==active/);
+ assert.match(ui,/node\.hidden=hide/);
+ assert.match(ui,/viewToggle\.addEventListener\('click'/);
+ assert.match(ui,/if\(guidedModeEnabled\)return/);
+ assert.match(ui,/viewToggle\.hidden=true/);
+ assert.match(css,/#exam-editor-card>\[data-workflow-hidden="true"\]\{/);
+ assert.match(edge,/BROWSER EXAM GUIDED STAGE/);
+ assert.match(edge,/Advanced editor reveals all original fields/);
+});
