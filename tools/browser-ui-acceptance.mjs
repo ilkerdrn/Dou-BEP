@@ -581,6 +581,13 @@ async function main(){
       guidedInitial.currentVisible&&guidedInitial.futureHidden,
       'Guided editor starts with only the current stage displayed');
 
+ // A teacher follows a preflight tile while the guided editor hides other stages.
+ await evaluate('document.querySelector(\'[data-workflow-target="exam-question-section"]\').click()');
+ pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("4 / 5")'),'Teacher can open guided review stage');
+ await evaluate('document.querySelector(\'#exam-preflight-body [data-preflight-jump="exam-main-fields"]\').click()');
+ pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("1 / 5")'),'Preflight jump switches to the owning guided stage');
+ pass(await evaluate('!document.getElementById("exam-main-fields").closest(\'[data-workflow-hidden="true"]\')'),'Preflight destination remains visible in guided editor');
+
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
  pass(await evaluate('document.getElementById("workflow-stage-help").textContent.includes("BEP hedeflerini")'),'Guided second step explains the teacher task');
