@@ -1,6 +1,6 @@
 import {ADJUSTMENTS} from './batch-accommodations.mjs';
 const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={actor:null,csrf:'',items:[],edit:null};
+const state={actor:null,csrf:'',items:[],edit:null,durationDecisionId:null,durationPreview:null};
 function notice(t,bad=false){$('decision-message').textContent=t;$('decision-message').className=bad?'error':'';}
 async function api(path,method='GET',data){const res=await fetch('/api'+path,{method,credentials:'same-origin',headers:{...(data?{'Content-Type':'application/json'}:{}),...(state.csrf?{'X-CSRF-Token':state.csrf}:{})},body:data?JSON.stringify(data):undefined});const d=await res.json();if(!res.ok)throw Error(d.message||d.error||`HTTP ${res.status}`);return d;}
 $('decision-adjustments').innerHTML=Object.entries(ADJUSTMENTS).map(([code,d])=>`<label><input type="checkbox" name="adjustment" value="${esc(code)}">${esc(d.label)}</label>`).join('');
@@ -18,6 +18,8 @@ async function boot(){try{const ses=await api('/session');state.actor=ses.member
 $('decision-form').addEventListener('submit',async event=>{event.preventDefault();const f=new FormData(event.currentTarget);const payload={term:f.get('term'),courseCode:f.get('courseCode'),examLabel:f.get('examLabel'),candidateCode:f.get('candidateCode'),extraMinutes:Number(f.get('extraMinutes')),adjustments:f.getAll('adjustment')};
  $('decision-save').disabled=true;try{if(state.edit)await api('/accommodations/'+state.edit.id,'PUT',{...payload,revision:state.edit.revision});else await api('/accommodations','POST',payload);reset();await refresh();notice('Taslak kaydedildi. Farklı bir yetkilinin onayı bekleniyor.');}catch(e){notice(e.message,true);}finally{$('decision-save').disabled=false;}});
 function renderDurationPreview(result){
+ state.durationPreview=result.ready?result:null;
+ $('decision-duration-save').hidden=!result.ready||!managing();
  $('decision-duration-panel').hidden=false;
  $('decision-duration-result').textContent=result.ready
   ?'Doğrulanan süre: '+result.baseMinutes+' dk temel + '+result.extraMinutes+' dk onaylı ek süre = '+result.totalMinutes+' dk planlanan toplam. Bu yalnızca önizlemedir.'
@@ -33,6 +35,29 @@ function renderDurationPreview(result){
  }
  $('decision-duration-choices').hidden=!choices.length;
 }
+async function refreshTimePlans(){
+ const result=await api('/accommodations/time-plans');
+ const box=$('decision-time-plans');box.replaceChildren();
+ if(!result.items.length){box.textContent='Henüz süre planlama kaydı yok.';return;}
+ for(const item of result.items){
+  const p=document.createElement('p');
+  p.textContent=(item.status==='verified'?'Doğrulandı':'Yeniden kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
+  box.append(p);
+ }
+}
+$('decision-time-plans-refresh').addEventListener('click',()=>refreshTimePlans().catch(e=>notice(e.message,true)));
+$('decision-duration-save').addEventListener('click',async()=>{
+ const verified=state.durationPreview;
+ if(!verified||!state.durationDecisionId||!managing())return;
+ if(!confirm('Bu onaylı süre planı yalnızca yerel planlama kaydı olarak saklansın mı? Öğrenci süresi değişmeyecektir.'))return;
+ const button=$('decision-duration-save');button.disabled=true;
+ try{
+  await api('/accommodations/time-plans','POST',{decisionId:state.durationDecisionId,coordinationId:verified.coordinationId});
+  notice('Süre planlama kaydı oluşturuldu; öğrenciye süre atanmadı.');
+  await refreshTimePlans();
+ }catch(e){notice(e.message,true);}
+ finally{button.disabled=false;}
+});
 $('decision-duration-apply').addEventListener('click',async()=>{
  if(!state.durationDecisionId)return;
  const btn=$('decision-duration-apply');btn.disabled=true;
