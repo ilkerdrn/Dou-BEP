@@ -1,6 +1,7 @@
 // Visual workflow helpers only. No network, cookies, credentials, or personal data storage.
 const nav = document.querySelector('.workflow-nav');
 let updateGuidedView=()=>{};
+let guidedModeEnabled=false;
 if (nav) {
   const steps = Array.from(nav.querySelectorAll('[data-workflow-target]'));
   const findTarget = button => document.getElementById(button.dataset.workflowTarget);
@@ -58,6 +59,7 @@ if (nav) {
   if(typeof IntersectionObserver!=='undefined'){
     const visible=new Map();
     const sectionObserver=new IntersectionObserver(entries=>{
+      if(guidedModeEnabled)return;
       for(const entry of entries){
         if(entry.isIntersecting)visible.set(entry.target.id,entry.boundingClientRect.top);
         else visible.delete(entry.target.id);
@@ -198,6 +200,7 @@ if(nav){
    let guided=true;
    const sync=index=>{
     const active=index>=0?index:0;
+    guidedModeEnabled=guided;
     editor.classList.toggle('exam-guided-view',guided);
     for(const [position,node] of nodes.entries()){
      const stage=stageFor(position);
