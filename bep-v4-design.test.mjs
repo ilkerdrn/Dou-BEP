@@ -318,3 +318,18 @@ test('V4 deep parity contracts replace V3 dashboard and exam disclosure scaffold
  assert.match(css,/\.exam-question-advanced\{\s*margin:16px 0 0!important/);
  assert.match(css,/\.exam-optional-tool\.campus-major-module>summary\{\s*display:flex!important/);
 });
+
+
+test('V4 exam nested content sizing and dashboard shortcuts are independent of V3',()=>{
+ const css=read('./bep-v4.css');
+ for(const selector of [
+  '.dashboard-secondary-shortcuts .dashboard-shortcut strong',
+  '#exam-workspace .exam-grid>#exam-editor-card',
+  '#exam-workspace #exam-editor-card>.portal-card-head',
+  '#exam-workspace .exam-question .exam-q-head',
+  '#exam-workspace .exam-optional-tool:not(.campus-major-module)>summary'
+ ])assert.ok(css.includes(selector),'Missing migrated detail rule: '+selector);
+ assert.match(css,/\.exam-question\{\s*margin-block:14px!important/);
+ assert.match(css,/\.exam-optional-tool:not\(\.campus-major-module\)\{\s*margin:13px 0!important/);
+ assert.match(css,/\.exam-optional-tool:not\(\.campus-major-module\)>summary\{\s*display:flex!important/);
+});
