@@ -55,3 +55,24 @@ Yalnızca sentetik, anonim Edge oturumundan görüntü alır.
 5. Giriş/parola, MFA, sınav düzenleme ve veri tabanı sözleşmeleri korunur.
 
 Not: Bu aşamada hiçbir eski CSS bağlantısı kaldırılmadı.
+
+
+## Tam işlevsel V3'süz deneme (kalıcı kaldırma değildir)
+
+```powershell
+npm.cmd run design:v4:without-v3
+```
+
+Bu komut, Edge'in anonim/izole kabul senaryoları boyunca sayfalarda
+`admin-design-v3.css` yüklendiğinde bağlantıyı yalnızca test DOM'unda devre
+dışı bırakır. Mevcut proje dosyasını, bağlantılarını, SQLite veritabanını veya
+kullanıcı hesabını değiştirmez. Diğer legacy CSS dosyalarına dokunmaz.
+
+Bu testin tamamının geçmesi **işlevsellik açısından olumlu bir işarettir**;
+görsel farkların kabulü anlamına gelmez. CSS karşılaştırmasında ilk raporda
+panelde 6, editörde 9 bölge; sonraki düzenlemede panelde 5, editörde 9 bölgede
+değişiklik gözlenmiştir. Düzen, içerik ve erişilebilirlik ayrı değerlendirilmelidir.
+
+Başarı ölçütü: V3'süz testin tüm kontrollerinin PASS olması, CSS probe farklarının
+incelenmesi, 320/390/768/1280px ekran görüntüleri ve manuel NVDA kontrolleri.
+Bundan önce eski dosyayı veya HTML linkini silmeyin.
