@@ -191,7 +191,7 @@ export function createApiHandler(store,{port=4173}={}){
    }
    const decisionPath=path.match(/^\/api\/accommodations\/([a-f0-9-]{36})(?:\/(history|approve|revoke|duration-preview))?$/);
    if(decisionPath){const [,id,action]=decisionPath;
-    if(action==='duration-preview'&&req.method==='GET'){response(res,200,store.accommodationDurationPreview(actor,id));return true;}
+    if(action==='duration-preview'&&req.method==='GET'){const sitting=new URL(req.url,'http://localhost').searchParams.get('coordinationId');response(res,200,store.accommodationDurationPreview(actor,id,sitting));return true;}
     if(action==='history'&&req.method==='GET'){response(res,200,{history:store.accommodationHistory(actor,id)});return true;}
     if(!action&&req.method==='PUT'){response(res,200,{item:store.accommodationUpdate(actor,id,await readJson(req))});return true;}
     if(action==='approve'&&req.method==='POST'){const data=await readJson(req);response(res,200,{item:store.accommodationApprove(actor,id,data.revision)});return true;}
