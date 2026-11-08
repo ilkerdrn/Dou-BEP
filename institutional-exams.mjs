@@ -735,6 +735,8 @@ $('exam-print').addEventListener('click',async()=>{const w=window.open('','_blan
   return;
  }state.actor=s.member;state.csrf=s.csrf;
  document.body.dataset.examAuth='authenticated';
+ document.documentElement.dataset.navRole=s.member.role;
+ document.dispatchEvent(new CustomEvent('dou-nav-role',{detail:{role:s.member.role}}));
  const navigation=document.querySelector('.dou-nav');if(navigation)navigation.inert=false;
  $('exam-workspace').hidden=false;$('exam-actor').textContent=s.member.email;$('exam-tenant').textContent=`${s.member.tenantId} · ${s.member.role}`;
  const sidebarProfile=$('campus-sidebar-profile');
