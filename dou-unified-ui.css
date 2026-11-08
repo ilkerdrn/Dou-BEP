@@ -174,3 +174,57 @@ body.bep-student-pilot:not(.high):not(.high-contrast) .mark{
 body.bep-student-pilot:not(.high):not(.high-contrast) .hero h1{
  color:#1d1d1b;letter-spacing:-.035em;
 }
+
+/* V4 hotfix: older V3 CSS used higher-specificity !important selectors,
+   leaving a white accordion inside the charcoal navigation with white links.
+   Override the complete menu surface, not merely the outer aside. */
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav #dou-nav-sections,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav #dou-nav-sections,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav #dou-nav-sections{
+ background:#1d1d1b!important;background-image:none!important;
+ border:1px solid #41413e!important;border-radius:13px!important;
+ box-shadow:none!important;color:#fff!important;
+ padding:10px 8px!important;
+}
+body[data-design-version="4"] .dou-nav #dou-nav-sections :is(.dou-nav-group,.dou-nav-disclosure,.dou-nav-group-links){
+ background:transparent!important;background-image:none!important;
+ color:#fff!important;border-color:#393937!important;box-shadow:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-disclosure>summary.dou-nav-group-title,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-disclosure>summary.dou-nav-group-title,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-disclosure>summary.dou-nav-group-title{
+ color:#bdbdb9!important;font-size:11px!important;font-weight:750!important;
+ letter-spacing:.08em!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]),
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]),
+body.dou-admin-standalone[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]){
+ color:#f0f0ed!important;background:transparent!important;
+ border-color:transparent!important;font-weight:650!important;
+ opacity:1!important;
+}
+body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]) :is(svg,span){
+ color:#f0f0ed!important;opacity:1!important;
+}
+body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu:not(.current):not([aria-current="page"]):hover{
+ background:#353533!important;color:#fff!important;border-color:#51514e!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu.current,
+body.institution-page.campus-layout[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu[aria-current="page"],
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu.current,
+body.institution-page:not(.campus-layout)[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu[aria-current="page"],
+body.dou-admin-standalone[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu.current,
+body.dou-admin-standalone[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu[aria-current="page"]{
+ background:#d70926!important;background-image:none!important;
+ border-color:#d70926!important;color:#fff!important;box-shadow:none!important;
+}
+body[data-design-version="4"] .dou-nav #dou-nav-sections :is(.dou-nav-link.current,.dou-nav-link[aria-current="page"]) :is(svg,span){
+ color:#fff!important;opacity:1!important;
+}
+/* Give interactive controls a legible footprint without increasing noise. */
+body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-link.portal-menu{
+ min-height:42px!important;font-size:13px!important;
+}
+body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-disclosure>summary{
+ cursor:pointer;min-height:36px;display:list-item;
+}
