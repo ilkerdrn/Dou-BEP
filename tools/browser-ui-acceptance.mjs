@@ -369,6 +369,22 @@ async function main(){
   'Authenticated admin has visible user-management and audit sidebar links');
  pass(adminNav.adminTarget&&adminNav.auditTarget,
   'Management sidebar links point to active authorized dashboard panels');
+ const managementUx=await evaluate(`(function(){
+  const field=document.getElementById('dou-nav-search');
+  const group=document.getElementById('dou-nav-management');
+  const disclosure=group.querySelector('.dou-nav-disclosure');
+  const admin=group.querySelector('[href="/kurum#admin-panel"]');
+  const search=value=>{field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));};
+  const startsOpen=disclosure.open;
+  search('ogretmen');
+  const matchesTeacher=!group.hidden&&!admin.hidden&&disclosure.open;
+  search(''); // Search clears without closing the role-authorized group.
+  return {startsOpen,matchesTeacher,restored:disclosure.open};
+ })()`);
+ console.log('BROWSER V4 MANAGEMENT SEARCH UX: '+JSON.stringify(managementUx));
+ pass(managementUx.startsOpen&&managementUx.matchesTeacher&&managementUx.restored,
+  'Admin navigation stays expanded and discoverable via teacher keyword search');
+
 
  pass(await evaluate('document.querySelector(".campus-dashboard-stage .campus-dashboard-aside")!==null'),'Dashboard has right contextual summary');
  pass(await evaluate('document.querySelectorAll(".campus-progress-steps li").length===4'),'Dashboard displays four teacher workflow steps');
