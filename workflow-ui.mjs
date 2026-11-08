@@ -10,6 +10,14 @@ if (nav) {
   const next=document.getElementById('workflow-next');
   const stepCount=document.getElementById('workflow-step-count');
   const nextHint=document.getElementById('workflow-next-hint');
+  const stageHelp=document.getElementById('workflow-stage-help');
+  const stageDescriptions=[
+    'Önce sınavın başlığını, dersini, sınıfını ve süresini girin. Diğer adımlara daha sonra dönebilirsiniz.',
+    'BEP hedeflerini kaynakla karşılaştırın ve öğretmen doğrulamasını tamamlayın.',
+    'Kazanım ve soru bankasından içerik seçin veya yeni taslak hazırlayın.',
+    'Soruları ve yanıtları düzenleyin; erişilebilirlik seçeneklerini ve önizlemeyi kontrol edin.',
+    'Kaydetme durumunu kontrol edin, sınavı gözden geçirip onaylayın ve uygun çıktıyı alın.'
+  ];
   const announcement=document.getElementById('workflow-announcement');
 
   const revealAndVisit = button => {
@@ -31,6 +39,7 @@ if (nav) {
     if(previous)previous.disabled=selectedIndex<=0;
     if(next)next.disabled=selectedIndex<0||selectedIndex>=steps.length-1;
     if(stepCount&&selectedIndex>=0)stepCount.textContent='Adım '+(selectedIndex+1)+' / '+steps.length;
+    if(stageHelp&&selectedIndex>=0)stageHelp.textContent=stageDescriptions[selectedIndex]||'';
     if(nextHint&&selectedIndex>=0){
       const following=steps[selectedIndex+1];
       nextHint.textContent=following
