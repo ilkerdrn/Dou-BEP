@@ -406,3 +406,70 @@ body[data-design-version="4"] :is(.portal-hero,.dashboard-welcome,.campus-summar
   padding:14px!important;
  }
 }
+
+
+/* Phase 4 — one task-first authenticated canvas; avoid duplicate marketing hero. */
+body[data-design-version="4"][data-portal-auth="authenticated"] .portal-hero,
+body[data-design-version="4"][data-exam-auth="authenticated"] .exam-hero{
+ display:none!important;
+}
+body[data-design-version="4"][data-portal-auth="authenticated"] .portal-content,
+body[data-design-version="4"][data-exam-auth="authenticated"] .portal-content{
+ padding-top:clamp(16px,2vw,26px)!important;
+}
+body[data-design-version="4"][data-portal-auth="authenticated"] #workspace-view{
+ min-width:0!important;
+}
+body[data-design-version="4"][data-portal-auth="authenticated"] .portal-topbar,
+body[data-design-version="4"][data-exam-auth="authenticated"] .portal-topbar{
+ position:relative!important;
+}
+body[data-design-version="4"][data-portal-auth="authenticated"] .dashboard-more-tools,
+body[data-design-version="4"] #exam-workspace .exam-overview{
+ border:1px solid var(--v4-border)!important;border-radius:12px!important;
+ background:#fff!important;background-image:none!important;
+ box-shadow:none!important;overflow:visible!important;
+}
+body[data-design-version="4"] :is(.dashboard-more-tools,.exam-overview)>summary{
+ cursor:pointer!important;padding:15px 20px!important;
+ min-height:48px!important;color:var(--v4-text)!important;
+ font-weight:700!important;
+}
+body[data-design-version="4"] :is(.dashboard-more-tools,.exam-overview)[open]>summary{
+ border-bottom:1px solid var(--v4-border)!important;
+}
+body[data-design-version="4"] :is(.dashboard-more-tools,.exam-overview)>summary:focus-visible{
+ outline:3px solid var(--v4-focus)!important;outline-offset:3px!important;
+}
+body[data-design-version="4"] .dashboard-secondary-shortcuts{
+ padding:16px!important;margin:0!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-workbench-heading h1{
+ margin:7px 0 8px!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-workbench-heading p{
+ color:var(--v4-muted)!important;max-width:720px!important;
+}
+body[data-design-version="4"] #exam-workspace .workflow-caption{
+ color:var(--v4-text)!important;
+}
+body[data-design-version="4"] #exam-workspace .workflow-caption span{
+ color:var(--v4-muted)!important;
+}
+body[data-design-version="4"] #exam-workspace .portal-card-head h3{
+ font-size:18px!important;color:var(--v4-text)!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-list-controls{
+ gap:12px!important;
+}
+body[data-design-version="4"] #exam-workspace .exam-list-controls label{
+ color:var(--v4-muted)!important;
+}
+@media(max-width:670px){
+ body[data-design-version="4"] .dashboard-secondary-shortcuts{
+  padding:12px!important;
+ }
+ body[data-design-version="4"] #exam-workspace .exam-workbench-heading{
+  padding:17px!important;
+ }
+}
