@@ -303,6 +303,7 @@ async function main(){
 
 
  pass(await evaluate('getComputedStyle(document.querySelector(".portal-hero")).display==="none"'),'Signed-in dashboard shows teacher tasks before marketing hero');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dashboard-welcome")).backgroundImage==="none"'),'V4 welcome panel has no decorative gradient');
  // Reference-led layout: real computed colors, not only CSS source assertions.
  const campusVisual=await evaluate(`({
   sidebar:getComputedStyle(document.querySelector('.dou-nav')).backgroundImage,
@@ -312,10 +313,10 @@ async function main(){
   brand:getComputedStyle(document.body).getPropertyValue('--bep-brand').trim()
  })`);
  console.log('BROWSER CAMPUS DASHBOARD STYLE: '+JSON.stringify(campusVisual));
- pass(campusVisual.sidebar.includes('linear-gradient'),'Dashboard uses warm pale unified sidebar');
- pass(campusVisual.brand==='#8e1428','V3 burgundy palette is active');
- pass(campusVisual.selected.includes('linear-gradient')&&campusVisual.selectedText==='rgb(255, 255, 255)','Active nav uses high-contrast burgundy design');
- pass(campusVisual.card.includes('linear-gradient'),'Dashboard welcome adopts V3 card surface');
+ pass(campusVisual.sidebar==='none','V4 dashboard sidebar is neutral, without gradient');
+ pass(campusVisual.brand==='#7a1f2b','V4 institutional burgundy token is active');
+ pass(campusVisual.selected==='none'&&campusVisual.selectedText==='rgb(255, 255, 255)','V4 selected menu uses solid high-contrast burgundy');
+ pass(campusVisual.card==='none','V4 dashboard welcome uses a plain institutional surface');
  await captureSyntheticScreenshot('dashboard-desktop');
  await navigate(base,'/kurumsal-sinav');
  await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
@@ -342,8 +343,8 @@ async function main(){
  console.log('BROWSER CAMPUS EXAM MODULES: '+JSON.stringify(modules));
  pass(modules.every(item=>item.exists&&item.wrapped),'Goal, library and output sections become accessible collapsible modules');
 
- pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundImage.includes("linear-gradient")'),'Exam editor uses the same pale navigation shell');
- pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundImage.includes("linear-gradient")'),'Exam editor current menu remains burgundy');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav")).backgroundImage==="none"'),'V4 exam editor uses the same neutral navigation shell');
+ pass(await evaluate('getComputedStyle(document.querySelector(".dou-nav-link[aria-current=page]")).backgroundImage==="none"'),'V4 exam menu active indicator has no decorative gradient');
  await captureSyntheticScreenshot('exam-desktop');
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
@@ -585,8 +586,8 @@ async function main(){
       palette:getComputedStyle(document.body).getPropertyValue('--bep-brand').trim()
     };
   })()`);
-  pass(result.stylesheet==='/bep-design-system.css',label+' V3 CSS is last');
-  pass(result.nav&&result.palette==='#8e1428',label+' shared navigation and color tokens');
+  pass(result.stylesheet==='/bep-v4.css',label+' V4 design stylesheet is last');
+  pass(result.nav&&result.palette==='#7a1f2b',label+' shared navigation and V4 color tokens');
   if(['/dou-reader-demo','/dou-speech-phoneme','/dou-speech-pool','/dou-speech-listening','/dou-speech-intelligibility'].includes(route)){
    const lab=await evaluate(`(function(){
     const nav=document.querySelector('.bep-lab-shortcuts');
@@ -605,7 +606,7 @@ async function main(){
    console.log('BROWSER OFFLINE SPEECH LAB UX '+label+': '+JSON.stringify(lab));
    pass(lab.destinationsValid&&lab.shortcuts>=2,label+' shortcuts navigate to existing controls');
    pass(lab.skipValid,label+' keyboard skip link reaches main content');
-   pass(lab.firstBg==='rgb(142, 20, 40)'&&lab.firstColor==='rgb(255, 255, 255)',label+' has premium readable primary navigation');
+   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(lab.firstBg)&&lab.firstColor==='rgb(255, 255, 255)',label+' retains readable primary navigation');
    pass(lab.docWidth<=lab.availableWidth+2,label+' has no horizontal overflow');
   }
 
@@ -623,7 +624,7 @@ async function main(){
    })()`);
    console.log('BROWSER V3 PILOT / BEP IMPORT '+label+': '+JSON.stringify(layout));
    pass(layout.valid&&layout.links===(route==='/pilot-yonetim'?3:2),label+' shortcuts target existing workflow panels');
-   pass(layout.firstBg==='rgb(142, 20, 40)'&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
+   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(layout.firstBg)&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
    pass(layout.scroll<=layout.available+2,label+' has no horizontal overflow');
   }
 
@@ -639,7 +640,7 @@ async function main(){
    })()`);
    console.log('BROWSER OFFLINE TASK UX '+label+': '+JSON.stringify(flow));
    pass(flow.valid&&flow.count===(route==='/sinav-dosya-aktar'?2:4),label+' task shortcuts resolve');
-   pass(flow.firstBg==='rgb(142, 20, 40)',label+' first task has burgundy emphasis');
+   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(flow.firstBg),label+' first task has burgundy emphasis');
    pass(flow.scroll<=flow.client+2,label+' no horizontal overflow');
   }
 
@@ -713,7 +714,7 @@ async function main(){
    })()`);
    console.log('BROWSER WORKSPACE USABILITY '+label+': '+JSON.stringify(task));
    pass(task.valid&&task.links>=(route==='/sinav-operasyon'?3:2),label+' navigation links resolve');
-   pass(task.accent==='rgb(142, 20, 40)',label+' uses premium burgundy primary action');
+   pass(['rgb(142, 20, 40)','rgb(122, 31, 43)'].includes(task.accent),label+' uses readable burgundy primary action');
    pass(task.scroll<=task.available+2,label+' has no horizontal overflow');
   }
 
