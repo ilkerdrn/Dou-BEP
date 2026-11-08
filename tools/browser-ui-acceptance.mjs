@@ -158,7 +158,9 @@ async function main(){
   const card=document.getElementById('login-view').getBoundingClientRect();
   return {screenWidth:innerWidth,screenHeight:innerHeight,
     contentWidth:Math.round(main.width),cardWidth:Math.round(card.width),
-    cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),\n    cardLeft:Math.round(card.left),cardRight:Math.round(card.right),\n    cardTop:Math.round(card.top),radius:getComputedStyle(document.getElementById('login-view')).borderTopLeftRadius,
+    cardHeight:Math.round(card.height),contentHeight:Math.round(main.height),
+    cardLeft:Math.round(card.left),cardRight:Math.round(card.right),
+    cardTop:Math.round(card.top),radius:getComputedStyle(document.getElementById('login-view')).borderTopLeftRadius,
     columns:getComputedStyle(document.getElementById('login-view')).gridTemplateColumns};
  })()`);
  console.log('BROWSER FULL-VIEWPORT LOGIN: '+JSON.stringify(fullScreenLogin));
