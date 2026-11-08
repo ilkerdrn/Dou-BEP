@@ -576,8 +576,7 @@ async function main(){
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("Onay ve çıktı")'),'Screen reader receives final review announcement');
  pass(await evaluate('document.activeElement===document.getElementById("exam-output-section")||document.getElementById("exam-output-section").contains(document.activeElement)'),'Focus transfers inside final review section');
  await evaluate('document.getElementById("workflow-view-toggle").click()');
- pass(await evaluate('!document.getElementById("exam-editor-card").classList.contains("exam-guided-view")&&
-  !document.getElementById("exam-goal-section").closest("[data-workflow-hidden=true]")'),
+ pass(await evaluate('!document.getElementById("exam-editor-card").classList.contains("exam-guided-view") && !document.getElementById("exam-goal-section").closest("[data-workflow-hidden=true]")'),
   'Advanced editor reveals all original fields for full workflow regression');
  await evaluate('document.querySelector(\'[data-workflow-target="exam-main-fields"]\').click()');
  await evaluate('document.getElementById("exam-focus-toggle").click()');
