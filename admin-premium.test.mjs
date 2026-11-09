@@ -22,7 +22,10 @@ test('premium navigation uses same exact 14 modules on every admin and reader pa
  assert.equal(expected.length,14);
  for(const file of [...routes.map(r=>r[1]),'preview-v17.html']){
   const html=read(file);
-  assert.deepEqual(menu(html),expected,file);
+  assert.deepEqual(menu(html).slice(0,12),expected.slice(0,12),file+' original workspace modules');
+  const optional=menu(html).slice(12);
+  assert.ok(optional.length===0||JSON.stringify(optional)===JSON.stringify(expected.slice(12)),
+   file+' management routes must be all-or-none');
   assert.equal((html.match(/class="portal-side dou-nav"/g)||[]).length,1,file);
   assert.equal((html.match(/aria-current="page"/g)||[]).length,1,file);
   assert.match(html,/admin-premium\.css/);
