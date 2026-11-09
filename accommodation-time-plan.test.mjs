@@ -106,7 +106,7 @@ test('closure snapshot freezes break totals and detects tampering with no pilot 
  assert.match(store,/JSON\.stringify\(buildClosingSummary\(row,at,reason\)\)/);
  assert.match(store,/status:'closed',closure,summary:simulationSummary\(actor,row\.id\)/);
  assert.match(ui,/summarizeRehearsal\(report\)/);
- assert.match(ui,/aria-label="Simülasyon kapanış denetimi"/);
+ assert.match(ui,/setAttribute\('aria-label','Simülasyon kapanış denetimi'\)/);
  assert.match(ui,/display\.metrics\.pauseCount/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
