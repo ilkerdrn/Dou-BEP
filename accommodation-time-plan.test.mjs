@@ -74,3 +74,11 @@ test('simulation routes and controls stay isolated from pilot and require explic
  assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('break-limit review fails closed and never extends student pilot time',()=>{
+ assert.match(store,/inspectExamBreakLimits\(/);
+ assert.match(store,/status:'break_limit_review'/);
+ assert.match(store,/current\.status==='review_required'\|\|current\.status==='break_limit_review'/);
+ assert.match(ui,/Mola limiti aşıldı — yetkili incelemesi gerekli/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
