@@ -42,8 +42,39 @@ export function calculateExamWindow({startedAt,totalMinutes,pauses=[],now=Date.n
   startedAt,plannedEnd,remainingMs,pausedMs,elapsedWorkingMs,
   totalMinutes,breaksAllowed,activePause:active};
 }
+/** Read-only limit assessment, including an overdue open pause.
+ * Does not clamp, close or extend an active break. Intervention is required.
+ */
+export function inspectExamBreakLimits({startedAt,pauses=[],now=Date.now(),breaksAllowed=false}){
+ if(!breaksAllowed||!Number.isSafeInteger(startedAt)||!Number.isSafeInteger(now)||
+    now<startedAt||!Array.isArray(pauses)||pauses.length>10)
+  return {reviewRequired:true,reason:'invalid_break_policy'};
+ let prior=0,lastEnd=startedAt,openCount=0;
+ for(let i=0;i<pauses.length;i++){
+  const p=pauses[i];
+  if(!p||!Number.isSafeInteger(p.startedAt)||p.startedAt<lastEnd||p.startedAt>now)
+   return {reviewRequired:true,reason:'invalid_break_history'};
+  const open=p.endedAt===null;
+  if(open){openCount++;if(i!==pauses.length-1)return {reviewRequired:true,reason:'invalid_break_history'};}
+  const end=open?now:p.endedAt;
+  if(!Number.isSafeInteger(end)||end<p.startedAt||end>now)
+   return {reviewRequired:true,reason:'invalid_break_history'};
+  const used=end-p.startedAt;
+  // The first reached threshold is the relevant one, never silently extend.
+  if(used>MAX_BREAK_MS)return {reviewRequired:true,reason:'single_break_over_limit'};
+  prior+=used;
+  if(prior>MAX_TOTAL_BREAK_MS)return {reviewRequired:true,reason:'total_break_over_limit'};
+  lastEnd=end;
+ }
+ return {reviewRequired:false,reason:null,usedBreakMs:prior,activePause:openCount===1,
+  remainingBreakMs:Math.max(0,MAX_TOTAL_BREAK_MS-prior)};
+}
 export function beginExamBreak(input,at){
+ if(!Array.isArray(input.pauses)||input.pauses.length>=10)
+  throw Error('10 mola kaydı sınırına ulaşıldı; yeni mola başlatılamaz.');
+
  const result=calculateExamWindow({...input,now:at});
+ if(result.pausedMs>=MAX_TOTAL_BREAK_MS)throw Error('Toplam mola süresi sınırına ulaşıldı; yeni mola başlatılamaz.');
  if(!input.breaksAllowed||result.phase!=='running')throw Error('Bu oturumda mola başlatılamaz.');
  return [...input.pauses,{startedAt:at,endedAt:null}];
 }
