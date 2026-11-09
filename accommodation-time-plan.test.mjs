@@ -97,3 +97,15 @@ test('simulation closure is immutable, tenant-scoped and leaves pilot entitlemen
  assert.match(ui,/Denetim raporunu göster/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('closure snapshot freezes break totals and detects tampering with no pilot entitlement',()=>{
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_simulation_summaries/);
+ assert.match(store,/function buildClosingSummary\(row,at,reason\)/);
+ assert.match(store,/function simulationSummary\(actor,id\)/);
+ assert.match(store,/digestString\(row\.summary_json\)===row\.summary_sha256/);
+ assert.match(store,/JSON\.stringify\(buildClosingSummary\(row,at,reason\)\)/);
+ assert.match(store,/status:'closed',closure,summary:simulationSummary\(actor,row\.id\)/);
+ assert.match(ui,/Kapanış özeti bütünlük doğrulaması başarısız/);
+ assert.match(ui,/Kapanış mola sayısı:/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
