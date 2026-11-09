@@ -27,3 +27,20 @@ test('plan API requires existing authenticated API context and never issues stud
  assert.match(ui,/\/accommodations\/time-plans','POST'/);
  assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
+
+test('independent decision and time-plan approvals are distinct with audit and live staleness',()=>{
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_plan_approvals/);
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_plan_events/);
+ assert.match(store,/function planApprove\(actor,id\)/);
+ assert.match(store,/permit\(actor,'accommodation\.approve'\)/);
+ assert.match(store,/row\.created_by===actor\.id/);
+ assert.match(store,/function planRevoke\(actor,id\)/);
+ assert.match(store,/approvalStatus=!approval\?'pending':approval\.status==='revoked'\?'revoked':valid\?'approved':'stale'/);
+ assert.match(store,/accommodationTimePlanApprove:planApprove/);
+ assert.match(store,/accommodationTimePlanRevoke:planRevoke/);
+ assert.match(api,/store\.accommodationTimePlanApprove\(actor,planId\)/);
+ assert.match(api,/store\.accommodationTimePlanRevoke\(actor,planId\)/);
+ assert.match(ui,/item\.canApprove\?'Planı bağımsız onayla':'Plan onayını iptal et'/);
+ assert.match(ui,/\/accommodations\/time-plans\/'\+item\.id\+'\/'\+action/);
+ assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
