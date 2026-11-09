@@ -315,6 +315,7 @@ export function createDecisionRepository(db,{StoreError,log}){
  }
  function simulationAction(actor,id,action,version){
   permit(actor,'accommodation.manage');
+  if(action!=='pause'&&action!=='resume')error('bad_action','Geçersiz mola işlemi.',422);
   if(!Number.isInteger(version)||version<1)error('bad_version','Güncel simülasyon sürümü gerekli.',422);
   const row=simulationRow(actor,id);
   if(row.version!==version)error('revision_conflict','Simülasyon başka oturumda değişti.',409);
