@@ -254,6 +254,22 @@ test('authorized local time rehearsal persists pause/resume with audit, no learn
   assert.equal(report.mode,'simulation_only');
   assert.equal(report.studentEntitlement,false);
   assert.equal(report.item.status,'closed');
+  assert.equal(report.item.summary.integrity,'verified');
+  assert.equal(report.item.summary.reason,'plan_invalid');
+  assert.equal(report.item.summary.reviewRequired,true);
+  assert.equal(report.item.summary.mode,'simulation_only');
+  assert.equal(report.item.summary.studentEntitlement,false);
+  assert.equal(report.item.summary.pauseCount,1);
+  const persisted=s.db.prepare('SELECT summary_json,summary_sha256 FROM accommodation_time_simulation_summaries WHERE simulation_id=?').get(sim.id);
+  assert.equal(persisted.summary_sha256.length,64);
+  const frozen=report.item.summary;
+  assert.deepEqual(s.accommodationSimulationReport(r,sim.id).item.summary,frozen);
+  s.db.prepare('UPDATE accommodation_time_simulation_summaries SET summary_json=? WHERE simulation_id=?')
+   .run(persisted.summary_json.replace('"studentEntitlement":false','"studentEntitlement":true'),sim.id);
+  assert.equal(s.accommodationSimulationReport(r,sim.id).item.summary.integrity,'failed');
+  s.db.prepare('UPDATE accommodation_time_simulation_summaries SET summary_json=? WHERE simulation_id=?')
+   .run(persisted.summary_json,sim.id);
+  assert.equal(s.accommodationSimulationReport(r,sim.id).item.summary.integrity,'verified');
   assert.deepEqual(report.events.map(x=>x.event),['started','paused','resumed','closed:plan_invalid']);
   assert.throws(()=>s.accommodationSimulationReport(f.adminB,sim.id),{code:'missing'});
   assert.throws(()=>s.accommodationSimulationClose(a,sim.id,closed.version),{code:'closed'});
