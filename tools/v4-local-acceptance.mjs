@@ -62,7 +62,7 @@ for(const step of steps){
  const started=Date.now();
  const result=spawnSync(process.execPath,step.argv,{
   cwd:ROOT,stdio:'inherit',shell:false,
-  env:{...process.env,BEP_NO_LISTEN:'1'}
+  env:{...process.env,BEP_NO_LISTEN:'1',BEP_DB_PATH:join(folder,'gate-fixture.sqlite')}
  });
  const exitCode=result.status===null?1:result.status;
  const status=exitCode===0&&!result.error?'PASS':'FAIL';
