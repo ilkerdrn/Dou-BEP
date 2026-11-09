@@ -136,11 +136,29 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
   return db.prepare('SELECT * FROM accommodation_synthetic_permits WHERE tenant_id=? ORDER BY issued_at DESC LIMIT 100')
    .all(actor.tenantId).map(row=>view(actor,row));
  }
+ function overview(actor){
+  access(actor,'accommodation.view');
+  const rows=db.prepare(`SELECT p.*,COALESCE(a.failed_count,0) AS failed_count
+   FROM accommodation_synthetic_permits p LEFT JOIN accommodation_synthetic_permit_attempts a
+    ON a.permit_id=p.id AND a.tenant_id=p.tenant_id
+   WHERE p.tenant_id=? ORDER BY p.issued_at DESC LIMIT 100`).all(actor.tenantId);
+  const result={issued:0,consumed:0,revoked:0,expired:0,stale:0,locked:0};
+  let failedAttempts=0;
+  for(const permit of rows){
+   const item=view(actor,permit);
+   if(!Object.hasOwn(result,item.status))fail('invalid_status','Bilinmeyen yapay izin durumu.',500);
+   result[item.status]++;
+   failedAttempts+=permit.failed_count;
+  }
+  return {scope:'synthetic_only',studentEntitlement:false,limit:100,
+   total:rows.length,failedAttempts,statusCounts:result,
+   note:'Yalnızca son 100 anonim yapay izin; tüm kurum kayıtlarının toplamı değildir.'};
+ }
  function history(actor,id){
   access(actor,'accommodation.view');select(actor,id);
   return {mode:'synthetic_permit_only',studentEntitlement:false,
    events:db.prepare('SELECT event,created_at AS createdAt FROM accommodation_synthetic_permit_events WHERE tenant_id=? AND permit_id=? ORDER BY id LIMIT 100').all(actor.tenantId,id)};
  }
  return {syntheticPermitIssue:issue,syntheticPermitConsume:consume,
-  syntheticPermitRevoke:revoke,syntheticPermitList:list,syntheticPermitHistory:history};
+  syntheticPermitRevoke:revoke,syntheticPermitList:list,syntheticPermitOverview:overview,syntheticPermitHistory:history};
 }
