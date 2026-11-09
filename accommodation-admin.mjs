@@ -183,6 +183,27 @@ async function refreshSyntheticPermits(){
    });
    section.append(revoke);
   }
+  const historyButton=document.createElement('button');historyButton.type='button';
+  historyButton.className='decision-smallbtn';historyButton.textContent='İzin denetim geçmişi';
+  historyButton.addEventListener('click',async()=>{
+   historyButton.disabled=true;
+   try{
+    const audit=await api('/accommodations/synthetic-permits/'+item.id+'/history');
+    const list=document.createElement('ol');
+    const labels={issued:'İzin oluşturuldu',consumed:'İzin tek seferlik kullanıldı',
+     revoked:'İzin iptal edildi',rejected_code:'Hatalı kod denemesi'};
+    for(const event of audit.events){
+     const li=document.createElement('li');
+     li.textContent=(labels[event.event]||'Bilinmeyen işlem')+' · '+
+      new Date(event.createdAt).toLocaleString('tr-TR');
+     list.append(li);
+    }
+    const old=section.querySelector('ol');if(old)old.remove();
+    section.append(list);
+   }catch(e){notice(e.message,true);}
+   finally{historyButton.disabled=false;}
+  });
+  section.append(historyButton);
   box.append(section);
  }
 }
