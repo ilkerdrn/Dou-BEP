@@ -116,6 +116,7 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
   log(actor,'accommodation.synthetic_binding.'+action,id);
   return view(actor,row(actor,id));
  }
+ function get(actor,id){access(actor,'accommodation.view');return view(actor,row(actor,id));}
  function list(actor){
   access(actor,'accommodation.view');
   return db.prepare('SELECT * FROM accommodation_synthetic_bindings WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100')
@@ -126,5 +127,5 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
   return {mode:'synthetic_binding_only',studentEntitlement:false,
    events:db.prepare('SELECT event,created_at AS createdAt FROM accommodation_synthetic_binding_events WHERE tenant_id=? AND binding_id=? ORDER BY id ASC LIMIT 100').all(actor.tenantId,id)};
  }
- return {syntheticBindingCreate:create,syntheticBindingDecide:decide,syntheticBindingList:list,syntheticBindingHistory:history};
+ return {syntheticBindingCreate:create,syntheticBindingDecide:decide,syntheticBindingGet:get,syntheticBindingList:list,syntheticBindingHistory:history};
 }
