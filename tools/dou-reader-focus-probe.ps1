@@ -35,9 +35,13 @@ $refs = @(
     [System.Windows.Forms.Form].Assembly.Location
     [System.Drawing.Color].Assembly.Location
     [System.Windows.Automation.AutomationElement].Assembly.Location
+    [System.Windows.Automation.ControlType].Assembly.Location
     [System.Windows.Automation.AutomationFocusChangedEventHandler].Assembly.Location
     [System.Linq.Enumerable].Assembly.Location
 ) | Select-Object -Unique
+if (@($refs | Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }).Count -gt 0) {
+    throw 'Windows UI Automation assembly reference missing.'
+}
 Add-Type -TypeDefinition ([IO.File]::ReadAllText($source)) -ReferencedAssemblies $refs -ErrorAction Stop
 if ($Check) {
     Write-Host 'DOU focus diagnostic C# compile PASS (not a live UIA event test).'
