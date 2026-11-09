@@ -27,3 +27,13 @@ test('lab checks exact PCM header and supports no-playback verification',()=>{
   assert.match(script,/\[BitConverter\]::ToUInt32\(\$wav,40\) -ne \(\$wav.Length - 44\)/);
   assert.ok([...script].every(ch=>ch.charCodeAt(0)<=127),'PowerShell 5.1 source must stay ASCII');
 });
+
+test('A/B candidate is explicit while default Windows audio lab stays baseline-only',()=>{
+  assert.match(script,/\[string\]\$Arm = 'baseline'/);
+  assert.match(script,/\[ValidateSet\('baseline', 'candidate'\)\]/);
+  assert.match(script,/if \(\$Arm -eq 'candidate'\)/);
+  assert.match(script,/dou-speech-compare-cue\.mjs/);
+  assert.match(script,/\$comparison --cue \$Cue --arm candidate/);
+  assert.match(script,/\$cli --cue \$Cue/);
+  assert.doesNotMatch(script,/Read-Host|Get-Clipboard|ValuePattern|TextPattern/);
+});
