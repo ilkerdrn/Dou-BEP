@@ -26,6 +26,23 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
   event TEXT NOT NULL,
   created_at INTEGER NOT NULL
  );`);
+ // A separate pin table keeps existing SQLite schemas intact. Missing legacy pins fail closed.
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_synthetic_binding_pins(
+  binding_id TEXT PRIMARY KEY REFERENCES accommodation_synthetic_bindings(id),
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  coordination_id TEXT NOT NULL REFERENCES exam_coordination(id),
+  starts_at TEXT NOT NULL, exam_id TEXT NOT NULL, exam_revision INTEGER NOT NULL
+ );`);
+ const sittingPin=(actor,id)=>db.prepare(`SELECT starts_at,exam_id,exam_revision
+  FROM exam_coordination WHERE tenant_id=? AND id=?`).get(actor.tenantId,id);
+ const recordedPin=(actor,id)=>db.prepare(`SELECT coordination_id,starts_at,exam_id,exam_revision
+  FROM accommodation_synthetic_binding_pins WHERE tenant_id=? AND binding_id=?`).get(actor.tenantId,id);
+ const pinValid=(actor,r,plan)=>{
+  const pin=recordedPin(actor,r.id);
+  if(!pin||!plan||pin.coordination_id!==plan.coordinationId)return false;
+  const live=sittingPin(actor,pin.coordination_id);
+  return Boolean(live&&live.starts_at===pin.starts_at&&live.exam_id===pin.exam_id&&live.exam_revision===pin.exam_revision);
+ };
  const row=(actor,id)=>{if(typeof id!=='string'||!ID.test(id))fail('bad_id','Geçersiz bağlantı kimliği.');
   const found=db.prepare('SELECT * FROM accommodation_synthetic_bindings WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
   if(!found)fail('missing','Anonim bağlantı kaydı bulunamadı.',404);
@@ -33,24 +50,32 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
  };
  const view=(actor,r)=>{
   const plan=planState(actor,r.plan_id);
-  const valid=plan?.status==='verified'&&plan?.approvalStatus==='approved';
+  const valid=plan?.status==='verified'&&plan?.approvalStatus==='approved'&&pinValid(actor,r,plan);
   return {id:r.id,planId:r.plan_id,mode:'synthetic_binding_only',studentEntitlement:false,
    status:r.revoked_at?'revoked':!valid?'stale':r.approved_at?'approved':'pending',
    createdAt:r.created_at,approvedAt:r.approved_at,revokedAt:r.revoked_at,
    message:'Yapay oturum eşleştirmesi. Gerçek öğrenciye süre uygulanmaz.'};
  };
- function create(actor,planId){
+ function create(actor,planId,coordinationId){
   access(actor,'accommodation.manage');
   if(typeof planId!=='string'||!ID.test(planId))fail('bad_id','Geçersiz plan kimliği.');
   const state=planState(actor,planId);
   if(!state)fail('missing','Süre planı bulunamadı.',404);
   if(state.status!=='verified'||state.approvalStatus!=='approved')
    fail('not_ready','Onaylı ve güncel süre planı gerekli.',409);
+  if(typeof coordinationId!=='string'||!ID.test(coordinationId)||coordinationId!==state.coordinationId)
+   fail('session_mismatch','Süre planıyla aynı sınav oturumunu açıkça seçin.',409);
+  const pin=sittingPin(actor,coordinationId);
+  if(!pin||!pin.starts_at||!pin.exam_id||!Number.isInteger(pin.exam_revision))
+   fail('not_ready','Güncel, kaynak sınavı onaylı oturum bulunamadı.',409);
   const id=randomUUID(),at=Date.now();
   db.exec('BEGIN IMMEDIATE');
   try{
    db.prepare('INSERT INTO accommodation_synthetic_bindings(id,tenant_id,plan_id,created_by,created_at) VALUES(?,?,?,?,?)')
     .run(id,actor.tenantId,planId,actor.id,at);
+   db.prepare(`INSERT INTO accommodation_synthetic_binding_pins
+    (binding_id,tenant_id,coordination_id,starts_at,exam_id,exam_revision) VALUES(?,?,?,?,?,?)`)
+    .run(id,actor.tenantId,coordinationId,pin.starts_at,pin.exam_id,pin.exam_revision);
    db.prepare('INSERT INTO accommodation_synthetic_binding_events(tenant_id,binding_id,actor_id,event,created_at) VALUES(?,?,?,?,?)')
     .run(actor.tenantId,id,actor.id,'created',at);
    db.exec('COMMIT');
@@ -73,8 +98,8 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
   if(action==='revoke'&&!r.approved_at)fail('not_approved','Yalnızca onaylanmış bağlantı iptal edilebilir.',409);
   if(action==='approve'){
    const plan=planState(actor,r.plan_id);
-   if(plan.status!=='verified'||plan.approvalStatus!=='approved')
-    fail('not_ready','Süre planı artık geçerli değil.',409);
+   if(!plan||plan.status!=='verified'||plan.approvalStatus!=='approved'||!pinValid(actor,r,plan))
+    fail('not_ready','Plan veya sabitlenen sınav oturumu değişmiş.',409);
   }
   const at=Date.now();
   db.exec('BEGIN IMMEDIATE');
