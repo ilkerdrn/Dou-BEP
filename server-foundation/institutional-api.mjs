@@ -1,5 +1,6 @@
 import {StoreError} from './institutional-store.mjs';
 import {rehearsalReportCsv} from './accommodation-report-csv.mjs';
+import {syntheticPermitCsv} from './synthetic-permit-report-csv.mjs';
 import {createTaggedPdfPilot} from './tagged-pdf.mjs';
 import {createHash} from 'node:crypto';
 import {institutionalOperationsReadiness} from './operation-readiness.mjs';
@@ -214,6 +215,15 @@ export function createApiHandler(store,{port=4173}={}){
    if(simulationAction&&req.method==='POST'){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
+   }
+   if(path==='/api/accommodations/synthetic-permits/audit.csv'&&req.method==='GET'){
+    const report=store.syntheticPermitAuditExport(actor);
+    const csv=syntheticPermitCsv(report);
+    res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8',
+     'Content-Disposition':'attachment; filename="bep-yapay-izin-denetimi.csv"',
+     'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
+     'Referrer-Policy':'no-referrer'});
+    res.end(csv);return true;
    }
    if(path==='/api/accommodations/synthetic-permits/overview'&&req.method==='GET'){
     response(res,200,store.syntheticPermitOverview(actor));return true;
