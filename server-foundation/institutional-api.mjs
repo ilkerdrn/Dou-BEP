@@ -184,6 +184,18 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/batch/authorized-audit'&&req.method==='GET'){
     response(res,200,{items:store.authorizedBatchAudit(actor)});return true;
    }
+   if(path==='/api/accommodations/simulations'&&req.method==='GET'){
+    response(res,200,{items:store.accommodationSimulationList(actor)});return true;
+   }
+   if(path==='/api/accommodations/simulations'&&req.method==='POST'){
+    const body=await readJson(req,3000);
+    response(res,201,{item:store.accommodationSimulationStart(actor,body.planId)});return true;
+   }
+   const simulationAction=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/(pause|resume)$/);
+   if(simulationAction&&req.method==='POST'){
+    const body=await readJson(req,3000);
+    response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
+   }
    const timeWindowPath=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/window-preview$/);
    if(timeWindowPath&&req.method==='GET'){
     response(res,200,store.accommodationTimePlanWindowPreview(actor,timeWindowPath[1]));return true;
