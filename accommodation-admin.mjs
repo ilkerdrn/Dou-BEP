@@ -35,6 +35,33 @@ function renderDurationPreview(result){
  }
  $('decision-duration-choices').hidden=!choices.length;
 }
+async function refreshSimulations(){
+ const rows=(await api('/accommodations/simulations')).items;
+ const box=$('decision-simulations');box.replaceChildren();
+ if(!rows.length){box.textContent='Henüz simülasyon başlatılmadı.';return;}
+ for(const item of rows){
+  const wrap=document.createElement('div');wrap.className='pilot-duration-preview';
+  const line=document.createElement('p');
+  line.textContent='Simülasyon · '+(item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
+   (item.window?' · Kalan '+Math.ceil(item.window.remainingMs/60000)+' dk':'');
+  wrap.append(line);
+  const action=item.status==='running'&&item.breaksAllowed?'pause':item.status==='paused'?'resume':null;
+  if(action&&managing()){
+   const button=document.createElement('button');button.type='button';button.className='decision-smallbtn';
+   button.textContent=action==='pause'?'Simülasyonda mola başlat':'Simülasyonda molayı bitir';
+   button.addEventListener('click',async()=>{
+    if(!confirm('Bu işlem yalnız yerel süre simülasyonunu etkiler. Devam edilsin mi?'))return;
+    button.disabled=true;
+    try{await api('/accommodations/simulations/'+item.id+'/'+action,'POST',{version:item.version});
+     await refreshSimulations();notice('Simülasyon mola durumu kaydedildi. Öğrenci oturumu değişmedi.');
+    }catch(e){notice(e.message,true);button.disabled=false;}
+   });
+   wrap.append(button);
+  }
+  box.append(wrap);
+ }
+}
+$('decision-simulations-refresh').addEventListener('click',()=>refreshSimulations().catch(e=>notice(e.message,true)));
 async function refreshTimePlans(){
  const result=await api('/accommodations/time-plans');
  const box=$('decision-time-plans');box.replaceChildren();
@@ -44,6 +71,19 @@ async function refreshTimePlans(){
   const labels={pending:'Onay bekliyor',approved:'Bağımsız onaylı',revoked:'Onay iptal edildi',stale:'Onay yeniden kontrol edilmeli'};
   p.textContent=(labels[item.approvalStatus]||'Kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
   box.append(p);
+  if(item.approvalStatus==='approved'&&item.status==='verified'&&managing()){
+   const startButton=document.createElement('button');
+   startButton.type='button';startButton.className='decision-smallbtn';
+   startButton.textContent='Yerel süre simülasyonu başlat';
+   startButton.addEventListener('click',async()=>{
+    if(!confirm('Gerçek sınav değil: Bu onaylı plan için yerel süre simülasyonu başlatılsın mı?'))return;
+    startButton.disabled=true;
+    try{await api('/accommodations/simulations','POST',{planId:item.id});
+     await refreshSimulations();notice('Yerel simülasyon başlatıldı; öğrenci sınavı açılmadı.');
+    }catch(e){startButton.disabled=false;notice(e.message,true);}
+   });
+   box.append(startButton);
+  }
   if(item.approvalStatus==='approved'&&item.status==='verified'){
    const previewButton=document.createElement('button');
    previewButton.type='button';previewButton.className='decision-smallbtn';
