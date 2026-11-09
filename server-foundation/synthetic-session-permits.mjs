@@ -1,5 +1,5 @@
 /** Local synthetic authorization handoff. Not a student token or time entitlement. */
-import {randomBytes,createHash,randomUUID} from 'node:crypto';
+import {randomBytes,createHash,randomUUID,timingSafeEqual} from 'node:crypto';
 const digest=value=>createHash('sha256').update(value).digest('hex');
 const ID=/^[a-f0-9-]{36}$/;
 const LIFETIME_MS=5*60*1000;
@@ -20,6 +20,27 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
   permit_id TEXT NOT NULL REFERENCES accommodation_synthetic_permits(id),
   actor_id TEXT NOT NULL REFERENCES members(id),event TEXT NOT NULL,created_at INTEGER NOT NULL
  );`);
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_synthetic_permit_attempts(
+  permit_id TEXT PRIMARY KEY REFERENCES accommodation_synthetic_permits(id),
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  failed_count INTEGER NOT NULL DEFAULT 0 CHECK(failed_count BETWEEN 0 AND 5),
+  last_failed_at INTEGER
+ );`);
+ const failures=(actor,id)=>db.prepare('SELECT failed_count FROM accommodation_synthetic_permit_attempts WHERE tenant_id=? AND permit_id=?')
+  .get(actor.tenantId,id)?.failed_count??0;
+ const recordFailure=(actor,id,at)=>{
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   db.prepare(`INSERT INTO accommodation_synthetic_permit_attempts(permit_id,tenant_id,failed_count,last_failed_at)
+    VALUES(?,?,1,?) ON CONFLICT(permit_id) DO UPDATE SET
+    failed_count=MIN(5,failed_count+1),last_failed_at=excluded.last_failed_at
+    WHERE tenant_id=excluded.tenant_id`).run(id,actor.tenantId,at);
+   db.prepare(`INSERT INTO accommodation_synthetic_permit_events
+    (tenant_id,permit_id,actor_id,event,created_at) VALUES(?,?,?,?,?)`)
+    .run(actor.tenantId,id,actor.id,'rejected_code',at);
+   db.exec('COMMIT');
+  }catch(e){db.exec('ROLLBACK');throw e;}
+ };
  const select=(actor,id)=>{
   if(typeof id!=='string'||!ID.test(id))fail('bad_id','Geçersiz izin kimliği.',422);
   const result=db.prepare('SELECT * FROM accommodation_synthetic_permits WHERE tenant_id=? AND id=?')
@@ -31,10 +52,11 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
  const view=(actor,row)=>{
   const now=Date.now();
   const state=row.revoked_at?'revoked':row.consumed_at?'consumed':
-   now>=row.expires_at?'expired':!bindingValid(actor,row.binding_id)?'stale':'issued';
+   now>=row.expires_at?'expired':failures(actor,row.id)>=5?'locked':
+   !bindingValid(actor,row.binding_id)?'stale':'issued';
   return {id:row.id,bindingId:row.binding_id,mode:'synthetic_permit_only',
    studentEntitlement:false,studentSessionCreated:false,
-   status:state,issuedAt:row.issued_at,expiresAt:row.expires_at,
+   status:state,failedAttempts:failures(actor,row.id),maxAttempts:5,issuedAt:row.issued_at,expiresAt:row.expires_at,
    consumedAt:row.consumed_at,revokedAt:row.revoked_at};
  };
  function issue(actor,bindingId){
@@ -62,18 +84,26 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
   access(actor,'accommodation.approve');
   const row=select(actor,id);
   if(row.issued_by===actor.id)fail('separation_of_duties','İzni oluşturan yetkili kendi iznini kullanamaz.',403);
-  if(typeof oneTimeSecret!=='string'||!/^[a-f0-9]{64}$/.test(oneTimeSecret))
-   fail('invalid_secret','Geçerli tek kullanımlık kod gerekli.',422);
-  if(row.revoked_at||row.consumed_at||Date.now()>=row.expires_at)
+  const atCheck=Date.now();
+  if(row.revoked_at||row.consumed_at||atCheck>=row.expires_at)
    fail('not_available','İzin süresi dolmuş, iptal edilmiş veya kullanılmış.',409);
+  if(failures(actor,id)>=5)fail('attempts_exceeded','Beş başarısız denemeden sonra yapay izin kilitlendi.',409);
   if(!bindingValid(actor,row.binding_id))fail('not_ready','Yapay bağlantı geçersizleşmiş.',409);
-  if(digest(oneTimeSecret)!==row.token_sha256)fail('invalid_secret','Kod doğrulanamadı.',403);
+  const syntaxOk=typeof oneTimeSecret==='string'&&/^[a-f0-9]{64}$/.test(oneTimeSecret);
+  const provided=syntaxOk?Buffer.from(digest(oneTimeSecret),'hex'):Buffer.alloc(32);
+  const correct=timingSafeEqual(provided,Buffer.from(row.token_sha256,'hex'));
+  if(!syntaxOk||!correct){
+   recordFailure(actor,id,atCheck);
+   fail('invalid_secret','Kod doğrulanamadı.',403);
+  }
   const at=Date.now();
   db.exec('BEGIN IMMEDIATE');
   try{
    const updated=db.prepare(`UPDATE accommodation_synthetic_permits SET consumed_by=?,consumed_at=?
-    WHERE tenant_id=? AND id=? AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>?`)
-    .run(actor.id,at,actor.tenantId,id,at);
+    WHERE tenant_id=? AND id=? AND consumed_at IS NULL AND revoked_at IS NULL AND expires_at>?
+    AND NOT EXISTS (SELECT 1 FROM accommodation_synthetic_permit_attempts a
+     WHERE a.permit_id=? AND a.tenant_id=? AND a.failed_count>=5)`)
+    .run(actor.id,at,actor.tenantId,id,at,id,actor.tenantId);
    if(!updated.changes)fail('not_available','İzin artık kullanılamaz.',409);
    db.prepare('INSERT INTO accommodation_synthetic_permit_events(tenant_id,permit_id,actor_id,event,created_at) VALUES(?,?,?,?,?)')
     .run(actor.tenantId,id,actor.id,'consumed',at);
