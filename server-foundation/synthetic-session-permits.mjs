@@ -85,13 +85,14 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
  function revoke(actor,id){
   access(actor,'accommodation.approve');
   const row=select(actor,id);
-  if(row.revoked_at||row.consumed_at)fail('not_available','İzin artık değiştirilemez.',409);
   const at=Date.now();
+  if(row.revoked_at||row.consumed_at||at>=row.expires_at)
+   fail('not_available','İzin kullanılmış, iptal edilmiş veya süresi dolmuş.',409);
   db.exec('BEGIN IMMEDIATE');
   try{
    const updated=db.prepare(`UPDATE accommodation_synthetic_permits SET revoked_by=?,revoked_at=?
-    WHERE tenant_id=? AND id=? AND revoked_at IS NULL AND consumed_at IS NULL`)
-    .run(actor.id,at,actor.tenantId,id);
+    WHERE tenant_id=? AND id=? AND revoked_at IS NULL AND consumed_at IS NULL AND expires_at>?`)
+    .run(actor.id,at,actor.tenantId,id,at);
    if(!updated.changes)fail('not_available','İzin başka oturumda değiştirildi.',409);
    db.prepare('INSERT INTO accommodation_synthetic_permit_events(tenant_id,permit_id,actor_id,event,created_at) VALUES(?,?,?,?,?)')
     .run(actor.tenantId,id,actor.id,'revoked',at);
