@@ -164,6 +164,8 @@ export function createDecisionRepository(db,{StoreError,log}){
    baseMinutes:row.base_minutes,extraMinutes:row.extra_minutes,totalMinutes:row.total_minutes,
    createdAt:row.created_at,status:valid?'verified':'recheck',
    approvalStatus,approvedAt:approval?.approved_at??null,
+   canApprove:valid&&!approval&&roleCan(actor.role,'accommodation.approve')&&row.created_by!==actor.id,
+   canRevoke:approval?.status==='approved'&&roleCan(actor.role,'accommodation.approve'),
    message:valid?'Onaylı süre planı doğrulandı. Öğrenci süresine uygulanmadı.':'Karar veya sınav değişmiş. Plan yeniden incelenmeli; öğrenciye uygulanamaz.'};
  }
  function planCreate(actor,decisionId,coordinationId){
