@@ -18,6 +18,8 @@ namespace DouReaderFocusProbe
         private AutomationFocusChangedEventHandler handler;
         private int observed;
         private int approved;
+        private int duplicates;
+        private readonly FocusDuplicateGate duplicateGate = new FocusDuplicateGate();
         private bool active;
 
         public ProbeWindow(string[] processNames)
@@ -58,6 +60,8 @@ namespace DouReaderFocusProbe
             if (active) return;
             observed = 0;
             approved = 0;
+            duplicates = 0;
+            duplicateGate.Reset();
             // Register only when explicitly requested. No UIA property beyond ProcessId.
             handler = new AutomationFocusChangedEventHandler(OnFocusChanged);
             try
@@ -85,7 +89,15 @@ namespace DouReaderFocusProbe
                 if (pid <= 0 || pid == Process.GetCurrentProcess().Id) return;
                 Interlocked.Increment(ref observed);
                 var processName = Process.GetProcessById(pid).ProcessName;
-                if (allowed.Contains(processName)) Interlocked.Increment(ref approved);
+                if (allowed.Contains(processName))
+                {
+                    // Runtime IDs are transient UIA metadata; no names or values are read.
+                    var runtimeId = element.GetRuntimeId();
+                    if (duplicateGate.Allow(pid, runtimeId, Stopwatch.GetTimestamp()))
+                        Interlocked.Increment(ref approved);
+                    else
+                        Interlocked.Increment(ref duplicates);
+                }
             }
             catch (ElementNotAvailableException) { }
             catch (InvalidOperationException) { }
@@ -99,12 +111,15 @@ namespace DouReaderFocusProbe
                     Interlocked.CompareExchange(ref observed, 0, 0) +
                     ". Events from approved applications: " +
                     Interlocked.CompareExchange(ref approved, 0, 0) +
+                    ". Repeated events ignored: " +
+                    Interlocked.CompareExchange(ref duplicates, 0, 0) +
                     ". No content is captured.";
         }
 
         private void StopMonitoring()
         {
             active = false;
+            duplicateGate.Reset();
             var previous = handler;
             handler = null;
             if (previous != null)
@@ -121,6 +136,48 @@ namespace DouReaderFocusProbe
             refresh.Stop();
             refresh.Dispose();
             base.OnFormClosed(e);
+        }
+    }
+
+    // Keeps only the last transient UIA runtime identity in memory.
+    // This is NOT a voice queue and does not persist or read content.
+    public sealed class FocusDuplicateGate
+    {
+        private readonly object sync = new object();
+        private int lastProcessId = -1;
+        private int[] lastRuntimeId;
+        private long lastTimestamp;
+        private readonly long windowTicks = Math.Max(1, Stopwatch.Frequency / 4);
+
+        public void Reset()
+        {
+            lock (sync)
+            {
+                lastProcessId = -1;
+                lastRuntimeId = null;
+                lastTimestamp = 0;
+            }
+        }
+
+        public bool Allow(int processId, int[] runtimeId, long timestamp)
+        {
+            if (processId <= 0 || runtimeId == null || runtimeId.Length == 0) return false;
+            lock (sync)
+            {
+                bool same = processId == lastProcessId &&
+                    lastRuntimeId != null && runtimeId.Length == lastRuntimeId.Length;
+                if (same)
+                {
+                    for (int i = 0; i < runtimeId.Length; i++)
+                        if (runtimeId[i] != lastRuntimeId[i]) { same = false; break; }
+                }
+                if (same && timestamp >= lastTimestamp &&
+                    timestamp - lastTimestamp < windowTicks) return false;
+                lastProcessId = processId;
+                lastRuntimeId = (int[])runtimeId.Clone();
+                lastTimestamp = timestamp;
+                return true;
+            }
         }
     }
 
