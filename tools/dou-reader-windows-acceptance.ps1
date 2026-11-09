@@ -22,6 +22,8 @@ $root = Split-Path -Parent $PSScriptRoot
 $paths = @(
     (Join-Path $root 'dou-reader-windows.test.mjs'),
     (Join-Path $root 'dou-speech-phoneme-ui-race.test.mjs'),
+    (Join-Path $root 'reader-speech-research/reader-speech-policy.test.mjs'),
+    (Join-Path $root 'reader-speech-research/windows-sensitive-name-source.test.mjs'),
     (Join-Path $PSScriptRoot 'dou-reader-windows.ps1'),
     (Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'),
     (Join-Path $PSScriptRoot 'dou-reader-pronunciation-check.ps1'),
@@ -46,7 +48,7 @@ if ($major -lt 22 -or ($major -eq 22 -and $minor -lt 13)) {
 Push-Location $root
 try {
     Write-Host '[1/4] DOU Reader Node regresyonları'
-    & $node.Source '--test' 'dou-reader-windows.test.mjs' 'dou-speech-phoneme-ui-race.test.mjs'
+    & $node.Source '--test' 'dou-reader-windows.test.mjs' 'dou-speech-phoneme-ui-race.test.mjs' 'reader-speech-research/reader-speech-policy.test.mjs' 'reader-speech-research/windows-sensitive-name-source.test.mjs'
     if ($LASTEXITCODE -ne 0) { throw 'Reader Node regresyonları başarısız.' }
 
     Write-Host '[2/4] Üretim C# telaffuz sınıfı ve sentetik örnekler'
