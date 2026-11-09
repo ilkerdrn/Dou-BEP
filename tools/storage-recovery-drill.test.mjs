@@ -63,7 +63,8 @@ test('v2.39 recovery rehearsal supports two-generation independent evidence afte
   assert.equal(result.result,'PASS');assert.equal(result.auditMode,'rotation');
  }finally{f.close();}
 });
-test('v2.39 recovery rehearsal rejects symlinked source rather than following it',async()=>{
+test('v2.39 recovery rehearsal rejects symlinked source rather than following it',async t=>{
+ if(process.platform==='win32'){t.skip('Windows symlink creation needs privilege; manual ACL review remains open.');return;}
  const f=fixture();try{
   const alias=join(f.root,'alias.sqlite');symlinkSync(f.source,alias);
   await assert.rejects(()=>runStorageRecoveryDrill({source:alias,passphrase,audit:f.audit}),/unsafe_database_file/);
