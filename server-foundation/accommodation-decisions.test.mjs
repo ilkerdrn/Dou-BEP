@@ -174,8 +174,16 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.throws(()=>s.accommodationTimePlanApprove(f.adminB,plan.id),{code:'missing'});
   assert.equal(s.accommodationTimePlanList(r)[0].canApprove,true);
   assert.throws(()=>s.accommodationTimePlanWindowPreview(a,plan.id),{code:'not_ready'});
+  const pendingGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
+  assert.equal(pendingGate.liveApplicationEnabled,false);
+  assert.ok(pendingGate.blockers.some(x=>x.id==='independent_review_missing'));
   const approved=s.accommodationTimePlanApprove(r,plan.id);
   assert.equal(approved.approvalStatus,'approved');
+  const approvedGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
+  assert.equal(approvedGate.liveApplicationEnabled,false);
+  assert.equal(approvedGate.reviewReady,true);
+  assert.equal(approvedGate.missingCount,6);
+  assert.throws(()=>s.accommodationTimePlanReleaseReadiness(f.adminB,plan.id),{code:'missing'});
   const window=s.accommodationTimePlanWindowPreview(a,plan.id);
   assert.equal(window.mode,'simulation_only');
   assert.equal(window.window.totalMinutes,85);
@@ -188,6 +196,9 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.deepEqual(s.db.prepare('SELECT event FROM accommodation_time_plan_events WHERE plan_id=? ORDER BY id').all(plan.id).map(x=>x.event),['approved']);
   s.accommodationRevoke(r,decision.id,decision.revision);
   assert.equal(s.accommodationTimePlanList(a)[0].approvalStatus,'stale');
+  const staleGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
+  assert.equal(staleGate.reviewReady,false);
+  assert.equal(staleGate.liveApplicationEnabled,false);
   assert.throws(()=>s.accommodationTimePlanWindowPreview(a,plan.id),{code:'not_ready'});
   assert.equal(s.accommodationTimePlanList(a)[0].status,'recheck');
   assert.equal(s.accommodationTimePlanRevoke(r,plan.id).approvalStatus,'revoked');
