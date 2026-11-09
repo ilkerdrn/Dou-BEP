@@ -8,8 +8,8 @@ test('V3 visual contract is shared by institution and exam pages, last in cascad
  for(const file of ['institution.html','institutional-exams.html']){
   const source=read('./'+file);
   const sheets=[...source.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(x=>x[1]);
-  assert.equal(sheets.at(-1),'/bep-design-system.css',file+' V3 CSS must load last');
-  assert.equal(sheets.filter(x=>x==='/bep-design-system.css').length,1);
+  assert.equal(sheets.at(-1),'/dou-unified-ui.css',file+' unified V4 CSS must load last');
+  assert.equal(sheets.filter(x=>x==='/dou-unified-ui.css').length,1);
   assert.match(source,/class="institution-page campus-layout"/);
   assert.match(source,/href="#dou-content"/);
  }
@@ -69,8 +69,8 @@ test('all V3 administrative pages use a single final design layer',()=>{
  for(const file of ADMIN_SCREENS){
   const source=read('./'+file);
   const styles=[...source.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(m=>m[1]);
-  assert.equal(styles.at(-1),'/bep-design-system.css',file+' must load V3 last');
-  assert.equal(styles.filter(x=>x==='/bep-design-system.css').length,1,file+' must not repeat CSS');
+  assert.equal(styles.at(-1),'/dou-unified-ui.css',file+' must load unified V4 last');
+  assert.equal(styles.filter(x=>x==='/dou-unified-ui.css').length,1,file+' must not repeat CSS');
   assert.match(source,/<body[^>]*class="[^"]*(institution-page|dou-admin-standalone)/,file);
   assert.match(source,/class="portal-side dou-nav"/,file+' must retain navigation');
   assert.match(source,/src="\/admin-navigation.js"/,file+' must retain navigation script');
@@ -141,7 +141,7 @@ test('batch and accommodation screens have accessible shortcuts and preserved wo
  ];
  for(const [file,ids] of screens){
   const html=read('./'+file);
-  assert.match(html,/<body class="institution-page bep-task-page">/);
+  assert.match(html,/<body\b[^>]*class="[^"]*institution-page[^"]*bep-task-page[^"]*"/);
   assert.match(html,/class="bep-task-shortcuts"/);
   for(const id of ids){
    assert.ok(html.includes('id="'+id+'"'),file+' missing destination '+id);
