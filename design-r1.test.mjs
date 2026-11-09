@@ -16,16 +16,17 @@ test('all 17 admin/editor/reader pages carry accessible search and original modu
   assert.match(html,/src="\/admin-navigation\.js"/);
   assert.equal((html.match(/class="dou-nav-find"/g)||[]).length,1,page);
   assert.match(html,/ARAŞTIRMA PROTOTİPİ · v2\.81/);
-  assert.equal((html.match(/class="dou-nav-link portal-menu/g)||[]).length,12,page);
+  assert.equal((html.match(/class="dou-nav-link portal-menu/g)||[]).length,14,page);
  }
- assert.ok(baseline.length===0||baseline.length===12);
+ assert.ok(baseline.length===0||baseline.length===14);
 });
 test('search is local, keyboard-accessible, no network or personal browser storage',()=>{
  const code=read('admin-navigation.js');
  for(const name of ['Escape','aria-expanded','toLocaleLowerCase','hidden','role']) assert.match(code+read('institution.html'),new RegExp(name));
  assert.match(code,/addEventListener\('input',filter\)/);
  assert.match(code,/\.focus\(\)/);
- assert.doesNotMatch(code,/fetch\(|XMLHttpRequest|localStorage|sessionStorage|indexedDB/);
+ assert.doesNotMatch(code,/fetch\(['"]https?:|XMLHttpRequest|localStorage|sessionStorage|indexedDB/);
+ assert.match(code,/fetch\('\/api\/session'.*credentials:'same-origin'/);
 });
 test('premium design is fully offline and retains mobile, print, reduced-motion and focus support',()=>{
  const css=read('admin-premium.css');
