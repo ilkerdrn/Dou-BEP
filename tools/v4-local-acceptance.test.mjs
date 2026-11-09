@@ -22,6 +22,8 @@ test('single command v4 gate lists real existing test files and phases',()=>{
 test('gate launches via local node, writes unique temp report and stops on failures',()=>{
  assert.match(src,/spawnSync\(process\.execPath,step\.argv/);
  assert.match(src,/shell:false/);
+ assert.match(src,/BEP_DB_PATH:join\(folder,'gate-fixture\.sqlite'\)/);
+ assert.match(src,/BEP_NO_LISTEN:'1'/);
  assert.match(src,/mkdtempSync\(join\(tmpdir\(\)/);
  assert.match(src,/writeFileSync\(reportFile,JSON\.stringify\(report,null,2\)/);
  assert.match(src,/if\(status==='FAIL'\)break/);
