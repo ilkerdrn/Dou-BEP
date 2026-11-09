@@ -4,6 +4,8 @@
 param(
     [ValidateSet('ready', 'stopped', 'help')]
     [string]$Cue = 'ready',
+    [ValidateSet('baseline', 'candidate')]
+    [string]$Arm = 'baseline',
     [switch]$Check
 )
 $ErrorActionPreference = 'Stop'
@@ -24,7 +26,13 @@ if (-not (Test-Path -LiteralPath $cli -PathType Leaf)) {
 
 # This command accepts only a fixed cue ID and returns a base64 WAV to memory.
 # Stderr is never redirected into the audio output.
-$encoded = & $node.Source $cli --cue $Cue
+if ($Arm -eq 'candidate') {
+    $comparison = Join-Path $PSScriptRoot 'dou-speech-compare-cue.mjs'
+    if (-not (Test-Path -LiteralPath $comparison -PathType Leaf)) { throw 'Comparison bridge missing.' }
+    $encoded = & $node.Source $comparison --cue $Cue --arm candidate
+} else {
+    $encoded = & $node.Source $cli --cue $Cue
+}
 if ($LASTEXITCODE -ne 0) { throw 'Synthetic cue generation failed.' }
 if ($encoded -is [array]) { throw 'Unexpected multi-line audio payload.' }
 if (-not ($encoded -is [string]) -or $encoded.Length -lt 60 -or
@@ -51,7 +59,7 @@ if ($ascii.GetString($wav,0,4) -cne 'RIFF' -or
     throw 'WAV header or format invalid.'
 }
 if ($Check) {
-    Write-Host ('DOU Speech offline cue WAV PASS: ' + $Cue + ' (' + $wav.Length + ' bytes). Playback NOT TESTED.')
+    Write-Host ('DOU Speech offline cue WAV PASS: ' + $Cue + ' [' + $Arm + '] (' + $wav.Length + ' bytes). Playback NOT TESTED.')
     return
 }
 
@@ -75,7 +83,7 @@ try {
     $status.Top = 18
     $status.Width = 455
     $status.Height = 58
-    $status.Text = 'Experimental robotic sound only. No exam text or SAPI. Cue: ' + $Cue
+    $status.Text = 'Experimental robotic sound only. No exam text or SAPI. Cue: ' + $Cue + ' / ' + $Arm
     $status.AccessibleName = 'Offline audio laboratory status'
 
     $play = New-Object System.Windows.Forms.Button
