@@ -215,6 +215,21 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
    }
+   if(path==='/api/accommodations/synthetic-bindings'&&req.method==='GET'){
+    response(res,200,{items:store.syntheticBindingList(actor)});return true;
+   }
+   if(path==='/api/accommodations/synthetic-bindings'&&req.method==='POST'){
+    const body=await readJson(req,2000);
+    response(res,201,{item:store.syntheticBindingCreate(actor,body.planId)});return true;
+   }
+   const bindingAction=path.match(/^\/api\/accommodations\/synthetic-bindings\/([a-f0-9-]{36})\/(approve|revoke)$/);
+   if(bindingAction&&req.method==='POST'){
+    response(res,200,{item:store.syntheticBindingDecide(actor,bindingAction[1],bindingAction[2])});return true;
+   }
+   const bindingHistory=path.match(/^\/api\/accommodations\/synthetic-bindings\/([a-f0-9-]{36})\/history$/);
+   if(bindingHistory&&req.method==='GET'){
+    response(res,200,store.syntheticBindingHistory(actor,bindingHistory[1]));return true;
+   }
    const releaseReadiness=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/release-readiness$/);
    if(releaseReadiness&&req.method==='GET'){
     response(res,200,store.accommodationTimePlanReleaseReadiness(actor,releaseReadiness[1]));return true;
