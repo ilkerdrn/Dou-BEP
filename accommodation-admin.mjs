@@ -67,8 +67,12 @@ async function refreshSimulations(){
     const report=await api('/accommodations/simulations/'+item.id+'/report');
     const labels=report.events.map(e=>e.event+' · '+new Date(e.createdAt).toLocaleString('tr-TR')+' · Yetkili: '+e.actorId);
     const details=document.createElement('pre');
+    const summary=report.item.summary;
+    const summaryText=!summary?'Kapanış özeti yok':summary.integrity!=='verified'?'Kapanış özeti bütünlük doğrulaması başarısız':
+     'Kapanış mola sayısı: '+summary.pauseCount+' · Hesaplanan mola: '+Math.ceil(summary.completedPauseMs/60000)+' dk · '+
+     (summary.reviewRequired?'Yetkili incelemesi gerekli':'Kapanış özeti doğrulandı');
     details.textContent='Yerel simülasyon / gerçek öğrenci hakkı yok\nDurum: '+report.item.status+
-      '\n'+labels.join('\n');
+      '\n'+summaryText+'\n'+labels.join('\n');
     const previous=wrap.querySelector('pre');if(previous)previous.remove();
     wrap.append(details);
    }catch(e){notice(e.message,true);}
