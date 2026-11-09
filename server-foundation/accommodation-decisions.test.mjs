@@ -230,16 +230,16 @@ test('authorized local time rehearsal persists pause/resume with audit, no learn
   assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'resume',resumed.version),{code:'invalid_break'});
   assert.deepEqual(s.db.prepare('SELECT event FROM accommodation_time_simulation_events WHERE simulation_id=? ORDER BY id').all(sim.id).map(x=>x.event),['started','paused','resumed']);
   // Inject only an isolated synthetic overdue pause; validate read/action fail-closed.
-  const saved=s.db.prepare('SELECT pauses_json FROM accommodation_time_simulations WHERE id=?').get(sim.id).pauses_json;
-  const overdue=Date.now()-31*60000;
-  s.db.prepare('UPDATE accommodation_time_simulations SET pauses_json=? WHERE id=?')
-   .run(JSON.stringify([{startedAt:overdue,endedAt:null}]),sim.id);
+  const saved=s.db.prepare('SELECT started_at,pauses_json FROM accommodation_time_simulations WHERE id=?').get(sim.id);
+  const now=Date.now(),overdue=now-31*60000;
+  s.db.prepare('UPDATE accommodation_time_simulations SET started_at=?,pauses_json=? WHERE id=?')
+   .run(now-40*60000,JSON.stringify([{startedAt:overdue,endedAt:null}]),sim.id);
   const limited=s.accommodationSimulationList(a)[0];
   assert.equal(limited.status,'break_limit_review');
   assert.equal(limited.limitReason,'single_break_over_limit');
   assert.equal(limited.window,undefined);
   assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'resume',resumed.version),{code:'not_ready'});
-  s.db.prepare('UPDATE accommodation_time_simulations SET pauses_json=? WHERE id=?').run(saved,sim.id);
+  s.db.prepare('UPDATE accommodation_time_simulations SET started_at=?,pauses_json=? WHERE id=?').run(saved.started_at,saved.pauses_json,sim.id);
   s.accommodationRevoke(r,decision.id,decision.revision);
   assert.equal(s.accommodationSimulationList(a)[0].status,'review_required');
   assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',resumed.version),{code:'not_ready'});
