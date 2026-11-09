@@ -82,3 +82,18 @@ test('break-limit review fails closed and never extends student pilot time',()=>
  assert.match(ui,/Mola limiti aşıldı — yetkili incelemesi gerekli/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('simulation closure is immutable, tenant-scoped and leaves pilot entitlement untouched',()=>{
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_simulation_closures/);
+ assert.match(store,/function simulationClose\(actor,id,version\)/);
+ assert.match(store,/permit\(actor,'accommodation\.manage'\)/);
+ assert.match(store,/if\(simulationClosure\(actor,id\)\)error\('closed'/);
+ assert.match(store,/WHERE tenant_id=\? AND id=\? AND version=\?/);
+ assert.match(store,/function simulationReport\(actor,id\)/);
+ assert.match(store,/studentEntitlement:false/);
+ assert.match(api,/store\.accommodationSimulationClose\(actor,simulationClosure\[1\],body\.version\)/);
+ assert.match(api,/store\.accommodationSimulationReport\(actor,simulationReport\[1\]\)/);
+ assert.match(ui,/Simülasyonu denetimli kapat/);
+ assert.match(ui,/Denetim raporunu göster/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
