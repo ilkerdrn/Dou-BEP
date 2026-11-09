@@ -11,8 +11,8 @@ test('Exam preparation editor has its DOM targets and same-origin script assets'
  const server=readFileSync(new URL('./server.mjs',import.meta.url),'utf8');
  const style=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
  const login=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
- assert.match(html,/<link rel="stylesheet" href="\/admin-design-v3\.css">/);
- assert.match(login,/<link rel="stylesheet" href="\/admin-design-v3\.css">/);
+ assert.match(html,/<link rel="stylesheet" href="\/dou-unified-ui\.css">/);
+ assert.match(login,/<link rel="stylesheet" href="\/dou-unified-ui\.css">/);
  assert.match(server,/['"]\/admin-design-v3\.css['"]\s*:\s*\[['"]admin-design-v3\.css['"]/);
  assert.match(style,/@media\(max-width:1080px\)/);
  assert.match(style, /:focus-visible/);
@@ -96,7 +96,7 @@ test('Institutional navigation is gated by verified session and reappears after 
  const html=readFileSync(new URL('./institution.html',import.meta.url),'utf8');
  const js=readFileSync(new URL('./institution.mjs',import.meta.url),'utf8');
  const css=readFileSync(new URL('./admin-design-v3.css',import.meta.url),'utf8');
- assert.match(html,/<body class="institution-page campus-layout" data-portal-auth="checking">/);
+ assert.match(html,/<body\b[^>]*class="institution-page campus-layout"[^>]*data-portal-auth="checking">/);
  assert.match(js,/document\.body\.dataset\.portalAuth=signedIn\?'authenticated':'guest'/);
  assert.match(js,/navigation\.inert=!signedIn/);
  assert.match(js,/const signedIn=active&&!restricted/);
