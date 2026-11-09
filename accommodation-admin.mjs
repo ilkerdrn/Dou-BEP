@@ -44,6 +44,21 @@ async function refreshTimePlans(){
   const labels={pending:'Onay bekliyor',approved:'Bağımsız onaylı',revoked:'Onay iptal edildi',stale:'Onay yeniden kontrol edilmeli'};
   p.textContent=(labels[item.approvalStatus]||'Kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
   box.append(p);
+  if(item.approvalStatus==='approved'&&item.status==='verified'){
+   const previewButton=document.createElement('button');
+   previewButton.type='button';previewButton.className='decision-smallbtn';
+   previewButton.textContent='Süre hesabını göster';
+   previewButton.addEventListener('click',async()=>{
+    previewButton.disabled=true;
+    try{
+     const result=await api('/accommodations/time-plans/'+item.id+'/window-preview');
+     const t=new Date(result.window.plannedEnd).toLocaleString('tr-TR');
+     notice('Varsayımsal başlangıç şimdi: '+item.totalMinutes+' dakika; örnek bitiş: '+t+'. Gerçek sınav başlatılmadı.');
+    }catch(e){notice(e.message,true);}
+    finally{previewButton.disabled=false;}
+   });
+   box.append(previewButton);
+  }
   if(item.canApprove||item.canRevoke){
    const button=document.createElement('button');
    button.type='button';button.className='decision-smallbtn';
