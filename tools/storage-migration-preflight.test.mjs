@@ -47,8 +47,8 @@ test('v2.40 detects exposed POSIX SQLite main, sidecar and directory permissions
  }finally{rmSync(t.root,{recursive:true,force:true});}
 });
 
-test('v2.40 rejects symlinked SQLite directory, main, WAL, and dangling journal',t=>{
- if(process.platform==='win32'){t.skip('Windows symlink privilege required; no production ACL claim.');return;}
+test('v2.40 rejects symlinked SQLite directory, main, WAL, and dangling journal',context=>{
+ if(process.platform==='win32'){context.skip('Windows symlink privilege required; no production ACL claim.');return;}
  const t=setup();try{
   const external=join(t.root,'external.sqlite');writeFileSync(external,'not relevant');
   const dirLink=join(t.root,'alias');symlinkSync(t.dir,dirLink,'dir');
