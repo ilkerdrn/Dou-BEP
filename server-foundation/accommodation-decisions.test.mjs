@@ -233,7 +233,7 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.equal(used.studentEntitlement,false);
   assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret),{code:'not_available'});
   assert.throws(()=>s.syntheticPermitRevoke(r,issued.item.id),{code:'not_available'});
-  assert.deepEqual(s.syntheticPermitHistory(a,issued.item.id).events.map(x=>x.event),['issued','consumed']);
+  assert.deepEqual(s.syntheticPermitHistory(a,issued.item.id).events.map(x=>x.event),['issued','rejected_code','consumed']);
 
   assert.throws(()=>s.syntheticBindingDecide(r,binding.id,'approve'),{code:'already_reviewed'});
   const approvedGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
