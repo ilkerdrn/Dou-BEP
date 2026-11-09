@@ -27,3 +27,12 @@ test('Offline gate executes extracted production C# guard rather than a duplicat
   assert.match(smoke,/\[DouBepReader\.SensitiveAccessibleNameGuard\]::IsSensitive/);
   assert.doesNotMatch(smoke,/Invoke-WebRequest|Invoke-RestMethod|Start-Transcript|Get-Clipboard|Set-Clipboard/);
 });
+
+test('Windows PowerShell 5.1 smoke fixtures are invariant to legacy source encoding', () => {
+  const smoke = readFileSync(new URL('../tools/dou-reader-privacy-check.ps1', import.meta.url), 'utf8');
+  assert.doesNotMatch(smoke, /[^\\x00-\\x7f]/, 'PS 5.1 without BOM can corrupt non-ASCII literals');
+  assert.match(smoke, /\[char\]0x015E/);
+  assert.match(smoke, /\[char\]0x00FC/);
+  assert.match(smoke, /label = \$turkishPassword/);
+  assert.match(smoke, /label = \$turkishSecurity/);
+});
