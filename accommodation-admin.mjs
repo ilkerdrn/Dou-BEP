@@ -206,7 +206,7 @@ async function refreshTimePlans(){
    bindingButton.addEventListener('click',async()=>{
     if(!confirm('Gerçek öğrenci veya pilot oturumu bağlanmaz. Yapay bağlantı kaydı oluşturulsun mu?'))return;
     bindingButton.disabled=true;
-    try{await api('/accommodations/synthetic-bindings','POST',{planId:item.id});
+    try{await api('/accommodations/synthetic-bindings','POST',{planId:item.id,coordinationId:item.coordinationId});
       await refreshSyntheticBindings();notice('Yapay bağlantı oluşturuldu. Bağımsız onay bekliyor.');
     }catch(e){bindingButton.disabled=false;notice(e.message,true);}
    });
