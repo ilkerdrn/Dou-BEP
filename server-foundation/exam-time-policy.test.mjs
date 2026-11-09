@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {calculateExamWindow,beginExamBreak,endExamBreak,MINUTE_MS} from './exam-time-policy.mjs';
+import {calculateExamWindow,beginExamBreak,endExamBreak,inspectExamBreakLimits,MINUTE_MS} from './exam-time-policy.mjs';
 
 const m=MINUTE_MS;
 const base={startedAt:100*m,totalMinutes:85,pauses:[],breaksAllowed:true};
@@ -50,4 +50,23 @@ test('closed break cannot be ended twice; no negative remaining',()=>{
  const expired=calculateExamWindow({...base,pauses:closed,now:190*m});
  assert.equal(expired.phase,'expired');
  assert.equal(expired.remainingMs,0);
+});
+
+test('cannot begin an eleventh break or exceed a cumulative hour',()=>{
+ const pauses=Array.from({length:10},(_,i)=>({startedAt:(101+i*2)*m,endedAt:(102+i*2)*m}));
+ assert.equal(calculateExamWindow({...base,pauses,now:122*m}).phase,'running');
+ assert.throws(()=>beginExamBreak({...base,pauses},122*m),/10 mola kaydı/);
+ const total=[{startedAt:101*m,endedAt:131*m},{startedAt:132*m,endedAt:162*m}];
+ assert.equal(calculateExamWindow({...base,pauses:total,now:163*m}).pausedMs,60*m);
+ assert.throws(()=>beginExamBreak({...base,pauses:total},163*m),/Toplam mola süresi/);
+});
+test('limit inspection reports overdue single and total pauses without granting time',()=>{
+ const open=[{startedAt:110*m,endedAt:null}];
+ assert.deepEqual(inspectExamBreakLimits({...base,pauses:open,now:141*m}),{reviewRequired:true,reason:'single_break_over_limit'});
+ const within=inspectExamBreakLimits({...base,pauses:open,now:139*m});
+ assert.equal(within.reviewRequired,false);
+ assert.equal(within.remainingBreakMs,31*m);
+ const cumulative=[{startedAt:101*m,endedAt:131*m},{startedAt:132*m,endedAt:162*m},{startedAt:163*m,endedAt:null}];
+ assert.equal(inspectExamBreakLimits({...base,pauses:cumulative,now:164*m}).reason,'total_break_over_limit');
+ assert.equal(inspectExamBreakLimits({...base,pauses:[{startedAt:140*m,endedAt:141*m},{startedAt:130*m,endedAt:null}],now:142*m}).reason,'invalid_break_history');
 });
