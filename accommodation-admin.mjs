@@ -152,6 +152,32 @@ async function refreshTimePlans(){
   const labels={pending:'Onay bekliyor',approved:'Bağımsız onaylı',revoked:'Onay iptal edildi',stale:'Onay yeniden kontrol edilmeli'};
   p.textContent=(labels[item.approvalStatus]||'Kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
   box.append(p);
+  const releaseButton=document.createElement('button');
+  releaseButton.type='button';releaseButton.className='decision-smallbtn';
+  releaseButton.textContent='Gerçek sınav hazırlık denetimi';
+  releaseButton.addEventListener('click',async()=>{
+   releaseButton.disabled=true;
+   try{
+    const data=await api('/accommodations/time-plans/'+item.id+'/release-readiness');
+    const details=document.createElement('section');
+    details.className='pilot-duration-preview';
+    details.setAttribute('aria-label','Gerçek sınav hazırlık denetimi');
+    const heading=document.createElement('h5');
+    heading.textContent='Gerçek sınav süresi uygulaması: KAPALI';
+    details.append(heading);
+    const note=document.createElement('p');note.textContent=data.message;details.append(note);
+    const list=document.createElement('ol');
+    for(const blocker of data.blockers){
+     const li=document.createElement('li');li.textContent=blocker.label;list.append(li);
+    }
+    details.append(list);
+    const previous=p.nextElementSibling;
+    if(previous?.getAttribute('aria-label')==='Gerçek sınav hazırlık denetimi')previous.remove();
+    p.after(details);
+   }catch(e){notice(e.message,true);}
+   finally{releaseButton.disabled=false;}
+  });
+  box.append(releaseButton);
   if(item.approvalStatus==='approved'&&item.status==='verified'&&managing()){
    const startButton=document.createElement('button');
    startButton.type='button';startButton.className='decision-smallbtn';
