@@ -215,6 +215,9 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
    }
+   if(path==='/api/accommodations/synthetic-permits/overview'&&req.method==='GET'){
+    response(res,200,store.syntheticPermitOverview(actor));return true;
+   }
    if(path==='/api/accommodations/synthetic-permits'&&req.method==='GET'){
     response(res,200,{items:store.syntheticPermitList(actor)});return true;
    }
