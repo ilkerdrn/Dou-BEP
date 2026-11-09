@@ -143,6 +143,33 @@ async function refreshSimulations(){
 $('decision-simulations-refresh').addEventListener('click',()=>refreshSimulations().catch(e=>notice(e.message,true)));
 $('decision-simulations-filter').addEventListener('change',()=>refreshSimulations().catch(e=>notice(e.message,true)));
 
+async function refreshSyntheticBindings(){
+ const box=$('synthetic-binding-list');box.replaceChildren();
+ const items=(await api('/accommodations/synthetic-bindings')).items;
+ if(!items.length){box.textContent='Henüz yapay eşleştirme kaydı yok.';return;}
+ for(const item of items){
+  const panel=document.createElement('section');panel.className='pilot-duration-preview';
+  const title=document.createElement('p');
+  title.textContent='Yapay eşleştirme · '+({pending:'İkinci yetkili onayı bekliyor',approved:'Yapay kayıt onaylandı',stale:'Plan geçersiz, yeni inceleme gerekli',revoked:'İptal edildi'}[item.status]||'İnceleme gerekli')+
+   ' · Gerçek öğrenciye uygulanmadı.';
+  panel.append(title);
+  if(item.status==='pending'||item.status==='approved'){
+   const action=item.status==='pending'?'approve':'revoke';
+   const btn=document.createElement('button');btn.type='button';btn.className='decision-smallbtn';
+   btn.textContent=action==='approve'?'Yapay bağlantıyı bağımsız onayla':'Yapay bağlantıyı iptal et';
+   btn.addEventListener('click',async()=>{
+    if(!confirm('Bu işlem yalnız yapay bağlantı denemesini etkiler. Öğrenciye süre verilmez. Devam edilsin mi?'))return;
+    btn.disabled=true;
+    try{await api('/accommodations/synthetic-bindings/'+item.id+'/'+action,'POST',{});
+     await refreshSyntheticBindings();notice('Yapay eşleştirme durumu güncellendi.');
+    }catch(e){btn.disabled=false;notice(e.message,true);}
+   });
+   panel.append(btn);
+  }
+  box.append(panel);
+ }
+}
+$('synthetic-binding-refresh').addEventListener('click',()=>refreshSyntheticBindings().catch(e=>notice(e.message,true)));
 async function refreshTimePlans(){
  const result=await api('/accommodations/time-plans');
  const box=$('decision-time-plans');box.replaceChildren();
@@ -152,6 +179,19 @@ async function refreshTimePlans(){
   const labels={pending:'Onay bekliyor',approved:'Bağımsız onaylı',revoked:'Onay iptal edildi',stale:'Onay yeniden kontrol edilmeli'};
   p.textContent=(labels[item.approvalStatus]||'Kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
   box.append(p);
+  if(item.approvalStatus==='approved'&&item.status==='verified'&&managing()){
+   const bindingButton=document.createElement('button');
+   bindingButton.type='button';bindingButton.className='decision-smallbtn';
+   bindingButton.textContent='Yapay oturum eşleştirmesi hazırla';
+   bindingButton.addEventListener('click',async()=>{
+    if(!confirm('Gerçek öğrenci veya pilot oturumu bağlanmaz. Yapay bağlantı kaydı oluşturulsun mu?'))return;
+    bindingButton.disabled=true;
+    try{await api('/accommodations/synthetic-bindings','POST',{planId:item.id});
+      await refreshSyntheticBindings();notice('Yapay bağlantı oluşturuldu. Bağımsız onay bekliyor.');
+    }catch(e){bindingButton.disabled=false;notice(e.message,true);}
+   });
+   box.append(bindingButton);
+  }
   const releaseButton=document.createElement('button');
   releaseButton.type='button';releaseButton.className='decision-smallbtn';
   releaseButton.textContent='Gerçek sınav hazırlık denetimi';
