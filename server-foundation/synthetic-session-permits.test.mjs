@@ -88,3 +88,25 @@ test('malformed code is counted but role and tenant denials do not increment fai
   assert.equal(attempts.failed_count,1);
  }finally{f.dispose();}
 });
+
+test('overview aggregates local statuses and rejects cross-tenant disclosure',()=>{
+ const f=fixture();try{
+  const {item,oneTimeSecret}=f.repo.syntheticPermitIssue(f.author,f.bindingId);
+  assert.throws(()=>f.repo.syntheticPermitOverview(f.foreign),{code:'forbidden'});
+  const issued=f.repo.syntheticPermitOverview(f.author);
+  assert.equal(issued.scope,'synthetic_only');
+  assert.equal(issued.studentEntitlement,false);
+  assert.equal(issued.total,1);
+  assert.equal(issued.statusCounts.issued,1);
+  assert.equal(issued.failedAttempts,0);
+  assert.equal(JSON.stringify(issued).includes(oneTimeSecret),false);
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.reviewer,item.id,'a'.repeat(64)),{code:'invalid_secret'});
+  const rejected=f.repo.syntheticPermitOverview(f.author);
+  assert.equal(rejected.failedAttempts,1);
+  assert.equal(rejected.statusCounts.issued,1);
+  f.repo.syntheticPermitRevoke(f.reviewer,item.id);
+  const revoked=f.repo.syntheticPermitOverview(f.author);
+  assert.equal(revoked.statusCounts.revoked,1);
+  assert.equal(revoked.failedAttempts,1);
+ }finally{f.dispose();}
+});
