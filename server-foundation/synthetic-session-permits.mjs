@@ -154,11 +154,28 @@ export function createSyntheticPermitRepository(db,{StoreError,roleCan,log,bindi
    total:rows.length,failedAttempts,statusCounts:result,
    note:'Yalnızca son 100 anonim yapay izin; tüm kurum kayıtlarının toplamı değildir.'};
  }
+ function auditExport(actor){
+  access(actor,'accommodation.view');
+  const rows=db.prepare(`SELECT * FROM accommodation_synthetic_permits
+   WHERE tenant_id=? ORDER BY issued_at DESC,id DESC LIMIT 100`).all(actor.tenantId);
+  const counts=db.prepare(`SELECT event,COUNT(*) AS n FROM accommodation_synthetic_permit_events
+   WHERE tenant_id=? AND permit_id=? GROUP BY event`);
+  return {scope:'synthetic_only',studentEntitlement:false,limit:100,
+   items:rows.map(r=>{
+    const item=view(actor,r);
+    const eventCounts={issued:0,rejected_code:0,consumed:0,revoked:0};
+    for(const record of counts.all(actor.tenantId,r.id)){
+     if(Object.hasOwn(eventCounts,record.event))eventCounts[record.event]=record.n;
+    }
+    return {status:item.status,studentEntitlement:false,
+     issuedAt:item.issuedAt,expiresAt:item.expiresAt,failedAttempts:item.failedAttempts,eventCounts};
+   })};
+ }
  function history(actor,id){
   access(actor,'accommodation.view');select(actor,id);
   return {mode:'synthetic_permit_only',studentEntitlement:false,
    events:db.prepare('SELECT event,created_at AS createdAt FROM accommodation_synthetic_permit_events WHERE tenant_id=? AND permit_id=? ORDER BY id LIMIT 100').all(actor.tenantId,id)};
  }
  return {syntheticPermitIssue:issue,syntheticPermitConsume:consume,
-  syntheticPermitRevoke:revoke,syntheticPermitList:list,syntheticPermitOverview:overview,syntheticPermitHistory:history};
+  syntheticPermitRevoke:revoke,syntheticPermitList:list,syntheticPermitOverview:overview,syntheticPermitAuditExport:auditExport,syntheticPermitHistory:history};
 }
