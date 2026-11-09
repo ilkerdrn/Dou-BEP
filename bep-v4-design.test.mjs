@@ -8,8 +8,8 @@ test('V4 uses exactly one new institutional foundation on login and exam',()=>{
   const html=read('./'+page);
   assert.match(html,/<body data-design-version="4" class="institution-page campus-layout"/);
   const css=[...html.matchAll(/<link\s+rel="stylesheet"\s+href="([^"]+)"/g)].map(m=>m[1]);
-  assert.equal(css.at(-1),'/bep-v4.css');
-  assert.equal(css.filter(path=>path==='/bep-v4.css').length,1);
+  assert.equal(css.at(-1),'/dou-unified-ui.css');
+  assert.equal(css.filter(path=>path==='/dou-unified-ui.css').length,1);
  }
  const server=read('./server.mjs');
  assert.match(server,/['"]\/bep-v4\.css['"]:\[['"]bep-v4\.css['"]/);
@@ -49,8 +49,8 @@ test('V4 entry and administrative routes share one final CSS contract',()=>{
   const html=read('./'+page);
   assert.match(html,/<body[^>]*data-design-version="4"/,page+' must opt into V4');
   const styles=[...html.matchAll(/<link[^>]*rel="stylesheet"[^>]*href="([^"]+\.css)"/g)].map(m=>m[1]);
-  assert.equal(styles.at(-1),'/bep-v4.css',page+' requires V4 as final stylesheet');
-  assert.equal(styles.filter(x=>x==='/bep-v4.css').length,1,page+' must not duplicate V4');
+  assert.equal(styles.at(-1),'/dou-unified-ui.css',page+' requires unified V4 as final stylesheet');
+  assert.equal(styles.filter(x=>x==='/dou-unified-ui.css').length,1,page+' must not duplicate V4');
   assert.match(html,/admin-navigation\.js/,page+' retains the shared accessible navigation');
  }
 });
