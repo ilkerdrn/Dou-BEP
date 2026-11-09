@@ -57,8 +57,8 @@ if ($Check) {
 
 Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
 Add-Type -AssemblyName System.Drawing -ErrorAction Stop
-$script:memory = New-Object System.IO.MemoryStream(,$wav)
-$script:player = New-Object System.Media.SoundPlayer($script:memory)
+$script:memory = [System.IO.MemoryStream]::new($wav)
+$script:player = [System.Media.SoundPlayer]::new($script:memory)
 try {
     $script:player.Load()
     $form = New-Object System.Windows.Forms.Form
