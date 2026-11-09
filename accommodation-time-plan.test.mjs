@@ -143,3 +143,12 @@ test('synthetic-only linkage has independent review and never grants learner tim
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
  assert.doesNotMatch(api,/pilotSessions\\.grantEntitlement/);
 });
+
+test('synthetic binding pins explicit sitting and revision, and admin loads records on entry',()=>{
+ assert.match(store,/createSyntheticBindingRepository\(/);
+ assert.match(api,/store\.syntheticBindingCreate\(actor,body\.planId,body\.coordinationId\)/);
+ assert.match(ui,/planId:item\.id,coordinationId:item\.coordinationId/);
+ assert.match(ui,/item\.startsAt\|\|'Tarih doğrulanamadı'/);
+ assert.match(ui,/Promise\.all\(\[refreshTimePlans\(\),refreshSimulations\(\),refreshSyntheticBindings\(\)\]\)/);
+ assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
+});
