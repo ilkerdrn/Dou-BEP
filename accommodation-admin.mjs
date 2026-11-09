@@ -42,7 +42,7 @@ async function refreshSimulations(){
  for(const item of rows){
   const wrap=document.createElement('div');wrap.className='pilot-duration-preview';
   const line=document.createElement('p');
-  line.textContent='Simülasyon · '+(item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='break_limit_review'?'Mola limiti aşıldı — yetkili incelemesi gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
+  line.textContent='Simülasyon · '+(item.status==='closed'?'Denetimli kapatıldı':item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='break_limit_review'?'Mola limiti aşıldı — yetkili incelemesi gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
    (item.window?' · Kalan '+Math.ceil(item.window.remainingMs/60000)+' dk':'')+' · '+item.message;
   wrap.append(line);
   const action=item.status==='running'&&item.breaksAllowed?'pause':item.status==='paused'?'resume':null;
@@ -57,6 +57,38 @@ async function refreshSimulations(){
     }catch(e){notice(e.message,true);button.disabled=false;}
    });
    wrap.append(button);
+  }
+  const reportButton=document.createElement('button');
+  reportButton.type='button';reportButton.className='decision-smallbtn';
+  reportButton.textContent='Denetim raporunu göster';
+  reportButton.addEventListener('click',async()=>{
+   reportButton.disabled=true;
+   try{
+    const report=await api('/accommodations/simulations/'+item.id+'/report');
+    const labels=report.events.map(e=>e.event+' · '+new Date(e.createdAt).toLocaleString('tr-TR'));
+    const details=document.createElement('pre');
+    details.textContent='Yerel simülasyon / gerçek öğrenci hakkı yok\nDurum: '+report.item.status+
+      '\n'+labels.join('\n');
+    const previous=wrap.querySelector('pre');if(previous)previous.remove();
+    wrap.append(details);
+   }catch(e){notice(e.message,true);}
+   finally{reportButton.disabled=false;}
+  });
+  wrap.append(reportButton);
+  if(item.status!=='closed'&&managing()){
+   const closeButton=document.createElement('button');
+   closeButton.type='button';closeButton.className='decision-smallbtn';
+   closeButton.textContent='Simülasyonu denetimli kapat';
+   closeButton.addEventListener('click',async()=>{
+    if(!confirm('Bu yerel simülasyon geri alınamaz biçimde kapatılacak ve geçmiş korunacak. Devam edilsin mi?'))return;
+    closeButton.disabled=true;
+    try{
+     await api('/accommodations/simulations/'+item.id+'/close','POST',{version:item.version});
+     await refreshSimulations();
+     notice('Simülasyon kapatıldı. Denetim geçmişi korundu.');
+    }catch(e){notice(e.message,true);closeButton.disabled=false;}
+   });
+   wrap.append(closeButton);
   }
   box.append(wrap);
  }
