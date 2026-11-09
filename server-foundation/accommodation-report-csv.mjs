@@ -9,7 +9,7 @@ function cell(value){
  return '"'+safe.replace(/"/g,'""')+'"';
 }
 function csvRow(fields){return fields.map(cell).join(';');}
-function iso(value){return Number.isSafeInteger(value)&&value>=0?new Date(value).toISOString():'';}
+function iso(value){if(!Number.isSafeInteger(value)||value<0||value>8.64e15)return '';const date=new Date(value);return Number.isNaN(date.getTime())?'':date.toISOString();}
 export function rehearsalReportCsv(report){
  if(!report||report.mode!=='simulation_only'||report.studentEntitlement!==false||
   !report.item||!Array.isArray(report.events))throw Error('Geçersiz simülasyon raporu.');
