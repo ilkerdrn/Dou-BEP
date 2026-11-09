@@ -186,7 +186,7 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.equal(binding.studentEntitlement,false);
   assert.equal(binding.mode,'synthetic_binding_only');
   assert.equal(s.syntheticBindingList(f.adminB).length,0);
-  assert.throws(()=>s.syntheticBindingCreate(a,plan.id),{code:'duplicate'});
+  assert.throws(()=>s.syntheticBindingCreate(a,plan.id,sitting.id),{code:'duplicate'});
   assert.throws(()=>s.syntheticBindingDecide(a,binding.id,'approve'),{code:'separation_of_duties'});
   assert.throws(()=>s.syntheticBindingDecide(f.teacher,binding.id,'approve'),{code:'forbidden'});
   assert.throws(()=>s.syntheticBindingHistory(f.adminB,binding.id),{code:'missing'});
