@@ -110,3 +110,20 @@ test('overview aggregates local statuses and rejects cross-tenant disclosure',()
   assert.equal(revoked.failedAttempts,1);
  }finally{f.dispose();}
 });
+
+test('export audit includes only current tenant and does not expose code or staff identity',()=>{
+ const f=fixture();try{
+  const issued=f.repo.syntheticPermitIssue(f.author,f.bindingId);
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.reviewer,issued.item.id,'f'.repeat(64)),{code:'invalid_secret'});
+  const report=f.repo.syntheticPermitAuditExport(f.author);
+  assert.equal(report.scope,'synthetic_only');
+  assert.equal(report.studentEntitlement,false);
+  assert.equal(report.items.length,1);
+  assert.equal(report.items[0].failedAttempts,1);
+  assert.deepEqual(report.items[0].eventCounts,{issued:1,rejected_code:1,consumed:0,revoked:0});
+  const serialized=JSON.stringify(report);
+  for(const field of ['oneTimeSecret','token_sha256','actorId','bindingId','candidateCode',issued.oneTimeSecret])
+   assert.equal(serialized.includes(field),false);
+  assert.equal(f.repo.syntheticPermitAuditExport(f.foreign).items.length,0);
+ }finally{f.dispose();}
+});
