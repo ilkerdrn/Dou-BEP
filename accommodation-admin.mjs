@@ -65,7 +65,7 @@ async function refreshSimulations(){
    reportButton.disabled=true;
    try{
     const report=await api('/accommodations/simulations/'+item.id+'/report');
-    const labels=report.events.map(e=>e.event+' · '+new Date(e.createdAt).toLocaleString('tr-TR'));
+    const labels=report.events.map(e=>e.event+' · '+new Date(e.createdAt).toLocaleString('tr-TR')+' · Yetkili: '+e.actorId);
     const details=document.createElement('pre');
     details.textContent='Yerel simülasyon / gerçek öğrenci hakkı yok\nDurum: '+report.item.status+
       '\n'+labels.join('\n');
