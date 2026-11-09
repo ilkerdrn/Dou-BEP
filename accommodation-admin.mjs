@@ -41,8 +41,22 @@ async function refreshTimePlans(){
  if(!result.items.length){box.textContent='Henüz süre planlama kaydı yok.';return;}
  for(const item of result.items){
   const p=document.createElement('p');
-  p.textContent=(item.status==='verified'?'Doğrulandı':'Yeniden kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
+  const labels={pending:'Onay bekliyor',approved:'Bağımsız onaylı',revoked:'Onay iptal edildi',stale:'Onay yeniden kontrol edilmeli'};
+  p.textContent=(labels[item.approvalStatus]||'Kontrol gerekli')+' · '+item.baseMinutes+' + '+item.extraMinutes+' = '+item.totalMinutes+' dk · '+item.message;
   box.append(p);
+  if(item.canApprove||item.canRevoke){
+   const button=document.createElement('button');
+   button.type='button';button.className='decision-smallbtn';
+   button.textContent=item.canApprove?'Planı bağımsız onayla':'Plan onayını iptal et';
+   button.addEventListener('click',async()=>{
+    const action=item.canApprove?'approve':'revoke';
+    if(!confirm(action==='approve'?'Bu süre planının bağımsız onayını kaydetmek istiyor musunuz? Öğrenci sınavına otomatik uygulanmaz.':'Bu planın onayını iptal etmek istiyor musunuz?'))return;
+    button.disabled=true;
+    try{await api('/accommodations/time-plans/'+item.id+'/'+action,'POST',{});await refreshTimePlans();notice('Plan onay durumu güncellendi. Öğrenci süresi değiştirilmedi.');}
+    catch(e){button.disabled=false;notice(e.message,true);}
+   });
+   box.append(button);
+  }
  }
 }
 $('decision-time-plans-refresh').addEventListener('click',()=>refreshTimePlans().catch(e=>notice(e.message,true)));
