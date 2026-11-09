@@ -8,6 +8,7 @@ import {roleCan} from '../roles.mjs';
 import {calculateExamWindow,beginExamBreak,endExamBreak,inspectExamBreakLimits} from './exam-time-policy.mjs';
 import {evaluateBepRelease} from './live-release-readiness.mjs';
 import {createSyntheticBindingRepository} from './synthetic-session-bindings.mjs';
+import {createSyntheticPermitRepository} from './synthetic-session-permits.mjs';
 const TERM=/^20\d{2}-(GUZ|BAHAR|YAZ)$/;
 const COURSE=/^[A-Z][A-Z0-9_-]{1,23}$/;
 const CODE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9_-]{2,24}$/;
@@ -473,6 +474,12 @@ export function createDecisionRepository(db,{StoreError,log}){
    return plan?planView(actor,plan):null;
   }
  });
+ const syntheticPermits=createSyntheticPermitRepository(db,{StoreError,roleCan,log,
+  bindingState:(actor,id)=>{
+   const binding=syntheticBindings.syntheticBindingList(actor).find(x=>x.id===id);
+   return binding??null;
+  }
+ });
  function verifyBatch(actor,rows){permit(actor,'accommodation.verify');if(!Array.isArray(rows)||!rows.length||rows.length>100)error('invalid_batch','1–100 anonim kayıt gereklidir.',422);
   const seen=new Set(),results=[];
   for(const input of rows){let data;try{data=normalizeDecision(input);}catch(e){error('invalid_batch',e.message,422);}
@@ -484,5 +491,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {...syntheticBindings,accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationTimePlanReleaseReadiness:planReleaseReadiness,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction,accommodationSimulationClose:simulationClose,accommodationSimulationReport:simulationReport};
+ return {...syntheticBindings,...syntheticPermits,accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationTimePlanReleaseReadiness:planReleaseReadiness,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction,accommodationSimulationClose:simulationClose,accommodationSimulationReport:simulationReport};
 }
