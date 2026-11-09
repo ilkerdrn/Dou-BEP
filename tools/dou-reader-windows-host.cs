@@ -198,6 +198,10 @@ namespace DouBepReader
             if (element.Current.IsPassword || element.Current.IsOffscreen || element.Current.ControlType == ControlType.Edit) return null;
             var name = element.Current.Name;
             if (String.IsNullOrWhiteSpace(name)) return null;
+            // Providers may expose secrets in non-edit accessible names. Fail closed on
+            // credential-like labels before any audio or status output is generated.
+            if (Regex.IsMatch(name, @"(?:parola|şifre|sifre|password|passcode|pin\s*(?:kod|code)|cvv|cvc|otp|tek\s*kullanımlık|one[- ]time\s*password|güvenlik\s*kodu|guvenlik\s*kodu|secret|token|api[_ -]?key|access[_ -]?key)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
             if (name.Length > MAX_SPEECH_CHARACTERS) name = name.Substring(0, MAX_SPEECH_CHARACTERS);
             if (name.Length == 0) return null;
