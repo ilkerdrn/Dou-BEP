@@ -307,7 +307,7 @@ export function createDecisionRepository(db,{StoreError,log}){
     remainingMs=calculated.remainingMs;plannedEnd=calculated.plannedEnd;
    }catch{/* No authoritative deadline for an invalid history. */}
   }
-  return {startedAt:row.started_at,closedAt:at,baseDurationMinutes:row.total_minutes,
+  return {startedAt:row.started_at,closedAt:at,totalDurationMinutes:row.total_minutes,
    pauseCount:pauses.length,completedPauseMs:completedMs,
    openPauseAtClosure:pauses.some(p=>p.endedAt===null),
    plannedEnd,remainingMs,reviewRequired:reason==='limit_review'||reason==='plan_invalid'||policy.reviewRequired,
