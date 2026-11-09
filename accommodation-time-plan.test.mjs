@@ -110,3 +110,14 @@ test('closure snapshot freezes break totals and detects tampering with no pilot 
  assert.match(ui,/display\.metrics\.pauseCount/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('CSV route respects authenticated report access and UI filter stays local',()=>{
+ assert.match(api,/rehearsalReportCsv\(report\)/);
+ assert.match(api,/store\.accommodationSimulationReport\(actor,simulationCsv\[1\]\)/);
+ assert.match(api,/Content-Type':'text\/csv; charset=utf-8'/);
+ assert.match(ui,/decision-simulations-filter/);
+ assert.match(ui,/rows\.filter\(item=>item\.status===filter\)/);
+ assert.match(ui,/Anonim CSV indir/);
+ assert.match(ui,/\/report\.csv'/);
+ assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+});
