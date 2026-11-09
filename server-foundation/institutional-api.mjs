@@ -191,6 +191,15 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,201,{item:store.accommodationSimulationStart(actor,body.planId)});return true;
    }
+   const simulationClosure=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/close$/);
+   if(simulationClosure&&req.method==='POST'){
+    const body=await readJson(req,3000);
+    response(res,200,{item:store.accommodationSimulationClose(actor,simulationClosure[1],body.version)});return true;
+   }
+   const simulationReport=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/report$/);
+   if(simulationReport&&req.method==='GET'){
+    response(res,200,store.accommodationSimulationReport(actor,simulationReport[1]));return true;
+   }
    const simulationAction=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/(pause|resume)$/);
    if(simulationAction&&req.method==='POST'){
     const body=await readJson(req,3000);
