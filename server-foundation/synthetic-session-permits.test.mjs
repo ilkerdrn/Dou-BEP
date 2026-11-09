@@ -62,3 +62,29 @@ test('expired permit refuses consume or revoke; stale binding cannot consume',()
   assert.deepEqual(f.repo.syntheticPermitHistory(f.author,item.id).events.map(x=>x.event),['issued']);
  }finally{f.dispose();}
 });
+
+test('five failed attempts are audited and permanently lock a synthetic permit',()=>{
+ const f=fixture();try{
+  const {item,oneTimeSecret}=f.repo.syntheticPermitIssue(f.author,f.bindingId);
+  for(let i=1;i<=5;i++){
+   assert.throws(()=>f.repo.syntheticPermitConsume(f.reviewer,item.id,'0'.repeat(64)),{code:'invalid_secret'});
+   assert.equal(f.repo.syntheticPermitList(f.author)[0].failedAttempts,i);
+  }
+  assert.equal(f.repo.syntheticPermitList(f.author)[0].status,'locked');
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.reviewer,item.id,oneTimeSecret),{code:'attempts_exceeded'});
+  assert.equal(f.db.prepare('SELECT consumed_at FROM accommodation_synthetic_permits WHERE id=?').get(item.id).consumed_at,null);
+  const history=f.repo.syntheticPermitHistory(f.author,item.id);
+  assert.deepEqual(history.events.map(x=>x.event),['issued',...Array(5).fill('rejected_code')]);
+  assert.equal(JSON.stringify(history).includes(oneTimeSecret),false);
+ }finally{f.dispose();}
+});
+test('malformed code is counted but role and tenant denials do not increment failures',()=>{
+ const f=fixture();try{
+  const {item}=f.repo.syntheticPermitIssue(f.author,f.bindingId);
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.foreign,item.id,'bad'),{code:'missing'});
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.author,item.id,'bad'),{code:'forbidden'});
+  assert.throws(()=>f.repo.syntheticPermitConsume(f.reviewer,item.id,'bad'),{code:'invalid_secret'});
+  const attempts=f.db.prepare('SELECT failed_count FROM accommodation_synthetic_permit_attempts WHERE permit_id=?').get(item.id);
+  assert.equal(attempts.failed_count,1);
+ }finally{f.dispose();}
+});
