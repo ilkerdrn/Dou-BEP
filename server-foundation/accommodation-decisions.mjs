@@ -132,6 +132,21 @@ export function createDecisionRepository(db,{StoreError,log}){
   created_at INTEGER NOT NULL,
   UNIQUE(tenant_id,decision_id,coordination_id)
  );CREATE INDEX IF NOT EXISTS idx_time_plans_tenant ON accommodation_time_plans(tenant_id,created_at);`);
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_time_plan_approvals(
+  plan_id TEXT PRIMARY KEY REFERENCES accommodation_time_plans(id) ON DELETE CASCADE,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  status TEXT NOT NULL CHECK(status IN ('approved','revoked')),
+  approved_by TEXT NOT NULL REFERENCES members(id),
+  approved_at INTEGER NOT NULL,
+  revoked_by TEXT REFERENCES members(id),
+  revoked_at INTEGER
+ );
+ CREATE TABLE IF NOT EXISTS accommodation_time_plan_events(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tenant_id TEXT NOT NULL,plan_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,event TEXT NOT NULL,created_at INTEGER NOT NULL
+ );
+ CREATE INDEX IF NOT EXISTS idx_time_plan_events ON accommodation_time_plan_events(tenant_id,plan_id,id);`);
  function planView(actor,row){
   const preview=durationPreview(actor,row.decision_id,row.coordination_id);
   const sitting=db.prepare('SELECT exam_id,exam_revision FROM exam_coordination WHERE tenant_id=? AND id=?')
@@ -142,9 +157,13 @@ export function createDecisionRepository(db,{StoreError,log}){
    sitting?.exam_revision===row.exam_revision&&
    db.prepare('SELECT content_sha256 FROM accommodation_decisions WHERE tenant_id=? AND id=?')
     .get(actor.tenantId,row.decision_id)?.content_sha256===row.decision_sha256;
+  const approval=db.prepare('SELECT * FROM accommodation_time_plan_approvals WHERE tenant_id=? AND plan_id=?')
+   .get(actor.tenantId,row.id);
+  const approvalStatus=!approval?'pending':approval.status==='revoked'?'revoked':valid?'approved':'stale';
   return {id:row.id,decisionId:row.decision_id,coordinationId:row.coordination_id,
    baseMinutes:row.base_minutes,extraMinutes:row.extra_minutes,totalMinutes:row.total_minutes,
    createdAt:row.created_at,status:valid?'verified':'recheck',
+   approvalStatus,approvedAt:approval?.approved_at??null,
    message:valid?'Onaylı süre planı doğrulandı. Öğrenci süresine uygulanmadı.':'Karar veya sınav değişmiş. Plan yeniden incelenmeli; öğrenciye uygulanamaz.'};
  }
  function planCreate(actor,decisionId,coordinationId){
@@ -173,6 +192,50 @@ export function createDecisionRepository(db,{StoreError,log}){
   log(actor,'accommodation.time_plan.created',id);
   return planView(actor,db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,id));
  }
+ function planApprove(actor,id){
+  permit(actor,'accommodation.approve');
+  if(!ID.test(id||''))error('bad_id','Geçersiz plan kimliği.');
+  const row=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
+  if(!row)error('missing','Süre planı bulunamadı.',404);
+  if(row.created_by===actor.id)error('separation_of_duties','Planı oluşturan kişi kendi planını onaylayamaz.',403);
+  const current=planView(actor,row);
+  if(current.status!=='verified')error('not_ready','Süre planı artık geçerli değil. Yeniden inceleyin.',409);
+  const existing=db.prepare('SELECT status FROM accommodation_time_plan_approvals WHERE tenant_id=? AND plan_id=?')
+   .get(actor.tenantId,id);
+  if(existing)error('already_reviewed','Plan daha önce onaylanmış veya iptal edilmiş.',409);
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   // Prevent duplicate concurrent approvals and preserve a trace of who approved.
+   const stamp=Date.now();
+   db.prepare(`INSERT INTO accommodation_time_plan_approvals(plan_id,tenant_id,status,approved_by,approved_at)
+    VALUES(?,?,'approved',?,?)`).run(id,actor.tenantId,actor.id,stamp);
+   db.prepare(`INSERT INTO accommodation_time_plan_events(tenant_id,plan_id,actor_id,event,created_at)
+    VALUES(?,?,?,'approved',?)`).run(actor.tenantId,id,actor.id,stamp);
+   db.exec('COMMIT');
+  }catch(err){db.exec('ROLLBACK');if(/UNIQUE constraint failed: accommodation_time_plan_approvals\.plan_id/.test(err.message||''))
+   error('already_reviewed','Plan başka oturumda onaylanmış.',409);throw err;}
+  log(actor,'accommodation.time_plan.approved',id);
+  return planView(actor,row);
+ }
+ function planRevoke(actor,id){
+  permit(actor,'accommodation.approve');
+  if(!ID.test(id||''))error('bad_id','Geçersiz plan kimliği.');
+  const row=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
+  if(!row)error('missing','Süre planı bulunamadı.',404);
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   const stamp=Date.now();
+   const updated=db.prepare(`UPDATE accommodation_time_plan_approvals
+    SET status='revoked',revoked_by=?,revoked_at=?
+    WHERE tenant_id=? AND plan_id=? AND status='approved'`).run(actor.id,stamp,actor.tenantId,id);
+   if(!updated.changes)error('invalid_status','Yalnızca onaylanmış plan iptal edilebilir.',409);
+   db.prepare(`INSERT INTO accommodation_time_plan_events(tenant_id,plan_id,actor_id,event,created_at)
+    VALUES(?,?,?,'revoked',?)`).run(actor.tenantId,id,actor.id,stamp);
+   db.exec('COMMIT');
+  }catch(err){db.exec('ROLLBACK');throw err;}
+  log(actor,'accommodation.time_plan.revoked',id);
+  return planView(actor,row);
+ }
  function planList(actor){
   permit(actor,'accommodation.view');
   return db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100')
@@ -189,5 +252,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke};
 }
