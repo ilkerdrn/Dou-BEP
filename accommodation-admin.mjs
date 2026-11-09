@@ -204,7 +204,7 @@ async function refreshTimePlans(){
    bindingButton.type='button';bindingButton.className='decision-smallbtn';
    bindingButton.textContent='Yapay oturum eşleştirmesi hazırla';
    bindingButton.addEventListener('click',async()=>{
-    if(!confirm('Gerçek öğrenci veya pilot oturumu bağlanmaz. Yapay bağlantı kaydı oluşturulsun mu?'))return;
+    if(!confirm('Seçilen sınav oturumu: '+(item.startsAt||'Tarih doğrulanamadı')+' · Oturum: '+item.coordinationId+'\nGerçek öğrenci veya pilot oturumu bağlanmaz. Bu yapay bağlantı kaydı oluşturulsun mu?'))return;
     bindingButton.disabled=true;
     try{await api('/accommodations/synthetic-bindings','POST',{planId:item.id,coordinationId:item.coordinationId});
       await refreshSyntheticBindings();notice('Yapay bağlantı oluşturuldu. Bağımsız onay bekliyor.');
