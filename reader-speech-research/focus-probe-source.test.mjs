@@ -41,3 +41,18 @@ test('focus probe resolves UIAutomationTypes and Client assemblies by loaded typ
   assert.match(ps,/-ReferencedAssemblies \$refs/);
   assert.match(ps,/Test-Path -LiteralPath \$_ -PathType Leaf/);
 });
+
+test('focus duplicate gate is in-memory, identity-based and drops rapid repeats',()=>{
+  assert.match(cs,/public sealed class FocusDuplicateGate/);
+  assert.match(cs,/var runtimeId = element.GetRuntimeId\(\)/);
+  assert.match(cs,/duplicateGate\.Allow\(pid, runtimeId, Stopwatch\.GetTimestamp\(\)\)/);
+  assert.match(cs,/duplicateGate\.Reset\(\)/);
+  assert.match(cs,/lastRuntimeId = \(int\[\]\)runtimeId\.Clone\(\)/);
+  assert.match(cs,/timestamp - lastTimestamp < windowTicks/);
+  assert.doesNotMatch(cs,/Current\.Name|ValuePattern|TextPattern|StreamWriter|File\.Write/);
+  const smoke=readFileSync(new URL('../tools/dou-reader-focus-duplicate-check.ps1',import.meta.url),'utf8');
+  assert.match(smoke,/public sealed class FocusDuplicateGate/);
+  assert.match(smoke,/Add-Type -TypeDefinition \$unit/);
+  assert.match(smoke,/\$gate\.Reset\(\)/);
+  assert.ok([...smoke].every(ch=>ch.charCodeAt(0)<=127),'PowerShell 5.1 fixtures must be ASCII');
+});
