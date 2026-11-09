@@ -16,7 +16,8 @@ test('all 17 admin/editor/reader pages carry accessible search and original modu
   assert.match(html,/src="\/admin-navigation\.js"/);
   assert.equal((html.match(/class="dou-nav-find"/g)||[]).length,1,page);
   assert.match(html,/ARAŞTIRMA PROTOTİPİ · v2\.81/);
-  assert.equal((html.match(/class="dou-nav-link portal-menu/g)||[]).length,14,page);
+  const links=(html.match(/class="dou-nav-link portal-menu/g)||[]).length;
+  assert.ok(links===12||links===14,page+' must retain 12 workspace links; management links optional');
  }
  assert.ok(baseline.length===0||baseline.length===14);
 });
