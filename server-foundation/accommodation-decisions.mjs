@@ -164,6 +164,7 @@ export function createDecisionRepository(db,{StoreError,log}){
    .get(actor.tenantId,row.id);
   const approvalStatus=!approval?'pending':approval.status==='revoked'?'revoked':valid?'approved':'stale';
   return {id:row.id,decisionId:row.decision_id,coordinationId:row.coordination_id,
+   startsAt:preview.ready?preview.startsAt:null,
    baseMinutes:row.base_minutes,extraMinutes:row.extra_minutes,totalMinutes:row.total_minutes,
    createdAt:row.created_at,status:valid?'verified':'recheck',
    approvalStatus,approvedAt:approval?.approved_at??null,
