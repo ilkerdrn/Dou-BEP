@@ -1,4 +1,5 @@
 import {ADJUSTMENTS} from './batch-accommodations.mjs';
+import {summarizeRehearsal} from './accommodation-audit-report.mjs';
 const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const state={actor:null,csrf:'',items:[],edit:null,durationDecisionId:null,durationPreview:null};
 function notice(t,bad=false){$('decision-message').textContent=t;$('decision-message').className=bad?'error':'';}
@@ -65,15 +66,48 @@ async function refreshSimulations(){
    reportButton.disabled=true;
    try{
     const report=await api('/accommodations/simulations/'+item.id+'/report');
-    const labels=report.events.map(e=>e.event+' · '+new Date(e.createdAt).toLocaleString('tr-TR')+' · Yetkili: '+e.actorId);
-    const details=document.createElement('pre');
-    const summary=report.item.summary;
-    const summaryText=!summary?'Kapanış özeti yok':summary.integrity!=='verified'?'Kapanış özeti bütünlük doğrulaması başarısız':
-     'Kapanış mola sayısı: '+summary.pauseCount+' · Hesaplanan mola: '+Math.ceil(summary.completedPauseMs/60000)+' dk · '+
-     (summary.reviewRequired?'Yetkili incelemesi gerekli':'Kapanış özeti doğrulandı');
-    details.textContent='Yerel simülasyon / gerçek öğrenci hakkı yok\nDurum: '+report.item.status+
-      '\n'+summaryText+'\n'+labels.join('\n');
-    const previous=wrap.querySelector('pre');if(previous)previous.remove();
+    const display=summarizeRehearsal(report);
+    const details=document.createElement('section');
+    details.className='pilot-duration-preview';
+    details.setAttribute('aria-label','Simülasyon kapanış denetimi');
+    const title=document.createElement('h5');title.textContent='Kapanış raporu · yerel simülasyon';
+    details.append(title);
+    const status=document.createElement('p');
+    status.textContent=display.warning||(
+      display.status==='verified'?'Kapanış özeti doğrulandı.':
+      display.status==='review_required'?'Kapanış kaydı mevcut; yetkili incelemesi gerekiyor.':
+      'Simülasyon henüz kapatılmadı.');
+    details.append(status);
+    if(display.metrics){
+     const grid=document.createElement('dl');
+     for(const [label,value] of [
+      ['Başlangıç',display.metrics.startedAt],['Kapanış',display.metrics.closedAt],
+      ['Toplam planlanan süre',display.metrics.totalDuration],
+      ['Mola sayısı',display.metrics.pauseCount],['Mola süresi',display.metrics.pausedTime],
+      ['Kapanışta açık mola',display.metrics.openPause],
+      ['Kalan çalışma süresi',display.metrics.remaining],['Kapanış nedeni',display.metrics.reason]
+     ]){
+      const dt=document.createElement('dt');dt.textContent=label;
+      const dd=document.createElement('dd');dd.textContent=String(value);
+      grid.append(dt,dd);
+     }
+     details.append(grid);
+    }
+    if(display.closedBy){
+     const officer=document.createElement('p');
+     officer.textContent='Kapatma işlemini yapan yetkili: '+display.closedBy;
+     details.append(officer);
+    }
+    const historyTitle=document.createElement('h6');historyTitle.textContent='Denetim geçmişi';
+    const history=document.createElement('ol');
+    for(const event of display.events){
+     const li=document.createElement('li');
+     li.textContent=event.label+' · '+event.at+' · Yetkili: '+event.actor;
+     history.append(li);
+    }
+    details.append(historyTitle,history);
+    const previous=wrap.querySelector('[aria-label="Simülasyon kapanış denetimi"]');
+    if(previous)previous.remove();
     wrap.append(details);
    }catch(e){notice(e.message,true);}
    finally{reportButton.disabled=false;}
