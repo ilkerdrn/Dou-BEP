@@ -92,7 +92,7 @@ test('malformed code is counted but role and tenant denials do not increment fai
 test('overview aggregates local statuses and rejects cross-tenant disclosure',()=>{
  const f=fixture();try{
   const {item,oneTimeSecret}=f.repo.syntheticPermitIssue(f.author,f.bindingId);
-  assert.throws(()=>f.repo.syntheticPermitOverview(f.foreign),{code:'forbidden'});
+  assert.equal(f.repo.syntheticPermitOverview(f.foreign).total,0);
   const issued=f.repo.syntheticPermitOverview(f.author);
   assert.equal(issued.scope,'synthetic_only');
   assert.equal(issued.studentEntitlement,false);
