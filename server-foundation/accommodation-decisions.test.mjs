@@ -201,6 +201,25 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.equal(s.syntheticBindingList(a)[0].status,'stale');
   s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?').run(initialStartsAt,sitting.id);
   assert.deepEqual(s.syntheticBindingHistory(a,binding.id).events.map(x=>x.event),['created','approved']);
+  const issued=s.syntheticPermitIssue(a,binding.id);
+  assert.equal(issued.item.status,'issued');
+  assert.equal(issued.item.studentEntitlement,false);
+  assert.equal(issued.item.studentSessionCreated,false);
+  assert.match(issued.oneTimeSecret,/^[a-f0-9]{64}$/);
+  assert.equal(issued.item.expiresAt-issued.item.issuedAt,5*60*1000);
+  assert.throws(()=>s.syntheticPermitIssue(a,binding.id),{code:'duplicate'});
+  assert.throws(()=>s.syntheticPermitConsume(a,issued.item.id,issued.oneTimeSecret),{code:'separation_of_duties'});
+  assert.throws(()=>s.syntheticPermitConsume(f.teacher,issued.item.id,issued.oneTimeSecret),{code:'forbidden'});
+  assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,'f'.repeat(64)),{code:'invalid_secret'});
+  assert.equal(s.syntheticPermitList(f.adminB).length,0);
+  assert.throws(()=>s.syntheticPermitHistory(f.adminB,issued.item.id),{code:'missing'});
+  const used=s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret);
+  assert.equal(used.status,'consumed');
+  assert.equal(used.studentEntitlement,false);
+  assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret),{code:'not_available'});
+  assert.throws(()=>s.syntheticPermitRevoke(r,issued.item.id),{code:'not_available'});
+  assert.deepEqual(s.syntheticPermitHistory(a,issued.item.id).events.map(x=>x.event),['issued','consumed']);
+
   assert.throws(()=>s.syntheticBindingDecide(r,binding.id,'approve'),{code:'already_reviewed'});
   const approvedGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
   assert.equal(approvedGate.liveApplicationEnabled,false);
