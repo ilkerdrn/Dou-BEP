@@ -14,7 +14,7 @@ function render(){const term=$('decision-search').value.trim().toLowerCase(),sta
 }
 async function refresh(){state.items=(await api('/accommodations')).items;render();}
 async function boot(){try{const ses=await api('/session');state.actor=ses.member;state.csrf=ses.csrf||'';const allow=ses.authenticated&&['admin','coordinator','reviewer'].includes(ses.member.role);
- $('decision-login').hidden=allow;$('decision-workspace').hidden=!allow;$('decision-create-section').hidden=!managing();if(allow)await refresh();else notice('Bu işlem için koordinatör veya incelemeci rolü gerekli.',true);
+ $('decision-login').hidden=allow;$('decision-workspace').hidden=!allow;$('decision-create-section').hidden=!managing();if(allow){await refresh();await Promise.all([refreshTimePlans(),refreshSimulations(),refreshSyntheticBindings()]);}else notice('Bu işlem için koordinatör veya incelemeci rolü gerekli.',true);
  }catch(e){$('decision-login').hidden=false;$('decision-workspace').hidden=true;notice(e.message,true);}}
 $('decision-form').addEventListener('submit',async event=>{event.preventDefault();const f=new FormData(event.currentTarget);const payload={term:f.get('term'),courseCode:f.get('courseCode'),examLabel:f.get('examLabel'),candidateCode:f.get('candidateCode'),extraMinutes:Number(f.get('extraMinutes')),adjustments:f.getAll('adjustment')};
  $('decision-save').disabled=true;try{if(state.edit)await api('/accommodations/'+state.edit.id,'PUT',{...payload,revision:state.edit.revision});else await api('/accommodations','POST',payload);reset();await refresh();notice('Taslak kaydedildi. Farklı bir yetkilinin onayı bekleniyor.');}catch(e){notice(e.message,true);}finally{$('decision-save').disabled=false;}});
