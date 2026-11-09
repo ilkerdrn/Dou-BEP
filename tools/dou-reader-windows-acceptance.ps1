@@ -24,7 +24,8 @@ $paths = @(
     (Join-Path $root 'dou-speech-phoneme-ui-race.test.mjs'),
     (Join-Path $PSScriptRoot 'dou-reader-windows.ps1'),
     (Join-Path $PSScriptRoot 'dou-reader-windows-host.cs'),
-    (Join-Path $PSScriptRoot 'dou-reader-pronunciation-check.ps1')
+    (Join-Path $PSScriptRoot 'dou-reader-pronunciation-check.ps1'),
+    (Join-Path $PSScriptRoot 'dou-reader-privacy-check.ps1')
 )
 foreach ($path in $paths) {
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
@@ -44,17 +45,21 @@ if ($major -lt 22 -or ($major -eq 22 -and $minor -lt 13)) {
 }
 Push-Location $root
 try {
-    Write-Host '[1/3] DOU Reader Node regresyonları'
+    Write-Host '[1/4] DOU Reader Node regresyonları'
     & $node.Source '--test' 'dou-reader-windows.test.mjs' 'dou-speech-phoneme-ui-race.test.mjs'
     if ($LASTEXITCODE -ne 0) { throw 'Reader Node regresyonları başarısız.' }
 
-    Write-Host '[2/3] Üretim C# telaffuz sınıfı ve sentetik örnekler'
+    Write-Host '[2/4] Üretim C# telaffuz sınıfı ve sentetik örnekler'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'dou-reader-pronunciation-check.ps1')
     if ($LASTEXITCODE -ne 0) { throw 'Türkçe telaffuz C# testi başarısız.' }
 
-    Write-Host '[3/3] Windows UIA / Forms / SAPI C# derleme kontrolü'
+    Write-Host '[3/4] Windows UIA / Forms / SAPI C# derleme kontrolü'
     & powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'dou-reader-windows.ps1') -Check
     if ($LASTEXITCODE -ne 0) { throw 'Windows Reader C# derleme kontrolü başarısız.' }
+
+    Write-Host '[4/4] Windows C# production sensitive-label behavior'
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'dou-reader-privacy-check.ps1')
+    if ($LASTEXITCODE -ne 0) { throw 'Reader privacy behavior FAIL.' }
 
     Write-Host 'DOU Reader teknik kabul kapısı PASS. Bu sonuç gerçek ses/erişilebilirlik kullanıcısı kabulü değildir.' -ForegroundColor Green
 }
