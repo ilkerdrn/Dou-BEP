@@ -152,3 +152,16 @@ test('synthetic binding pins explicit sitting and revision, and admin loads reco
  assert.match(ui,/Promise\.all\(\[refreshTimePlans\(\),refreshSimulations\(\),refreshSyntheticBindings\(\)\]\)/);
  assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
 });
+
+test('single-use synthetic permits never issue learner entitlement, use server expiry and independent reviewer',()=>{
+ assert.match(store,/createSyntheticPermitRepository\(/);
+ assert.match(api,/store\.syntheticPermitIssue\(actor,body\.bindingId\)/);
+ assert.match(api,/store\.syntheticPermitConsume\(actor,permitAction\[1\],body\.oneTimeSecret\)/);
+ assert.match(api,/store\.syntheticPermitRevoke\(actor,permitAction\[1\]\)/);
+ assert.match(ui,/5 dakikalık yapay izin üret/);
+ assert.match(ui,/Yapay izni tek seferlik doğrula/);
+ assert.match(ui,/Bir kez gösterilen yapay izin kodu/);
+ assert.match(ui,/refreshSyntheticPermits\(\)/);
+ assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
