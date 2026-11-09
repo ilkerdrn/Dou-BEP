@@ -153,7 +153,7 @@ async function refreshSyntheticBindings(){
   title.textContent='Yapay eşleştirme · '+({pending:'İkinci yetkili onayı bekliyor',approved:'Yapay kayıt onaylandı',stale:'Plan geçersiz, yeni inceleme gerekli',revoked:'İptal edildi'}[item.status]||'İnceleme gerekli')+
    ' · Gerçek öğrenciye uygulanmadı.';
   panel.append(title);
-  if(item.status==='pending'||item.status==='approved'){
+  if(reviewing()&&(item.status==='pending'||item.status==='approved'||item.status==='stale')){
    const action=item.status==='pending'?'approve':'revoke';
    const btn=document.createElement('button');btn.type='button';btn.className='decision-smallbtn';
    btn.textContent=action==='approve'?'Yapay bağlantıyı bağımsız onayla':'Yapay bağlantıyı iptal et';
@@ -166,6 +166,26 @@ async function refreshSyntheticBindings(){
    });
    panel.append(btn);
   }
+  const historyButton=document.createElement('button');
+  historyButton.type='button';historyButton.className='decision-smallbtn';
+  historyButton.textContent='Yapay bağlantı geçmişini göster';
+  historyButton.addEventListener('click',async()=>{
+   historyButton.disabled=true;
+   try{
+    const report=await api('/accommodations/synthetic-bindings/'+item.id+'/history');
+    const history=document.createElement('ol');
+    for(const event of report.events){
+     const row=document.createElement('li');
+     row.textContent=({created:'Hazırlandı',approved:'Bağımsız onaylandı',revoked:'İptal edildi'}[event.event]||'Bilinmeyen işlem')+
+      ' · '+new Date(event.createdAt).toLocaleString('tr-TR');
+     history.append(row);
+    }
+    const old=panel.querySelector('ol');if(old)old.remove();
+    panel.append(history);
+   }catch(e){notice(e.message,true);}
+   finally{historyButton.disabled=false;}
+  });
+  panel.append(historyButton);
   box.append(panel);
  }
 }
