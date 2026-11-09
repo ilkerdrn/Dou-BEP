@@ -269,13 +269,30 @@ export function createDecisionRepository(db,{StoreError,log}){
   id INTEGER PRIMARY KEY AUTOINCREMENT,tenant_id TEXT NOT NULL,simulation_id TEXT NOT NULL,
   actor_id TEXT NOT NULL,event TEXT NOT NULL,created_at INTEGER NOT NULL
  );`);
+ // Immutable local simulation closure; does not touch pilot sessions.
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_time_simulation_closures(
+  simulation_id TEXT PRIMARY KEY REFERENCES accommodation_time_simulations(id),
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  closed_by TEXT NOT NULL REFERENCES members(id),
+  closed_at INTEGER NOT NULL,
+  reason TEXT NOT NULL CHECK(reason IN ('limit_review','plan_invalid','elapsed','operator_stopped')),
+  final_version INTEGER NOT NULL
+ );`);
  function simulationRow(actor,id){
   if(!ID.test(id||''))error('bad_id','Geçersiz simülasyon kimliği.');
   const row=db.prepare('SELECT * FROM accommodation_time_simulations WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
   if(!row)error('missing','Simülasyon bulunamadı.',404);
   return row;
  }
+ function simulationClosure(actor,id){
+  return db.prepare('SELECT reason,closed_at AS closedAt,final_version AS finalVersion FROM accommodation_time_simulation_closures WHERE tenant_id=? AND simulation_id=?')
+   .get(actor.tenantId,id);
+ }
  function simulationRead(actor,row){
+  const closure=simulationClosure(actor,row.id);
+  if(closure)return {id:row.id,planId:row.plan_id,version:row.version,
+   status:'closed',closure,breaksAllowed:Boolean(row.breaks_allowed),
+   message:'Yerel simülasyon denetim kaydıyla kapatıldı. Öğrenci oturumuna uygulanmadı.'};
   const plan=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,row.plan_id);
   const valid=plan&&planView(actor,plan).approvalStatus==='approved';
   const now=Date.now(),pauses=JSON.parse(row.pauses_json);
@@ -326,6 +343,7 @@ export function createDecisionRepository(db,{StoreError,log}){
   if(action!=='pause'&&action!=='resume')error('bad_action','Geçersiz mola işlemi.',422);
   if(!Number.isInteger(version)||version<1)error('bad_version','Güncel simülasyon sürümü gerekli.',422);
   const row=simulationRow(actor,id);
+  if(simulationClosure(actor,id))error('closed','Kapatılmış simülasyonda mola işlemi yapılamaz.',409);
   if(row.version!==version)error('revision_conflict','Simülasyon başka oturumda değişti.',409);
   const current=simulationRead(actor,row);
   if(current.status==='review_required'||current.status==='break_limit_review')error('not_ready','Simülasyon yeniden incelenmeli; mola işlemi ve otomatik süre uzatması yapılamaz.',409);
@@ -346,6 +364,42 @@ export function createDecisionRepository(db,{StoreError,log}){
   }catch(e){db.exec('ROLLBACK');throw e;}
   log(actor,'accommodation.simulation.'+action,id);
   return simulationRead(actor,simulationRow(actor,id));
+ }
+ function simulationClose(actor,id,version){
+  permit(actor,'accommodation.manage');
+  if(!Number.isInteger(version)||version<1)error('bad_version','Güncel sürüm gerekli.',422);
+  const row=simulationRow(actor,id);
+  if(simulationClosure(actor,id))error('closed','Simülasyon zaten kapatılmış.',409);
+  if(row.version!==version)error('revision_conflict','Simülasyon sürümü güncel değil.',409);
+  const current=simulationRead(actor,row);
+  const reason=current.status==='break_limit_review'?'limit_review':
+   current.status==='review_required'?'plan_invalid':
+   current.status==='expired'?'elapsed':'operator_stopped';
+  const at=Date.now();
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   const updated=db.prepare(`UPDATE accommodation_time_simulations SET version=version+1
+    WHERE tenant_id=? AND id=? AND version=?`).run(actor.tenantId,id,version);
+   if(!updated.changes)error('revision_conflict','Simülasyon başka oturumda değişti.',409);
+   db.prepare(`INSERT INTO accommodation_time_simulation_closures
+    (simulation_id,tenant_id,closed_by,closed_at,reason,final_version) VALUES(?,?,?,?,?,?)`)
+    .run(id,actor.tenantId,actor.id,at,reason,version+1);
+   db.prepare(`INSERT INTO accommodation_time_simulation_events
+    (tenant_id,simulation_id,actor_id,event,created_at) VALUES(?,?,?,?,?)`)
+    .run(actor.tenantId,id,actor.id,'closed:'+reason,at);
+   db.exec('COMMIT');
+  }catch(e){db.exec('ROLLBACK');if(/UNIQUE constraint failed: accommodation_time_simulation_closures\.simulation_id/.test(e.message||''))
+   error('closed','Simülasyon zaten kapatılmış.',409);throw e;}
+  log(actor,'accommodation.simulation.closed',id);
+  return simulationRead(actor,simulationRow(actor,id));
+ }
+ function simulationReport(actor,id){
+  permit(actor,'accommodation.view');
+  const row=simulationRow(actor,id);
+  const item=simulationRead(actor,row);
+  const events=db.prepare(`SELECT event,created_at AS createdAt FROM accommodation_time_simulation_events
+   WHERE tenant_id=? AND simulation_id=? ORDER BY id ASC LIMIT 100`).all(actor.tenantId,id);
+  return {mode:'simulation_only',item,events,studentEntitlement:false};
  }
  function simulationList(actor){
   permit(actor,'accommodation.view');
@@ -368,5 +422,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction,accommodationSimulationClose:simulationClose,accommodationSimulationReport:simulationReport};
 }
