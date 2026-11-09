@@ -58,7 +58,10 @@
     "design:v4:inventory": "node tools/v4-css-migration-audit.mjs --strict",
     "design:v4:css-probe": "node tools/browser-ui-acceptance.mjs --css-probe",
     "design:v4:without-v3": "node tools/browser-ui-acceptance.mjs --without-v3",
-    "design:v4:parity": "node tools/browser-ui-acceptance.mjs --css-parity"
+    "design:v4:parity": "node tools/browser-ui-acceptance.mjs --css-parity",
+    "acceptance:v4": "node tools/v4-local-acceptance.mjs --full",
+    "acceptance:v4:quick": "node tools/v4-local-acceptance.mjs --quick",
+    "acceptance:v4:browser": "node tools/v4-local-acceptance.mjs --full --browser"
   },
   "engines": {
     "node": ">=22.13"
