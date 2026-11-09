@@ -220,7 +220,7 @@ export function createApiHandler(store,{port=4173}={}){
    }
    if(path==='/api/accommodations/synthetic-bindings'&&req.method==='POST'){
     const body=await readJson(req,2000);
-    response(res,201,{item:store.syntheticBindingCreate(actor,body.planId)});return true;
+    response(res,201,{item:store.syntheticBindingCreate(actor,body.planId,body.coordinationId)});return true;
    }
    const bindingAction=path.match(/^\/api\/accommodations\/synthetic-bindings\/([a-f0-9-]{36})\/(approve|revoke)$/);
    if(bindingAction&&req.method==='POST'){
