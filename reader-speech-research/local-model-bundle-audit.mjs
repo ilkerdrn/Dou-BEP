@@ -13,7 +13,7 @@ const MAX_MODEL_BYTES = 2 * 1024 * 1024 * 1024;
 
 export async function inspectLocalModelBundle(directory,manifest) {
   const deny = reason => Object.freeze({
-    usableForResearch:false, usableForProduction:false, reason,
+    packageIntegrityVerified:false, usableForResearch:false, usableForProduction:false, reason,
     offlineOnly:true, humanListeningRequired:true
   });
   if (typeof directory!=='string' || !isAbsolute(directory) ||
@@ -42,7 +42,7 @@ export async function inspectLocalModelBundle(directory,manifest) {
     const hash = digest.digest('hex');
     if (hash !== manifest.sha256) return deny('model-sha256-mismatch');
     return Object.freeze({
-      usableForResearch:true, usableForProduction:false,
+      packageIntegrityVerified:true, usableForResearch:false, usableForProduction:false,
       reason:'model-hash-matches-self-declared-license-but-runtime-and-listening-not-validated',
       offlineOnly:true,humanListeningRequired:true
     });
