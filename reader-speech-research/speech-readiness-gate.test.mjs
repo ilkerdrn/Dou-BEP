@@ -40,10 +40,12 @@ test('local voice model audit rejects missing and unlicensed packages',async()=>
   writeFileSync(join(dir,'voice.onnx'),data);
   const sha256=createHash('sha256').update(data).digest('hex');
   const ready=await inspectLocalModelBundle(dir,{...valid,sha256});
-  assert.equal(ready.usableForResearch,true);
+  assert.equal(ready.packageIntegrityVerified,true);
+  assert.equal(ready.usableForResearch,false);
   assert.equal(ready.usableForProduction,false);
   assert.equal(ready.humanListeningRequired,true);
   const wrong=await inspectLocalModelBundle(dir,{...valid,sha256:'0'.repeat(64)});
+  assert.equal(wrong.packageIntegrityVerified,false);
   assert.equal(wrong.usableForResearch,false);
   const unlicensed=await inspectLocalModelBundle(dir,{...valid,sha256,distributionRightsVerified:false});
   assert.equal(unlicensed.usableForResearch,false);
