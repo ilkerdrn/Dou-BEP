@@ -38,9 +38,12 @@ function renderDurationPreview(result){
 }
 async function refreshSimulations(){
  const rows=(await api('/accommodations/simulations')).items;
+ const filter=$('decision-simulations-filter').value;
+ const visible=filter==='all'?rows:rows.filter(item=>item.status===filter);
+ $('decision-simulations-count').textContent=visible.length+' / '+rows.length+' simülasyon gösteriliyor.';
  const box=$('decision-simulations');box.replaceChildren();
- if(!rows.length){box.textContent='Henüz simülasyon başlatılmadı.';return;}
- for(const item of rows){
+ if(!visible.length){box.textContent=rows.length?'Seçilen durumda simülasyon yok.':'Henüz simülasyon başlatılmadı.';return;}
+ for(const item of visible){
   const wrap=document.createElement('div');wrap.className='pilot-duration-preview';
   const line=document.createElement('p');
   line.textContent='Simülasyon · '+(item.status==='closed'?'Denetimli kapatıldı':item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='break_limit_review'?'Mola limiti aşıldı — yetkili incelemesi gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
@@ -113,6 +116,12 @@ async function refreshSimulations(){
    finally{reportButton.disabled=false;}
   });
   wrap.append(reportButton);
+  const csvLink=document.createElement('a');
+  csvLink.className='decision-smallbtn';
+  csvLink.href='/api/accommodations/simulations/'+encodeURIComponent(item.id)+'/report.csv';
+  csvLink.textContent='Anonim CSV indir';
+  csvLink.setAttribute('download','bep-anonim-simulasyon-denetimi.csv');
+  wrap.append(csvLink);
   if(item.status!=='closed'&&managing()){
    const closeButton=document.createElement('button');
    closeButton.type='button';closeButton.className='decision-smallbtn';
@@ -132,6 +141,8 @@ async function refreshSimulations(){
  }
 }
 $('decision-simulations-refresh').addEventListener('click',()=>refreshSimulations().catch(e=>notice(e.message,true)));
+$('decision-simulations-filter').addEventListener('change',()=>refreshSimulations().catch(e=>notice(e.message,true)));
+
 async function refreshTimePlans(){
  const result=await api('/accommodations/time-plans');
  const box=$('decision-time-plans');box.replaceChildren();
