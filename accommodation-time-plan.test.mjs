@@ -149,7 +149,7 @@ test('synthetic binding pins explicit sitting and revision, and admin loads reco
  assert.match(api,/store\.syntheticBindingCreate\(actor,body\.planId,body\.coordinationId\)/);
  assert.match(ui,/planId:item\.id,coordinationId:item\.coordinationId/);
  assert.match(ui,/item\.startsAt\|\|'Tarih doğrulanamadı'/);
- assert.match(ui,/Promise\.all\(\[refreshTimePlans\(\),refreshSimulations\(\),refreshSyntheticBindings\(\)\]\)/);
+ assert.match(ui,/Promise\.all\(\[refreshTimePlans\(\),refreshSimulations\(\),refreshSyntheticBindings\(\),refreshSyntheticPermits\(\)\]\)/);
  assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
 });
 
