@@ -184,6 +184,10 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/batch/authorized-audit'&&req.method==='GET'){
     response(res,200,{items:store.authorizedBatchAudit(actor)});return true;
    }
+   const timeWindowPath=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/window-preview$/);
+   if(timeWindowPath&&req.method==='GET'){
+    response(res,200,store.accommodationTimePlanWindowPreview(actor,timeWindowPath[1]));return true;
+   }
    const timePlanAction=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/(approve|revoke)$/);
    if(timePlanAction&&req.method==='POST'){
     const [,planId,action]=timePlanAction;
