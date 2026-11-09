@@ -243,5 +243,20 @@ test('authorized local time rehearsal persists pause/resume with audit, no learn
   s.accommodationRevoke(r,decision.id,decision.revision);
   assert.equal(s.accommodationSimulationList(a)[0].status,'review_required');
   assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',resumed.version),{code:'not_ready'});
+  assert.throws(()=>s.accommodationSimulationClose(f.teacher,sim.id,resumed.version),{code:'forbidden'});
+  assert.throws(()=>s.accommodationSimulationClose(f.adminB,sim.id,resumed.version),{code:'missing'});
+  assert.throws(()=>s.accommodationSimulationClose(a,sim.id,resumed.version-1),{code:'revision_conflict'});
+  const closed=s.accommodationSimulationClose(a,sim.id,resumed.version);
+  assert.equal(closed.status,'closed');
+  assert.equal(closed.closure.reason,'plan_invalid');
+  assert.equal(closed.closure.finalVersion,resumed.version+1);
+  const report=s.accommodationSimulationReport(r,sim.id);
+  assert.equal(report.mode,'simulation_only');
+  assert.equal(report.studentEntitlement,false);
+  assert.equal(report.item.status,'closed');
+  assert.deepEqual(report.events.map(x=>x.event),['started','paused','resumed','closed:plan_invalid']);
+  assert.throws(()=>s.accommodationSimulationReport(f.adminB,sim.id),{code:'missing'});
+  assert.throws(()=>s.accommodationSimulationClose(a,sim.id,closed.version),{code:'closed'});
+  assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',closed.version),{code:'closed'});
  }finally{f.dispose();}
 });
