@@ -131,3 +131,15 @@ test('real-exam preflight is read-only, tenant-scoped and never enables learner 
  assert.match(ui,/Gerçek sınav süresi uygulaması: KAPALI/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('synthetic-only linkage has independent review and never grants learner time',()=>{
+ assert.match(store,/createSyntheticBindingRepository\(/);
+ assert.match(store,/accommodationTimePlanReleaseReadiness:planReleaseReadiness/);
+ assert.match(api,/store\.syntheticBindingCreate\(actor,body\.planId\)/);
+ assert.match(api,/store\.syntheticBindingDecide\(actor,bindingAction\[1\],bindingAction\[2\]\)/);
+ assert.match(api,/store\.syntheticBindingHistory\(actor,bindingHistory\[1\]\)/);
+ assert.match(ui,/Yapay oturum eşleştirmesi hazırla/);
+ assert.match(ui,/Yapay bağlantıyı bağımsız onayla/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+ assert.doesNotMatch(api,/pilotSessions\\.grantEntitlement/);
+});
