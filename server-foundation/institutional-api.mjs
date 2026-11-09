@@ -215,6 +215,10 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
    }
+   const releaseReadiness=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/release-readiness$/);
+   if(releaseReadiness&&req.method==='GET'){
+    response(res,200,store.accommodationTimePlanReleaseReadiness(actor,releaseReadiness[1]));return true;
+   }
    const timeWindowPath=path.match(/^\/api\/accommodations\/time-plans\/([a-f0-9-]{36})\/window-preview$/);
    if(timeWindowPath&&req.method==='GET'){
     response(res,200,store.accommodationTimePlanWindowPreview(actor,timeWindowPath[1]));return true;
