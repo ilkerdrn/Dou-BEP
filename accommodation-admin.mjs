@@ -42,8 +42,8 @@ async function refreshSimulations(){
  for(const item of rows){
   const wrap=document.createElement('div');wrap.className='pilot-duration-preview';
   const line=document.createElement('p');
-  line.textContent='Simülasyon · '+(item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
-   (item.window?' · Kalan '+Math.ceil(item.window.remainingMs/60000)+' dk':'');
+  line.textContent='Simülasyon · '+(item.status==='review_required'?'Yeniden inceleme gerekli':item.status==='break_limit_review'?'Mola limiti aşıldı — yetkili incelemesi gerekli':item.status==='paused'?'Molada':item.status==='expired'?'Süre doldu':'Süre işliyor')+
+   (item.window?' · Kalan '+Math.ceil(item.window.remainingMs/60000)+' dk':'')+' · '+item.message;
   wrap.append(line);
   const action=item.status==='running'&&item.breaksAllowed?'pause':item.status==='paused'?'resume':null;
   if(action&&managing()){
