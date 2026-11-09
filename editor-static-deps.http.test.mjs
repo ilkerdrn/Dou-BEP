@@ -20,7 +20,7 @@ function normalize(spec){return '/'+spec.replace(/^\.\//,'').replace(/^\//,'');}
 function dependencies(content){return [...content.matchAll(/(?:import|export)\s+(?:[^\n;]*?\s+from\s+)?['"](\.[^'"]+)['"]/g)].map(x=>normalize(x[1]));}
 test('exam endpoint delivers HTML and all three once-missing dependencies serve JS MIME',async()=>{
  const page=await get('/kurumsal-sinav');assert.equal(page.status,200);assert.match(page.text,/id="exam-workspace"/);
- for(const item of ['question-access.mjs','presentation-variants.mjs','objective-observations.mjs']){
+ for(const item of ['question-access.mjs','presentation-variants.mjs','objective-observations.mjs','accommodation-audit-report.mjs']){
   const r=await get('/'+item);assert.equal(r.status,200,item);assert.match(r.mime,/text\/javascript/,item);
  }
 });
