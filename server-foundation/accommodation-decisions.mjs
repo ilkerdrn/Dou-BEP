@@ -328,7 +328,7 @@ export function createDecisionRepository(db,{StoreError,log}){
   const row=simulationRow(actor,id);
   if(row.version!==version)error('revision_conflict','Simülasyon başka oturumda değişti.',409);
   const current=simulationRead(actor,row);
-  if(current.status==='review_required')error('not_ready','Onay veya zaman planı geçersiz; mola işlemi yapılamaz.',409);
+  if(current.status==='review_required'||current.status==='break_limit_review')error('not_ready','Simülasyon yeniden incelenmeli; mola işlemi ve otomatik süre uzatması yapılamaz.',409);
   const now=Date.now(),pauses=JSON.parse(row.pauses_json);
   let next;
   try{
