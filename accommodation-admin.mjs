@@ -14,7 +14,7 @@ function render(){const term=$('decision-search').value.trim().toLowerCase(),sta
 }
 async function refresh(){state.items=(await api('/accommodations')).items;render();}
 async function boot(){try{const ses=await api('/session');state.actor=ses.member;state.csrf=ses.csrf||'';const allow=ses.authenticated&&['admin','coordinator','reviewer'].includes(ses.member.role);
- $('decision-login').hidden=allow;$('decision-workspace').hidden=!allow;$('decision-create-section').hidden=!managing();if(allow){await refresh();await Promise.all([refreshTimePlans(),refreshSimulations(),refreshSyntheticBindings()]);}else notice('Bu işlem için koordinatör veya incelemeci rolü gerekli.',true);
+ $('decision-login').hidden=allow;$('decision-workspace').hidden=!allow;$('decision-create-section').hidden=!managing();if(allow){await refresh();await Promise.all([refreshTimePlans(),refreshSimulations(),refreshSyntheticBindings(),refreshSyntheticPermits()]);}else notice('Bu işlem için koordinatör veya incelemeci rolü gerekli.',true);
  }catch(e){$('decision-login').hidden=false;$('decision-workspace').hidden=true;notice(e.message,true);}}
 $('decision-form').addEventListener('submit',async event=>{event.preventDefault();const f=new FormData(event.currentTarget);const payload={term:f.get('term'),courseCode:f.get('courseCode'),examLabel:f.get('examLabel'),candidateCode:f.get('candidateCode'),extraMinutes:Number(f.get('extraMinutes')),adjustments:f.getAll('adjustment')};
  $('decision-save').disabled=true;try{if(state.edit)await api('/accommodations/'+state.edit.id,'PUT',{...payload,revision:state.edit.revision});else await api('/accommodations','POST',payload);reset();await refresh();notice('Taslak kaydedildi. Farklı bir yetkilinin onayı bekleniyor.');}catch(e){notice(e.message,true);}finally{$('decision-save').disabled=false;}});
@@ -143,6 +143,49 @@ async function refreshSimulations(){
 $('decision-simulations-refresh').addEventListener('click',()=>refreshSimulations().catch(e=>notice(e.message,true)));
 $('decision-simulations-filter').addEventListener('change',()=>refreshSimulations().catch(e=>notice(e.message,true)));
 
+async function refreshSyntheticPermits(){
+ const box=$('synthetic-permits-list');box.replaceChildren();
+ const entries=(await api('/accommodations/synthetic-permits')).items;
+ if(!entries.length){box.textContent='Henüz yapay izin oluşturulmadı.';return;}
+ for(const item of entries){
+  const section=document.createElement('section');section.className='pilot-duration-preview';
+  const title=document.createElement('p');
+  title.textContent='Yapay izin · '+({issued:'Aktif — 5 dakika içinde kullanılabilir',
+   consumed:'Bir kez kullanıldı',expired:'Süresi doldu',stale:'Bağlantı artık geçersiz',
+   revoked:'İptal edildi'}[item.status]||'İnceleme gerekli')+
+   ' · Gerçek sınav süresi verilmez.';
+  section.append(title);
+  if(item.status==='issued'&&reviewing()){
+   const input=document.createElement('input');input.type='password';input.autocomplete='off';
+   input.placeholder='64 karakterlik tek kullanımlık kod';
+   input.setAttribute('aria-label','Yapay izin kodu');
+   const consume=document.createElement('button');consume.type='button';consume.className='decision-smallbtn';
+   consume.textContent='Yapay izni tek seferlik doğrula';
+   consume.addEventListener('click',async()=>{
+    const secret=input.value.trim();input.value='';
+    if(!confirm('Kod tek kullanımlık doğrulanacaktır. Gerçek öğrenci sınavı etkilenmez.'))return;
+    consume.disabled=true;
+    try{
+     await api('/accommodations/synthetic-permits/'+item.id+'/consume','POST',{oneTimeSecret:secret});
+     await refreshSyntheticPermits();notice('Yapay izin bir kez doğrulandı. Öğrenci hakkı oluşmadı.');
+    }catch(e){consume.disabled=false;notice(e.message,true);}
+   });
+   section.append(input,consume);
+   const revoke=document.createElement('button');revoke.type='button';revoke.className='decision-smallbtn';
+   revoke.textContent='Kullanılmamış izni iptal et';
+   revoke.addEventListener('click',async()=>{
+    if(!confirm('Bu yapay izin geri alınamaz biçimde iptal edilsin mi?'))return;
+    revoke.disabled=true;
+    try{await api('/accommodations/synthetic-permits/'+item.id+'/revoke','POST',{});
+     await refreshSyntheticPermits();notice('Yapay izin iptal edildi.');}
+    catch(e){revoke.disabled=false;notice(e.message,true);}
+   });
+   section.append(revoke);
+  }
+  box.append(section);
+ }
+}
+$('synthetic-permits-refresh').addEventListener('click',()=>refreshSyntheticPermits().catch(e=>notice(e.message,true)));
 async function refreshSyntheticBindings(){
  const box=$('synthetic-binding-list');box.replaceChildren();
  const items=(await api('/accommodations/synthetic-bindings')).items;
@@ -186,6 +229,24 @@ async function refreshSyntheticBindings(){
    finally{historyButton.disabled=false;}
   });
   panel.append(historyButton);
+  if(item.status==='approved'&&managing()){
+   const issue=document.createElement('button');issue.type='button';issue.className='decision-smallbtn';
+   issue.textContent='5 dakikalık yapay izin üret';
+   issue.addEventListener('click',async()=>{
+    if(!confirm('Bu bağlantı için yalnızca yapay, tek kullanımlık izin üretilecek. Devam edilsin mi?'))return;
+    issue.disabled=true;
+    try{
+     const issued=await api('/accommodations/synthetic-permits','POST',{bindingId:item.id});
+     await refreshSyntheticPermits();
+     const code=document.createElement('p');code.textContent='Bu kod yalnız bir kez gösterilir. Diğer yetkiliye güvenli biçimde iletin.';
+     const output=document.createElement('input');output.type='text';output.readOnly=true;output.value=issued.oneTimeSecret;
+     output.setAttribute('aria-label','Bir kez gösterilen yapay izin kodu');
+     panel.append(code,output);
+     notice('Yapay izin üretildi; gerçek öğrenciye süre uygulanmadı.');
+    }catch(e){issue.disabled=false;notice(e.message,true);}
+   });
+   panel.append(issue);
+  }
   box.append(panel);
  }
 }
