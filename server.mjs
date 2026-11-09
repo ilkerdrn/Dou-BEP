@@ -124,6 +124,7 @@ const allowed={
  '/review-audio.html':['review-audio.html','text/html; charset=utf-8'],
  '/review-audio.js':['review-audio.js','text/javascript; charset=utf-8'],
  '/review-audio.css':['review-audio.css','text/css; charset=utf-8'],
+ '/pilot-time.mjs':['pilot-time.mjs','text/javascript; charset=utf-8'],
  '/question-access.mjs':['question-access.mjs','text/javascript; charset=utf-8'],
  '/presentation-variants.mjs':['presentation-variants.mjs','text/javascript; charset=utf-8'],
  '/objective-observations.mjs':['objective-observations.mjs','text/javascript; charset=utf-8'],
