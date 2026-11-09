@@ -215,6 +215,25 @@ export function createApiHandler(store,{port=4173}={}){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationAction(actor,simulationAction[1],simulationAction[2],body.version)});return true;
    }
+   if(path==='/api/accommodations/synthetic-permits'&&req.method==='GET'){
+    response(res,200,{items:store.syntheticPermitList(actor)});return true;
+   }
+   if(path==='/api/accommodations/synthetic-permits'&&req.method==='POST'){
+    const body=await readJson(req,2000);
+    response(res,201,store.syntheticPermitIssue(actor,body.bindingId));return true;
+   }
+   const permitAction=path.match(/^\/api\/accommodations\/synthetic-permits\/([a-f0-9-]{36})\/(consume|revoke)$/);
+   if(permitAction&&req.method==='POST'){
+    const body=await readJson(req,2000);
+    const result=permitAction[2]==='consume'
+     ?store.syntheticPermitConsume(actor,permitAction[1],body.oneTimeSecret)
+     :store.syntheticPermitRevoke(actor,permitAction[1]);
+    response(res,200,{item:result});return true;
+   }
+   const permitHistory=path.match(/^\/api\/accommodations\/synthetic-permits\/([a-f0-9-]{36})\/history$/);
+   if(permitHistory&&req.method==='GET'){
+    response(res,200,store.syntheticPermitHistory(actor,permitHistory[1]));return true;
+   }
    if(path==='/api/accommodations/synthetic-bindings'&&req.method==='GET'){
     response(res,200,{items:store.syntheticBindingList(actor)});return true;
    }
