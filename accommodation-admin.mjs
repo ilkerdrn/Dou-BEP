@@ -151,10 +151,11 @@ async function refreshSyntheticPermits(){
   const section=document.createElement('section');section.className='pilot-duration-preview';
   const title=document.createElement('p');
   title.textContent='Yapay izin · '+({issued:'Aktif — 5 dakika içinde kullanılabilir',
-   consumed:'Bir kez kullanıldı',expired:'Süresi doldu',stale:'Bağlantı artık geçersiz',
+   consumed:'Bir kez kullanıldı',expired:'Süresi doldu',locked:'5 hatalı deneme nedeniyle kilitlendi',stale:'Bağlantı artık geçersiz',
    revoked:'İptal edildi'}[item.status]||'İnceleme gerekli')+
    ' · Gerçek sınav süresi verilmez.';
   section.append(title);
+  if(item.failedAttempts){const warning=document.createElement('p');warning.textContent='Başarısız kod denemesi: '+item.failedAttempts+' / '+item.maxAttempts;section.append(warning);}
   if(item.status==='issued'&&reviewing()){
    const input=document.createElement('input');input.type='password';input.autocomplete='off';
    input.placeholder='64 karakterlik tek kullanımlık kod';
@@ -238,10 +239,18 @@ async function refreshSyntheticBindings(){
     try{
      const issued=await api('/accommodations/synthetic-permits','POST',{bindingId:item.id});
      await refreshSyntheticPermits();
-     const code=document.createElement('p');code.textContent='Bu kod yalnız bir kez gösterilir. Diğer yetkiliye güvenli biçimde iletin.';
-     const output=document.createElement('input');output.type='text';output.readOnly=true;output.value=issued.oneTimeSecret;
+     const envelope=document.createElement('div');envelope.className='pilot-duration-preview';
+     const code=document.createElement('p');code.textContent='Bu kod yalnız burada gösterilir; kapatınca tekrar getirilemez. Kurum içi güvenli kanaldan paylaşın.';
+     const output=document.createElement('input');output.type='password';output.readOnly=true;output.value=issued.oneTimeSecret;
      output.setAttribute('aria-label','Bir kez gösterilen yapay izin kodu');
-     panel.append(code,output);
+     const show=document.createElement('button');show.type='button';show.textContent='Kodu göster';
+     show.addEventListener('click',()=>{
+      output.type=output.type==='password'?'text':'password';
+      show.textContent=output.type==='password'?'Kodu göster':'Kodu gizle';
+     });
+     const dismiss=document.createElement('button');dismiss.type='button';dismiss.textContent='Kodu kapat';
+     dismiss.addEventListener('click',()=>{output.value='';envelope.remove();});
+     envelope.append(code,output,show,dismiss);panel.append(envelope);
      notice('Yapay izin üretildi; gerçek öğrenciye süre uygulanmadı.');
     }catch(e){issue.disabled=false;notice(e.message,true);}
    });
