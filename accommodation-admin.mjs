@@ -145,9 +145,22 @@ $('decision-simulations-filter').addEventListener('change',()=>refreshSimulation
 
 async function refreshSyntheticPermits(){
  const box=$('synthetic-permits-list');box.replaceChildren();
- const entries=(await api('/accommodations/synthetic-permits')).items;
- if(!entries.length){box.textContent='Henüz yapay izin oluşturulmadı.';return;}
- for(const item of entries){
+ const [listing,overview]=await Promise.all([
+  api('/accommodations/synthetic-permits'),
+  api('/accommodations/synthetic-permits/overview')
+ ]);
+ const entries=listing.items;
+ const filter=$('synthetic-permits-filter').value;
+ const visible=filter==='all'?entries:entries.filter(item=>item.status===filter);
+ const count=overview.statusCounts;
+ $('synthetic-permits-summary').textContent=
+  'Son '+overview.total+' yapay izin · Aktif '+count.issued+
+  ' · Kullanılmış '+count.consumed+' · Kilitli '+count.locked+
+  ' · Süresi dolmuş '+count.expired+' · Geçersiz bağlantı '+count.stale+
+  ' · İptal '+count.revoked+' · Hatalı giriş '+overview.failedAttempts+
+  ' · Gösterilen '+visible.length;
+ if(!visible.length){box.textContent=entries.length?'Bu durumda yapay izin yok.':'Henüz yapay izin oluşturulmadı.';return;}
+ for(const item of visible){
   const section=document.createElement('section');section.className='pilot-duration-preview';
   const title=document.createElement('p');
   title.textContent='Yapay izin · '+({issued:'Aktif — 5 dakika içinde kullanılabilir',
@@ -208,6 +221,8 @@ async function refreshSyntheticPermits(){
  }
 }
 $('synthetic-permits-refresh').addEventListener('click',()=>refreshSyntheticPermits().catch(e=>notice(e.message,true)));
+$('synthetic-permits-filter').addEventListener('change',()=>refreshSyntheticPermits().catch(e=>notice(e.message,true)));
+
 async function refreshSyntheticBindings(){
  const box=$('synthetic-binding-list');box.replaceChildren();
  const items=(await api('/accommodations/synthetic-bindings')).items;
