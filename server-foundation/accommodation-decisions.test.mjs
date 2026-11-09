@@ -179,7 +179,9 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.ok(pendingGate.blockers.some(x=>x.id==='independent_review_missing'));
   const approved=s.accommodationTimePlanApprove(r,plan.id);
   assert.equal(approved.approvalStatus,'approved');
-  const binding=s.syntheticBindingCreate(a,plan.id);
+  assert.throws(()=>s.syntheticBindingCreate(a,plan.id),{code:'session_mismatch'});
+  assert.throws(()=>s.syntheticBindingCreate(a,plan.id,'00000000-0000-0000-0000-000000000000'),{code:'session_mismatch'});
+  const binding=s.syntheticBindingCreate(a,plan.id,sitting.id);
   assert.equal(binding.status,'pending');
   assert.equal(binding.studentEntitlement,false);
   assert.equal(binding.mode,'synthetic_binding_only');
@@ -188,7 +190,16 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.throws(()=>s.syntheticBindingDecide(a,binding.id,'approve'),{code:'separation_of_duties'});
   assert.throws(()=>s.syntheticBindingDecide(f.teacher,binding.id,'approve'),{code:'forbidden'});
   assert.throws(()=>s.syntheticBindingHistory(f.adminB,binding.id),{code:'missing'});
+  const initialStartsAt=s.db.prepare('SELECT starts_at FROM exam_coordination WHERE id=?').get(sitting.id).starts_at;
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?').run('2026-11-15T10:30',sitting.id);
+  assert.equal(s.syntheticBindingList(a)[0].status,'stale');
+  assert.throws(()=>s.syntheticBindingDecide(r,binding.id,'approve'),{code:'not_ready'});
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?').run(initialStartsAt,sitting.id);
+  assert.equal(s.syntheticBindingList(a)[0].status,'pending');
   assert.equal(s.syntheticBindingDecide(r,binding.id,'approve').status,'approved');
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?').run('2026-11-15T10:30',sitting.id);
+  assert.equal(s.syntheticBindingList(a)[0].status,'stale');
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?').run(initialStartsAt,sitting.id);
   assert.deepEqual(s.syntheticBindingHistory(a,binding.id).events.map(x=>x.event),['created','approved']);
   assert.throws(()=>s.syntheticBindingDecide(r,binding.id,'approve'),{code:'already_reviewed'});
   const approvedGate=s.accommodationTimePlanReleaseReadiness(a,plan.id);
