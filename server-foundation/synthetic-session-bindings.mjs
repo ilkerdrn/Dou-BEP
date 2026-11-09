@@ -93,8 +93,8 @@ export function createSyntheticBindingRepository(db,{StoreError,roleCan,log,plan
   const r=row(actor,id);
   if(action==='approve'&&r.created_by===actor.id)
    fail('separation_of_duties','Hazırlayan kişi kendi bağlantısını onaylayamaz.',403);
-  if(action==='approve'&&r.approved_at)fail('already_reviewed','Bağlantı önceden incelendi.',409);
   if(r.revoked_at)fail('revoked','İptal edilmiş bağlantı tekrar açılamaz.',409);
+  if(action==='approve'&&r.approved_at)fail('already_reviewed','Bağlantı önceden incelendi.',409);
   if(action==='revoke'&&!r.approved_at)fail('not_approved','Yalnızca onaylanmış bağlantı iptal edilebilir.',409);
   if(action==='approve'){
    const plan=planState(actor,r.plan_id);
