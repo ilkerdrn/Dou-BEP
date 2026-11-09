@@ -17,17 +17,21 @@ if ($start -lt 0 -or $end -le $start) { throw 'Production guard boundaries not f
 $productionClass = $source.Substring($start, $end - $start)
 $unit = "using System; using System.Text.RegularExpressions; namespace DouBepReader { $productionClass }"
 Add-Type -TypeDefinition $unit -ErrorAction Stop
+# Windows PowerShell 5.1 interprets UTF-8 without BOM using the legacy ANSI code page.
+# Build Turkish fixtures from Unicode code points to avoid mojibake in test data.
+$turkishPassword = ([char]0x015E).ToString() + 'ifre: 1234'
+$turkishSecurity = 'G' + ([char]0x00FC).ToString() + 'venlik kodu'
 $cases = @(
     @{ label = 'Sonraki soru'; blocked = $false },
     @{ label = 'Kaydet ve devam'; blocked = $false },
-    @{ label = 'Şifre: 1234'; blocked = $true },
+    @{ label = $turkishPassword; blocked = $true },
     @{ label = 'Parola gir'; blocked = $true },
     @{ label = 'PASSWORD reset'; blocked = $true },
     @{ label = 'OTP 654321'; blocked = $true },
     @{ label = 'CVV 123'; blocked = $true },
     @{ label = 'PIN kodu'; blocked = $true },
     @{ label = 'API_KEY=demo'; blocked = $true },
-    @{ label = 'Güvenlik kodu'; blocked = $true },
+    @{ label = $turkishSecurity; blocked = $true },
     @{ label = 'access-key'; blocked = $true },
     @{ label = ''; blocked = $true }
 )
