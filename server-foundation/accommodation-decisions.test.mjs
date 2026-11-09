@@ -152,3 +152,38 @@ test('duration plan snapshots stay isolated, cannot grant student time, and turn
   assert.throws(()=>s.accommodationTimePlanCreate(a,decision.id,sitting.id),{code:'not_ready'});
  }finally{f.dispose();}
 });
+
+test('separate reviewer approves synthetic time plan; revocation and stale decision cannot grant entitlement',()=>{
+ const f=make();try{
+  const {s,adminA:a,reviewer:r}=f;
+  const decision=s.accommodationCreate(a,sample);
+  s.accommodationApprove(r,decision.id,decision.revision);
+  const source=createDemo();source.profile='';
+  source.questions=source.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
+  const exam=s.createExam(a,{exam:source});
+  s.approveExam(a,exam.id,{revision:1,confirmed:true});
+  const sitting=s.coordinationCreate(a,{term:'2026-GUZ',department:'TEKNOLOJI',program:'BILGISAYAR',
+   courseCode:'BLP103',courseName:'İşletim Sistemleri',examLabel:'VIZE',
+   startsAt:'2026-11-15T09:30',durationMinutes:70,instructorCode:'HOC01',
+   roomCode:'LAB01',examId:exam.id,examRevision:1});
+  const plan=s.accommodationTimePlanCreate(a,decision.id,sitting.id);
+  assert.equal(plan.approvalStatus,'pending');
+  assert.equal(plan.canApprove,false);
+  assert.throws(()=>s.accommodationTimePlanApprove(a,plan.id),{code:'separation_of_duties'});
+  assert.throws(()=>s.accommodationTimePlanApprove(f.teacher,plan.id),{code:'forbidden'});
+  assert.throws(()=>s.accommodationTimePlanApprove(f.adminB,plan.id),{code:'missing'});
+  assert.equal(s.accommodationTimePlanList(r)[0].canApprove,true);
+  const approved=s.accommodationTimePlanApprove(r,plan.id);
+  assert.equal(approved.approvalStatus,'approved');
+  assert.equal(approved.entitlement,undefined);
+  assert.throws(()=>s.accommodationTimePlanApprove(r,plan.id),{code:'already_reviewed'});
+  assert.deepEqual(s.db.prepare('SELECT event FROM accommodation_time_plan_events WHERE plan_id=? ORDER BY id').all(plan.id).map(x=>x.event),['approved']);
+  s.accommodationRevoke(r,decision.id,decision.revision);
+  assert.equal(s.accommodationTimePlanList(a)[0].approvalStatus,'stale');
+  assert.equal(s.accommodationTimePlanList(a)[0].status,'recheck');
+  assert.equal(s.accommodationTimePlanRevoke(r,plan.id).approvalStatus,'revoked');
+  assert.deepEqual(s.db.prepare('SELECT event FROM accommodation_time_plan_events WHERE plan_id=? ORDER BY id').all(plan.id).map(x=>x.event),['approved','revoked']);
+  assert.throws(()=>s.accommodationTimePlanApprove(r,plan.id),{code:'not_ready'});
+  assert.throws(()=>s.accommodationTimePlanRevoke(r,plan.id),{code:'invalid_status'});
+ }finally{f.dispose();}
+});
