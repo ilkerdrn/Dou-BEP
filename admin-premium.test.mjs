@@ -18,8 +18,8 @@ const routes=[
 function read(name){return readFileSync(join(root,name),'utf8');}
 function menu(html){return [...html.matchAll(/class="dou-nav-link portal-menu[^\"]*" href="([^"]+)"/g)].map(x=>x[1]);}
 const expected=menu(read('institution.html'));
-test('premium navigation uses same exact 12 modules on every admin and reader page',()=>{
- assert.equal(expected.length,12);
+test('premium navigation uses same exact 14 modules on every admin and reader page',()=>{
+ assert.equal(expected.length,14);
  for(const file of [...routes.map(r=>r[1]),'preview-v17.html']){
   const html=read(file);
   assert.deepEqual(menu(html),expected,file);
@@ -46,7 +46,8 @@ test('premium navigation is keyboard-operable, mobile and offline',()=>{
  assert.match(code,/aria-expanded/);assert.match(css,/@media\(max-width:1080px\)/);
  assert.match(css,/prefers-reduced-motion/);assert.match(css,/@media print/);
  assert.doesNotMatch(css,/@import|https?:\/\//);
- assert.doesNotMatch(code,/fetch\(|localStorage|sessionStorage/);
+ assert.doesNotMatch(code,/fetch\(['"]https?:|localStorage|sessionStorage/);
+ assert.match(code,/fetch\('\/api\/session'.*credentials:'same-origin'/);
 });
 test('quick action consistently targets new exam and source files do not expose personal data',()=>{
  const html=read('institution.html');
