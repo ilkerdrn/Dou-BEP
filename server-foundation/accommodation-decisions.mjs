@@ -285,7 +285,7 @@ export function createDecisionRepository(db,{StoreError,log}){
   return row;
  }
  function simulationClosure(actor,id){
-  return db.prepare('SELECT reason,closed_at AS closedAt,final_version AS finalVersion FROM accommodation_time_simulation_closures WHERE tenant_id=? AND simulation_id=?')
+  return db.prepare('SELECT reason,closed_by AS closedBy,closed_at AS closedAt,final_version AS finalVersion FROM accommodation_time_simulation_closures WHERE tenant_id=? AND simulation_id=?')
    .get(actor.tenantId,id);
  }
  function simulationRead(actor,row){
@@ -397,7 +397,7 @@ export function createDecisionRepository(db,{StoreError,log}){
   permit(actor,'accommodation.view');
   const row=simulationRow(actor,id);
   const item=simulationRead(actor,row);
-  const events=db.prepare(`SELECT event,created_at AS createdAt FROM accommodation_time_simulation_events
+  const events=db.prepare(`SELECT event,actor_id AS actorId,created_at AS createdAt FROM accommodation_time_simulation_events
    WHERE tenant_id=? AND simulation_id=? ORDER BY id ASC LIMIT 100`).all(actor.tenantId,id);
   return {mode:'simulation_only',item,events,studentEntitlement:false};
  }
