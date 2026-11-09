@@ -167,7 +167,7 @@ export function createDecisionRepository(db,{StoreError,log}){
     .run(id,actor.tenantId,decisionId,coordinationId,decision.revision,decision.content_sha256,
       preview.baseMinutes,preview.extraMinutes,preview.totalMinutes,sitting.exam_id,sitting.exam_revision,actor.id,Date.now());
   }catch(e){
-   if(e.code==='ERR_SQLITE_CONSTRAINT_UNIQUE')error('duplicate','Bu karar ve oturum için plan zaten kaydedilmiş.',409);
+   if((e.code==='ERR_SQLITE_CONSTRAINT_UNIQUE'||e.code==='ERR_SQLITE_ERROR')&&/^UNIQUE constraint failed: accommodation_time_plans\.tenant_id, accommodation_time_plans\.decision_id, accommodation_time_plans\.coordination_id$/.test(e.message||''))error('duplicate','Bu karar ve oturum için plan zaten kaydedilmiş.',409);
    throw e;
   }
   log(actor,'accommodation.time_plan.created',id);
