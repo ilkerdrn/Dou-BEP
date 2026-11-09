@@ -31,3 +31,13 @@ test('focus callback counts only metadata and limits approved process names',()=
   assert.match(ps,/\[switch\]\$Check/);
   assert.doesNotMatch(ps,/Invoke-WebRequest|Invoke-RestMethod|Start-Transcript|Set-Content|Out-File/);
 });
+
+test('focus probe resolves UIAutomationTypes and Client assemblies by loaded type paths',()=>{
+  assert.match(ps,/Add-Type -AssemblyName 'UIAutomationTypes'/);
+  assert.match(ps,/Add-Type -AssemblyName 'UIAutomationClient'/);
+  assert.match(ps,/\[System\.Windows\.Automation\.ControlType\]\.Assembly\.Location/);
+  assert.match(ps,/\[System\.Windows\.Automation\.AutomationElement\]\.Assembly\.Location/);
+  assert.match(ps,/\[System\.Windows\.Automation\.AutomationFocusChangedEventHandler\]\.Assembly\.Location/);
+  assert.match(ps,/-ReferencedAssemblies \$refs/);
+  assert.match(ps,/Test-Path -LiteralPath \$_ -PathType Leaf/);
+});
