@@ -213,6 +213,21 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,'f'.repeat(64)),{code:'invalid_secret'});
   assert.equal(s.syntheticPermitList(f.adminB).length,0);
   assert.throws(()=>s.syntheticPermitHistory(f.adminB,issued.item.id),{code:'missing'});
+  const originalExpiry=s.db.prepare('SELECT expires_at FROM accommodation_synthetic_permits WHERE id=?')
+   .get(issued.item.id).expires_at;
+  s.db.prepare('UPDATE accommodation_synthetic_permits SET expires_at=? WHERE id=?')
+   .run(Date.now()-1000,issued.item.id);
+  assert.equal(s.syntheticPermitList(a)[0].status,'expired');
+  assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret),{code:'not_available'});
+  assert.throws(()=>s.syntheticPermitRevoke(r,issued.item.id),{code:'not_available'});
+  s.db.prepare('UPDATE accommodation_synthetic_permits SET expires_at=? WHERE id=?')
+   .run(originalExpiry,issued.item.id);
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?')
+   .run('2026-11-15T10:30',sitting.id);
+  assert.equal(s.syntheticPermitList(a)[0].status,'stale');
+  assert.throws(()=>s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret),{code:'not_ready'});
+  s.db.prepare('UPDATE exam_coordination SET starts_at=? WHERE id=?')
+   .run(initialStartsAt,sitting.id);
   const used=s.syntheticPermitConsume(r,issued.item.id,issued.oneTimeSecret);
   assert.equal(used.status,'consumed');
   assert.equal(used.studentEntitlement,false);
