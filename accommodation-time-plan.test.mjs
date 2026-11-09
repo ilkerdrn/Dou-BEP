@@ -44,3 +44,13 @@ test('independent decision and time-plan approvals are distinct with audit and l
  assert.match(ui,/\/accommodations\/time-plans\/'\+item\.id\+'\/'\+action/);
  assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
+
+test('approved-only hypothetical exam clock cannot issue or modify student pilot',()=>{
+ assert.match(store,/function planWindowPreview\(actor,id\)/);
+ assert.match(store,/state\.approvalStatus!=='approved'\|\|state\.status!=='verified'/);
+ assert.match(store,/mode:'simulation_only'/);
+ assert.match(store,/breaksAllowed:false,now:startedAt/);
+ assert.match(api,/store\.accommodationTimePlanWindowPreview\(actor,timeWindowPath\[1\]\)/);
+ assert.match(ui,/\/window-preview'/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
