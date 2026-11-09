@@ -5,7 +5,7 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {ADJUSTMENTS} from '../batch-accommodations.mjs';
 import {roleCan} from '../roles.mjs';
-import {calculateExamWindow,beginExamBreak,endExamBreak} from './exam-time-policy.mjs';
+import {calculateExamWindow,beginExamBreak,endExamBreak,inspectExamBreakLimits} from './exam-time-policy.mjs';
 const TERM=/^20\d{2}-(GUZ|BAHAR|YAZ)$/;
 const COURSE=/^[A-Z][A-Z0-9_-]{1,23}$/;
 const CODE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9_-]{2,24}$/;
@@ -279,6 +279,14 @@ export function createDecisionRepository(db,{StoreError,log}){
   const plan=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,row.plan_id);
   const valid=plan&&planView(actor,plan).approvalStatus==='approved';
   const now=Date.now(),pauses=JSON.parse(row.pauses_json);
+  if(valid&&pauses.length){
+   const limits=inspectExamBreakLimits({
+    startedAt:row.started_at,pauses,now,breaksAllowed:Boolean(row.breaks_allowed)
+   });
+   if(limits.reviewRequired)return {id:row.id,planId:row.plan_id,version:row.version,
+    status:'break_limit_review',limitReason:limits.reason,breaksAllowed:Boolean(row.breaks_allowed),
+    message:'Mola sınırı aşıldı veya mola geçmişi geçersiz. Yeni süre verilmez; yetkili incelemesi gerekli.'};
+  }
   let window;
   try{window=calculateExamWindow({startedAt:row.started_at,totalMinutes:row.total_minutes,
     breaksAllowed:Boolean(row.breaks_allowed),pauses,now});}
