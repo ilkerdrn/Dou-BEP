@@ -54,3 +54,23 @@ test('approved-only hypothetical exam clock cannot issue or modify student pilot
  assert.match(ui,/\/window-preview'/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('simulation routes and controls stay isolated from pilot and require explicit authorization',()=>{
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_simulations/);
+ assert.match(store,/CREATE TABLE IF NOT EXISTS accommodation_time_simulation_events/);
+ assert.match(store,/function simulationStart\(actor,planId\)/);
+ assert.match(store,/planView\(actor,plan\)\.approvalStatus!=='approved'/);
+ assert.match(store,/rowData\(decision\)\.adjustments\.includes\('BREAKS'\)/);
+ assert.match(store,/function simulationAction\(actor,id,action,version\)/);
+ assert.match(store,/row\.version!==version/);
+ assert.match(store,/beginExamBreak\(input,now\):endExamBreak\(input,now\)/);
+ assert.match(store,/function simulationList\(actor\)/);
+ assert.match(api,/path==='\/api\/accommodations\/simulations'&&req\.method==='POST'/);
+ assert.match(api,/path==='\/api\/accommodations\/simulations'&&req\.method==='GET'/);
+ assert.match(api,/store\.accommodationSimulationAction\(actor,simulationAction\[1\],simulationAction\[2\],body\.version\)/);
+ assert.match(ui,/Yerel süre simülasyonu başlat/);
+ assert.match(ui,/Simülasyonda mola başlat/);
+ assert.match(ui,/Simülasyonda molayı bitir/);
+ assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
