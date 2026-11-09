@@ -121,3 +121,13 @@ test('CSV route respects authenticated report access and UI filter stays local',
  assert.match(ui,/\/report\.csv'/);
  assert.doesNotMatch(ui,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
 });
+
+test('real-exam preflight is read-only, tenant-scoped and never enables learner time',()=>{
+ assert.match(store,/function planReleaseReadiness\(actor,id\)/);
+ assert.match(store,/permit\(actor,'accommodation\.view'\)/);
+ assert.match(store,/accommodationTimePlanReleaseReadiness:planReleaseReadiness/);
+ assert.match(api,/store\.accommodationTimePlanReleaseReadiness\(actor,releaseReadiness\[1\]\)/);
+ assert.match(ui,/Gerçek sınav hazırlık denetimi/);
+ assert.match(ui,/Gerçek sınav süresi uygulaması: KAPALI/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
