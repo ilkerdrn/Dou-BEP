@@ -200,7 +200,7 @@ namespace DouBepReader
             if (String.IsNullOrWhiteSpace(name)) return null;
             // Providers may expose secrets in non-edit accessible names. Fail closed on
             // credential-like labels before any audio or status output is generated.
-            if (Regex.IsMatch(name, @"(?:parola|şifre|sifre|password|passcode|pin\s*(?:kod|code)|cvv|cvc|otp|tek\s*kullanımlık|one[- ]time\s*password|güvenlik\s*kodu|guvenlik\s*kodu|secret|token|api[_ -]?key|access[_ -]?key)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+            if (SensitiveAccessibleNameGuard.IsSensitive(name))
                 return null;
             name = Regex.Replace(name, "[\\u0000-\\u001f\\u007f]+", " ").Trim();
             if (name.Length > MAX_SPEECH_CHARACTERS) name = name.Substring(0, MAX_SPEECH_CHARACTERS);
@@ -756,6 +756,21 @@ namespace DouBepReader
 
     // This is a deterministic text normalization layer, NOT a Turkish TTS engine.
     // Never normalize inside URLs or email addresses. All data stays in memory.
+    // This pure helper is compiled directly in the offline Windows privacy smoke test.
+    // It checks labels only; it cannot detect secrets disguised as ordinary text.
+    public static class SensitiveAccessibleNameGuard
+    {
+        private static readonly Regex CredentialLabel = new Regex(
+            @"(?:parola|şifre|sifre|password|passcode|pin\s*(?:kod|code)|cvv|cvc|otp|tek\s*kullanımlık|one[- ]time\s*password|güvenlik\s*kodu|guvenlik\s*kodu|secret|token|api[_ -]?key|access[_ -]?key)",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
+
+        public static bool IsSensitive(string accessibleName)
+        {
+            if (String.IsNullOrWhiteSpace(accessibleName)) return true;
+            return CredentialLabel.IsMatch(accessibleName);
+        }
+    }
+
     public static class TurkishMathPronunciation
     {
         private static readonly Regex ProtectedToken = new Regex(
