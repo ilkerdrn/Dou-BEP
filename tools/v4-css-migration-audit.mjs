@@ -27,8 +27,10 @@ for(const page of pages){
  const unique=new Set(css);
  if(!html.match(/<body\b[^>]*data-design-version="4"/))
   findings.push(page+': missing V4 body opt-in');
- if(css.at(-1)!=='bep-v4.css')
-  findings.push(page+': V4 stylesheet must load last');
+ if(css.at(-1)!=='dou-unified-ui.css')
+  findings.push(page+': unified V4 stylesheet must load last');
+ if(css.filter(name=>name==='dou-unified-ui.css').length!==1)
+  findings.push(page+': unified V4 stylesheet must be linked exactly once');
  if(unique.size!==css.length)
   findings.push(page+': repeated stylesheet link');
  for(const name of css){
