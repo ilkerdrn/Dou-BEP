@@ -172,3 +172,13 @@ test('synthetic permit expiration is checked on consume and revoke atomically',(
  assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('synthetic permit failed-code lock and masked one-time display are explicit',()=>{
+ assert.match(api,/store\.syntheticPermitHistory\(actor,permitHistory\[1\]\)/);
+ assert.match(ui,/5 hatalı deneme nedeniyle kilitlendi/);
+ assert.match(ui,/Başarısız kod denemesi:/);
+ assert.match(ui,/Hatalı kod denemesi/);
+ assert.match(ui,/output\.type='password'/);
+ assert.match(ui,/Kodu kapat/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
