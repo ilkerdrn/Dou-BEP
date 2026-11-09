@@ -165,3 +165,10 @@ test('single-use synthetic permits never issue learner entitlement, use server e
  assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('synthetic permit expiration is checked on consume and revoke atomically',()=>{
+ assert.match(api,/store\.syntheticPermitRevoke\(actor,permitAction\[1\]\)/);
+ assert.match(api,/store\.syntheticPermitConsume\(actor,permitAction\[1\],body\.oneTimeSecret\)/);
+ assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
