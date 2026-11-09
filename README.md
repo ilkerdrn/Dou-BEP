@@ -1,3 +1,5 @@
+**DOU BEP V4 genel kabul (yerel, yalnız sentetik):** `npm.cmd run acceptance:v4:quick` veya `npm.cmd run acceptance:v4`. İzole Edge tarayıcı kontrolü: `npm.cmd run acceptance:v4:browser`. Kullanım ve sınırlar: [`docs/V4-YEREL-GENEL-KABUL.md`](docs/V4-YEREL-GENEL-KABUL.md). Bu testlerin PASS sonucu canlı kullanım izni veya gerçek ekran okuyucu kabulü değildir.
+
 **DOU BEP V3 arayüz kabulü:** Otomatik kontrol: `npm.cmd run design:v3:acceptance`. Gerçek NVDA/klavye manuel kabul protokolü: [`docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md`](docs/V3-MANUEL-ERISILEBILIRLIK-KABUL.md). Otomatik PASS, gerçek ekran okuyucu kabulü değildir.
 
 **Son sürüm:** v2.81. Sınav oluşturma–onay–teslim zinciri ve gerçek SHA-256 indirme doğrulaması: `README-v2.81.md`.
