@@ -6,6 +6,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {ADJUSTMENTS} from '../batch-accommodations.mjs';
 import {roleCan} from '../roles.mjs';
 import {calculateExamWindow,beginExamBreak,endExamBreak,inspectExamBreakLimits} from './exam-time-policy.mjs';
+import {evaluateBepRelease} from './live-release-readiness.mjs';
 const TERM=/^20\d{2}-(GUZ|BAHAR|YAZ)$/;
 const COURSE=/^[A-Z][A-Z0-9_-]{1,23}$/;
 const CODE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9_-]{2,24}$/;
@@ -239,6 +240,20 @@ export function createDecisionRepository(db,{StoreError,log}){
   log(actor,'accommodation.time_plan.revoked',id);
   return planView(actor,row);
  }
+ function planReleaseReadiness(actor,id){
+  permit(actor,'accommodation.view');
+  if(typeof id!=='string'||!ID.test(id))error('bad_id','Geçersiz plan kimliği.');
+  const row=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?')
+   .get(actor.tenantId,id);
+  if(!row)error('missing','Süre planı bulunamadı.',404);
+  const item=planView(actor,row);
+  // No live readiness flags can be supplied through this API; all future
+  // prerequisites must be determined independently by server-owned systems.
+  return {planId:id,...evaluateBepRelease({
+   planStatus:item.status,approvalStatus:item.approvalStatus,
+   coordinationVerified:item.status==='verified'
+  })};
+ }
  function planWindowPreview(actor,id){
   permit(actor,'accommodation.view');
   if(!ID.test(id||''))error('bad_id','Geçersiz plan kimliği.');
@@ -461,5 +476,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction,accommodationSimulationClose:simulationClose,accommodationSimulationReport:simulationReport};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationTimePlanReleaseReadiness:planReleaseReadiness,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction,accommodationSimulationClose:simulationClose,accommodationSimulationReport:simulationReport};
 }
