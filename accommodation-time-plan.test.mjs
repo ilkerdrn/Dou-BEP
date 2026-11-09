@@ -182,3 +182,13 @@ test('synthetic permit failed-code lock and masked one-time display are explicit
  assert.match(ui,/Kodu kapat/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('permit overview is read-only, tenant-scoped, anonymous and filterable',()=>{
+ assert.match(api,/store\.syntheticPermitOverview\(actor\)/);
+ assert.match(ui,/synthetic-permits-filter/);
+ assert.match(ui,/entries\.filter\(item=>item\.status===filter\)/);
+ assert.match(ui,/overview\.failedAttempts/);
+ assert.match(ui,/count\.locked/);
+ assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+});
