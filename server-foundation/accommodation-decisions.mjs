@@ -476,8 +476,8 @@ export function createDecisionRepository(db,{StoreError,log}){
  });
  const syntheticPermits=createSyntheticPermitRepository(db,{StoreError,roleCan,log,
   bindingState:(actor,id)=>{
-   const binding=syntheticBindings.syntheticBindingList(actor).find(x=>x.id===id);
-   return binding??null;
+   try{return syntheticBindings.syntheticBindingGet(actor,id);}
+   catch(e){if(e.code==='missing')return null;throw e;}
   }
  });
  function verifyBatch(actor,rows){permit(actor,'accommodation.verify');if(!Array.isArray(rows)||!rows.length||rows.length>100)error('invalid_batch','1–100 anonim kayıt gereklidir.',422);
