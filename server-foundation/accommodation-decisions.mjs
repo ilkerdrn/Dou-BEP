@@ -278,6 +278,41 @@ export function createDecisionRepository(db,{StoreError,log}){
   reason TEXT NOT NULL CHECK(reason IN ('limit_review','plan_invalid','elapsed','operator_stopped')),
   final_version INTEGER NOT NULL
  );`);
+ // Frozen, integrity-checked closing summary; separate table preserves old SQLite files.
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_time_simulation_summaries(
+  simulation_id TEXT PRIMARY KEY REFERENCES accommodation_time_simulations(id),
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  summary_json TEXT NOT NULL,
+  summary_sha256 TEXT NOT NULL
+ );`);
+ function simulationSummary(actor,id){
+  const row=db.prepare('SELECT summary_json,summary_sha256 FROM accommodation_time_simulation_summaries WHERE tenant_id=? AND simulation_id=?')
+   .get(actor.tenantId,id);
+  if(!row)return null;
+  const verified=digestString(row.summary_json)===row.summary_sha256;
+  if(!verified)return {integrity:'failed',message:'Kapanış özeti bütünlüğü doğrulanamadı.'};
+  try{return {integrity:'verified',...JSON.parse(row.summary_json)};}
+  catch{return {integrity:'failed',message:'Kapanış özeti okunamıyor.'};}
+ }
+ function digestString(value){return createHash('sha256').update(value).digest('hex');}
+ function buildClosingSummary(row,at,reason){
+  const pauses=JSON.parse(row.pauses_json);
+  const completedMs=pauses.reduce((acc,p)=>acc+Math.max(0,(p.endedAt??at)-p.startedAt),0);
+  const policy=inspectExamBreakLimits({startedAt:row.started_at,pauses,now:at,breaksAllowed:Boolean(row.breaks_allowed)});
+  let remainingMs=null,plannedEnd=null;
+  if(!policy.reviewRequired){
+   try{
+    const calculated=calculateExamWindow({startedAt:row.started_at,totalMinutes:row.total_minutes,
+     breaksAllowed:Boolean(row.breaks_allowed),pauses,now:at});
+    remainingMs=calculated.remainingMs;plannedEnd=calculated.plannedEnd;
+   }catch{/* No authoritative deadline for an invalid history. */}
+  }
+  return {startedAt:row.started_at,closedAt:at,baseDurationMinutes:row.total_minutes,
+   pauseCount:pauses.length,completedPauseMs:completedMs,
+   openPauseAtClosure:pauses.some(p=>p.endedAt===null),
+   plannedEnd,remainingMs,reviewRequired:reason==='limit_review'||reason==='plan_invalid'||policy.reviewRequired,
+   reason,mode:'simulation_only',studentEntitlement:false};
+ }
  function simulationRow(actor,id){
   if(!ID.test(id||''))error('bad_id','Geçersiz simülasyon kimliği.');
   const row=db.prepare('SELECT * FROM accommodation_time_simulations WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
@@ -291,7 +326,7 @@ export function createDecisionRepository(db,{StoreError,log}){
  function simulationRead(actor,row){
   const closure=simulationClosure(actor,row.id);
   if(closure)return {id:row.id,planId:row.plan_id,version:row.version,
-   status:'closed',closure,breaksAllowed:Boolean(row.breaks_allowed),
+   status:'closed',closure,summary:simulationSummary(actor,row.id),breaksAllowed:Boolean(row.breaks_allowed),
    message:'Yerel simülasyon denetim kaydıyla kapatıldı. Öğrenci oturumuna uygulanmadı.'};
   const plan=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,row.plan_id);
   const valid=plan&&planView(actor,plan).approvalStatus==='approved';
@@ -384,6 +419,10 @@ export function createDecisionRepository(db,{StoreError,log}){
    db.prepare(`INSERT INTO accommodation_time_simulation_closures
     (simulation_id,tenant_id,closed_by,closed_at,reason,final_version) VALUES(?,?,?,?,?,?)`)
     .run(id,actor.tenantId,actor.id,at,reason,version+1);
+   const snapshot=JSON.stringify(buildClosingSummary(row,at,reason));
+   db.prepare(`INSERT INTO accommodation_time_simulation_summaries
+    (simulation_id,tenant_id,summary_json,summary_sha256) VALUES(?,?,?,?)`)
+    .run(id,actor.tenantId,snapshot,digestString(snapshot));
    db.prepare(`INSERT INTO accommodation_time_simulation_events
     (tenant_id,simulation_id,actor_id,event,created_at) VALUES(?,?,?,?,?)`)
     .run(actor.tenantId,id,actor.id,'closed:'+reason,at);
