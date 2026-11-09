@@ -1,4 +1,5 @@
 import {StoreError} from './institutional-store.mjs';
+import {rehearsalReportCsv} from './accommodation-report-csv.mjs';
 import {createTaggedPdfPilot} from './tagged-pdf.mjs';
 import {createHash} from 'node:crypto';
 import {institutionalOperationsReadiness} from './operation-readiness.mjs';
@@ -195,6 +196,15 @@ export function createApiHandler(store,{port=4173}={}){
    if(simulationClosure&&req.method==='POST'){
     const body=await readJson(req,3000);
     response(res,200,{item:store.accommodationSimulationClose(actor,simulationClosure[1],body.version)});return true;
+   }
+   const simulationCsv=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/report\.csv$/);
+   if(simulationCsv&&req.method==='GET'){
+    const report=store.accommodationSimulationReport(actor,simulationCsv[1]);
+    const csv=rehearsalReportCsv(report);
+    res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8',
+     'Content-Disposition':'attachment; filename="bep-anonim-simulasyon-denetimi.csv"',
+     'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+    res.end(csv);return true;
    }
    const simulationReport=path.match(/^\/api\/accommodations\/simulations\/([a-f0-9-]{36})\/report$/);
    if(simulationReport&&req.method==='GET'){
