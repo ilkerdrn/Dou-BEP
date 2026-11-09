@@ -5,7 +5,7 @@
 import {randomUUID,createHash} from 'node:crypto';
 import {ADJUSTMENTS} from '../batch-accommodations.mjs';
 import {roleCan} from '../roles.mjs';
-import {calculateExamWindow} from './exam-time-policy.mjs';
+import {calculateExamWindow,beginExamBreak,endExamBreak} from './exam-time-policy.mjs';
 const TERM=/^20\d{2}-(GUZ|BAHAR|YAZ)$/;
 const COURSE=/^[A-Z][A-Z0-9_-]{1,23}$/;
 const CODE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9_-]{2,24}$/;
@@ -255,6 +255,94 @@ export function createDecisionRepository(db,{StoreError,log}){
    startedAt,totalMinutes:row.total_minutes,pauses:[],breaksAllowed:false,now:startedAt
   }),message:'Bu hesap yalnızca başlangıç anı varsayımıdır; gerçek sınav başlamadı ve süre atanmadı.'};
  }
+ // Synthetic execution rehearsal only; never references pilot_sessions or student tokens.
+ db.exec(`CREATE TABLE IF NOT EXISTS accommodation_time_simulations(
+  id TEXT PRIMARY KEY,tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  plan_id TEXT NOT NULL REFERENCES accommodation_time_plans(id),
+  started_at INTEGER NOT NULL,total_minutes INTEGER NOT NULL,
+  breaks_allowed INTEGER NOT NULL CHECK(breaks_allowed IN (0,1)),
+  pauses_json TEXT NOT NULL DEFAULT '[]',version INTEGER NOT NULL DEFAULT 1,
+  started_by TEXT NOT NULL REFERENCES members(id),
+  UNIQUE(tenant_id,plan_id)
+ );
+ CREATE TABLE IF NOT EXISTS accommodation_time_simulation_events(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,tenant_id TEXT NOT NULL,simulation_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,event TEXT NOT NULL,created_at INTEGER NOT NULL
+ );`);
+ function simulationRow(actor,id){
+  if(!ID.test(id||''))error('bad_id','Geçersiz simülasyon kimliği.');
+  const row=db.prepare('SELECT * FROM accommodation_time_simulations WHERE tenant_id=? AND id=?').get(actor.tenantId,id);
+  if(!row)error('missing','Simülasyon bulunamadı.',404);
+  return row;
+ }
+ function simulationRead(actor,row){
+  const plan=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,row.plan_id);
+  const valid=plan&&planView(actor,plan).approvalStatus==='approved';
+  const now=Date.now(),pauses=JSON.parse(row.pauses_json);
+  let window;
+  try{window=calculateExamWindow({startedAt:row.started_at,totalMinutes:row.total_minutes,
+    breaksAllowed:Boolean(row.breaks_allowed),pauses,now});}
+  catch(e){return {id:row.id,planId:row.plan_id,version:row.version,status:'review_required',
+   message:'Mola sınırı veya veri tutarlılığı kontrolü başarısız. Manuel inceleme gerekli.'};}
+  return {id:row.id,planId:row.plan_id,version:row.version,status:valid?window.phase:'review_required',
+   breaksAllowed:Boolean(row.breaks_allowed),window,
+   message:valid?'Yalnızca yerel simülasyon; öğrenci oturumu değişmedi.':'Onay veya sınav geçerliliği değişti; simülasyon durduruldu.'};
+ }
+ function simulationStart(actor,planId){
+  permit(actor,'accommodation.manage');
+  if(!ID.test(planId||''))error('bad_id','Geçersiz süre planı kimliği.');
+  const plan=db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? AND id=?').get(actor.tenantId,planId);
+  if(!plan)error('missing','Süre planı bulunamadı.',404);
+  if(planView(actor,plan).approvalStatus!=='approved')error('not_ready','Sadece geçerli ve bağımsız onaylı plan simüle edilebilir.',409);
+  const decision=select(actor,plan.decision_id);
+  const breaksAllowed=rowData(decision).adjustments.includes('BREAKS');
+  const id=randomUUID(),stamp=Date.now();
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   db.prepare(`INSERT INTO accommodation_time_simulations(
+    id,tenant_id,plan_id,started_at,total_minutes,breaks_allowed,pauses_json,started_by
+   ) VALUES(?,?,?,?,?,?,'[]',?)`).run(id,actor.tenantId,planId,stamp,plan.total_minutes,Number(breaksAllowed),actor.id);
+   db.prepare(`INSERT INTO accommodation_time_simulation_events(tenant_id,simulation_id,actor_id,event,created_at)
+    VALUES(?,?,?,'started',?)`).run(actor.tenantId,id,actor.id,stamp);
+   db.exec('COMMIT');
+  }catch(e){db.exec('ROLLBACK');
+   if(/UNIQUE constraint failed: accommodation_time_simulations\.tenant_id, accommodation_time_simulations\.plan_id/.test(e.message||''))
+    error('duplicate','Bu plan için simülasyon zaten başlatılmış.',409);
+   throw e;
+  }
+  log(actor,'accommodation.simulation.started',id);
+  return simulationRead(actor,simulationRow(actor,id));
+ }
+ function simulationAction(actor,id,action,version){
+  permit(actor,'accommodation.manage');
+  if(!Number.isInteger(version)||version<1)error('bad_version','Güncel simülasyon sürümü gerekli.',422);
+  const row=simulationRow(actor,id);
+  if(row.version!==version)error('revision_conflict','Simülasyon başka oturumda değişti.',409);
+  const current=simulationRead(actor,row);
+  if(current.status==='review_required')error('not_ready','Onay veya zaman planı geçersiz; mola işlemi yapılamaz.',409);
+  const now=Date.now(),pauses=JSON.parse(row.pauses_json);
+  let next;
+  try{
+   const input={startedAt:row.started_at,totalMinutes:row.total_minutes,breaksAllowed:Boolean(row.breaks_allowed),pauses};
+   next=action==='pause'?beginExamBreak(input,now):endExamBreak(input,now);
+  }catch(e){error('invalid_break',e.message,409);}
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   const changed=db.prepare(`UPDATE accommodation_time_simulations SET pauses_json=?,version=version+1
+    WHERE tenant_id=? AND id=? AND version=?`).run(JSON.stringify(next),actor.tenantId,id,version);
+   if(!changed.changes)error('revision_conflict','Simülasyon güncellendi.',409);
+   db.prepare(`INSERT INTO accommodation_time_simulation_events(tenant_id,simulation_id,actor_id,event,created_at)
+    VALUES(?,?,?,?,?)`).run(actor.tenantId,id,actor.id,action==='pause'?'paused':'resumed',now);
+   db.exec('COMMIT');
+  }catch(e){db.exec('ROLLBACK');throw e;}
+  log(actor,'accommodation.simulation.'+action,id);
+  return simulationRead(actor,simulationRow(actor,id));
+ }
+ function simulationList(actor){
+  permit(actor,'accommodation.view');
+  return db.prepare('SELECT * FROM accommodation_time_simulations WHERE tenant_id=? ORDER BY started_at DESC LIMIT 100')
+   .all(actor.tenantId).map(row=>simulationRead(actor,row));
+ }
  function planList(actor){
   permit(actor,'accommodation.view');
   return db.prepare('SELECT * FROM accommodation_time_plans WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100')
@@ -271,5 +359,5 @@ export function createDecisionRepository(db,{StoreError,log}){
   }
   return {ok:results.every(r=>r.approved),total:results.length,approved:results.filter(r=>r.approved).length,results};
  }
- return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview};
+ return {accommodationList:list,accommodationHistory:history,accommodationCreate:create,accommodationUpdate:update,accommodationApprove:approve,accommodationRevoke:revoke,accommodationVerifyBatch:verifyBatch,accommodationDurationPreview:durationPreview,accommodationTimePlanCreate:planCreate,accommodationTimePlanList:planList,accommodationTimePlanApprove:planApprove,accommodationTimePlanRevoke:planRevoke,accommodationTimePlanWindowPreview:planWindowPreview,accommodationSimulationStart:simulationStart,accommodationSimulationList:simulationList,accommodationSimulationAction:simulationAction};
 }
