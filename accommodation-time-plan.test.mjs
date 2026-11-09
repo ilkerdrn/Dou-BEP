@@ -192,3 +192,12 @@ test('permit overview is read-only, tenant-scoped, anonymous and filterable',()=
  assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
  assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
 });
+
+test('synthetic permit CSV is read-only, authenticated, privacy filtered and never touches pilot',()=>{
+ assert.match(api,/store\.syntheticPermitAuditExport\(actor\)/);
+ assert.match(api,/syntheticPermitCsv\(report\)/);
+ assert.match(api,/bep-yapay-izin-denetimi\.csv/);
+ assert.match(ui,/synthetic-permits-filter/);
+ assert.doesNotMatch(store,/UPDATE pilot_sessions SET expires_at/);
+ assert.doesNotMatch(api,/pilotSessions\.grantEntitlement/);
+});
