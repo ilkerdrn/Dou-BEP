@@ -14,7 +14,7 @@ namespace DouReaderFocusProbe
     {
         private readonly HashSet<string> allowed;
         private readonly Label status;
-        private readonly Timer refresh;
+        private readonly System.Windows.Forms.Timer refresh;
         private AutomationFocusChangedEventHandler handler;
         private int observed;
         private int approved;
@@ -48,7 +48,7 @@ namespace DouReaderFocusProbe
             Controls.Add(status);
             Controls.Add(start);
             Controls.Add(stop);
-            refresh = new Timer { Interval = 250 };
+            refresh = new System.Windows.Forms.Timer { Interval = 250 };
             refresh.Tick += delegate { UpdateStatus(); };
             refresh.Start();
         }
