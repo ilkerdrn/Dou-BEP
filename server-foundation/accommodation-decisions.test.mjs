@@ -196,3 +196,41 @@ test('separate reviewer approves synthetic time plan; revocation and stale decis
   assert.throws(()=>s.accommodationTimePlanRevoke(r,plan.id),{code:'invalid_status'});
  }finally{f.dispose();}
 });
+
+test('authorized local time rehearsal persists pause/resume with audit, no learner access',()=>{
+ const f=make();try{
+  const {s,adminA:a,reviewer:r}=f;
+  const approvedSample={...sample,adjustments:['BREAKS','HIGH_CONTRAST']};
+  const decision=s.accommodationCreate(a,approvedSample);
+  s.accommodationApprove(r,decision.id,decision.revision);
+  const source=createDemo();source.profile='';
+  source.questions=source.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
+  const exam=s.createExam(a,{exam:source});
+  s.approveExam(a,exam.id,{revision:1,confirmed:true});
+  const sitting=s.coordinationCreate(a,{term:'2026-GUZ',department:'TEKNOLOJI',program:'BILGISAYAR',
+   courseCode:'BLP103',courseName:'İşletim Sistemleri',examLabel:'VIZE',
+   startsAt:'2026-11-15T09:30',durationMinutes:70,instructorCode:'HOC01',
+   roomCode:'LAB01',examId:exam.id,examRevision:1});
+  const plan=s.accommodationTimePlanCreate(a,decision.id,sitting.id);
+  assert.throws(()=>s.accommodationSimulationStart(a,plan.id),{code:'not_ready'});
+  s.accommodationTimePlanApprove(r,plan.id);
+  assert.throws(()=>s.accommodationSimulationStart(f.teacher,plan.id),{code:'forbidden'});
+  const sim=s.accommodationSimulationStart(a,plan.id);
+  assert.equal(sim.status,'running');assert.equal(sim.breaksAllowed,true);
+  assert.equal(sim.window.totalMinutes,85);assert.equal(sim.entitlement,undefined);
+  assert.equal(s.accommodationSimulationList(f.adminB).length,0);
+  assert.throws(()=>s.accommodationSimulationStart(a,plan.id),{code:'duplicate'});
+  assert.throws(()=>s.accommodationSimulationAction(r,sim.id,'pause',sim.version),{code:'forbidden'});
+  const paused=s.accommodationSimulationAction(a,sim.id,'pause',sim.version);
+  assert.equal(paused.status,'paused');
+  assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',sim.version),{code:'revision_conflict'});
+  assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',paused.version),{code:'invalid_break'});
+  const resumed=s.accommodationSimulationAction(a,sim.id,'resume',paused.version);
+  assert.equal(resumed.status,'running');assert.equal(resumed.version,3);
+  assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'resume',resumed.version),{code:'invalid_break'});
+  assert.deepEqual(s.db.prepare('SELECT event FROM accommodation_time_simulation_events WHERE simulation_id=? ORDER BY id').all(sim.id).map(x=>x.event),['started','paused','resumed']);
+  s.accommodationRevoke(r,decision.id,decision.revision);
+  assert.equal(s.accommodationSimulationList(a)[0].status,'review_required');
+  assert.throws(()=>s.accommodationSimulationAction(a,sim.id,'pause',resumed.version),{code:'not_ready'});
+ }finally{f.dispose();}
+});
