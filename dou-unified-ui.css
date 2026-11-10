@@ -1024,3 +1024,11 @@ body.dou-admin-standalone .pilot-duration-preview p{
   border-width:2px;
  }
 }
+
+/* V4 campus mobile navigation: retain a consistent DOU red control,
+   overriding the older V3 burgundy icon without affecting student high contrast. */
+body.institution-page.campus-layout[data-design-version="4"]:not(.high):not(.high-contrast) .dou-nav-toggle{
+ color:#d70926!important;
+ background:#fff!important;
+ border-color:#e6e5e1!important;
+}
