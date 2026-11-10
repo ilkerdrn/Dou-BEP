@@ -563,3 +563,16 @@ test('V4 exam authoring is a reversible five-step guided view, not a destructive
  assert.match(edge,/BROWSER EXAM GUIDED STAGE/);
  assert.match(edge,/Advanced editor reveals all original fields/);
 });
+
+
+test('V4 first exam stage keeps teacher adaptation optional and non-destructive',()=>{
+ const html=read('./institutional-exams.html');
+ const ui=read('./workflow-ui.mjs');
+ assert.match(html,/class="support-workbench" aria-labelledby="support-title"/);
+ assert.match(ui,/\['support-workbench','BEP uyarlama motoru','İhtiyaç örnekleri/);
+ assert.match(ui,/wrapper\.className='exam-optional-tool'/);
+ assert.match(ui,/wrapper\.appendChild\(section\)/);
+ assert.match(ui,/wrapper\.addEventListener\('focusin',\(\)=>\{wrapper\.open=true;\}\)/);
+ assert.match(ui,/if\(id==='exam-output-section'\)wrapper\.open=true/);
+ assert.doesNotMatch(ui,/if\(id==='support-workbench'\)wrapper\.open=true/);
+});
