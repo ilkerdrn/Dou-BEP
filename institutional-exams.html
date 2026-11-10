@@ -68,6 +68,16 @@
  </section><section class="portal-card exam-library-workbench" id="exam-library-section" aria-label="v2.3 kazanım ve soru kütüphanesi" style="padding:18px;margin:18px 0">
   <span class="portal-mini-label">v2.7 · KURUMA ÖZEL KÜTÜPHANE</span><h3>BEP kazanım kataloğu ve soru bankası</h3>
   <p class="portal-help">Öğretmenin hazırladığı anonim içerik önce taslaktır. Yönetici veya incelemeci yayımlar; sınava eklenen her soru yeniden sınav onayına tabidir. Kütüphane AI üretimi ya da resmî MEB müfredatı değildir.</p>
+  <div class="exam-library-onboarding" aria-label="Soru bankasında hızlı başlangıç">
+   <strong>Önce hazır içeriği kontrol edin</strong>
+   <p>Arama yapın ve ders/kademe filtreleriyle kayıtları daraltın. Uygun kayıt yoksa yeni kazanım veya soru taslağı hazırlayın.</p>
+   <nav class="exam-library-shortcuts" aria-label="Soru bankası işlemlerine git">
+    <a href="#exam-library-search" data-library-shortcut="exam-library-search">Kütüphanede ara</a>
+    <a href="#exam-library-goal-code" data-library-shortcut="exam-library-goal-code">Yeni kazanım ekle</a>
+    <a href="#exam-library-question-title" data-library-shortcut="exam-library-question-title">Soru taslağı oluştur</a>
+   </nav>
+   <small>Bu kısayollar yalnızca alanlara götürür; otomatik kaydetme, yayımlama veya sınav onayı yapmaz.</small>
+  </div>
   <details class="catalog-import-card"><summary>CSV / JSON dosyasından kazanım aktar <span>Yerel dosya · İnceleme zorunlu</span></summary>
    <p class="portal-help">Kurumunuzun yetkili olduğu, öğrenci bilgisi içermeyen kazanımları yükleyin. Kayıtlar yalnızca taslak olarak açılır; hiçbir kaynak otomatik doğrulanmaz. İşlem başarısızsa hiçbir satır kaydedilmez.</p>
    <div class="exam-two"><label class="exam-label">Dosya (.csv / .json, en fazla 256 KB)<input type="file" id="exam-catalog-file" accept=".csv,.json,text/csv,application/json"></label><label class="exam-label">Amaç türü<select id="exam-catalog-level"><option value="short">Kısa dönemli</option><option value="long">Uzun dönemli</option></select></label></div>
