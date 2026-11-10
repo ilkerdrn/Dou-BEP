@@ -1032,3 +1032,37 @@ body.institution-page.campus-layout[data-design-version="4"]:not(.high):not(.hig
  background:#fff!important;
  border-color:#e6e5e1!important;
 }
+
+/* Exam authoring V4: compact stage-specific guidance, not a completion badge.
+   No student, login, or high-contrast reader surface is affected. */
+body.institution-page[data-design-version="4"]:not(.high):not(.high-contrast) .workflow-step-guide{
+ padding:10px 14px;
+ margin:8px 0 12px;
+ border:1px solid #e6e5e1;
+ border-radius:10px;
+ background:#f8f8f6;
+ color:#252523;
+}
+body.institution-page[data-design-version="4"] .workflow-step-guide strong{
+ display:block;
+ font-size:13px;
+ line-height:1.4;
+}
+body.institution-page[data-design-version="4"] .workflow-step-guide ul{
+ display:grid;
+ gap:3px;
+ margin:6px 0;
+ padding-left:20px;
+ font-size:13px;
+ line-height:1.5;
+}
+body.institution-page[data-design-version="4"] .workflow-step-guide p{
+ margin:6px 0 0;
+ font-size:12px;
+ line-height:1.45;
+}
+@media(max-width:600px){
+ body.institution-page[data-design-version="4"] .workflow-step-guide{
+  padding:10px 12px;
+ }
+}
