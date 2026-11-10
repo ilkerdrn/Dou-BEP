@@ -141,6 +141,26 @@ if (nav) {
   };
   if (source) { new MutationObserver(onChange).observe(source,{subtree:true,childList:true,characterData:true});onChange(); }
 }
+// Task shortcuts on stage three only reveal and focus existing fields.
+// They do not mutate exam drafts, approval, filtering or server state.
+const libraryShortcuts=document.querySelector('.exam-library-shortcuts');
+if(libraryShortcuts){
+ libraryShortcuts.addEventListener('click',event=>{
+  const link=event.target.closest('a[data-library-shortcut]');
+  if(!link||!libraryShortcuts.contains(link))return;
+  const id=link.dataset.libraryShortcut;
+  if(!['exam-library-search','exam-library-goal-code','exam-library-question-title'].includes(id))return;
+  const target=document.getElementById(id);
+  if(!target)return;
+  event.preventDefault();
+  for(let parent=target.parentElement;parent;parent=parent.parentElement){
+   if(parent.tagName==='DETAILS')parent.open=true;
+  }
+  target.scrollIntoView({block:'center',behavior:'auto'});
+  target.focus({preventScroll:true});
+ });
+}
+
 const filter = document.querySelector('.library-filter');
 const library = document.getElementById('exam-library-list');
 if (filter && library) {
