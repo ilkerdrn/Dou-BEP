@@ -22,7 +22,7 @@ test('research capture binds to allowed fixed development prompts, outside repos
  assert.match(source,/destination-must-match-prompt-id/);
  assert.match(source,/will-not-overwrite-recordings/);
  assert.match(source,/\['-hide_banner','-nostdin','-loglevel','error','-y'/);
- assert.match(source,/\['-f','dshow'/);
+ assert.match(source,/'-f','dshow'/);
  assert.match(source,/pcm_s16le/);
  assert.match(source,/rmSync\(temp,\{force:true\}\)/);
  assert.match(source,/inspectLocalSpeechPcm\(readFileSync\(temp\),DEFAULT_RATE\)/);
