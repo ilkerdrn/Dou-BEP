@@ -576,3 +576,19 @@ test('V4 first exam stage keeps teacher adaptation optional and non-destructive'
  assert.match(ui,/if\(id==='exam-output-section'\)wrapper\.open=true/);
  assert.doesNotMatch(ui,/if\(id==='support-workbench'\)wrapper\.open=true/);
 });
+
+
+test('V4 goal verification step gives safe instructions without changing approval flow',()=>{
+ const html=read('./institutional-exams.html');
+ const css=read('./dou-unified-ui.css');
+ const ui=read('./workflow-ui.mjs');
+ assert.match(html,/class="exam-goal-onboarding" aria-label="BEP kazanımı için kısa rehber"/);
+ assert.match(html,/Henüz BEP hedefim yok, nasıl başlamalıyım\?/);
+ assert.match(html,/href="\/bep-import">BEP kazanım aktarımını aç/);
+ assert.match(html,/Aktarım tek başına doğrulama veya sınav onayı değildir/);
+ assert.match(html,/id="exam-goal-review"/);
+ assert.match(html,/id="exam-review-export"/);
+ assert.match(ui,/\['exam-goal-section','BEP hedef doğrulama'/);
+ assert.match(css,/#exam-goal-section \.exam-goal-onboarding/);
+ assert.match(css,/#exam-goal-section \.exam-goal-help summary/);
+});
