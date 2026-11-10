@@ -874,7 +874,7 @@ async function main(){
    console.log('BROWSER OFFLINE SPEECH LAB UX '+label+': '+JSON.stringify(lab));
    pass(lab.destinationsValid&&lab.shortcuts>=2,label+' shortcuts navigate to existing controls');
    pass(lab.skipValid,label+' keyboard skip link reaches main content');
-   pass(lab.firstBg==='rgb(122, 31, 43)'&&lab.firstColor==='rgb(255, 255, 255)',label+' retains readable primary navigation');
+   pass(lab.firstBg==='rgb(215, 9, 38)'&&lab.firstColor==='rgb(255, 255, 255)',label+' retains readable primary navigation');
    pass(lab.docWidth<=lab.availableWidth+2,label+' has no horizontal overflow');
   }
 
@@ -892,7 +892,7 @@ async function main(){
    })()`);
    console.log('BROWSER V4 PILOT / BEP IMPORT '+label+': '+JSON.stringify(layout));
    pass(layout.valid&&layout.links===(route==='/pilot-yonetim'?3:2),label+' shortcuts target existing workflow panels');
-   pass(layout.firstBg==='rgb(122, 31, 43)'&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
+   pass(layout.firstBg==='rgb(215, 9, 38)'&&layout.firstColor==='rgb(255, 255, 255)',label+' primary shortcut has readable branding');
    pass(layout.scroll<=layout.available+2,label+' has no horizontal overflow');
   }
 
