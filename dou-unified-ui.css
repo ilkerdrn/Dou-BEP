@@ -1124,3 +1124,47 @@ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace :is
   position:static!important;
  }
 }
+
+/* Wizard step 2: compact, teacher-controlled goal verification guidance. */
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-onboarding{
+ margin:12px 0 16px;
+ padding:14px 16px;
+ border:1px solid #e6e5e1;
+ border-radius:12px;
+ background:#f8f8f6;
+ color:#1d1d1b;
+}
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-onboarding>strong{
+ font-size:14px;
+ display:block;
+}
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-onboarding ol{
+ padding-left:22px;
+ margin:8px 0;
+ display:grid;
+ gap:6px;
+ font-size:13px;
+ line-height:1.6;
+}
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-help{
+ border-top:1px solid #e6e5e1;
+ padding-top:10px;
+ margin-top:10px;
+ font-size:13px;
+ line-height:1.6;
+}
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-help summary{
+ cursor:pointer;
+ font-weight:750;
+}
+body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-help a{
+ color:#a50820;
+ text-decoration:underline;
+ text-underline-offset:3px;
+ font-weight:750;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-onboarding{
+  padding:12px;
+ }
+}
