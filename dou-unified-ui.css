@@ -1281,3 +1281,42 @@ body.institution-page[data-design-version="4"] #exam-editor-card .exam-question-
   flex:1 1 100%;
  }
 }
+
+/* V4 final stage: teacher-facing completion sequence; no approval automation. */
+body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding{
+ margin:0 0 16px;
+ padding:14px 16px;
+ border:1px solid #e6e5e1;
+ border-radius:12px;
+ background:#f8f8f6;
+ color:#1d1d1b;
+}
+body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding>strong{
+ display:block;
+ font-size:14px;
+ font-weight:800;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding ol{
+ display:grid;
+ gap:8px;
+ margin:10px 0;
+ padding-left:23px;
+ font-size:13px;
+ line-height:1.6;
+}
+body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding li::marker{
+ color:#9c1025;
+ font-weight:800;
+}
+body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding p{
+ margin:10px 0 0;
+ color:#626269;
+ line-height:1.55;
+ font-size:12px;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-output-section .exam-output-onboarding{
+  padding:12px;
+ }
+}
