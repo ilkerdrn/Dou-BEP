@@ -1168,3 +1168,60 @@ body.institution-page[data-design-version="4"] #exam-goal-section .exam-goal-hel
   padding:12px;
  }
 }
+
+/* V4 exam stage 3: task-first guidance without changing library operations. */
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-onboarding{
+ margin:14px 0 18px;
+ padding:15px 16px;
+ border:1px solid #e6e5e1;
+ border-radius:12px;
+ background:#f8f8f6;
+ color:#1d1d1b;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-onboarding strong{
+ display:block;
+ font-size:14px;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-onboarding p{
+ margin:6px 0 12px;
+ line-height:1.55;
+ font-size:13px;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-shortcuts{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:8px;
+ margin-bottom:10px;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-shortcuts a{
+ display:inline-flex;
+ align-items:center;
+ min-height:40px;
+ padding:8px 12px;
+ border:1px solid #d7d7d1;
+ border-radius:9px;
+ background:#fff;
+ color:#9c1025;
+ text-decoration:none;
+ font-size:13px;
+ font-weight:750;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-shortcuts a:hover{
+ background:#fff0f2;
+ border-color:#c88b94;
+}
+body.institution-page[data-design-version="4"] #exam-library-section .exam-library-onboarding small{
+ display:block;
+ color:#626269;
+ font-size:12px;
+ line-height:1.5;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-library-section .exam-library-onboarding{
+  padding:12px;
+ }
+ body.institution-page[data-design-version="4"] #exam-library-section .exam-library-shortcuts a{
+  flex:1 1 100%;
+ }
+}
