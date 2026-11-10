@@ -1102,3 +1102,25 @@ body.institution-page[data-design-version="4"] .workflow-step-guide p{
   overflow-wrap:anywhere;
  }
 }
+
+/* The five-step navigator is intentionally a normal document section.
+   A multi-row sticky toolbar covers the exam fields while scrolling. */
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+ position:relative!important;
+ top:auto!important;
+ left:auto!important;
+ right:auto!important;
+ z-index:auto!important;
+ max-height:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-workspace :is(
+ #exam-main-fields,#exam-goal-section,#exam-library-section,
+ #exam-question-section,#exam-output-section
+){
+ scroll-margin-top:24px!important;
+}
+@media(max-width:760px){
+ body.institution-page.campus-layout[data-design-version="4"] #exam-workspace .workflow-nav{
+  position:static!important;
+ }
+}
