@@ -1066,3 +1066,39 @@ body.institution-page[data-design-version="4"] .workflow-step-guide p{
   padding:10px 12px;
  }
 }
+
+/* V4 sidebar: isolate scrolling links from the persistent status footer.
+   Prevent menu entries and section titles from painting under the footer. */
+@media (min-width:1081px){
+ body.institution-page[data-design-version="4"] .dou-nav,
+ body.dou-admin-standalone[data-design-version="4"] .dou-nav{
+  height:100dvh!important;
+  max-height:100dvh!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+ }
+ body[data-design-version="4"] .dou-nav #dou-nav-sections{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  padding-bottom:18px!important;
+  border-radius:0!important;
+ }
+ body[data-design-version="4"] .dou-nav .dou-nav-bottom{
+  position:relative!important;
+  inset:auto!important;
+  z-index:1;
+  flex:0 0 auto!important;
+  margin-top:0!important;
+  background:#1d1d1b!important;
+  border-top:1px solid #41413e!important;
+ }
+ body[data-design-version="4"] .dou-nav #dou-nav-sections .dou-nav-group-title{
+  position:static!important;
+  overflow-wrap:anywhere;
+ }
+}
