@@ -429,7 +429,13 @@ const navigationJs=readFileSync(join(root,'admin-navigation.js'),'utf8');
 const examGuardJs=readFileSync(join(root,'exam-page-health.js'),'utf8');
 const navLinks=html=>[...html.matchAll(/class="dou-nav-link portal-menu[^"]*" href="([^"]+)"/g)].map(x=>x[1]);
 const goldenNav=navLinks(readFileSync(join(root,'institution.html'),'utf8'));
-check('v2.67 12 static navigation links persist across admin and reader screens',goldenNav.length===12&&adminPages.every(name=>JSON.stringify(navLinks(readFileSync(join(root,name),'utf8')))===JSON.stringify(goldenNav)));
+check('v2.67 original workspace navigation persists with optional protected management links',
+ goldenNav.length===14&&adminPages.every(name=>{
+  const links=navLinks(readFileSync(join(root,name),'utf8'));
+  return (links.length===12||links.length===14)&&
+   JSON.stringify(links.slice(0,12))===JSON.stringify(goldenNav.slice(0,12))&&
+   (links.length===12||JSON.stringify(links.slice(12))===JSON.stringify(goldenNav.slice(12)));
+ }));
 check('v2.67 exam screen has visible loading/retry and app ready markers',readFileSync(join(root,'institutional-exams.html'),'utf8').includes('id="exam-recovery"')&&readFileSync(join(root,'institutional-exams.html'),'utf8').includes('id="exam-loading"')&&readFileSync(join(root,'institutional-exams.mjs'),'utf8').includes("dataset.examAppReady='ready'"));
 check('v2.67 new exam action is always available',adminPages.every(name=>readFileSync(join(root,name),'utf8').includes('href="/kurumsal-sinav?new=1"')));
 check('v2.67 all admin pages share premium stylesheet',adminPages.every(name=>readFileSync(join(root,name),'utf8').includes('href="/admin-premium.css"')));
