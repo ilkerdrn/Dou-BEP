@@ -478,8 +478,8 @@ async function main(){
  })`);
  console.log('BROWSER CAMPUS DASHBOARD STYLE: '+JSON.stringify(campusVisual));
  pass(campusVisual.sidebar==='none','V4 dashboard sidebar is neutral, without gradient');
- pass(campusVisual.brand==='#7a1f2b','V4 institutional burgundy token is active');
- pass(campusVisual.selected==='none'&&campusVisual.selectedText==='rgb(255, 255, 255)','V4 selected menu uses solid high-contrast burgundy');
+ pass(campusVisual.brand==='#d70926','V4 institutional DOU red token is active');
+ pass(campusVisual.selected==='none'&&campusVisual.selectedText==='rgb(255, 255, 255)','V4 selected menu uses solid high-contrast DOU red');
  pass(campusVisual.card==='none','V4 dashboard welcome uses a plain institutional surface');
  await captureSyntheticScreenshot('dashboard-desktop');
  if(process.argv.includes('--css-probe')||process.argv.includes('--css-parity'))await probeLegacySheet('dashboard',[
@@ -803,7 +803,7 @@ async function main(){
   return {color:style.color,background:style.backgroundColor,width:Math.round(rect.width),height:Math.round(rect.height)};
  })()`);
  console.log('BROWSER CAMPUS MOBILE MENU: '+JSON.stringify(mobileToggle));
- pass(mobileToggle.color==='rgb(128, 27, 42)'&&mobileToggle.background==='rgb(255, 255, 255)','Mobile menu has contrasting burgundy icon on white surface');
+ pass(mobileToggle.color==='rgb(215, 9, 38)'&&mobileToggle.background==='rgb(255, 255, 255)','Mobile menu has contrasting DOU red icon on white surface');
  pass(mobileToggle.width>=40&&mobileToggle.height>=40,'Mobile menu control has a usable touch target');
  await evaluate('document.querySelector(".dou-nav-toggle").click()');
  pass(await evaluate('document.querySelector(".dou-nav-toggle").getAttribute("aria-expanded")==="true"'),'Mobile menu opens with accessible expanded state');
@@ -854,8 +854,8 @@ async function main(){
       palette:getComputedStyle(document.body).getPropertyValue('--bep-brand').trim()
     };
   })()`);
-  pass(result.stylesheet==='/bep-v4.css',label+' V4 design stylesheet is last');
-  pass(result.nav&&result.palette==='#7a1f2b',label+' shared navigation and V4 color tokens');
+  pass(result.stylesheet==='/dou-unified-ui.css',label+' V4 design stylesheet is last');
+  pass(result.nav&&result.palette==='#d70926',label+' shared navigation and V4 color tokens');
   if(['/dou-reader-demo','/dou-speech-phoneme','/dou-speech-pool','/dou-speech-listening','/dou-speech-intelligibility'].includes(route)){
    const lab=await evaluate(`(function(){
     const nav=document.querySelector('.bep-lab-shortcuts');
@@ -908,7 +908,7 @@ async function main(){
    })()`);
    console.log('BROWSER OFFLINE TASK UX '+label+': '+JSON.stringify(flow));
    pass(flow.valid&&flow.count===(route==='/sinav-dosya-aktar'?2:4),label+' task shortcuts resolve');
-   pass(flow.firstBg==='rgb(122, 31, 43)',label+' first task has burgundy emphasis');
+   pass(flow.firstBg==='rgb(215, 9, 38)',label+' first task has DOU red emphasis');
    pass(flow.scroll<=flow.client+2,label+' no horizontal overflow');
   }
 
@@ -982,7 +982,7 @@ async function main(){
    })()`);
    console.log('BROWSER WORKSPACE USABILITY '+label+': '+JSON.stringify(task));
    pass(task.valid&&task.links>=(route==='/sinav-operasyon'?3:2),label+' navigation links resolve');
-   pass(task.accent==='rgb(122, 31, 43)',label+' uses readable burgundy primary action');
+   pass(task.accent==='rgb(215, 9, 38)',label+' uses readable DOU red primary action');
    pass(task.scroll<=task.available+2,label+' has no horizontal overflow');
   }
 
