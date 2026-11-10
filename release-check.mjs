@@ -37,14 +37,13 @@ if(inGitRepo){
 function walk(directory){for(const d of readdirSync(directory,{withFileTypes:true})){
  if(['node_modules','.git','__pycache__'].includes(d.name))continue;
  const pathname=join(directory,d.name);
- // Runtime SQLite under an untracked data/ folder is not part of the Git release.
- // For standalone ZIP deliveries, scan everything because no Git index exists.
- if(d.isDirectory()){
-  if(inGitRepo&&isPrivatePath(pathname.slice(root.length+1)))continue;
-  walk(pathname);
- }else if(secretExtension.test(d.name))prohibited.push(pathname.slice(root.length+1));
+ // A Git checkout is released from tracked files only (verified above).
+ // Standalone folders without .git must scan every file as a packaged artifact.
+ if(d.isDirectory())walk(pathname);
+ else if(secretExtension.test(d.name))prohibited.push(pathname.slice(root.length+1));
 }}
-walk(root);check('No database or private key shipped',prohibited.length===0);
+if(!inGitRepo)walk(root);
+check('No database or private key shipped',prohibited.length===0);
 const encryptedBackup=readFileSync(join(root,'tools/secure-backup.mjs'),'utf8');
 const packageJson=readFileSync(join(root,'package.json'),'utf8');
 const ledger=readFileSync(join(root,'server-foundation/exam-repository.mjs'),'utf8');
