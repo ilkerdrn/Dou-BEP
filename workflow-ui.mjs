@@ -18,6 +18,16 @@ if (nav) {
     'Soruları ve yanıtları düzenleyin; erişilebilirlik seçeneklerini ve önizlemeyi kontrol edin.',
     'Kaydetme durumunu kontrol edin, sınavı gözden geçirip onaylayın ve uygun çıktıyı alın.'
   ];
+  const stepTasks=document.getElementById('workflow-step-tasks');
+  // Static guidance only: these instructions never inspect answers, grades,
+  // permissions, autosave, approval, or any learner information.
+  const tasksByStage=[
+    ['Başlık ve ders bilgilerini girin.','Sınıf ile sınav süresini kontrol edin.'],
+    ['İlgili BEP hedeflerini bulun veya içe aktarın.','Hedeflerin kaynakla eşleştiğini öğretmen olarak doğrulayın.'],
+    ['İsterseniz bankadan soru seçin.','Hazır içerik yoksa sonraki adımda kendiniz soru yazabilirsiniz.'],
+    ['Soruları, puanları ve doğru yanıtları düzenleyin.','Erişilebilirlik açıklamalarını ve önizlemeyi kontrol edin.'],
+    ['Önce kaydetme durumunu ve kalite kontrolünü inceleyin.','Yetkili onayından sonra uygun sınav çıktısını oluşturun.']
+  ];
   const announcement=document.getElementById('workflow-announcement');
 
   const revealAndVisit = button => {
@@ -40,6 +50,24 @@ if (nav) {
     if(next)next.disabled=selectedIndex<0||selectedIndex>=steps.length-1;
     if(stepCount&&selectedIndex>=0)stepCount.textContent='Adım '+(selectedIndex+1)+' / '+steps.length;
     if(stageHelp&&selectedIndex>=0)stageHelp.textContent=stageDescriptions[selectedIndex]||'';
+    if(stepTasks&&selectedIndex>=0){
+      stepTasks.replaceChildren(...(tasksByStage[selectedIndex]||[]).map(task=>{
+        const item=document.createElement('li');
+        item.textContent=task;
+        return item;
+      }));
+    }
+    const shortName=step=>step?.textContent.replace(/^\s*\d+\s*/,'').trim()||'';
+    if(previous){
+      const label=shortName(steps[selectedIndex-1]);
+      previous.setAttribute('aria-label',label?'Önceki adım: '+label:'Önceki adım');
+      previous.title=label?'Önceki: '+label:'';
+    }
+    if(next){
+      const label=shortName(steps[selectedIndex+1]);
+      next.setAttribute('aria-label',label?'Sonraki adım: '+label:'Son adım');
+      next.title=label?'Sonraki: '+label:'';
+    }
     if(nextHint&&selectedIndex>=0){
       const following=steps[selectedIndex+1];
       nextHint.textContent=following
