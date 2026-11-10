@@ -170,6 +170,9 @@ if (filter && library) {
 // Progressive disclosure is presentation-only. Keep the original section nodes
 // and their IDs intact so every existing editor handler continues to work.
 const optionalExamTools=[
+  // Keep the teacher-only adaptation workbench available without forcing
+  // everyone to scroll through its many choices on the first exam step.
+  ['support-workbench','BEP uyarlama motoru','İhtiyaç örnekleri ve öğretmen kararlarına ait isteğe bağlı ayarlar'],
   // Keep major workflow section nodes and IDs unchanged. Native details make
   // the teacher workspace navigable without losing any editor listeners.
   ['exam-goal-section','BEP hedef doğrulama','İçe aktarılan hedefleri kaynakla karşılaştır'],
