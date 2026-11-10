@@ -11,6 +11,7 @@ import {mkdtempSync,readFileSync,realpathSync,rmSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {isAbsolute,join,basename} from 'node:path';
 import {TURKISH_EVALUATION_PROMPTS} from './turkish-evaluation-prompts.mjs';
+import {inspectLocalSpeechPcm} from './local-pcm-output-gate.mjs';
 
 const MAX_WAV=2*1024*1024;
 const MAX_CONFIG=256*1024;
@@ -66,17 +67,14 @@ export function runPiperFixedPrompt(opts={}) {
     const stat=statSync(output);
     if(stat.size<46||stat.size>MAX_WAV)return deny('wav-size-outside-lab-range');
     const wav=readFileSync(output);
-    if(wav.toString('ascii',0,4)!=='RIFF'||wav.toString('ascii',8,12)!=='WAVE'||
-       wav.toString('ascii',12,16)!=='fmt '||wav.toString('ascii',36,40)!=='data'||
-       wav.readUInt32LE(4)!==wav.length-8||
-       wav.readUInt16LE(20)!==1||wav.readUInt16LE(22)!==1||
-       wav.readUInt16LE(34)!==16||wav.readUInt16LE(32)!==2||
-       wav.readUInt32LE(24)!==inspection.sampleRate||
-       wav.readUInt32LE(40)!==wav.length-44)return deny('invalid-local-pcm-wav');
+    const pcm=inspectLocalSpeechPcm(wav,inspection.sampleRate);
+    if(!pcm.valid)return deny(pcm.reason);
     return Object.freeze({
       ready:true,researchOnly:true,productionApproved:false,
       promptId:prompt.id,format:'PCM16-mono-WAV',
       sampleRate:inspection.sampleRate,
+      durationSeconds:pcm.durationSeconds,
+      objectivePcmValidated:true,
       wavBase64:wav.toString('base64'),
       humanListeningValidated:false
     });
