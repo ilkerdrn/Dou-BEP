@@ -22,8 +22,8 @@ test('Short stage guidance remains presentation-only, never a false completion o
  assert.doesNotMatch(ui,/localStorage|sessionStorage|fetch\(|XMLHttpRequest|indexedDB/);
 });
 test('Stage pager exposes next and previous destinations while preserving focus management',()=>{
- assert.match(ui,/next\.setAttribute\('aria-label','Sonraki adım: '/);
- assert.match(ui,/previous\.setAttribute\('aria-label','Önceki adım: '/);
+ assert.match(ui,/next\.setAttribute\('aria-label',label\?'Sonraki adım: '\+label:'Son adım'\)/);
+ assert.match(ui,/previous\.setAttribute\('aria-label',label\?'Önceki adım: '\+label:'Önceki adım'\)/);
  assert.match(ui,/target\.scrollIntoView/);
  assert.match(ui,/heading\.focus\(\{preventScroll:true\}\)/);
  assert.match(ui,/updateGuidedView\(selectedIndex\)/);
