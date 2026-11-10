@@ -39,10 +39,10 @@ security review. File existence and model cards are not legal proof.
 ## Windows check (only when files have been reviewed and supplied)
 ```powershell
 node tools/dou-piper-local-preflight.mjs `
-  --exe "C:\\DOU-PIPER-LAB\\piper.exe" `
-  --model "C:\\DOU-PIPER-LAB\\tr_TR-dfki-medium.onnx" `
-  --config "C:\\DOU-PIPER-LAB\\tr_TR-dfki-medium.onnx.json" `
-  --card "C:\\DOU-PIPER-LAB\\MODEL_CARD"
+  --exe "C:\DOU-PIPER-LAB\piper.exe" `
+  --model "C:\DOU-PIPER-LAB\tr_TR-dfki-medium.onnx" `
+  --config "C:\DOU-PIPER-LAB\tr_TR-dfki-medium.onnx.json" `
+  --card "C:\DOU-PIPER-LAB\MODEL_CARD"
 ```
 The paths are examples, not installed components. The command is a read-only
 file preflight, not actual synthesis or a license approval. Its JSON will
