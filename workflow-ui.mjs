@@ -161,6 +161,25 @@ if(libraryShortcuts){
  });
 }
 
+// Stage four: navigate to existing question controls without invoking their actions.
+const questionShortcuts=document.querySelector('.exam-question-shortcuts');
+if(questionShortcuts){
+ questionShortcuts.addEventListener('click',event=>{
+  const link=event.target.closest('a[data-question-shortcut]');
+  if(!link||!questionShortcuts.contains(link))return;
+  const id=link.dataset.questionShortcut;
+  if(!['exam-add-question','exam-question-find-input','exam-preview-question'].includes(id))return;
+  const target=document.getElementById(id);
+  if(!target)return;
+  event.preventDefault();
+  for(let parent=target.parentElement;parent;parent=parent.parentElement){
+   if(parent.tagName==='DETAILS')parent.open=true;
+  }
+  target.scrollIntoView({block:'center',behavior:'auto'});
+  target.focus({preventScroll:true});
+ });
+}
+
 const filter = document.querySelector('.library-filter');
 const library = document.getElementById('exam-library-list');
 if (filter && library) {
