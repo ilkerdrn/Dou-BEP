@@ -1020,9 +1020,9 @@ async function main(){
     };
    })()`);
    console.log('BROWSER COORDINATION V4 CONTRAST: '+JSON.stringify(coordinationVisual));
-   pass(coordinationVisual.heroColor==='rgb(255, 255, 255)'&&coordinationVisual.headingColor==='rgb(32, 36, 49)','V4 coordination has neutral white header and legible dark headline');
-   pass(coordinationVisual.menuColor==='rgb(66, 53, 64)','Inactive coordination navigation remains legible');
-   pass(coordinationVisual.searchBg==='rgb(255, 255, 255)'&&coordinationVisual.searchText==='rgb(32, 36, 49)','V4 coordination search has accessible neutral input');
+   pass(coordinationVisual.heroColor==='rgb(255, 255, 255)'&&coordinationVisual.headingColor==='rgb(29, 29, 27)','V4 coordination has neutral white header and legible dark headline');
+   pass(coordinationVisual.menuColor==='rgb(240, 240, 237)','Inactive coordination navigation is light on charcoal sidebar');
+   pass(coordinationVisual.searchBg==='rgb(48, 48, 46)'&&coordinationVisual.searchText==='rgb(255, 255, 255)','V4 coordination search has a high-contrast dark input');
    const schedulingUx=await evaluate(`(function(){
     const nav=document.querySelector('.coord-quick-nav');
     const links=[...nav.querySelectorAll('a')];
