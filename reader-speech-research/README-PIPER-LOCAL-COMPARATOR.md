@@ -54,3 +54,25 @@ report `available:false` when those files do not exist.
 - Actual local inference: requires vetted model, binary and human approval.
 - No real exam content or student data may enter any of these research paths.
 - No trained natural Turkish TTS engine is present in this repository.
+
+## Explicit fixed-prompt synthesis (only after model and binary review)
+After independent provenance/license/security approval, in an isolated
+**offline** test VM, a researcher may evaluate a single invented development
+sentence, such as TR001:
+```powershell
+node tools/dou-piper-fixed-prompt-lab.mjs `
+  --exe "C:\DOU-PIPER-LAB\piper.exe" `
+  --model "C:\DOU-PIPER-LAB\tr_TR-dfki-medium.onnx" `
+  --config "C:\DOU-PIPER-LAB\tr_TR-dfki-medium.onnx.json" `
+  --card "C:\DOU-PIPER-LAB\MODEL_CARD" `
+  --prompt "TR001" --research-only --rights-reviewed
+```
+This returns **base64 WAV**, not human-readable text or an auto-playing
+sound. Do not run the command before the model rights and executable are
+actually reviewed. The CLI uses only fixed development prompts; it rejects
+held-out/validation sentences and all free text. Model inference has NOT
+been run or quality-tested in the present branch.
+
+A CLI switch is not legal permission and does not restrict what a third-party
+binary could do: use a firewall-isolated machine. Do not use this experimental
+comparator for student exams or as a permanent external dependency.
