@@ -631,3 +631,21 @@ test('V4 question editing shortcuts preserve existing add, search and preview co
  assert.match(html,/id="exam-add-ten-questions"/);
  assert.match(html,/id="exam-questions"/);
 });
+
+
+test('V4 final step explains save review approval delivery without bypassing controls',()=>{
+ const html=read('./institutional-exams.html');
+ const css=read('./dou-unified-ui.css');
+ assert.match(html,/class="exam-output-onboarding" aria-label="Sınav tamamlama sırası"/);
+ for(const label of ['Kaydet:','Kontrol et:','Onay:','Çıktı:'])
+  assert.ok(html.includes('<b>'+label+'</b>'),'Missing final stage label '+label);
+ assert.match(html,/Bu rehber yalnızca işlem sırasını açıklar/);
+ assert.match(html,/PDF pilotu PDF\/UA sertifikası değildir/);
+ for(const id of ['exam-output-section','exam-save','exam-approve','exam-confirm',
+   'exam-preflight-body','exam-delivery-check','exam-delivery-package','exam-delivery-status']){
+  assert.match(html,new RegExp('id="'+id+'"'),'Existing control missing: '+id);
+ }
+ assert.match(html,/id="exam-approve"[^>]*disabled/);
+ assert.match(css,/#exam-output-section \.exam-output-onboarding/);
+ assert.match(css,/@media\(max-width:670px\)/);
+});
