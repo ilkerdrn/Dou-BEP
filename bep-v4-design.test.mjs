@@ -612,3 +612,22 @@ test('V4 question bank shortcuts focus existing controls without saving or appro
  assert.match(html,/id="exam-library-question-save"/);
  assert.match(html,/id="exam-library-goal-save"/);
 });
+
+
+test('V4 question editing shortcuts preserve existing add, search and preview controls',()=>{
+ const html=read('./institutional-exams.html');
+ const ui=read('./workflow-ui.mjs');
+ const css=read('./dou-unified-ui.css');
+ assert.match(html,/class="exam-question-onboarding" aria-label="Soru düzenleme hızlı başlangıç"/);
+ for(const id of ['exam-add-question','exam-question-find-input','exam-preview-question']){
+  assert.match(html,new RegExp('data-question-shortcut="'+id+'"'));
+  assert.match(html,new RegExp('id="'+id+'"'));
+ }
+ assert.match(ui,/questionShortcuts\.addEventListener\('click'/);
+ assert.match(ui,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
+ assert.match(ui,/target\.focus\(\{preventScroll:true\}\)/);
+ assert.match(html,/Kısayollar alanları açıp odaklar; soru eklemez/);
+ assert.match(css,/#exam-editor-card \.exam-question-shortcuts a/);
+ assert.match(html,/id="exam-add-ten-questions"/);
+ assert.match(html,/id="exam-questions"/);
+});
