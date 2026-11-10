@@ -6,7 +6,7 @@
  * WARNING: an external executable is not a network sandbox. Run offline.
  */
 import {spawnSync} from 'node:child_process';
-import {realpathSync, statSync, mkdirSync, readFileSync, rmSync, renameSync, existsSync} from 'node:fs';
+import {realpathSync, statSync, readFileSync, rmSync, renameSync, existsSync} from 'node:fs';
 import {basename, dirname, isAbsolute, join, relative, resolve, sep} from 'node:path';
 import {TURKISH_EVALUATION_PROMPTS} from './turkish-evaluation-prompts.mjs';
 import {inspectLocalSpeechPcm} from './local-pcm-output-gate.mjs';
@@ -54,6 +54,26 @@ export function validateRecordingRequest(x={}) {
 }
 function exeNameOk(path) { return basename(path).toLowerCase()==='ffmpeg.exe'; }
 
+/**
+ * Redact FFmpeg's device text. Report only a known failure category.
+ * stderr may contain local device paths, usernames or other sensitive data.
+ */
+export function classifyAudioCaptureFailure(stderr='', error=null) {
+ if(error?.code==='ETIMEDOUT')return 'microphone-capture-timeout';
+ if(error)return 'microphone-process-start-failed';
+ const msg=typeof stderr==='string'?stderr.slice(0,8192):'';
+ if(/Could not find output pin from audio only capture device|Could not find audio only device|Error opening input file audio=/i.test(msg))
+  return 'dshow-audio-device-open-failed';
+ if(/Permission denied|Access is denied|Access denied/i.test(msg))
+  return 'microphone-permission-denied';
+ if(/Device or resource busy|being used by another process/i.test(msg))
+  return 'microphone-device-busy';
+ if(/No such device|Could not find.*device/i.test(msg))
+  return 'microphone-device-not-found';
+ return 'microphone-capture-failed';
+}
+
+
 export function captureConsentBasedPrompt(x={}) {
  const plan=validateRecordingRequest(x);
  if(!plan.ok)return plan;
@@ -75,7 +95,8 @@ export function captureConsentBasedPrompt(x={}) {
      {encoding:'utf8',timeout:(plan.seconds+15)*1000,maxBuffer:8192,
       windowsHide:true,cwd:root,
       env:{...process.env,HF_HUB_OFFLINE:'1',TRANSFORMERS_OFFLINE:'1'}});
-   if(result.error||result.status!==0)return fail('microphone-capture-failed');
+   if(result.error||result.status!==0)
+    return fail(classifyAudioCaptureFailure(result.stderr,result.error));
    const recorded=statSync(temp);
    if(recorded.size<46||recorded.size>2*1024*1024)return fail('invalid-recording-size');
    const pcm=inspectLocalSpeechPcm(readFileSync(temp),DEFAULT_RATE);
