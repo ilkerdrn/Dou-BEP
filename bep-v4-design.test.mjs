@@ -91,7 +91,7 @@ test('V4 acceptance checks real browser styling instead of old gradient contract
  assert.match(css,/data-portal-auth="authenticated"\] \.portal-hero/);
  assert.match(css,/data-exam-auth="authenticated"\] \.exam-hero/);
  assert.match(css,/\.dashboard-more-tools/);
- assert.match(browser,/V4 institutional burgundy token is active/);
+ assert.match(browser,/V4 institutional DOU red token is active/);
  assert.match(browser,/V4 dashboard sidebar is neutral/);
  assert.match(browser,/V4 design stylesheet is last/);
  assert.doesNotMatch(browser,/V3 CSS is last/);
@@ -136,7 +136,7 @@ test('V4 coordination removes transparent hero and checks current palette in bro
  assert.match(css,/background:#fff!important;background-image:none!important/);
  assert.match(browser,/BROWSER COORDINATION V4 CONTRAST/);
  assert.match(browser,/coordinationVisual\.heroColor==='rgb\(255, 255, 255\)'/);
- assert.match(browser,/coordinationVisual\.headingColor==='rgb\(32, 36, 49\)'/);
+ assert.match(browser,/coordinationVisual\.headingColor==='rgb\(29, 29, 27\)'/);
  assert.doesNotMatch(browser,/BROWSER COORDINATION V3 CONTRAST/);
 });
 
@@ -149,10 +149,10 @@ test('V4 shortcut branding excludes old V3 primary color across migrated modules
   assert.ok(css.includes(selector),'V4 primary shortcut missing: '+selector);
  }
  assert.match(css,/background:var\(--v4-primary\)!important/);
- assert.match(browser,/lab\.firstBg==='rgb\(122, 31, 43\)'/);
- assert.match(browser,/layout\.firstBg==='rgb\(122, 31, 43\)'/);
- assert.match(browser,/flow\.firstBg==='rgb\(122, 31, 43\)'/);
- assert.match(browser,/task\.accent==='rgb\(122, 31, 43\)'/);
+ assert.match(browser,/lab\.firstBg==='rgb\(215, 9, 38\)'/);
+ assert.match(browser,/layout\.firstBg==='rgb\(215, 9, 38\)'/);
+ assert.match(browser,/flow\.firstBg==='rgb\(215, 9, 38\)'/);
+ assert.match(browser,/task\.accent==='rgb\(215, 9, 38\)'/);
  assert.doesNotMatch(browser,/\['rgb\(142, 20, 40\)','rgb\(122, 31, 43\)'\]/);
 });
 
@@ -233,7 +233,7 @@ test('V4 preserves a visible mobile menu toggle independently of legacy V3',()=>
  assert.match(css,/color:#801b2a!important/);
  assert.match(css,/background:#fff!important/);
  assert.match(css,/\.dou-nav-toggle span\{\s*background:currentColor!important/);
- assert.match(browser,/Mobile menu has contrasting burgundy icon on white surface/);
+ assert.match(browser,/Mobile menu has contrasting DOU red icon on white surface/);
  assert.match(browser,/let primaryError=null/);
  assert.match(browser,/BROWSER CLEANUP WARNING/);
  assert.match(browser,/if\(primaryError\)throw primaryError/);
