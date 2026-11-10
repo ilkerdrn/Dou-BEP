@@ -591,6 +591,11 @@ async function main(){
  await evaluate('document.getElementById("workflow-next").click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("2 / 5")'),'Step pager actually advances');
  pass(await evaluate('document.getElementById("workflow-stage-help").textContent.includes("BEP hedeflerini")'),'Guided second step explains the teacher task');
+ pass(await evaluate('(document.querySelectorAll("#workflow-step-tasks li").length===2)&&document.getElementById("workflow-step-tasks").textContent.includes("öğretmen olarak doğrulayın")'),'Second step presents two concise teacher tasks without grading or automatic approval');
+ pass(await evaluate('document.getElementById("workflow-next").getAttribute("aria-label")==="Sonraki adım: Soru bankası"'),'Next button identifies its destination to assistive technology');
+ await evaluate('document.querySelector(\'[data-workflow-target="exam-library-section"]\').click()');
+ pass(await evaluate('document.getElementById("workflow-step-tasks").textContent.includes("kendiniz soru yazabilirsiniz")'),'Question bank is clearly optional rather than a required step');
+ await evaluate('document.querySelector(\'[data-workflow-target="exam-goal-section"]\').click()');
  pass(await evaluate('document.getElementById("workflow-announcement").textContent.includes("BEP kazanımı")'),'Screen reader receives explicit step navigation announcement');
  // CDP synthetic key events are not a substitute for manual NVDA/keyboard
  // testing. Verify focused-button activation and the accessible state here.
