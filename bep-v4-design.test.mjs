@@ -592,3 +592,23 @@ test('V4 goal verification step gives safe instructions without changing approva
  assert.match(css,/#exam-goal-section \.exam-goal-onboarding/);
  assert.match(css,/#exam-goal-section \.exam-goal-help summary/);
 });
+
+
+test('V4 question bank shortcuts focus existing controls without saving or approving',()=>{
+ const html=read('./institutional-exams.html');
+ const ui=read('./workflow-ui.mjs');
+ const css=read('./dou-unified-ui.css');
+ for(const id of ['exam-library-search','exam-library-goal-code','exam-library-question-title']){
+  assert.match(html,new RegExp('data-library-shortcut="'+id+'"'));
+  assert.match(html,new RegExp('id="'+id+'"'));
+ }
+ assert.match(html,/Bu kısayollar yalnızca alanlara götürür/);
+ assert.match(ui,/libraryShortcuts\.addEventListener\('click'/);
+ assert.match(ui,/target\.scrollIntoView\(\{block:'center',behavior:'auto'\}\)/);
+ assert.match(ui,/target\.focus\(\{preventScroll:true\}\)/);
+ assert.match(ui,/if\(parent\.tagName==='DETAILS'\)parent\.open=true/);
+ assert.match(css,/#exam-library-section \.exam-library-onboarding/);
+ assert.match(css,/#exam-library-section \.exam-library-shortcuts a/);
+ assert.match(html,/id="exam-library-question-save"/);
+ assert.match(html,/id="exam-library-goal-save"/);
+});
