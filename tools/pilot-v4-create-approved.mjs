@@ -63,7 +63,7 @@ try{
   const history=store.approvalHistory(reviewer,current.id);
   const saved=store.getExam(reviewer,current.id);
   if(approved.status!=='approved'||saved.status!=='approved'||
-     saved.approvedBy!==reviewer.id||!history.length)
+     saved.approvedBy!==reviewer.id||!history.records?.some(record=>record.current&&record.approvedBy===reviewer.id))
    throw Error('Onay sonrasi kalici durum/incelemeci/gecmis dogrulamasi basarisiz.');
   console.log('ONAYLI SENTETIK SINAV: '+saved.exam.title);
   console.log('SINAV ID: '+saved.id+' | SURUM: '+saved.revision);
