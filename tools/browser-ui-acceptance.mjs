@@ -581,6 +581,27 @@ async function main(){
       guidedInitial.currentVisible&&guidedInitial.futureHidden,
       'Guided editor starts with only the current stage displayed');
 
+ // Exercise the real first-step optional adaptation wrapper. A missing
+ // target id used to silently skip progressive disclosure entirely.
+ const adaptation=await evaluate(`(function(){
+  const section=document.getElementById('support-workbench');
+  const panel=section?.closest('details.exam-optional-tool');
+  return {exists:!!section,wrapped:!!panel,
+   matches:panel?.dataset.toolId==='support-workbench',
+   initiallyClosed:panel?.open===false,
+   contentRetained:!!section?.querySelector('#exam-support-panel')};
+ })()`);
+ console.log('BROWSER EXAM ADAPTATION DISCLOSURE: '+JSON.stringify(adaptation));
+ pass(adaptation.exists&&adaptation.wrapped&&adaptation.matches&&
+      adaptation.initiallyClosed&&adaptation.contentRetained,
+      'First-step adaptation workbench is optional and preserves its original controls');
+ await evaluate('document.querySelector(\'details[data-tool-id="support-workbench"]>summary\').click()');
+ pass(await evaluate('document.querySelector(\'details[data-tool-id="support-workbench"]\').open'),
+      'Teacher can expand original adaptation settings on demand');
+ await evaluate('document.querySelector(\'details[data-tool-id="support-workbench"]>summary\').click()');
+ pass(await evaluate('!document.querySelector(\'details[data-tool-id="support-workbench"]\').open'),
+      'Teacher can collapse adaptation settings again without removing the form');
+
  // A teacher follows a preflight tile while the guided editor hides other stages.
  await evaluate('document.querySelector(\'[data-workflow-target="exam-question-section"]\').click()');
  pass(await evaluate('document.getElementById("workflow-step-count").textContent.includes("4 / 5")'),'Teacher can open guided review stage');
