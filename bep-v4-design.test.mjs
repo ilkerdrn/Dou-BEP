@@ -661,3 +661,20 @@ test('V4 browser smoke validates actual optional adaptation section and disclosu
  assert.match(browser,/Teacher can expand original adaptation settings on demand/);
  assert.match(browser,/Teacher can collapse adaptation settings again/);
 });
+
+
+test('V4 dashboard browser acceptance checks the same five stages as the exam editor',()=>{
+ const dashboard=read('./institution.html');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ const editor=read('./institutional-exams.html');
+ const labels=['Sınav bilgileri','BEP kazanımı','Soru bankası','Sorular ve kontrol','Onay ve çıktı'];
+ const list=dashboard.match(/<ol class="campus-progress-steps">([\s\S]*?)<\/ol>/);
+ assert.ok(list,'Dashboard must expose the five-step checklist');
+ for(const [index,label] of labels.entries()){
+  assert.ok(list[1].includes('<li><span>0'+(index+1)+'</span> '+label+'</li>'));
+  assert.ok(browser.includes("'0"+(index+1)+" "+label+"'"));
+ }
+ assert.match(editor,/class="workflow-steps" role="group"/);
+ assert.match(browser,/BROWSER DASHBOARD FIVE-STEP WORKFLOW/);
+ assert.doesNotMatch(browser,/Dashboard displays four teacher workflow steps/);
+});
