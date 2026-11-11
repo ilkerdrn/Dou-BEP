@@ -387,7 +387,12 @@ async function main(){
 
 
  pass(await evaluate('document.querySelector(".campus-dashboard-stage .campus-dashboard-aside")!==null'),'Dashboard has right contextual summary');
- pass(await evaluate('document.querySelectorAll(".campus-progress-steps li").length===4'),'Dashboard displays four teacher workflow steps');
+ const dashboardSteps=await evaluate(`[...document.querySelectorAll(".campus-progress-steps li")].map(item=>item.textContent.replace(/\\s+/g,' ').trim())`);
+ console.log('BROWSER DASHBOARD FIVE-STEP WORKFLOW: '+JSON.stringify(dashboardSteps));
+ pass(JSON.stringify(dashboardSteps)===JSON.stringify([
+  '01 Sınav bilgileri','02 BEP kazanımı','03 Soru bankası',
+  '04 Sorular ve kontrol','05 Onay ve çıktı'
+ ]),'Dashboard displays all five teacher workflow steps in their correct order');
  const sidebarFlow=await evaluate(`(function(){
   const links=document.querySelector('.dou-nav-sections').getBoundingClientRect();
   const footer=document.querySelector('.dou-nav-bottom').getBoundingClientRect();
