@@ -46,3 +46,49 @@ test('excessive clipping fails even with a structurally valid WAV',()=>{
  assert.equal(r.valid,false);
  assert.equal(r.reason,'excessive-clipping');
 });
+
+function withRiffChunks(base, chunks) {
+ const fmt=base.subarray(12,36);
+ const data=base.subarray(36);
+ const metadata=chunks.map(({type,payload})=>{
+  const padded=Buffer.alloc(8+payload.length+(payload.length%2));
+  padded.write(type,0,'ascii');
+  padded.writeUInt32LE(payload.length,4);
+  payload.copy(padded,8);
+  return padded;
+ });
+ const out=Buffer.concat([base.subarray(0,12),fmt,...metadata,data]);
+ out.writeUInt32LE(out.length-8,4);
+ return out;
+}
+
+test('FFmpeg LIST/INFO WAV metadata is accepted without weakening PCM safety',()=>{
+ const base=fixture();
+ const wav=withRiffChunks(base,[{type:'LIST',payload:Buffer.from('INFOISFTffmpeg\\x00','binary')}]);
+ const r=inspectLocalSpeechPcm(wav,22050);
+ assert.equal(r.valid,true,JSON.stringify(r));
+ assert.equal(r.productionApproved,false);
+ assert.equal(r.validatedIntelligibility,false);
+ assert.equal(r.durationSeconds,.5);
+});
+test('odd metadata chunks with RIFF padding are supported',()=>{
+ const wav=withRiffChunks(fixture(),[
+  {type:'JUNK',payload:Buffer.from([1,2,3])},
+  {type:'LIST',payload:Buffer.from([73,78,70,79,0])}
+ ]);
+ assert.equal(inspectLocalSpeechPcm(wav,22050).valid,true);
+});
+test('RIFF parser refuses missing padding, duplicate data and corrupt chunk boundaries',()=>{
+ const normal=fixture();
+ const wav=withRiffChunks(normal,[{type:'LIST',payload:Buffer.from('INFO')}]);
+ const sizeBroken=Buffer.from(wav);
+ sizeBroken.writeUInt32LE(0xffffffff,40);
+ assert.equal(inspectLocalSpeechPcm(sizeBroken,22050).valid,false);
+ const dup=Buffer.concat([normal,normal.subarray(36)]);
+ dup.writeUInt32LE(dup.length-8,4);
+ assert.equal(inspectLocalSpeechPcm(dup,22050).valid,false);
+ const unknown=withRiffChunks(normal,[{type:'XXXX',payload:Buffer.from('test')}]);
+ assert.equal(inspectLocalSpeechPcm(unknown,22050).valid,false);
+ const truncated=wav.subarray(0,wav.length-1);
+ assert.equal(inspectLocalSpeechPcm(truncated,22050).valid,false);
+});
