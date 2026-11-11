@@ -568,7 +568,7 @@ test('V4 exam authoring is a reversible five-step guided view, not a destructive
 test('V4 first exam stage keeps teacher adaptation optional and non-destructive',()=>{
  const html=read('./institutional-exams.html');
  const ui=read('./workflow-ui.mjs');
- assert.match(html,/class="support-workbench" aria-labelledby="support-title"/);
+ assert.match(html,/id="support-workbench" class="support-workbench" aria-labelledby="support-title"/);
  assert.match(ui,/\['support-workbench','BEP uyarlama motoru','İhtiyaç örnekleri/);
  assert.match(ui,/wrapper\.className='exam-optional-tool'/);
  assert.match(ui,/wrapper\.appendChild\(section\)/);
@@ -648,4 +648,16 @@ test('V4 final step explains save review approval delivery without bypassing con
  assert.match(html,/id="exam-approve"[^>]*disabled/);
  assert.match(css,/#exam-output-section \.exam-output-onboarding/);
  assert.match(css,/@media\(max-width:670px\)/);
+});
+
+test('V4 browser smoke validates actual optional adaptation section and disclosure',()=>{
+ const html=read('./institutional-exams.html');
+ const ui=read('./workflow-ui.mjs');
+ const browser=read('./tools/browser-ui-acceptance.mjs');
+ assert.match(html,/id="support-workbench" class="support-workbench"/);
+ assert.match(ui,/\['support-workbench','BEP uyarlama motoru'/);
+ assert.match(browser,/BROWSER EXAM ADAPTATION DISCLOSURE/);
+ assert.match(browser,/adaptation\.initiallyClosed&&adaptation\.contentRetained/);
+ assert.match(browser,/Teacher can expand original adaptation settings on demand/);
+ assert.match(browser,/Teacher can collapse adaptation settings again/);
 });
