@@ -82,17 +82,45 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function state(row){if(row.status==='revoked')return 'revoked';if(row.expires_at<=now()&&row.status!=='submitted')return 'expired';return row.status;}
  function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.status==='submitted'&&row.answers?JSON.parse(row.answers):null}:{})};}
+ // Shared, side-effect-free eligibility gate: the picker and issuing endpoint must agree.
+ function validatePilotPayload(exam){
+  const source=JSON.parse(exam.body),check=reviewExam(source);
+  if(check.errorCount)error('quality_errors','Sınavda zorunlu kalite hatası var.',422);
+  let payload;try{payload=createStudentPayload(source);}catch{error('accessibility_errors','Erişilebilir sınav için görsel betimleme kontrollerini tamamlayın.',422);}
+  if(payload.questions.length<1||payload.questions.length>30||payload.questions.some(q=>!['choice','truefalse','matching'].includes(q.type)))
+   error('unsupported_questions','Pilot oturumu yalnızca 1–30 adet çoktan seçmeli, doğru-yanlış ve eşleştirme sorusunu kabul eder.',422);
+  return payload;
+ }
+ function eligibleExams(actor){
+  permit(actor);
+  const rows=elevated(actor)?
+   db.prepare("SELECT * FROM exams WHERE tenant_id=? AND status='approved' ORDER BY updated_at DESC LIMIT 100").all(actor.tenantId):
+   db.prepare("SELECT * FROM exams WHERE tenant_id=? AND owner_id=? AND status='approved' ORDER BY updated_at DESC LIMIT 100").all(actor.tenantId,actor.id);
+  return rows.map(row=>{
+   const item={id:row.id,title:row.title,revision:row.revision,eligible:false,reason:'',questionCount:0};
+   try{
+    approvedExam(row);
+    const payload=validatePilotPayload(row);
+    item.eligible=true;
+    item.questionCount=payload.questions.length;
+   }catch(err){
+    item.reason=({
+     approval_integrity:'Onaylı sürümün içerik doğrulaması başarısız.',
+     quality_errors:'Sınavın zorunlu kalite kontrollerinde hata var.',
+     accessibility_errors:'Görsel betimleme veya erişilebilirlik kontrolleri eksik.',
+     unsupported_questions:'Soru türü veya sayısı pilot oturumuna uygun değil.'
+    })[err?.code]||'Pilot uygunluğu doğrulanamadı.';
+   }
+   return item;
+  });
+ }
  function issue(actor,examId){permit(actor);cleanup();if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
   if(!exam)error('not_found','Sınav bulunamadı.',404);
   if(!elevated(actor)&&exam.owner_id!==actor.id)error('forbidden','Sınav sahibi olmanız gerekiyor.',403);
   if(exam.status!=='approved'||!exam.approved_at)error('not_approved','Önce sınavı onaylayın.',409);
   approvedExam(exam);
-  const source=JSON.parse(exam.body),check=reviewExam(source);
-  if(check.errorCount)error('quality_errors','Sınavda zorunlu kalite hatası var.',422);
-  let payload;try{payload=createStudentPayload(source);}catch{error('accessibility_errors','Erişilebilir sınav için görsel betimleme kontrollerini tamamlayın.',422);}
-  if(payload.questions.length>30||payload.questions.some(q=>!['choice','truefalse','matching'].includes(q.type)))
-   error('unsupported_questions','Pilot oturumu yalnızca en fazla 30 adet çoktan seçmeli, doğru-yanlış ve eşleştirme sorusunu kabul eder.',422);
+  validatePilotPayload(exam);
   if(db.prepare("SELECT COUNT(*) AS n FROM pilot_sessions WHERE tenant_id=? AND status IN ('issued','started') AND expires_at>?").get(actor.tenantId,now()).n>=30)error('quota','Kurum için aynı anda en fazla 30 açık pilot kodu olabilir.',409);
   const raw=randomBytes(10).toString('hex').toUpperCase(),code=raw.match(/.{1,5}/g).join('-');
   const stamp=now(),id=randomUUID();
@@ -302,6 +330,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
+ return {pilotEligibleExams:eligibleExams,pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
