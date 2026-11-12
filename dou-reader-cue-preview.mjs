@@ -38,7 +38,7 @@ export function attachFixedReaderCuePreview({doc,win}){
   const token=epoch;
   const chosen=file.files?.[0];
   if(!currentCue()||!chosen)return report('Geçerli bir sabit anons ve WAV dosyası seçin.');
-  if(typeof chosen.name!=='string'||!/.wav$/i.test(chosen.name)||
+  if(typeof chosen.name!=='string'||!/\.wav$/i.test(chosen.name)||
      !Number.isInteger(chosen.size)||chosen.size<46||chosen.size>2*1024*1024)
    return report('Yalnızca 2 MB altı PCM16 mono 22.050 Hz WAV dosyası kabul edilir.');
   try{
