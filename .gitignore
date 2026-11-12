@@ -10,3 +10,6 @@ node_modules/
 *.pem
 *.p12
 *.pfx
+
+# Isolated synthetic V4 pilot: local marker, accounts, DB and runtime files.
+.local-pilot-v4/
