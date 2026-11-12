@@ -41,6 +41,29 @@
 <p id="reader-status" role="status" aria-live="polite" aria-atomic="true">Yerel sesler kontrol ediliyor.</p>
 <div id="reader-shortcuts" hidden><p>Alt+Shift+R: oku · Alt+Shift+S: durdur · Alt+Shift+N: sonraki · Alt+Shift+P: önceki · Alt+Shift+H: yardım. Form alanlarında kısayollar kapatılır.</p></div>
 </section>
+<section class="card reader-panel" aria-labelledby="reader-cue-title">
+<h2 id="reader-cue-title">Doğal Türkçe sabit anons önizlemesi</h2>
+<p>İzinli bir ses sağlayıcısında önceden üretilmiş <strong>sabit arayüz anonsunu</strong>, yalnızca kendi bilgisayarınızda dinleyin. Dosya sunucuya yüklenmez, saklanmaz, otomatik oynatılmaz ve sınav sorularını seslendirmez. Bu özellik çevrimdışı bir TTS motoru değildir. Kullandığınız sesin lisansını kontrol edin.</p>
+<div class="reader-settings">
+<label for="reader-cue-select">Sabit anons
+<select id="reader-cue-select">
+<option value="welcome">Hoş geldiniz</option>
+<option value="exam-start">Sınav hazırlama</option>
+<option value="next-step">İleri adım</option>
+<option value="finished">İşlem tamamlandı</option>
+</select></label>
+<label for="reader-cue-file">Yerel WAV dosyası (PCM16, mono, 22.050 Hz)
+<input id="reader-cue-file" type="file" accept=".wav,audio/wav"/>
+</label>
+</div>
+<p><strong>Seçili anons metni:</strong> <span id="reader-cue-text">Doğuş Üniversitesi erişilebilir sınav sistemine hoş geldiniz.</span></p>
+<div class="reader-actions" role="group" aria-label="Yerel sabit anons önizleme denetimleri">
+<button type="button" id="reader-cue-play" disabled>Seçili anonsu dinle</button>
+<button type="button" id="reader-cue-stop" class="ghost">Anonsu durdur</button>
+</div>
+<p id="reader-cue-status" role="status" aria-live="polite">Yerel WAV dosyası seçilmedi.</p>
+<p class="muted">Metnin gerçekten karşılık gelen cümleyi söylediğini dinleyerek doğrulayın. Kişisel, öğrenci veya gerçek sınav verisi kullanmayın. Sayfayı kapatınca seçilen ses bellekte tutulmaz.</p>
+</section>
 <section class="card" aria-label="Örnek soru ve gizlilik bilgisi"><p id="question-progress" class="pill" aria-live="polite">Soru 1 / 3</p><h2 id="demo-question-heading" tabindex="-1">Soru 1</h2><p id="demo-prompt"></p><p id="demo-extra"></p><ul id="demo-options"></ul><p class="muted">Bu sayfa yalnız okumayı gösterir; cevap toplamaz ve göndermez.</p></section>
 <section class="card" aria-labelledby="synth-title">
 <h2 id="synth-title">DOU Speech Lab — özgün robotik ses deneyi</h2>
@@ -107,4 +130,4 @@
 <section class="card"><h2>Anonim dinleme karşılaştırması</h2><p>Önceki hece-vurgu modeli ile yeni fonem geçişi denemesini, ses sürümleri gizlenmiş şekilde dinlemek için <a href="/dou-speech-listening">kör A/B dinleme laboratuvarını aç</a>. Sunucuya yanıt gönderilmez.</p></section>
 <section class="card"><h2>Yeni: Ünsüz tanıma alıştırması</h2><p>Yalnız sabit sentetik örneklerle, hangi sözcüğün duyulduğunu seçmek için <a href="/dou-speech-phoneme">yerel fonem tanıma laboratuvarını aç</a>. Kişisel veri veya ses kaydı tutulmaz; sonuçlar yalnız toplam sayılardır. Bu bilimsel bir doğruluk belgesi değildir.</p></section>
 <section class="card"><h2>Yeni: toplu fonem araştırması</h2><p>Yalnız anonim sonuçları birleştirmek için <a href="/dou-speech-pool">yerel fonem analiz ekranını aç</a>.</p></section><p class="notice" id="message" role="status" aria-live="polite"></p><p class="muted">BAP araştırma prototipi; canlı kullanım, NVDA eşdeğerliği veya Türkçe ses motoru geliştirildiği iddiası değildir.</p></main>
-<script type="module" src="/dou-reader-demo.mjs"></script><script type="module" src="/dou-speech-free-text-ui.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>
+<script type="module" src="/dou-reader-demo.mjs"></script><script type="module" src="/dou-reader-cue-preview-ui.mjs"></script><script type="module" src="/dou-speech-free-text-ui.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>
