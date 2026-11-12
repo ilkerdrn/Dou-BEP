@@ -96,6 +96,7 @@ export function createApiHandler(store,{port=4173}={}){
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   if(path==='/api/pilot/eligible-exams'&&req.method==='GET'){response(res,200,{items:store.pilotEligibleExams(actor)});return true;}
    if(path==='/api/pilot'&&req.method==='GET'){response(res,200,{items:store.pilotList(actor)});return true;}
    if(path==='/api/pilot'&&req.method==='POST'){
     const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId)});return true;
