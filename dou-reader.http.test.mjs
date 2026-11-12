@@ -39,3 +39,27 @@ test('v2.60 local A/B technical rehearsal is served in reader with synthetic-onl
   assert.equal((await get(path)).status,404);
  }
 });
+
+test('fixed Turkish cue preview stays a public demo-only, read-only local feature',async()=>{
+ const page=await get('/dou-reader-demo');
+ assert.equal(page.status,200);
+ for(const id of ['reader-cue-select','reader-cue-file','reader-cue-play','reader-cue-stop','reader-cue-status','reader-cue-text'])
+  assert.match(page.body,new RegExp('id="'+id+'"'));
+ assert.match(page.body,/dou-reader-cue-preview-ui\.mjs/);
+ assert.match(page.body,/sınav sorularını seslendirmez/);
+ assert.match(page.headers['content-security-policy'],/media-src 'self' blob:/);
+ assert.doesNotMatch(page.headers['content-security-policy'],/media-src[^;]*https?:/);
+ for(const resource of ['/dou-reader-cue-preview.mjs','/dou-reader-cue-preview-ui.mjs',
+   '/reader-speech-research/local-pcm-output-gate.mjs']){
+  const r=await get(resource);
+  assert.equal(r.status,200,resource);
+  assert.match(r.headers['content-type'],/text\/javascript/);
+ }
+ for(const privateResource of ['/dou-reader-cue-preview.test.mjs',
+   '/reader-speech-research/local-voice-capture.mjs',
+   '/reader-speech-research/local-voice-capture.test.mjs'])
+  assert.equal((await get(privateResource)).status,404,privateResource);
+ const module=await get('/dou-reader-cue-preview.mjs');
+ assert.match(module.body,/inspectLocalSpeechPcm/);
+ assert.doesNotMatch(module.body,/fetch\(|XMLHttpRequest|localStorage|sessionStorage|sendBeacon|speechSynthesis\.speak/);
+});
