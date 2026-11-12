@@ -247,3 +247,68 @@ test('HTTP recovery requires authenticated actor and CSRF; student redeems rotat
   assert.notEqual((await request('/pilot/redeem','POST',{code:recovered.data.item.code})).status,200);
  }finally{await new Promise(resolve=>server.close(resolve));f.close();}
 });
+
+
+test('pilot eligibility lists only supported approved exams, without weakening issue validation',()=>{
+ const f=fixture();
+ try{
+  const unsupported=createDemo();
+  unsupported.profile='';
+  unsupported.adaptations.visualCues=false;
+  unsupported.questions=unsupported.questions.map(q=>({...q,teacherNote:''}));
+  unsupported.title='Kısa yanıt içeren onaylı örnek';
+  const created=f.s.createExam(f.a,{exam:unsupported});
+  f.s.approveExam(f.a,created.id,{revision:created.revision,confirmed:true});
+  const options=f.s.pilotEligibleExams(f.a);
+  const ready=options.find(item=>item.id===f.rec.id);
+  const blocked=options.find(item=>item.id===created.id);
+  assert.equal(ready.eligible,true);
+  assert.equal(ready.questionCount,4);
+  assert.equal(blocked.eligible,false);
+  assert.match(blocked.reason,/Soru türü veya sayısı/);
+  assert.equal(JSON.stringify(options).includes('answer'),false);
+  assert.equal(f.s.pilotEligibleExams(f.b).length,0);
+  assert.throws(()=>f.s.pilotIssue(f.a,created.id),{code:'unsupported_questions'});
+  assert.ok(f.s.pilotIssue(f.a,f.rec.id).code);
+ }finally{f.close();}
+});
+
+test('pilot eligibility listing enforces exam export permission and exam ownership',()=>{
+ const f=fixture();
+ try{
+  f.s.addMember(f.a,{email:'pilot-observer@a-okul.test',role:'observer',password});
+  const observer=f.s.requireActor(f.s.signIn({tenantId:'a-okul',email:'pilot-observer@a-okul.test',password}).token);
+  assert.throws(()=>f.s.pilotEligibleExams(observer),{code:'forbidden'});
+  f.s.addMember(f.a,{email:'pilot-teacher@a-okul.test',role:'teacher',password});
+  const teacher=f.s.requireActor(f.s.signIn({tenantId:'a-okul',email:'pilot-teacher@a-okul.test',password}).token);
+  assert.deepEqual(f.s.pilotEligibleExams(teacher),[]);
+  const own=f.s.createExam(teacher,{exam:exam()});
+  f.s.approveExam(f.a,own.id,{revision:1,confirmed:true});
+  const options=f.s.pilotEligibleExams(teacher);
+  assert.deepEqual(options.map(item=>item.id),[own.id]);
+  assert.equal(options[0].eligible,true);
+  assert.equal(f.s.pilotEligibleExams(f.a).length,2);
+ }finally{f.close();}
+});
+
+test('pilot eligibility API is authenticated, tenant scoped and excludes answer keys',async()=>{
+ const f=fixture(),server=http.createServer();
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ const port=server.address().port;
+ const api=createApiHandler(f.s,{port});
+ server.on('request',(req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ const get=(cookie)=>fetch('http://127.0.0.1:'+port+'/api/pilot/eligible-exams',{headers:cookie?{Cookie:'bep_session='+cookie}:{}}); 
+ try{
+  assert.equal((await get()).status,401);
+  const own=await get(f.la.token);
+  assert.equal(own.status,200);
+  const data=await own.json();
+  assert.equal(data.items.length,1);
+  assert.equal(data.items[0].eligible,true);
+  assert.equal(data.items[0].questionCount,4);
+  assert.equal(JSON.stringify(data).includes('answer'),false);
+  const isolated=await get(f.lb.token);
+  assert.equal(isolated.status,200);
+  assert.deepEqual((await isolated.json()).items,[]);
+ }finally{await new Promise(resolve=>server.close(resolve));f.close();}
+});
