@@ -136,3 +136,21 @@ test('queued file read cannot reactivate a cue after the user changes selection'
  assert.equal(ui.play(),false);
  ui.destroy();
 });
+
+test('MP3 parser rejects a valid MPEG-looking frame hidden inside another file',()=>{
+ const hidden=Buffer.alloc(4096,0);
+ hidden.write('RIFF',0);
+ hidden.write('WAVE',8);
+ hidden[120]=0xff;hidden[121]=0xfb;hidden[122]=0x90;hidden[123]=0x64;
+ assert.equal(inspectFixedCueAudio(hidden,'wrong.mp3').valid,false);
+ const prefixed=Buffer.concat([Buffer.alloc(32),makeMp3()]);
+ assert.equal(inspectFixedCueAudio(prefixed,'prefixed.mp3').valid,false);
+});
+test('MP3 parser only allows a frame immediately after an explicit ID3v2 tag',()=>{
+ const valid=makeMp3({id3:true});
+ assert.equal(inspectFixedCueAudio(valid,'a.mp3').valid,true);
+ const bad=Buffer.from(valid);
+ bad[21]=0;bad[22]=0;bad[23]=0;bad[24]=0;
+ bad[100]=0xff;bad[101]=0xfb;bad[102]=0x90;bad[103]=0x64;
+ assert.equal(inspectFixedCueAudio(bad,'a.mp3').valid,false);
+});
