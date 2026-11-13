@@ -132,7 +132,9 @@ export function pilotSessions(db,{StoreError,log}){
  function list(actor){
   permit(actor);cleanup();
   // Read-only summary: only tenant/owner-scoped records, never answers or stored scores.
-  const base=`SELECT p.*,e.title AS exam_title,e.body AS exam_body,
+  const base=`SELECT p.id,p.tenant_id,p.exam_id,p.owner_id,p.revision,p.status,
+    p.created_at,p.expires_at,p.started_at,p.submitted_at,
+    e.title AS exam_title,e.body AS exam_body,
     e.revision AS exam_revision,e.status AS exam_status,
     e.approved_by AS exam_approved_by,e.approved_at AS exam_approved_at,
     r.entries AS review_entries
