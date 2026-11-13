@@ -433,6 +433,8 @@ function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-audio-mp3').disabled=$('exam-audio-export').disabled||!state.mp3Available||x.questions.some(q=>questionAccess(q).audioAllowed===false);
  $('exam-voice-export').disabled=$('exam-audio-export').disabled||!$('exam-voice-allow').checked;
  $('exam-add-question').disabled=!has('exam.edit')||state.busy;
+ $('exam-add-ten-questions').disabled=!has('exam.edit')||state.busy;
+ $('exam-quick-question-type').disabled=!has('exam.edit')||state.busy;
  if(libraryState.goals.length||libraryState.questions.length)drawLibrary();
  for(const el of $('exam-editor-card').querySelectorAll('[data-field],[data-qkey],[data-access],[data-adapt],[data-delete],[data-source-review]'))el.disabled=!has('exam.edit')||state.busy;
 }
@@ -667,7 +669,11 @@ function appendBlankQuestions(count){
  notice(count>1?count+' boş çoktan seçmeli soru eklendi. Metinleri, kazanımları ve yanıtları tamamlayın.':'Yeni soru taslağı eklendi. Önce metni, ardından kazanımı, puanı ve yanıtı kontrol edin.');
 }
 $('exam-add-question').addEventListener('click',()=>appendBlankQuestions(1));
-$('exam-add-ten-questions').addEventListener('click',()=>appendBlankQuestions(10));
+$('exam-add-ten-questions').addEventListener('click',()=>{
+ if(!has('exam.edit')||state.busy)return;
+ if(!confirm('10 yeni boş çoktan seçmeli soru taslağı eklenecek ve otomatik kayda dahil edilecek. Devam edilsin mi?'))return;
+ appendBlankQuestions(10);
+});
 $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
  if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
