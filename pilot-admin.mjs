@@ -177,6 +177,7 @@ $('review-form').addEventListener('submit',async e=>{e.preventDefault();if(!acti
    updateReviewDraftStatus();
    msg('Değerlendirme kaydedildi. Bu sırada yaptığınız daha yeni değişiklikler henüz kaydedilmedi.');
   }
+  void refresh().catch(()=>msg('Değerlendirme kaydedildi; oturum listesi güncellenemedi. Listeyi yenile düğmesini kullanın.',true));
  }catch(err){msg(err.message,true);}
  finally{reviewSaving=false;if(activeReview)updateReviewDraftStatus();}
 });
