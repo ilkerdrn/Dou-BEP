@@ -1,6 +1,7 @@
 /** Authenticated institutional exam editor. No sensitive learner data or browser persistence. */
 import {makeDeliveryVersion} from './presentation-profiles.mjs';
 import {verifyExamDownload} from './exam-download-verify.mjs';
+import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt} from './exam-delivery-ux.mjs';
 import {prepareQuestionPreview} from './question-preview.mjs';
 import {VISUAL_MATERIALS,findVisualMaterials,visualMaterial,visualMaterialMarkup,applyVisualMaterial} from './visual-materials.mjs';
 import {createAutosaveManager} from './autosave-manager.mjs';
@@ -362,6 +363,7 @@ function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-save').disabled=!has('exam.edit')||state.busy;
  $('exam-approve').disabled=!has('exam.approve')||!state.current||state.dirty||state.current.status==='approved'||state.busy||report.errorCount>0||!$('exam-confirm').checked;
  updateApprovalGuidance(report);
+ syncDeliveryContext();
  $('exam-word').disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;
  $('exam-print').disabled=$('exam-word').disabled;
  $('exam-delivery-word').disabled=$('exam-word').disabled;
@@ -690,9 +692,63 @@ $('exam-approve').addEventListener('click',async()=>{
 });
 function saveHtml(out,name){const blob=new Blob([out],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
 function openPreview(out){const blob=new Blob([out],{type:'text/html;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);}
+let lastDeliverySelectionKey='',lastDeliveryReceipt=null,deliveryInFlight=false;
+function currentDeliverySelection(){
+ return deliverySelection({id:state.current?.id,revision:state.current?.revision,
+  status:state.current?.status,dirty:state.dirty||autosave.hasChanges()||autosave.isSaving()||autosave.isBlocked(),
+  profile:$('exam-delivery-profile').value});
+}
+function deliveryKeyOf(selection){return selection.id+'|'+selection.revision+'|'+selection.profile;}
+function clearDeliveryReceipt(){
+ lastDeliveryReceipt=null;
+ $('exam-delivery-receipt').hidden=true;
+ $('exam-delivery-receipt-description').textContent='';
+ $('exam-delivery-receipt-sha').textContent='';
+}
+function syncDeliveryContext(){
+ let key='',selection;
+ try{selection=currentDeliverySelection();key=deliveryKeyOf(selection);}catch{}
+ if(key===lastDeliverySelectionKey)return;
+ lastDeliverySelectionKey=key;
+ clearDeliveryReceipt();
+ $('exam-delivery-status').textContent=selection
+  ?'Sürüm '+selection.revision+' · '+selection.profile+' profili seçildi. Dosyayı almadan önce sunucu onayı tekrar doğrulanacak.'
+  :'Çıktı için önce kaydedilmiş, onaylı ve değişiklik içermeyen bir sınav sürümü seçin.';
+}
+async function getDeliveryReadiness(selection){
+ const info=await api('/exams/'+selection.id+'/delivery-readiness?profile='+encodeURIComponent(selection.profile));
+ const ready=assertDeliveryReady(info,selection);
+ if(!sameDeliverySelection(selection,currentDeliverySelection()))
+  throw Error('Sınav veya sunum profili bu işlem sırasında değişti. Güncel seçimi tekrar kontrol edin.');
+ return ready;
+}
+function showDeliveryReceipt(receipt){
+ lastDeliveryReceipt=receipt;
+ $('exam-delivery-receipt-description').textContent=receipt.description;
+ $('exam-delivery-receipt-sha').textContent=receipt.sha256;
+ $('exam-delivery-receipt').hidden=false;
+}
+$('exam-delivery-copy-sha').addEventListener('click',async()=>{
+ if(!lastDeliveryReceipt)return;
+ try{
+  await navigator.clipboard.writeText(lastDeliveryReceipt.sha256);
+  notice('Dosya SHA-256 özeti kopyalandı.');
+ }catch{
+  notice('Otomatik kopyalama yapılamadı. Özeti yukarıdan seçip kopyalayabilirsiniz.',true);
+ }
+});
 function downloadVerified(bytes,mime,name){const blob=new Blob([bytes],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),3000);}
 function download(out,name){const blob=new Blob([out],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
-async function getApproved(){if(!state.current||state.dirty)throw Error('Önce kaydedilmiş ve onaylı sınav sürümünü açın.');const r=await api('/exams/'+state.current.id+'/export',{method:'POST',body:{}});return r.exam;}
+async function getApproved(){
+ if(!state.current||state.current.status!=='approved'||state.dirty||autosave.hasChanges()||autosave.isSaving()||autosave.isBlocked())
+  throw Error('Önce kaydedilmiş ve onaylı sınav sürümünü açın.');
+ const id=state.current.id,revision=state.current.revision;
+ const r=await api('/exams/'+id+'/export',{method:'POST',body:{}});
+ if(r.meta?.id!==id||r.meta?.revision!==revision||r.meta?.status!=='approved'||
+    state.current?.id!==id||state.current?.revision!==revision||state.dirty)
+  throw Error('Sunucu sürümü değişti. Güncel sınavı yeniden açıp çıktı alın.');
+ return r.exam;
+}
 $('exam-word').addEventListener('click',async()=>{try{const exam=await getApproved();download(generateDocx(exam,false),slugify(exam.title)+'-kurumsal.docx');notice('Word belgesi yetkilendirilmiş sunucu sürümünden üretildi.');}catch(err){notice(err.message,true);}});
 $('exam-delivery-word').addEventListener('click',async()=>{
  try{const exam=await getApproved();const profile=$('exam-delivery-profile').value;const variant=makeDeliveryVersion(exam,profile);
