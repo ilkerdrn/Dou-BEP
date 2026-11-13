@@ -127,6 +127,11 @@ $('review-form').addEventListener('submit',async e=>{e.preventDefault();if(!acti
  }catch(err){msg(err.message,true);}
  finally{reviewSaving=false;if(activeReview)updateReviewDraftStatus();}
 });
+window.addEventListener('beforeunload',event=>{
+ if(reviewSaving||reviewDraftSnapshot()?.inspection.changed){
+  event.preventDefault();event.returnValue='';
+ }
+});
 $('create').addEventListener('click',async()=>{const btn=$('create');btn.disabled=true;try{const result=await api('/pilot','POST',{examId:$('exams').value});lastCode=result.item.code;$('code').textContent=lastCode;$('new-code').hidden=false;const expires=new Date(result.item.expiresAt);$('pilot-code-expiry').textContent='Kodun son geçerlilik zamanı: '+expires.toLocaleString('tr-TR')+'. Kod yalnızca bir kez kullanılabilir; öğrenci sayfası yenilenirse pilot oturumu yeniden alınamaz.';msg('Kod oluşturuldu. Şimdi kodu kopyalayıp öğrenciye iletin; daha sonra tekrar görüntülenemez.');await refresh();}catch(e){msg(e.message,true);}finally{btn.disabled=false;}});
 $('refresh').addEventListener('click',()=>refresh().catch(e=>msg(e.message,true)));
 $('copy').addEventListener('click',async()=>{try{if(!lastCode)return;await navigator.clipboard.writeText(lastCode);msg('Kod kopyalandı.');}catch{msg('Kopyalama izni yok; kodu elle seçebilirsiniz.',true);}});
