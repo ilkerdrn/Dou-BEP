@@ -336,6 +336,11 @@ export function createApiHandler(store,{port=4173}={}){
     if(action==='delivery-package'&&req.method==='POST'){
      const data=await readJson(req,2000);
      if(typeof data.profile!=='string'||data.profile.length>24)throw new StoreError('invalid_profile','Sunum profili gerekli.',422);
+     if(data.revision!==undefined){
+      if(!Number.isSafeInteger(data.revision)||data.revision<1)throw new StoreError('bad_revision','Teslim sürüm numarası geçersiz.',422);
+      const current=store.deliveryCheck(actor,id,data.profile);
+      if(current.meta.revision!==data.revision)throw new StoreError('revision_conflict','Sınav sürümü değişti. Sınavı yeniden açıp teslimi kontrol edin.',409);
+     }
      const pack=store.deliveryProduce(actor,id,data.profile);
      res.writeHead(200,{'Content-Type':'application/zip','Content-Disposition':'attachment; filename="anonim-onayli-sinav-teslimi.zip"',
       'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Length':pack.zip.length,
@@ -346,6 +351,10 @@ export function createApiHandler(store,{port=4173}={}){
      const data=await readJson(req,1200);
      if(typeof data.profile!=='string'||data.profile.length>24)throw new StoreError('invalid_profile','PDF için sunum profili gerekli.',422);
      const readiness=store.deliveryCheck(actor,id,data.profile); // approved ledger and tenant hash verified again
+     if(data.revision!==undefined){
+      if(!Number.isSafeInteger(data.revision)||data.revision<1)throw new StoreError('bad_revision','PDF sürüm numarası geçersiz.',422);
+      if(readiness.meta.revision!==data.revision)throw new StoreError('revision_conflict','Sınav sürümü değişti. Sınavı yeniden açıp PDF oluşturun.',409);
+     }
      if(!readiness.ready)throw new StoreError('pdf_not_ready','Onaylı sınavın teslim kontrolü uygun değil.',422);
      const {exam}=store.exportExam(actor,id); // same authorization as other delivery exports
      let generated;
