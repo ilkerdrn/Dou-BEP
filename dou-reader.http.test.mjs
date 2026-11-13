@@ -77,3 +77,26 @@ test('fixed cue preview accepts local MP3 without remote media or upload',async(
  assert.doesNotMatch(module.body,/fetch\(|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage/);
  assert.match(demo.headers['content-security-policy'],/media-src 'self' blob:/);
 });
+
+test('Reader MVP exposes split audio controls on demo and learner pilot, not research endpoints',async()=>{
+ for(const route of ['/dou-reader-demo','/pilot']){
+  const page=await get(route);assert.equal(page.status,200);
+  for(const id of ['reader-read','reader-stem','reader-choices','reader-stop','reader-status'])
+   assert.match(page.body,new RegExp('id="'+id+'"'),route+' / '+id);
+  assert.match(page.body,/Soru metnini oku/);
+  assert.match(page.body,/Seçenekleri oku/);
+  assert.match(page.body,/Soruyu ve seçenekleri oku/);
+ }
+ const core=await get('/dou-reader-core.mjs');
+ assert.equal(core.status,200);
+ assert.match(core.body,/readerStemText/);
+ assert.match(core.body,/readerChoicesText/);
+ assert.match(core.body,/readerHasChoices/);
+ const panel=await get('/dou-reader-panel.mjs');
+ assert.equal(panel.status,200);
+ assert.match(panel.body,/reader-stem/);
+ assert.match(panel.body,/reader-choices/);
+ assert.doesNotMatch(panel.body,/fetch\(|XMLHttpRequest|localStorage|sessionStorage/);
+ assert.equal((await get('/dou-reader-core.test.mjs')).status,404);
+ assert.equal((await get('/dou-reader-panel.test.mjs')).status,404);
+});
