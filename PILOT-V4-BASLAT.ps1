@@ -20,6 +20,33 @@ if (Test-Path -LiteralPath $marker) {
         throw 'Bu klasorun bizim pilot kurulumumuz oldugu dogrulanamadi.'
     }
 }
+# A previous pilot can still own 4174. Diagnose it before launching another
+# server or printing test credentials. Never kill or overwrite the process.
+$portListeners = @()
+if (Get-Command Get-NetTCPConnection -ErrorAction SilentlyContinue) {
+    $portListeners = @(Get-NetTCPConnection -LocalPort 4174 -State Listen -ErrorAction SilentlyContinue)
+}
+if ($portListeners.Count -gt 0) {
+    Write-Host '[PILOT] 4174 portu zaten kullaniliyor. Yeni sunucu baslatilmadi.' -ForegroundColor Yellow
+    foreach ($processId in @($portListeners | Select-Object -ExpandProperty OwningProcess -Unique)) {
+        $ownerProcess = Get-CimInstance Win32_Process -Filter "ProcessId = $processId" -ErrorAction SilentlyContinue
+        if ($null -ne $ownerProcess) {
+            Write-Host ("[PILOT] PID {0}: {1}" -f $ownerProcess.ProcessId, $ownerProcess.Name)
+            Write-Host ("[PILOT] Komut: {0}" -f $ownerProcess.CommandLine)
+        }
+    }
+    try {
+        $existingResponse = Invoke-WebRequest -Uri 'http://127.0.0.1:4174/kurum' -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        if ($existingResponse.Headers['X-DOU-BEP-Local'] -eq '1') {
+            Write-Host '[PILOT] Bu portta zaten bir DOU BEP uygulamasi yanit veriyor. Surumu eski olabilir.' -ForegroundColor Yellow
+        } else {
+            Write-Host '[PILOT] Bu portta DOU BEP olarak dogrulanmayan bir servis var.' -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host '[PILOT] Port dolu; HTTP uzerinden servis kimligi dogrulanamadi.' -ForegroundColor Yellow
+    }
+    throw '4174 portu dolu. Acik terminalde ilgili pilotu Ctrl+C ile durdurun ve tekrar baslatin. Baska islemleri otomatik kapatmayin.'
+}
 # Port is separate from the ordinary 4173 instance. Keep the existing service running.
 $env:PORT = '4174'
 $env:BEP_DB_PATH = $db
@@ -43,7 +70,7 @@ try {
     Write-Host 'Koordinator: koordinator@dou-pilot.test'
     Write-Host 'TEST SIFRESI (tumu): BEP-Sentetik-Pilot-2026!' -ForegroundColor Yellow
     Write-Host 'Bu bilgiler ASLA gercek ogrenci veya canli ortamda kullanilmamalidir.' -ForegroundColor Yellow
-    Write-Host '2 anonim sinav taslagi ogretmen hesabinda. Onay icin ayri incelemeciye gecin.'
+    Write-Host 'Pilot veritabanindaki sinavlar korunuyor. Guncel durumu Sınav Hazirla ekranindan inceleyin.'
     Write-Host 'Kapatmak icin Ctrl+C. Pilot DB kalir; mevcut kurum DB degismez.'
     & $node.Source (Join-Path $PSScriptRoot 'server.mjs')
     if ($LASTEXITCODE -ne 0) { throw 'Pilot sunucu baslatilamadi. 4174 portunu kontrol edin.' }
