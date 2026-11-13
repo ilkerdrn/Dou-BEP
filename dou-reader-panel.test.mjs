@@ -15,7 +15,7 @@ function fakeElement(){
  };
 }
 test('Reader voice event revocation cancels speech, and destroy removes event listeners',()=>{
- const nodes=new Map();for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'])nodes.set(id,fakeElement());
+ const nodes=new Map();for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-stem','reader-choices','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'])nodes.set(id,fakeElement());
  const docHandlers=new Map();const doc={
   getElementById(id){return nodes.get(id);},createElement(){return fakeElement();},
   addEventListener(name,fn){docHandlers.set(name,fn);},
@@ -41,7 +41,7 @@ test('Reader voice event revocation cancels speech, and destroy removes event li
 
 function makeInteractiveReader(){
  const ids=['reader-read','reader-stop','reader-pause','reader-resume','reader-prev',
- 'reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
+ 'reader-next','reader-stem','reader-choices','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
  const nodes=new Map(ids.map(id=>[id,fakeElement()]));
  const handlers=new Map();
  const doc={getElementById:id=>nodes.get(id),createElement:()=>fakeElement(),
@@ -112,7 +112,55 @@ test('No Turkish local voice disables reading and removal cleans all button list
  assert.equal(h.said.length,0);
  h.reader.destroy();
  for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev',
-   'reader-next','reader-voice','reader-help'])
+   'reader-next','reader-stem','reader-choices','reader-voice','reader-help'])
   assert.equal(get(id).handlers.size,0,id);
  assert.equal(h.handlers.size,0);
+});
+
+test('student can replay just the question or choices without leaking answers',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ const question={
+  number:4,prompt:'Dört artı dört kaçtır?',audioAllowed:true,
+  options:[{id:'A',label:'Sekiz'},{id:'B',label:'Dokuz'}],
+  answer:'GIZLI_ANAHTAR',teacherNote:'OGRETMEN_NOTU',studentResponse:'OGRENCI_YANITI'
+ };
+ h.setQuestion(question);h.reader.syncQuestion();
+ assert.equal(get('reader-stem').disabled,false);
+ assert.equal(get('reader-choices').disabled,false);
+ get('reader-stem').click();
+ assert.equal(h.said.length,1);
+ assert.match(h.said[0].text,/Dört artı dört/);
+ assert.doesNotMatch(h.said[0].text,/Seçenek A/);
+ get('reader-choices').click();
+ assert.equal(h.said.length,2);
+ assert.match(h.said[1].text,/Seçenek A/);
+ assert.match(h.said[1].text,/Seçenek B/);
+ assert.doesNotMatch(h.said[1].text,/Dört artı dört/);
+ assert.doesNotMatch(h.said[1].text,/GIZLI_ANAHTAR|OGRETMEN_NOTU|OGRENCI_YANITI/);
+ h.reader.destroy();
+});
+test('options-only control is disabled when question has no choices',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ assert.equal(get('reader-stem').disabled,false);
+ assert.equal(get('reader-choices').disabled,true);
+ get('reader-stem').click();
+ assert.equal(h.said.length,1);
+ get('reader-choices').click();
+ assert.equal(h.said.length,1);
+ assert.match(get('reader-status').textContent,/seçenek bulunamadı/);
+ h.reader.destroy();
+});
+test('split reader controls obey teacher audio prohibition and voice inventory loss',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ h.setQuestion({number:7,prompt:'Kapalı örnek',audioAllowed:false,options:[{id:'A',label:'x'}]});
+ h.reader.syncQuestion();
+ for(const id of ['reader-read','reader-stem','reader-choices'])
+  assert.equal(get(id).disabled,true,id);
+ get('reader-stem').click();get('reader-choices').click();
+ assert.equal(h.said.length,0);
+ h.setQuestion({number:8,prompt:'Açık örnek',options:[{id:'A',label:'y'}]});
+ h.reader.syncQuestion();h.voices.splice(0);h.reader.refreshVoices();
+ for(const id of ['reader-read','reader-stem','reader-choices'])
+  assert.equal(get(id).disabled,true,id);
+ h.reader.destroy();
 });
