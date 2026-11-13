@@ -29,6 +29,7 @@ const api=createApiHandler(store,{port});
 const allowed={
  '/catalog-workflow.mjs':['catalog-workflow.mjs','text/javascript; charset=utf-8'],
  '/exam-download-verify.mjs':['exam-download-verify.mjs','text/javascript; charset=utf-8'],
+ '/exam-delivery-ux.mjs':['exam-delivery-ux.mjs','text/javascript; charset=utf-8'],
  '/':['index.html','text/html; charset=utf-8'],
  '/index.html':['index.html','text/html; charset=utf-8'],
  '/eski-sinav-tasarimci':['index.html','text/html; charset=utf-8'],
