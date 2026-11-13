@@ -67,8 +67,9 @@ test('conflicting historical approval remains a visible blocker without changing
  assert.equal(action.target,'exam-goal-section');
  assert.match(action.title,/uyuşmuyor/i);
  assert.match(action.detail,/Yetkili incelemesi gerekir/);
- assert.throws(()=>workflowNextAction(report([false,false,false,false,false]).constructor===Object?
-  {...report([false,false,false,false,false]),stages:[{...stages[0],target:'https://invalid.example',done:false},...report([false,false,false,false,false]).stages.slice(1)]}:null));
+ const invalid=report([false,false,false,false,false]);
+ invalid.stages[0].target='https://invalid.example';
+ assert.throws(()=>workflowNextAction(invalid),/hedefi geçersiz/);
 });
 
 test('wizard surface, focus navigation, and local-only module preserve exam controls',()=>{
