@@ -16,6 +16,7 @@ import {REVIEW_CRITERIA,goalFingerprint,questionFingerprint,hasAlternative,confi
 import {VERSION, DEFAULT_ADAPTATIONS, starterQuestion, normalizeExam, generateDocx, printableHtml, slugify, escapeHtml} from './core.mjs';
 import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
+import {questionDraftGuidance} from './question-draft-guidance.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
@@ -97,6 +98,37 @@ function qualityQuestionTarget(message){
  const index=Number(match[1])-1;
  return Number.isSafeInteger(index)&&index>=0&&index<(state.exam?.questions?.length||0)?index:null;
 }
+function updateQuestionDraftGuidance(){
+ if(!state.exam)return;
+ const summary=questionDraftGuidance(state.exam),button=$('exam-draft-guidance-go');
+ if(!button)return;
+ $('exam-draft-guidance-count').textContent=summary.total+' soru · '+summary.incomplete+' zorunlu alan eksik · '+summary.review+' ek inceleme gerekli · '+summary.basicComplete+' temel kontrolü tamam.';
+ const next=summary.next;
+ button.disabled=!next;
+ button.dataset.questionIndex=next?String(next.index):'';
+ button.dataset.questionField=next?next.focus:'';
+ button.textContent=!next?'Temel alanlar incelendi':next.state==='incomplete'?'İlk eksik soruya git':'İlk incelenecek soruya git';
+ const problem=next?.issues.find(i=>i.level==='error')||next?.issues[0];
+ $('exam-draft-guidance-detail').textContent=next
+  ?'Soru '+next.number+': '+(problem?.text.replace(/^\\d+\\.\\s*soru\\s*:\\s*/iu,'')||'Temel alanı kontrol edin.')+' Bu rehber taslağı değiştirmez.'
+  :'Temel alan uyarısı bulunmadı. Son kontrol, BEP kazanımı ve kurumsal onay ayrıca gereklidir.';
+}
+$('exam-draft-guidance-go').addEventListener('click',()=>{
+ if(!state.exam)return;
+ const next=questionDraftGuidance(state.exam).next;
+ if(!next)return;
+ const stage=document.querySelector('.workflow-nav [data-workflow-target="exam-question-section"]');
+ if(stage&&$('exam-editor-card').classList.contains('exam-guided-view'))stage.click();
+ const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+next.index+'"]');
+ if(!card)return;
+ let target=next.focus==='source'?card.querySelector('[data-source-review]'):
+  card.querySelector('[data-qkey="'+next.focus+'"]');
+ target ||=card.querySelector('[data-qkey="prompt"]')||card;
+ for(let parent=target.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+ card.scrollIntoView({behavior:'auto',block:'center'});
+ if(!target.matches('input,select,textarea,button'))target.setAttribute('tabindex','-1');
+ target.focus({preventScroll:true});
+});
 function renderQuality(x){
  const report=reviewExam(x),issues=report.issues;
  $('exam-quality').innerHTML=`<strong>Kalite denetimi: ${report.errorCount} hata · ${report.warningCount} uyarı</strong>${issues.slice(0,9).map(q=>{
@@ -383,6 +415,7 @@ function draw(){if(!state.exam)return;const x=state.exam;
  drawVisualMaterials();
  $('exam-questions').innerHTML=x.questions.map((q,i)=>`<article class="exam-question" data-qindex="${i}"><div class="exam-q-head"><strong>Soru ${i+1}</strong><button type="button" class="portal-btn secondary exam-delete-q" data-delete="${i}">Kaldır</button></div><label class="exam-label">Soru türü<select data-qkey="type" data-qindex="${i}">${Object.entries({choice:'Çoktan seçmeli',short:'Kısa yanıt',truefalse:'Doğru / Yanlış',matching:'Eşleştirme'}).map(([v,l])=>`<option value="${v}" ${q.type===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="exam-label">Soru metni<textarea data-qkey="prompt" data-qindex="${i}" rows="2">${esc(q.prompt)}</textarea></label><details class="portal-help" style="margin:8px 0 16px"><summary>PDF için öğretmen açıklamalı denklem / görsel blokları</summary><p>Yalnız öğretmenin kaynakla karşılaştırdığı metinsel dökümü ekleyin. Gerçek Office denklemi veya görsel otomatik aktarılmaz; belgeyi ayrıca uzmanla değerlendirin. Yeni açıklama kaydedilince sınav tekrar kurumsal onay ister.</p><button type="button" class="btn-secondary btn-small" data-pdf-alt="denklem" data-qindex="${i}">Denklem örneği ekle</button> <button type="button" class="btn-secondary btn-small" data-pdf-alt="gorsel" data-qindex="${i}">Görsel örneği ekle</button></details><div class="exam-two"><label class="exam-label">Kazanım<textarea data-qkey="objective" data-qindex="${i}" rows="2">${esc(q.objective)}</textarea></label><label class="exam-label">Puan<input type="number" min="1" max="1000" data-qkey="points" data-qindex="${i}" value="${q.points}"></label></div><label class="exam-label">Bu soru için kullanılacak metin<select data-qkey="presentationMode" data-qindex="${i}" aria-label="Soru ${i+1} için sunum metni">${Object.entries(PRESENTATION_MODES).map(([k,v])=>`<option value="${k}" ${q.presentationMode===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label><div class="variant-comparison" id="variant-comparison-${i}" role="region" aria-label="Soru ${i+1} metin karşılaştırması">${variantHtml(q,i,x)}</div><div id="review-slot-${i}">${reviewPanelHtml(q,i,x)}</div>${accessPanelHtml(q,i)}${q.provenance?.kind==='source-import'?`<label class="portal-check" style="margin:14px 0;display:flex;gap:10px;align-items:center"><input type="checkbox" data-source-review="${i}" ${q.provenance.reviewed?'checked':''}> Bu sorunun metnini, seçeneklerini, puanını, doğru yanıtını ve erişilebilirliğini özgün belgeyle karşılaştırdım.</label>`:''}${q.type==='choice'?`<label class="exam-label">Seçenekler (her satır bir seçenek)<textarea data-qkey="options" data-qindex="${i}" rows="3">${esc(q.options.join('\n'))}</textarea></label>`:''}${q.type==='matching'?`<label class="exam-label">Eşleştirmeler (her satır: sol = sağ)<textarea data-qkey="pairs" data-qindex="${i}" rows="3">${esc(q.pairs.map(p=>p.left+' = '+p.right).join('\n'))}</textarea></label>`:q.type==='truefalse'?'':''}<label class="exam-label">${q.type==='matching'?'Örnek cevap (isteğe bağlı)':q.type==='truefalse'?'Doğru yanıt: Doğru veya Yanlış':'Doğru yanıt'}<input data-qkey="answer" data-qindex="${i}" value="${esc(q.answer)}" placeholder="${q.type==='choice'?'Seçeneklerden birini aynen yazın':''}"></label><label class="exam-label">Sadeleştirilmiş yönerge (isteğe bağlı)<textarea data-qkey="simplifiedPrompt" data-qindex="${i}" rows="2">${esc(q.simplifiedPrompt||'')}</textarea></label><div class="exam-two"><label class="exam-label">Görsel türü<select data-qkey="visualMode" data-qindex="${i}"><option value="shapes" ${q.visualMode!=='numberline'?'selected':''}>Nesne grubu</option><option value="numberline" ${q.visualMode==='numberline'?'selected':''}>Sayı doğrusu</option></select></label><label class="exam-label">Görsel betimlemesi<input data-qkey="visualAltText" data-qindex="${i}" value="${esc(q.visualAltText||'')}"></label></div>${q.visualMode==='numberline'?`<div class="exam-two"><label class="exam-label">Sayı doğrusu başlangıç<input data-qkey="numberLineStart" data-qindex="${i}" type="number" min="0" max="30" value="${q.numberLineStart??0}"></label><label class="exam-label">Sayı doğrusu bitiş<input data-qkey="numberLineEnd" data-qindex="${i}" type="number" min="1" max="30" value="${q.numberLineEnd??10}"></label></div>`:`<div class="exam-two"><label class="exam-label">Görsel nesne grubu A (0–12)<input data-qkey="visualDotsA" data-qindex="${i}" type="number" min="0" max="12" value="${q.visualDots?.groupA||0}"></label><label class="exam-label">Görsel nesne grubu B (0–12)<input data-qkey="visualDotsB" data-qindex="${i}" type="number" min="0" max="12" value="${q.visualDots?.groupB||0}"></label></div>`}<label class="exam-label">Görsele yönelik kısa açıklama<input data-qkey="visualNote" data-qindex="${i}" value="${esc(q.visualNote||'')}"></label></article>`).join('');
  renderTeacherQuestionPreview();
+ updateQuestionDraftGuidance();
  $('exam-adjustments').innerHTML=`<label class="exam-label">Yazı boyutu<select data-adapt="fontSize">${[16,18,20,22,24].map(v=>`<option value="${v}" ${x.adaptations.fontSize===v?'selected':''}>${v} punto</option>`).join('')}</select></label>${[['highContrast','Yüksek kontrast'],['simpleInstructions','Sadeleştirilmiş yönerge'],['onePerPage','Her sayfada bir soru'],['largerAnswerArea','Geniş cevap alanı'],['visualCues','Görsel açıklamalar']].map(([k,label])=>`<label class="portal-check"><input type="checkbox" data-adapt="${k}" ${x.adaptations[k]?'checked':''}> ${label}</label>`).join('')}`;
  const report=renderQuality(x);renderPreflight();const coverage=objectiveCoverage(x);$('exam-objective-coverage').textContent=`Kazanım kapsamı: ${coverage.groups.length} hedef · BEP bankası: ${(x.bepGoals||[]).length} amaç · ${coverage.total} soru · ${coverage.missing} kazanımsız soru. Bu özet ölçme yeterliliğini doğrulamaz.`;
  $('exam-save').disabled=!has('exam.edit')||state.busy;
@@ -432,7 +465,7 @@ $('exam-support-panel').addEventListener('click',event=>{
   touch();draw();notice('Uyarlama seçimleri uygulandı. Kaydedilince sürüme bağlanır; öğretmen onayı gereklidir.');
  }
 });
-function touch(){examSelection.invalidate();state.dirty=true;state.current&&(state.current={...state.current,status:'draft'});$('exam-confirm').checked=false;syncButtons();autosave.changed();if(state.exam){renderQuality(state.exam);renderPreflight();renderGoalMatrix();renderTeacherQuestionPreview();}}
+function touch(){examSelection.invalidate();state.dirty=true;state.current&&(state.current={...state.current,status:'draft'});$('exam-confirm').checked=false;syncButtons();autosave.changed();if(state.exam){renderQuality(state.exam);renderPreflight();renderGoalMatrix();updateQuestionDraftGuidance();renderTeacherQuestionPreview();}}
 function syncButtons(){ $('exam-status').textContent='KAYDEDİLMEDİ';$('exam-version').textContent='Değişiklikler kısa süre içinde oturumlu sunucuya otomatik kaydedilir.';for(const id of ['exam-approve','exam-word','exam-print','exam-audio-export','exam-audio-mp3','exam-delivery-check','exam-delivery-package','exam-pdf-pilot'])$(id).disabled=true;}
 function drawExamList(){
  const query=($('exam-search')?.value||'').trim().toLocaleLowerCase('tr'),filter=$('exam-status-filter')?.value||'all';
@@ -621,13 +654,17 @@ $('exam-questions').addEventListener('click',ev=>{
 function appendBlankQuestions(count){
  if(!has('exam.edit')||state.busy||!state.exam)return;
  if(!Number.isSafeInteger(count)||count<1||count>10)return;
+ if(state.exam.questions.length+count>100)return notice('Sınav en fazla 100 soru içerebilir. Soru sayısını kontrol edin.',true);
+ const chosen=count===1?$('exam-quick-question-type').value:'choice';
+ if(!['choice','truefalse','matching','short'].includes(chosen))
+  return notice('Desteklenen bir soru türü seçin.',true);
  const firstNewIndex=state.exam.questions.length;
- for(let i=0;i<count;i++)state.exam.questions.push(starterQuestion('choice'));
- // One draft invalidation and one redraw, even when adding 10 cards.
+ for(let i=0;i<count;i++)state.exam.questions.push(starterQuestion(chosen));
+ // Preserve existing draft, autosave, and revision invalidation semantics.
  touch();draw();
  const field=$('exam-questions').querySelector(`.exam-question[data-qindex="${firstNewIndex}"] [data-qkey="prompt"]`);
  field?.focus({preventScroll:true});
- if(count>1)notice(count+' boş soru eklendi. Soruların metnini, kazanımlarını ve yanıtlarını öğretmen olarak tamamlayın.');
+ notice(count>1?count+' boş çoktan seçmeli soru eklendi. Metinleri, kazanımları ve yanıtları tamamlayın.':'Yeni soru taslağı eklendi. Önce metni, ardından kazanımı, puanı ve yanıtı kontrol edin.');
 }
 $('exam-add-question').addEventListener('click',()=>appendBlankQuestions(1));
 $('exam-add-ten-questions').addEventListener('click',()=>appendBlankQuestions(10));
