@@ -30,7 +30,8 @@ test('list endpoint returns only summary metadata and respects prior authorizati
  assert.match(sessions,/AND p\.owner_id=\?/);
  assert.match(sessions,/pilotReviewOverview\(\{status:item\.status/);
  assert.match(sessions,/approvedExam\(\{id:row\.exam_id/);
- assert.match(sessions,/\.\.\.meta\(row\)/);
+ assert.match(sessions,/const item=meta\(row\)/);
+ assert.match(sessions,/return \{\.\.\.item,examTitle:row\.exam_title,\.\.\.summary\}/);
  assert.match(server,/'\/pilot-session-overview\.mjs':\['pilot-session-overview\.mjs'/);
 });
 
