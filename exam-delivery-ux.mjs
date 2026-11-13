@@ -3,7 +3,12 @@
  * This UI check is additional to the server's tenant, approval and SHA-256 checks.
  */
 const HEX=/^[a-f0-9]{64}$/;
-const PROFILES=new Set(['standard','large','focus','contrast','motor']);
+const PROFILE_LABELS=Object.freeze({
+ standard:'Standart',large:'Geniş okuma',focus:'Odaklanma',
+ contrast:'Yüksek kontrast',motor:'Geniş yanıt alanı'
+});
+const PROFILES=new Set(Object.keys(PROFILE_LABELS));
+export function deliveryProfileLabel(profile){return PROFILE_LABELS[profile]||'Bilinmeyen profil';}
 
 export function deliverySelection({id,revision,status,dirty,profile}={}){
  if(typeof id!=='string'||!(/^[a-f0-9-]{36}$/.test(id))||
@@ -34,5 +39,5 @@ export function deliveryReceipt({kind,filename,profile,revision,sha256}={}){
     typeof filename!=='string'||!/^[a-zA-Z0-9._-]{1,140}$/.test(filename))
   throw Error('Dosya doğrulama belgesi geçersiz.');
  return {kind,filename,profile,revision,sha256,
-  description:`${kind==='zip'?'ZIP':'PDF'} dosyası doğrulandı · ${filename} · ${profile} profili · Sürüm ${revision}. İndirme tarayıcıya gönderildi.`};
+  description:`${kind==='zip'?'ZIP':'PDF'} dosyası doğrulandı · ${filename} · ${deliveryProfileLabel(profile)} profili · Sürüm ${revision}. İndirme tarayıcıya gönderildi.`};
 }
