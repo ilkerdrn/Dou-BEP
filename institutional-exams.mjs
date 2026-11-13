@@ -757,53 +757,69 @@ $('exam-delivery-word').addEventListener('click',async()=>{
  }catch(err){notice(err.message,true);}
 });
 
-// Server-owned delivery: ZIP contents and manifest are re-derived from the approved database revision.
-$('exam-delivery-profile').addEventListener('change',()=>{
- $('exam-delivery-status').textContent='Yeni profil seçildi. Sunucu kontrolü yeniden yapılmalıdır.';
-});
+// Server-owned ZIP/PDF: new downloads use the selected revision and a fresh
+// server check; the browser verifies exact response length, format and SHA-256.
+$('exam-delivery-profile').addEventListener('change',syncDeliveryContext);
 $('exam-delivery-check').addEventListener('click',async()=>{
  const status=$('exam-delivery-status');
+ let selection;
  try{
-  if(!state.current||state.dirty||state.current.status!=='approved')throw Error('Önce kaydedilmiş ve onaylı sürümü açın.');
-  const r=await api('/exams/'+state.current.id+'/delivery-readiness?profile='+encodeURIComponent($('exam-delivery-profile').value));
-  status.textContent=r.ready
-   ?`Sunucu kontrolü uygun · ${r.questionCount} soru · ${r.profile} profili · ${r.qualityWarnings} öğretmen incelemesi gerektiren uyarı · ${r.structuralAudit?.summary?.passed??0}/7 çıktı yapısı kontrolü; gerçek kullanıcı incelemesi gerekli. Kaynak özeti: ${r.sourceSha256.slice(0,16)}…`
-   :'Teslim durduruldu: '+r.problems.map(x=>x.message).join(' ');
- }catch(err){status.textContent='Kontrol başarısız: '+err.message;}
+  if(deliveryInFlight)throw Error('Başka bir çıktı işlemi devam ediyor.');
+  selection=currentDeliverySelection();
+  status.textContent='Sunucu onay geçmişini ve seçili sürümü kontrol ediyor…';
+  const ready=await getDeliveryReadiness(selection);
+  status.textContent=`Kontrol uygun · Sürüm ${ready.revision} · ${ready.questionCount} soru · ${ready.profile} profili · ${ready.qualityWarnings} öğretmen uyarısı · ${ready.structuralChecks}/7 yapısal kontrol. Kaynak SHA-256: ${ready.sourceSha256.slice(0,16)}… Gerçek kullanıcı incelemesi yine gerekli.`;
+ }catch(err){
+  if(!selection||lastDeliverySelectionKey===deliveryKeyOf(selection))
+   status.textContent='Kontrol başarısız: '+err.message;
+ }
 });
-$('exam-pdf-pilot').addEventListener('click',async()=>{
- const status=$('exam-delivery-status'),btn=$('exam-pdf-pilot');
+async function downloadDelivery(format){
+ const status=$('exam-delivery-status');
+ if(deliveryInFlight)return notice('Önce devam eden çıktı işlemini tamamlayın.',true);
+ let selection;
  try{
-  if(!state.current||state.dirty||state.current.status!=='approved')throw Error('Önce kayıtlı ve onaylı sınavı açın.');
-  btn.disabled=true;status.textContent='Yerel PDF üretiliyor; etiketler ve font kontrol ediliyor…';
-  const profile=$('exam-delivery-profile').value;
-  const response=await fetch('/api/exams/'+state.current.id+'/pdf-pilot',{
-   method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':state.csrf},body:JSON.stringify({profile})
+  selection=currentDeliverySelection();
+  deliveryInFlight=true;
+  for(const id of ['exam-delivery-check','exam-delivery-package','exam-pdf-pilot'])$(id).disabled=true;
+  status.textContent='Onaylı sürüm ve sunum profili sunucuda tekrar doğrulanıyor…';
+  await getDeliveryReadiness(selection);
+  status.textContent=format==='pdf'?'Yerel PDF üretiliyor, dosya imzası ve bütünlüğü doğrulanacak…':'Onaylı ZIP paketi üretiliyor, dosya imzası ve bütünlüğü doğrulanacak…';
+  const response=await fetch('/api/exams/'+selection.id+'/'+(format==='pdf'?'pdf-pilot':'delivery-package'),{
+   method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':'application/json','X-CSRF-Token':state.csrf},
+   body:JSON.stringify({profile:selection.profile,revision:selection.revision})
   });
-  if(!response.ok){let data={};try{data=await response.json();}catch{}throw Error(data.message||data.error||'PDF pilotu üretilemedi.');}
-  if(response.headers.get('x-pdf-status')!=='structural-pilot-not-pdfua')throw Error('PDF yapısal pilot durumu geçersiz.');
-  const verified=await verifyExamDownload(response,{format:'pdf'});
-  downloadVerified(verified.bytes,verified.mime,'bep-'+profile+'-pdf-pilot.pdf');
-  status.textContent='PDF pilotu bütünlüğü doğrulanarak indirildi · SHA-256: '+verified.sha256+' · Erişilebilir alternatif: '+(response.headers.get('x-pdf-alternative-count')||'0')+' · Öğretmen/uzman ve PDF/UA incelemesi hâlâ gerekli.';
- }catch(err){status.textContent='PDF pilotu: '+err.message;notice(err.message,true);}
- finally{btn.disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;}
-});
-$('exam-delivery-package').addEventListener('click',async()=>{
- const status=$('exam-delivery-status'),btn=$('exam-delivery-package');
- try{
-  if(!state.current||state.dirty||state.current.status!=='approved')throw Error('Önce kaydedilmiş ve onaylı sürümü açın.');
-  btn.disabled=true;status.textContent='Sunucu, onaylı sınavı ve dosyaları doğruluyor…';
-  const profile=$('exam-delivery-profile').value;
-  const response=await fetch('/api/exams/'+state.current.id+'/delivery-package',{
-   method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':state.csrf},body:JSON.stringify({profile})
-  });
-  if(!response.ok){let data={};try{data=await response.json();}catch{}throw Error(data.message||data.error||'Sunucu paketi oluşturamadı.');}
-  const verified=await verifyExamDownload(response,{format:'zip'});
-  downloadVerified(verified.bytes,verified.mime,'anonim-onayli-sinav-'+profile+'.zip');
-  status.textContent='Paket bütünlüğü doğrulanarak indirildi · '+profile+' profili · SHA-256: '+verified.sha256+' · Öğretmen çıktı incelemesi yine gereklidir.';
- }catch(err){status.textContent='Teslim hatası: '+err.message;notice(err.message,true);}
- finally{btn.disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;}
-});
+  if(!response.ok){
+   let data={};try{data=await response.json();}catch{}
+   throw Error(data.message||data.error||'Dosya sunucudan alınamadı.');
+  }
+  if(format==='pdf'&&response.headers.get('x-pdf-status')!=='structural-pilot-not-pdfua')
+   throw Error('PDF yapısal pilot durumu geçersiz.');
+  const verified=await verifyExamDownload(response,{format});
+  if(!sameDeliverySelection(selection,currentDeliverySelection()))
+   throw Error('Dosya hazırlanırken sınav sürümü veya profil değişti. Önce güncel seçimi kontrol edin.');
+  const filename=format==='pdf'
+   ?'bep-'+selection.profile+'-pdf-pilot.pdf'
+   :'anonim-onayli-sinav-'+selection.profile+'.zip';
+  const receipt=deliveryReceipt({kind:format,filename,profile:selection.profile,
+   revision:selection.revision,sha256:verified.sha256});
+  downloadVerified(verified.bytes,verified.mime,filename);
+  showDeliveryReceipt(receipt);
+  status.textContent=receipt.description+' Öğretmen erişilebilirlik incelemesi ayrıca gereklidir.';
+ }catch(err){
+  if(!selection||lastDeliverySelectionKey===deliveryKeyOf(selection)){
+   status.textContent='Dosya hazırlanamadı: '+err.message;
+   notice(err.message,true);
+  }
+ }finally{
+  deliveryInFlight=false;
+  const disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;
+  for(const id of ['exam-delivery-check','exam-delivery-package','exam-pdf-pilot'])$(id).disabled=disabled;
+ }
+}
+$('exam-pdf-pilot').addEventListener('click',()=>downloadDelivery('pdf'));
+$('exam-delivery-package').addEventListener('click',()=>downloadDelivery('zip'));
 $('exam-delivery-preview').addEventListener('click',()=>{
  try{const variant=makeDeliveryVersion(state.exam,$('exam-delivery-profile').value);
  openPreview(printableHtml(variant,false));notice('Bu öğretmen önizlemesidir; onay ve pedagojik eşdeğerlik doğrulaması değildir.');
