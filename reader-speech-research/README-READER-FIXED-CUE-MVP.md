@@ -3,7 +3,7 @@
 ## Purpose and boundary
 The usable Reader pilot is the priority. Independent Turkish neural speech synthesis
 remains a separate research milestone. This demo feature accepts a **user-selected,
-pre-rendered, licensed** Turkish WAV for a small fixed UI announcement. It does not:
+pre-rendered, licensed** Turkish MP3 or WAV for a small fixed UI announcement. It does not:
 - synthesize exam questions or answers, student data, passwords, or teacher notes;
 - record from microphones, contact ElevenLabs, upload audio, store voices or change
   the production Reader / native Windows screen-reader;
