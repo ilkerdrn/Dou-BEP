@@ -63,3 +63,17 @@ test('fixed Turkish cue preview stays a public demo-only, read-only local featur
  assert.match(module.body,/inspectLocalSpeechPcm/);
  assert.doesNotMatch(module.body,/fetch\(|XMLHttpRequest|localStorage|sessionStorage|sendBeacon|speechSynthesis\.speak/);
 });
+
+test('fixed cue preview accepts local MP3 without remote media or upload',async()=>{
+ const demo=await get('/dou-reader-demo');
+ assert.equal(demo.status,200);
+ assert.match(demo.body,/accept="\.mp3,audio\/mpeg,\.wav,audio\/wav"/);
+ assert.match(demo.body,/Yerel MP3 veya WAV dosyası/);
+ const module=await get('/dou-reader-cue-preview.mjs');
+ assert.equal(module.status,200);
+ assert.match(module.body,/inspectFixedCueAudio/);
+ assert.match(module.body,/audio\/mpeg/);
+ assert.match(module.body,/arrayBuffer\(\)/);
+ assert.doesNotMatch(module.body,/fetch\(|XMLHttpRequest|WebSocket|sendBeacon|localStorage|sessionStorage/);
+ assert.match(demo.headers['content-security-policy'],/media-src 'self' blob:/);
+});
