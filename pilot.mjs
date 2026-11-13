@@ -23,6 +23,7 @@ function renderPilotClock(){
   $('pilot-save').disabled=true;
   $('pilot-restore').disabled=true;
   $('send').disabled=true;
+  for(const control of $('student-questions').querySelectorAll('input[type="radio"],select,.pilot-clear-answer'))control.disabled=true;
   if(phaseChanged)announce('Oturum süresi doldu. Öğretmeninizle görüşün.',true);
  }
 }
@@ -119,12 +120,29 @@ function updateAnswerProgress(){
  updateQuestionMap();
 }
 function render(){const area=$('student-questions');area.replaceChildren();
- for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
+ for(const [index,q] of exam.questions.entries()){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
   const field=el('fieldset');const legend=el('legend','Yanıt');field.append(legend);
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
-  box.append(field);area.append(box);
+  box.append(field);
+  const clear=el('button','Bu sorunun yanıtını temizle');
+  clear.type='button';clear.className='ghost pilot-clear-answer';
+  clear.setAttribute('aria-label','Soru '+q.number+' yanıtını temizle');
+  clear.addEventListener('click',()=>{
+   if(pilotTimeState(pilotExpiresAt).phase==='expired')return announce('Oturum süresi dolduğu için yanıt değiştirilemez.',true);
+   let changed=false;
+   for(const input of field.querySelectorAll('input[type="radio"]')){
+    if(input.checked){input.checked=false;changed=true;}
+   }
+   for(const select of field.querySelectorAll('select')){
+    if(select.value!==''){select.value='';changed=true;}
+   }
+   if(!changed)return announce('Soru '+q.number+' için temizlenecek bir yanıt bulunmuyor.');
+   resetFinalReview();updateAnswerProgress();scheduleAutoSave();
+   announce('Soru '+q.number+' yanıtı temizlendi. Yeni seçim yapabilir veya boş bırakabilirsiniz.');
+  });
+  box.append(clear);area.append(box);
  }
  reviewFlags.clear();resetFinalReview();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
@@ -268,7 +286,8 @@ $('answer-form').addEventListener('submit',async event=>{event.preventDefault();
  if($('pilot-final-review').hidden){showFinalReview();return;}
  const {empty}=collectAnswers();
  const warning=empty.length?empty.length+' soru boş veya tamamlanmamış. ':'';
- if(!confirm(warning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
+ const reviewWarning=reviewFlags.size?reviewFlags.size+' soru tekrar bakılacak olarak işaretli. ':'';
+ if(!confirm(warning+reviewWarning+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;
  if(pilotTimeState(pilotExpiresAt).phase==='expired'){announce('Oturum süresi doldu. Yeni teslim denemesi yapılamaz.',true);return;}
  btn.disabled=true;clearSaveTimer();
  try{
