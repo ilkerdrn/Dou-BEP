@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {FIXED_READER_CUES,attachFixedReaderCuePreview} from './dou-reader-cue-preview.mjs';
+import {FIXED_READER_CUES,inspectFixedCueAudio,attachFixedReaderCuePreview} from './dou-reader-cue-preview.mjs';
 
 function makeWav(){
  const n=11025;
@@ -87,9 +87,52 @@ test('switching cue clears old audio so it cannot read the wrong fixed phrase',a
 });
 test('oversize file, unsupported extension and destroy are safe',async()=>{
  const h=harness();const ui=attachFixedReaderCuePreview({doc:h.doc,win:h.win});
- injectFile(h,makeWav(),'cue.mp3');await flush();
+ injectFile(h,makeWav(),'cue.ogg');await flush();
  assert.equal(h.nodes['reader-cue-play'].disabled,true);
  ui.destroy();
  assert.equal(h.nodes['reader-cue-play'].disabled,true);
  assert.equal(h.metrics().played,0);
+});
+
+function makeMp3({id3=false}={}){
+ const tagSize=id3?11:0,start=id3?21:0;
+ const b=Buffer.alloc(start+2048);
+ if(id3){b.write('ID3',0);b[3]=4;b[4]=0;b[5]=0;b[6]=0;b[7]=0;b[8]=0;b[9]=tagSize;}
+ b[start]=255;b[start+1]=0xfb;b[start+2]=0x90;b[start+3]=0x64;
+ return b;
+}
+test('MP3 direct import permits preview without FFmpeg, never auto-plays',async()=>{
+ const h=harness();const ui=attachFixedReaderCuePreview({doc:h.doc,win:h.win});
+ injectFile(h,makeMp3(),'licensed-cue.mp3');await flush();
+ assert.equal(h.nodes['reader-cue-play'].disabled,false);
+ assert.match(h.nodes['reader-cue-status'].textContent,/MP3 başlığı/);
+ assert.equal(h.metrics().played,0);
+ assert.equal(ui.play(),true);
+ assert.equal(h.metrics().played,1);
+ ui.destroy();
+ assert.equal(h.metrics().created,h.metrics().revoked);
+});
+test('MP3 tagged with ID3v2 metadata is supported, invalid headers are rejected',()=>{
+ assert.equal(inspectFixedCueAudio(makeMp3({id3:true}),'cue.MP3').valid,true);
+ const id3=makeMp3({id3:true});
+ id3[6]=0x80;
+ assert.equal(inspectFixedCueAudio(id3,'cue.mp3').valid,false);
+ assert.equal(inspectFixedCueAudio(Buffer.alloc(2048),'cue.mp3').valid,false);
+ assert.equal(inspectFixedCueAudio(makeWav(),'wav-disguised.mp3').valid,false);
+ assert.equal(inspectFixedCueAudio(makeMp3(),'mp3-disguised.wav').valid,false);
+});
+test('queued file read cannot reactivate a cue after the user changes selection',async()=>{
+ const h=harness();const ui=attachFixedReaderCuePreview({doc:h.doc,win:h.win});
+ let resolveRead;
+ h.nodes['reader-cue-file'].files=[{name:'test.mp3',size:2048,
+  arrayBuffer:()=>new Promise(resolve=>{resolveRead=resolve;})}];
+ h.nodes['reader-cue-file'].change();
+ h.nodes['reader-cue-select'].value='finished';
+ h.nodes['reader-cue-select'].change();
+ const mp3=makeMp3();
+ resolveRead(mp3.buffer.slice(mp3.byteOffset,mp3.byteOffset+mp3.byteLength));
+ await flush();
+ assert.equal(h.nodes['reader-cue-play'].disabled,true);
+ assert.equal(ui.play(),false);
+ ui.destroy();
 });
