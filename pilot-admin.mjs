@@ -1,7 +1,8 @@
 /** Teacher session dashboard. HTML elements are created with textContent, not innerHTML. */
 import {summarizeObjectives} from './objective-observations.mjs';
 import {inspectPilotReviewDraft} from './pilot-review-workbench.mjs';
-const $=id=>document.getElementById(id);let csrf='',lastCode='',activeReview=null,reviewSaving=false,showGeneration=0;
+import {filterPilotOverview} from './pilot-session-overview.mjs';
+const $=id=>document.getElementById(id);let csrf='',lastCode='',activeReview=null,reviewSaving=false,showGeneration=0,pilotRows=[];
 function msg(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 function el(tag,text){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;}
 async function api(path,method='GET',body){const r=await fetch('/api'+path,{method,credentials:'same-origin',headers:{...(body?{'Content-Type':'application/json'}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();if(!r.ok)throw Error(data.message||'İşlem başarısız.');return data;}
@@ -16,22 +17,74 @@ async function refresh(){const [candidates,pilots]=await Promise.all([api('/pilo
   for(const item of unavailable)list.append(el('li',item.title+' · '+item.reason));
   reasons.append(list);
  }
- const region=$('sessions');region.replaceChildren();if(!pilots.items.length)region.append(el('p','Henüz pilot oturumu oluşturulmadı.'));
- for(const item of pilots.items){const section=el('div');section.className='session-item';section.append(el('strong',stateLabel(item.status)+' · '+item.id.slice(0,8).toUpperCase()),el('small','Sınav: '+item.examId.slice(0,8)+' · Oluşturuldu: '+new Date(item.createdAt).toLocaleString('tr-TR')+' · Bitiş: '+new Date(item.expiresAt).toLocaleTimeString('tr-TR')));
- const buttons=el('div');buttons.className='inline';buttons.append(action('İncele',()=>show(item.id)));
- if(item.status==='started')buttons.append(action('Kurtarma kodu oluştur',async()=>{
-  if(!confirm('Bu oturumun mevcut öğrenci erişimi iptal edilip yeni tek kullanımlık kod oluşturulsun mu? Süre uzamayacak; yalnız yerel ara kaydedilmiş yanıtlar korunacak.'))return;
-  const result=await api('/pilot/'+item.id+'/recover','POST',{});
-  lastCode=result.item.code;
-  $('code').textContent=lastCode;
-  $('new-code').hidden=false;
-  $('pilot-code-expiry').textContent='Kurtarma kodu son geçerlilik: '+new Date(result.item.expiresAt).toLocaleString('tr-TR')+'. Orijinal oturum süresi uzamaz. Eski öğrenci oturumu geçersizdir.';
-  msg('Kurtarma kodu yalnızca bir kez gösterildi. Öğrenciye güvenli şekilde iletin.');
-  $('new-code').scrollIntoView({block:'nearest'});
-  await refresh();
- }));if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){await api('/pilot/'+item.id+'/revoke','POST',{});await refresh();}}));buttons.append(action('Kaydı sil',async()=>{if(confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?')){await api('/pilot/'+item.id,'DELETE');$('details').hidden=true;await refresh();}},'danger'));section.append(buttons);region.append(section);
+ pilotRows=pilots.items;
+ renderSessionList();
+}
+function reviewStatusText(item){
+ if(item.status!=='submitted')return '';
+ const count=item.reviewedQuestions+' / '+item.totalQuestions+' soru';
+ if(item.reviewStatus==='complete')return 'Değerlendirme tamamlandı · '+count;
+ if(item.reviewStatus==='partial')return 'Kısmi değerlendirme · '+count;
+ if(item.reviewStatus==='unreviewed')return 'Değerlendirme bekliyor · '+count;
+ return 'Değerlendirme durumu doğrulanamadı; sınav sürümünü kontrol edin.';
+}
+function renderSessionList(){
+ const selected=$('pilot-session-filter').value;
+ const shown=filterPilotOverview(pilotRows,selected);
+ $('pilot-session-count').textContent=shown.length+' / '+pilotRows.length+' anonim oturum gösteriliyor.';
+ const region=$('sessions');region.replaceChildren();
+ if(!shown.length){
+  region.append(el('p',pilotRows.length?'Bu filtreye uyan oturum bulunmuyor.':'Henüz pilot oturumu oluşturulmadı.'));
+  return;
+ }
+ for(const item of shown){
+  const section=el('div');section.className='session-item';
+  const title=(item.examTitle||'Sınav')+' · Sürüm '+item.revision;
+  section.append(
+   el('strong',stateLabel(item.status)+' · '+item.id.slice(0,8).toUpperCase()),
+   el('small',title+' · Oluşturuldu: '+new Date(item.createdAt).toLocaleString('tr-TR')+' · Bitiş: '+new Date(item.expiresAt).toLocaleString('tr-TR'))
+  );
+  if(item.status==='submitted'){
+   const progress=el('p',reviewStatusText(item));
+   progress.className='pilot-review-indicator';
+   progress.dataset.reviewStatus=item.reviewStatus;
+   section.append(progress);
+  }
+  const buttons=el('div');buttons.className='inline';
+  buttons.append(action(item.status==='submitted'?'Değerlendir':'Durumu gör',()=>show(item.id)));
+  if(item.status==='started')buttons.append(action('Kurtarma kodu oluştur',async()=>{
+   if(!confirm('Bu oturumun mevcut öğrenci erişimi iptal edilip yeni tek kullanımlık kod oluşturulsun mu? Süre uzamayacak; yalnız yerel ara kaydedilmiş yanıtlar korunacak.'))return;
+   const result=await api('/pilot/'+item.id+'/recover','POST',{});
+   lastCode=result.item.code;
+   $('code').textContent=lastCode;
+   $('new-code').hidden=false;
+   $('pilot-code-expiry').textContent='Kurtarma kodu son geçerlilik: '+new Date(result.item.expiresAt).toLocaleString('tr-TR')+'. Orijinal oturum süresi uzamaz. Eski öğrenci oturumu geçersizdir.';
+   msg('Kurtarma kodu yalnızca bir kez gösterildi. Öğrenciye güvenli şekilde iletin.');
+   $('new-code').scrollIntoView({block:'nearest'});
+   await refresh();
+  }));
+  if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{
+   if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){
+    await api('/pilot/'+item.id+'/revoke','POST',{});
+    await refresh();
+   }
+  }));
+  buttons.append(action('Kaydı sil',async()=>{
+   if(activeReview?.sessionId===item.id&&(reviewSaving||reviewDraftSnapshot()?.inspection.changed)){
+    msg('Bu oturumun değerlendirmesinde kaydedilmemiş değişiklik var. Önce kaydedin.',true);
+    return;
+   }
+   if(!confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?'))return;
+   await api('/pilot/'+item.id,'DELETE');
+   if(activeReview?.sessionId===item.id){
+    showGeneration++;activeReview=null;$('details').hidden=true;
+   }
+   await refresh();
+  },'danger'));
+  section.append(buttons);region.append(section);
  }
 }
+$('pilot-session-filter').addEventListener('change',renderSessionList);
 function reviewDraftSnapshot(){
  if(!activeReview)return null;
  const entries={};
