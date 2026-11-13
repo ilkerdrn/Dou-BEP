@@ -27,6 +27,8 @@ test('list endpoint returns only summary metadata and respects prior authorizati
  assert.match(sessions,/function list\(actor\)\{/);
  assert.match(sessions,/permit\(actor\);cleanup\(\);/);
  assert.match(sessions,/WHERE p\.tenant_id=\?/);
+ assert.match(sessions,/SELECT p\.id,p\.tenant_id,p\.exam_id,p\.owner_id/);
+ assert.doesNotMatch(sessions,/SELECT p\.\*/);
  assert.match(sessions,/AND p\.owner_id=\?/);
  assert.match(sessions,/pilotReviewOverview\(\{status:item\.status/);
  assert.match(sessions,/approvedExam\(\{id:row\.exam_id/);
