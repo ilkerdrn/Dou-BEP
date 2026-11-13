@@ -4,10 +4,10 @@ import {localTurkishVoices,readerChunks,readerRate} from './dou-reader-core.mjs'
  * localService is an inventory signal supplied by the browser, not proof of network isolation.
  */
 export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
- let generation=0,selected='',available=[],activeVoiceId='',reading=false;
+ let generation=0,selected='',available=[],activeVoiceId='',reading=false,paused=false;
  const voiceId=v=>v.voiceURI||v.name;
  function cancelActive(status){
-  generation++;reading=false;activeVoiceId='';
+  generation++;reading=false;paused=false;activeVoiceId='';
   try{synth?.cancel?.();}catch{}
   if(status)onStatus(status);
  }
@@ -36,10 +36,10 @@ export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
   if(!chunks.length){onStatus('Okunacak içerik yok.');return false;}
   const current=++generation;let index=0;
   const requestedVoiceId=voiceId(voice);
-  reading=true;activeVoiceId=requestedVoiceId;
+  reading=true;paused=false;activeVoiceId=requestedVoiceId;
   const next=()=>{
    if(current!==generation)return;
-   if(index>=chunks.length){reading=false;activeVoiceId='';onStatus('Okuma tamamlandı.');return;}
+   if(index>=chunks.length){reading=false;paused=false;activeVoiceId='';onStatus('Okuma tamamlandı.');return;}
    // Recheck before *each* chunk: a previously selected local voice may have
    // been removed/replaced between async utterance callbacks.
    refresh();if(current!==generation)return;
@@ -65,7 +65,19 @@ export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
   refresh();if(!available.some(v=>voiceId(v)===id)){stop();return false;}
   selected=id;stop();return true;
  }
- function pause(){if(reading&&synth?.speaking&&!synth.paused){synth.pause();onStatus('Okuma duraklatıldı.');return true;}return false;}
- function resume(){if(reading&&synth?.paused){synth.resume();onStatus('Okuma sürdürüldü.');return true;}return false;}
- return {refresh,speak,stop,pause,resume,setVoice,get selectedVoice(){return selected;}};
+ function pause(){
+  if(!reading||!synth?.speaking||synth.paused)return false;
+  try{synth.pause();paused=true;onStatus('Okuma duraklatıldı.');return true;}
+  catch{return false;}
+ }
+ function resume(){
+  if(!reading||!synth?.paused)return false;
+  try{synth.resume();paused=false;onStatus('Okuma sürdürüldü.');return true;}
+  catch{return false;}
+ }
+ return {refresh,speak,stop,pause,resume,setVoice,
+  get selectedVoice(){return selected;},
+  get isReading(){return reading;},
+  get isPaused(){return paused;}
+ };
 }
