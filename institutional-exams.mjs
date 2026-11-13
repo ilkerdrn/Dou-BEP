@@ -131,7 +131,7 @@ function renderPreflight(){
  const nextStage=report.stages.find(step=>!step.done);
  const nextAction=nextStage
   ?`<div class="preflight-next-action"><div><span class="portal-mini-label">SIRADAKİ ADIM</span><strong>${esc(nextStage.title)}</strong><p>${esc(nextStage.detail)}</p></div><button type="button" class="portal-btn primary" data-preflight-jump="${nextStage.target}">Bu aşamayı aç</button></div>`
-  :'<div class="preflight-next-action preflight-all-checked"><strong>Hazırlık aşamaları tamamlandı.</strong><p>Son değerlendirme ve kurum onayı öğretmenin sorumluluğundadır.</p></div>';
+  :'<div class="preflight-next-action preflight-all-checked"><strong>Hazırlık aşamaları tamamlandı.</strong><p>Son sürümün incelenmesi ve kurum onayı yetkili onaylayıcının sorumluluğundadır.</p></div>';
  body.innerHTML=`${nextAction}<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
 }
 $('exam-preflight-body').addEventListener('click',event=>{
@@ -326,6 +326,24 @@ $('exam-material-apply').addEventListener('click',()=>{
  notice(`“${p.label}” materyali ${index+1}. soruya eklendi. Görsel açıklamalar ayarını, kazanım uygunluğunu ve eşdeğerliği öğretmen olarak yeniden denetleyin.`);
  $('exam-questions').querySelector(`[data-qindex="${index}"] [data-qkey="visualAltText"]`)?.focus({preventScroll:true});
 });
+function updateApprovalGuidance(report){
+ const role=state.actor?.role;
+ const label=role==='reviewer'
+  ?'İncelemeci olarak bu sınav sürümünün kazanımlarını, cevap anahtarını ve bireysel uyarlama uygunluğunu gözden geçirdim. Gerçek öğrenci verisi bulunmadığını kontrol ettim.'
+  :role==='admin'||role==='coordinator'
+   ?'Yetkili kurum onaylayıcısı olarak bu sınav sürümünün kazanımlarını, cevap anahtarını ve bireysel uyarlama uygunluğunu gözden geçirdim. Gerçek öğrenci verisi bulunmadığını kontrol ettim.'
+   :'Sınavın kazanımını, cevap anahtarını ve bireysel uyarlama uygunluğunu öğretmen olarak gözden geçirdim. Gerçek öğrenci verisi eklemedim.';
+ $('exam-confirm-label').textContent=label;
+ const reason=!has('exam.approve')?'Bu hesapta sınav onaylama yetkisi bulunmuyor.'
+  :!state.current?'Onay için önce kaydedilmiş bir sınav seçin.'
+  :state.current.status==='approved'?'Bu sınav sürümü zaten onaylı.'
+  :state.busy||autosave.isSaving()?'Devam eden işlem veya kaydın bitmesini bekleyin.'
+  :state.dirty||autosave.hasChanges()||autosave.isBlocked()?'Kaydedilmemiş veya çakışan değişiklikler var.'
+  :report.errorCount>0?report.errorCount+' zorunlu kalite kontrol hatası düzeltilmeli.'
+  :!$('exam-confirm').checked?'Onay için yukarıdaki gözden geçirme teyidini işaretleyin.'
+  :'Bu sınav sürümü onay işlemine hazır. Sunucu son kontrolü ayrıca yapacaktır.';
+ $('exam-confirm-hint').textContent=reason;
+}
 function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-editor-title').textContent=x.title||'Adsız sınav';
  $('exam-status').textContent=!state.current?'YENİ TASLAK':state.dirty?'KAYDEDİLMEDİ':state.current?.status==='approved'?'ONAYLI':'TASLAK';
@@ -343,6 +361,7 @@ function draw(){if(!state.exam)return;const x=state.exam;
  const report=renderQuality(x);renderPreflight();const coverage=objectiveCoverage(x);$('exam-objective-coverage').textContent=`Kazanım kapsamı: ${coverage.groups.length} hedef · BEP bankası: ${(x.bepGoals||[]).length} amaç · ${coverage.total} soru · ${coverage.missing} kazanımsız soru. Bu özet ölçme yeterliliğini doğrulamaz.`;
  $('exam-save').disabled=!has('exam.edit')||state.busy;
  $('exam-approve').disabled=!has('exam.approve')||!state.current||state.dirty||state.current.status==='approved'||state.busy||report.errorCount>0||!$('exam-confirm').checked;
+ updateApprovalGuidance(report);
  $('exam-word').disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;
  $('exam-print').disabled=$('exam-word').disabled;
  $('exam-delivery-word').disabled=$('exam-word').disabled;
@@ -600,7 +619,7 @@ $('exam-list').addEventListener('click',async ev=>{
 });
 $('exam-new').addEventListener('click',()=>{if(state.busy)return notice('Devam eden işlem tamamlanmalı.',true);if(autosave.isSaving())return notice('Otomatik kayıt sürüyor.',true);if(state.dirty&&!confirm('Kaydedilmemiş değişiklikleri bırakmak istiyor musunuz?'))return;draft();});
 $('exam-refresh').addEventListener('click',()=>refreshList().catch(err=>notice(err.message,true)));
-$('exam-confirm').addEventListener('change',()=>{const report=reviewExam(state.exam);$('exam-approve').disabled=!$('exam-confirm').checked||!has('exam.approve')||!state.current||state.dirty||state.current.status==='approved'||!!report.errorCount;});
+$('exam-confirm').addEventListener('change',()=>{draw();});
 $('exam-save').addEventListener('click',async()=>{if(!has('exam.edit')||state.busy)return;
  const checkpoint=examSelection.checkpoint();
  try{const result=await autosave.flush({force:!state.current&&!autosave.hasChanges()});
