@@ -42,12 +42,12 @@
 <section class="card" id="details" hidden><div class="eyebrow">ÖĞRETMEN İNCELEMESİ</div><h2>Anonim yanıtlar</h2><p id="detail-info"></p><div id="answers"></div>
 <section id="manual-review" hidden aria-labelledby="review-title">
 <h3 id="review-title">Soru bazında öğretmen değerlendirmesi</h3>
-<p class="muted">Puanı ve gözlem notunu öğretmen girer. Boş puan değerlendirilmeyen sorudur; sıfır puan ayrı kaydedilir. Kişisel bilgi yazmayın.</p>
+<p class="muted">Puanı ve gözlem notunu öğretmen girer. Boş puan <strong>değerlendirilmedi</strong>, 0 puan <strong>değerlendirildi</strong> demektir. Değişiklikler yalnızca “Değerlendirmeyi kaydet” ile sunucuya gönderilir. Kişisel bilgi yazmayın.</p>
 <div id="review-summary" class="hint" role="status" aria-live="polite"></div>
 <section class="objective-observation-list" aria-labelledby="objective-heading"><h3 id="objective-heading">Kazanım bazlı gözlem özeti</h3>
 <p class="muted">Yalnızca öğretmenin puanladığı soruların betimsel özeti; öğrenci hakkında gelişim, yeterlilik veya tanı çıkarımı değildir.</p>
 <div id="objective-observations" aria-live="polite"></div></section>
-<form id="review-form"><div id="review-questions"></div><div class="inline"><button id="review-save" type="submit">Değerlendirmeyi kaydet</button>
+<form id="review-form"><div id="review-draft-status" class="hint review-draft-status" role="status" aria-live="polite" aria-atomic="true">Değerlendirme alanları hazırlanıyor.</div><div class="inline review-tools"><button id="review-first-unscored" class="ghost" type="button" disabled>İlk puanlanmayan soruya git</button></div><div id="review-questions"></div><div class="inline"><button id="review-save" type="submit" disabled>Değerlendirmeyi kaydet</button>
 <a id="review-csv" class="download-link" href="#">Anonim CSV raporu</a></div></form></section>
 <p class="muted">Bu anonim pilotta otomatik puan, tanı veya başarı sınıflaması yapılmaz. Öğretmen gözlemleri kurumsal oturumla saklanır.</p></section></section>
 <p class="muted">Pilot oturumları yerel SQLite veritabanında tutulur. Süresi dolan kayıtlar en geç 24 saat sonra yeni işlemlerde temizlenir; öğretmen daha önce de silebilir. Resmî DOU ürünü değildir.</p></main><script type="module" src="/pilot-admin.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>
