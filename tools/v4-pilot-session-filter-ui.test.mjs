@@ -28,7 +28,8 @@ test('list endpoint returns only summary metadata and respects prior authorizati
  assert.match(sessions,/permit\(actor\);cleanup\(\);/);
  assert.match(sessions,/WHERE p\.tenant_id=\?/);
  assert.match(sessions,/AND p\.owner_id=\?/);
- assert.match(sessions,/pilotReviewOverview\(\{status:state\(row\)/);
+ assert.match(sessions,/pilotReviewOverview\(\{status:item\.status/);
+ assert.match(sessions,/approvedExam\(\{id:row\.exam_id/);
  assert.match(sessions,/\.\.\.meta\(row\)/);
  assert.match(server,/'\/pilot-session-overview\.mjs':\['pilot-session-overview\.mjs'/);
 });
