@@ -104,6 +104,7 @@ function updateQuestionMap(){
  toggle.setAttribute('aria-pressed',String(marked));
  toggle.textContent=marked?'Tekrar bakılacak işaretini kaldır':'Bu soruyu tekrar bakılacak olarak işaretle';
  $('pilot-review-count').textContent=reviewFlags.size?reviewFlags.size+' soru tekrar bakılacak.':'Tekrar bakılacak soru yok.';
+ $('pilot-first-review').disabled=reviewFlags.size===0;
 }
 $('pilot-toggle-review').addEventListener('click',()=>{
  if(!exam)return;
@@ -257,6 +258,12 @@ $('pilot-first-empty').addEventListener('click',()=>{
  if(!empty.length)return;
  activeQuestionIndex=empty[0];$('one-question').checked=true;updateQuestionNavigation(true);
  announce('İlk boş veya tamamlanmamış soru: '+(activeQuestionIndex+1)+'.');
+});
+$('pilot-first-review').addEventListener('click',()=>{
+ if(!exam||reviewFlags.size===0)return;
+ activeQuestionIndex=Math.min(...reviewFlags);
+ $('one-question').checked=true;resetFinalReview();updateQuestionNavigation(true);
+ announce('Tekrar bakılacak ilk soru: '+(activeQuestionIndex+1)+'.');
 });
 $('pilot-cancel-final').addEventListener('click',()=>{
  resetFinalReview();
