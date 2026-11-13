@@ -80,6 +80,14 @@ test('stored pilot list shows review progress but never publishes answers, notes
   row=store.pilotList(a).find(x=>x.id===issued.id);
   assert.equal(row.reviewStatus,'complete');
   assert.equal(row.reviewedQuestions,4);
+  // The list never claims review completion if an approved exam was tampered with.
+  const original=store.db.prepare('SELECT body FROM exams WHERE id=?').get(draft.id).body;
+  const modified=JSON.parse(original);
+  modified.questions[0].prompt='An unauthorized mutation';
+  store.db.prepare('UPDATE exams SET body=? WHERE id=?').run(JSON.stringify(modified),draft.id);
+  assert.equal(store.pilotList(a).find(x=>x.id===issued.id).reviewStatus,'unavailable');
+  store.db.prepare('UPDATE exams SET body=? WHERE id=?').run(original,draft.id);
+  assert.equal(store.pilotList(a).find(x=>x.id===issued.id).reviewStatus,'complete');
   const output=JSON.stringify(store.pilotList(a));
   assert.ok(!output.includes('Anonymized reviewer note'));
   assert.ok(!output.includes('code_hash'));
