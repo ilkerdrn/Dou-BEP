@@ -102,7 +102,7 @@ function updateQuestionDraftGuidance(){
  if(!state.exam)return;
  const summary=questionDraftGuidance(state.exam),button=$('exam-draft-guidance-go');
  if(!button)return;
- $('exam-draft-guidance-count').textContent=summary.total+' soru · '+summary.incomplete+' zorunlu alan eksik · '+summary.review+' ek inceleme gerekli · '+summary.basicComplete+' temel kontrolü tamam.';
+ $('exam-draft-guidance-count').textContent=summary.total+' soru · '+summary.incomplete+' soruda zorunlu eksik · '+summary.review+' soruda ek inceleme · '+summary.basicComplete+' soruda temel kontrol tamamlandı.';
  const next=summary.next;
  button.disabled=!next;
  button.dataset.questionIndex=next?String(next.index):'';
