@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt} from '../exam-delivery-ux.mjs';
+import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt,deliveryProfileLabel} from '../exam-delivery-ux.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const id='ab1d1fc8-3f9a-4dc1-a312-600da644ca00';
@@ -46,6 +46,8 @@ test('download evidence includes actual verified digest, not PDF-UA or academic 
   profile:'large',revision:4,sha256:hash});
  assert.equal(receipt.sha256,hash);
  assert.match(receipt.description,/Sürüm 4/);
+ assert.equal(deliveryProfileLabel('large'),'Geniş okuma');
+ assert.match(receipt.description,/Geniş okuma profili/);
  assert.match(receipt.description,/tarayıcıya gönderildi/);
  assert.doesNotMatch(JSON.stringify(receipt),/PDF\/UA onaylı|WCAG sertifikalı|öğrenci/i);
  for(const props of [
@@ -67,6 +69,10 @@ test('browser re-checks server, binds revision on ZIP/PDF, verifies integrity an
  assert.match(js,/revision:selection\.revision/);
  assert.match(js,/verifyExamDownload\(response,\{format\}\)/);
  assert.match(js,/showDeliveryReceipt\(receipt\)/);
+ assert.match(js,/selection\.revision\+'-pdf-pilot\.pdf'/);
+ assert.match(js,/selection\.revision\+'\.zip'/);
+ assert.match(js,/surum-'\+state\.current\.revision\+'-kurumsal\.docx/);
+ assert.match(js,/deliveryInFlight/);
  assert.match(js,/r\.meta\?\.revision!==revision/);
  assert.match(html,/id="exam-delivery-receipt"/);
  assert.match(html,/id="exam-delivery-receipt-sha"/);
