@@ -164,3 +164,30 @@ test('split reader controls obey teacher audio prohibition and voice inventory l
   assert.equal(get(id).disabled,true,id);
  h.reader.destroy();
 });
+
+test('J/O speech shortcuts are keyboard accessible but never activate in answer fields',()=>{
+ const h=makeInteractiveReader();
+ h.setQuestion({number:9,audioAllowed:true,prompt:'Dokuz kaçtır?',options:[{id:'A',label:'Dokuz'}]});
+ h.reader.syncQuestion();
+ const keydown=h.handlers.get('keydown');
+ assert.equal(typeof keydown,'function');
+ let blocked=0;
+ const base={altKey:true,shiftKey:true,ctrlKey:false,metaKey:false,
+   repeat:false,defaultPrevented:false,isComposing:false,target:{tagName:'DIV'},
+   preventDefault(){blocked++;}};
+ keydown({...base,code:'KeyJ'});
+ assert.equal(h.said.length,1);
+ assert.match(h.said[0].text,/Dokuz kaçtır/);
+ assert.doesNotMatch(h.said[0].text,/Seçenek A/);
+ keydown({...base,code:'KeyO'});
+ assert.equal(h.said.length,2);
+ assert.match(h.said[1].text,/Seçenek A/);
+ assert.doesNotMatch(h.said[1].text,/kaçtır/);
+ assert.equal(blocked,2);
+ keydown({...base,code:'KeyO',target:{tagName:'INPUT'}});
+ keydown({...base,code:'KeyO',isComposing:true});
+ keydown({...base,code:'KeyO',defaultPrevented:true});
+ assert.equal(h.said.length,2);
+ assert.equal(blocked,2);
+ h.reader.destroy();
+});
