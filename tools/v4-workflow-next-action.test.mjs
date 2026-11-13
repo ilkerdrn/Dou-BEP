@@ -54,10 +54,24 @@ test('save, independent approval, and export permissions are explained but never
  assert.match(approver.detail,/bağımsız incelemeci/i);
  const readonly=workflowNextAction(report([false,false,false,false,false]),{canEdit:false});
  assert.match(readonly.title,/Yetkili düzenlemesi/i);
+ const readonlySave=workflowNextAction(delivery,{saved:false,dirty:true,canEdit:false});
+ assert.match(readonlySave.title,/Yetkili kullanıcı kaydı/);
+ assert.doesNotMatch(readonlySave.title,/Taslağı kaydedin/);
  const done=workflowNextAction(report([true,true,true,true,true]),{saved:true,dirty:false,approved:true,canExport:false});
  assert.equal(done.state,'complete');
  assert.equal(done.target,'exam-output-section');
  assert.match(done.detail,/Çıktı indirme yetkisi olmayan/);
+});
+
+test('real exam-preflight schema still maps the optional library independently',async()=>{
+ const {getExamPreflight}=await import('../exam-preflight.mjs');
+ const {createDemo}=await import('../core.mjs');
+ const report=getExamPreflight(createDemo(),{saved:false,dirty:true,approved:false});
+ assert.equal(report.total,5);
+ assert.equal(report.firstPending,'goals');
+ const guidance=workflowNextAction(report,{saved:false,dirty:true});
+ assert.equal(guidance.target,'exam-goal-section');
+ assert.equal(guidance.stepStates[2],'optional');
 });
 
 test('conflicting historical approval remains a visible blocker without changing it',()=>{
