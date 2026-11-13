@@ -1411,3 +1411,60 @@ body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-ac
   width:100%;
  }
 }
+/* V4 question drafting quick guidance: compact, mobile, keyboard accessible. */
+body.institution-page[data-design-version="4"] #exam-question-section~.exam-draft-guidance,
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ padding:14px 16px;
+ margin:12px 0 18px;
+ border:1px solid #e2e1dc;
+ border-radius:12px;
+ background:#f8f8f6;
+ color:#252523;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance-body{
+ flex:1 1 280px;
+ min-width:0;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance strong{
+ display:block;
+ margin-bottom:6px;
+ font-size:14px;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance p{
+ margin:5px 0;
+ font-size:12px;
+ line-height:1.55;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance button{
+ min-height:44px;
+ white-space:normal;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-question-type-select{
+ display:flex;
+ flex-direction:column;
+ gap:4px;
+ font-weight:650;
+ font-size:12px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-question-type-select select{
+ width:auto;
+ min-width:145px;
+ max-width:100%;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance{
+  padding:12px;
+ }
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-guidance button,
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-question-type-select,
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-question-type-select select{
+  width:100%;
+ }
+}
