@@ -82,12 +82,18 @@ try{
  const html=printableHtml(source.exam,false);inspect(/lang=["']tr["']/.test(html)&&html.includes('ANONİM'),'Türkçe HTML yazdırma çıktısı');
  const ready=await api('/api/exams/'+id+'/delivery-readiness?profile=large',{session:first.cookie});const readiness=await ready.json();
  inspect(ready.status===200&&readiness.ready===true,'Onaylı teslim ön kontrolü');
- const packageRes=await api('/api/exams/'+id+'/delivery-package',{method:'POST',body:{profile:'large'},session:first.cookie,csrf:first.csrf});
+ const staleZip=await api('/api/exams/'+id+'/delivery-package',{method:'POST',body:{profile:'large',revision:1},session:first.cookie,csrf:first.csrf});
+ inspect(staleZip.status===409,'Eski sürümle ZIP teslimi reddedildi');
+ const badZipVersion=await api('/api/exams/'+id+'/delivery-package',{method:'POST',body:{profile:'large',revision:'2'},session:first.cookie,csrf:first.csrf});
+ inspect(badZipVersion.status===422,'Geçersiz ZIP sürüm numarası reddedildi');
+ const packageRes=await api('/api/exams/'+id+'/delivery-package',{method:'POST',body:{profile:'large',revision:2},session:first.cookie,csrf:first.csrf});
  inspect(packageRes.status===200,'Sunucu sahipli teslim ZIP HTTP');
  const packageFile=await verifyExamDownload(packageRes,{format:'zip'});
  inspect(packageFile.bytes.length>300&&packageFile.sha256===sha(packageFile.bytes),'Sunucudan indirilen gerçek ZIP SHA-256');
  const otherExport=await api('/api/exams/'+id+'/export',{method:'POST',body:{},session:other.cookie,csrf:other.csrf});inspect(otherExport.status===404,'Kurumlar arası ihracat kapalı');
- const pdfRes=await api('/api/exams/'+id+'/pdf-pilot',{method:'POST',body:{profile:'standard'},session:first.cookie,csrf:first.csrf});
+ const stalePdf=await api('/api/exams/'+id+'/pdf-pilot',{method:'POST',body:{profile:'standard',revision:1},session:first.cookie,csrf:first.csrf});
+ inspect(stalePdf.status===409,'Eski sürümle PDF teslimi reddedildi');
+ const pdfRes=await api('/api/exams/'+id+'/pdf-pilot',{method:'POST',body:{profile:'standard',revision:2},session:first.cookie,csrf:first.csrf});
  if(pdfRes.status===200){const pdf=await verifyExamDownload(pdfRes,{format:'pdf'});inspect(pdf.bytes.length>2000,'Yerel PDF pilotu SHA-256 ve imza');}
  else{inspect(pdfRes.status===422,'PDF yerel font/pilot kısıtı açık hata 422; PDF kanıtı geçilmedi');}
  for(const p of ['/server.mjs','/server-foundation/institutional-store.mjs','/tools/exam-closure-smoke.mjs','/exam-download-verify.test.mjs','/data/institution.sqlite']){
