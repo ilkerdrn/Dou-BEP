@@ -110,7 +110,7 @@ function updateQuestionDraftGuidance(){
  button.textContent=!next?'Temel alanlar incelendi':next.state==='incomplete'?'İlk eksik soruya git':'İlk incelenecek soruya git';
  const problem=next?.issues.find(i=>i.level==='error')||next?.issues[0];
  $('exam-draft-guidance-detail').textContent=next
-  ?'Soru '+next.number+': '+(problem?.text.replace(/^\\d+\\.\\s*soru\\s*:\\s*/iu,'')||'Temel alanı kontrol edin.')+' Bu rehber taslağı değiştirmez.'
+  ?'Soru '+next.number+': '+(problem?.text.replace(/^\d+\.\s*soru\s*:\s*/iu,'')||'Temel alanı kontrol edin.')+' Bu rehber taslağı değiştirmez.'
   :'Temel alan uyarısı bulunmadı. Son kontrol, BEP kazanımı ve kurumsal onay ayrıca gereklidir.';
 }
 $('exam-draft-guidance-go').addEventListener('click',()=>{
