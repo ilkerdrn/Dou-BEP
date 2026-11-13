@@ -31,8 +31,10 @@ function Require-Managed-Python {
   throw 'Python launcher py.exe not found. Install Python 3.11 x64 from python.org first.'
  }
  foreach ($version in @('-3.11','-3.12','-3.10')) {
-  & $launcher.Source $version -c 'import sys; assert sys.version_info[:2] >= (3,10); print(sys.executable)' 2>$null | Out-Null
-  if ($LASTEXITCODE -eq 0) { return @($launcher.Source,$version) }
+  try {
+   & $launcher.Source $version -c 'import sys; assert (3,10) <= sys.version_info[:2] <= (3,12); print(sys.executable)' 2>$null | Out-Null
+   if ($LASTEXITCODE -eq 0) { return @($launcher.Source,$version) }
+  } catch { continue }
  }
  throw 'A compatible Python 3.10, 3.11, or 3.12 runtime is required.'
 }
@@ -44,7 +46,9 @@ if ($Setup) {
  }
  if (-not (Test-Path -LiteralPath $pythonExe -PathType Leaf)) {
   $launch = Require-Managed-Python
-  & $launch[0] $launch[1] -m venv $venvPath
+  $launchExe = $launch[0]
+  $launchVersion = $launch[1]
+  & $launchExe $launchVersion -m venv $venvPath
   if ($LASTEXITCODE -ne 0) { throw 'Python virtual environment creation failed.' }
  }
  & $pythonExe -m pip install --disable-pip-version-check pocket-tts-turkish
@@ -54,7 +58,7 @@ if ($Setup) {
 $installed = (Test-Path -LiteralPath $pythonExe -PathType Leaf) -and
  (Test-Path -LiteralPath $cliExe -PathType Leaf)
 if (-not $installed) {
- Write-Host 'DOU POCKET TTS: NOT READY — local Python package is absent.' -ForegroundColor Yellow
+ Write-Host 'DOU POCKET TTS: NOT READY - local Python package is absent.' -ForegroundColor Yellow
  Write-Host 'Use -Setup to explicitly install a separate Python research environment.'
  return
 }
