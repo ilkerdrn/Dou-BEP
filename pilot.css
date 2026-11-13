@@ -47,3 +47,13 @@
 .bep-pilot-ux .review-question:focus-within{outline:2px solid #147ad6;outline-offset:3px}
 .bep-pilot-ux .review-question input[type="number"]{max-width:240px}
 @media(max-width:650px){.bep-pilot-ux .review-tools button{width:100%}.bep-pilot-ux .review-question input[type="number"]{max-width:100%}}
+/* V4 anonymous session filters and review progress: readable without color. */
+.bep-pilot-ux .pilot-session-controls{margin:14px 0 20px}
+.bep-pilot-ux .pilot-session-controls label{margin:0 0 6px}
+.bep-pilot-ux .pilot-session-controls select{max-width:100%}
+.bep-pilot-ux .pilot-session-controls p{margin:8px 0}
+.bep-pilot-ux .pilot-review-indicator{padding:8px 11px;margin:10px 0;background:#f3f5f9;border-left:3px solid #656d7c;border-radius:6px;color:#1e2b36;font-weight:700}
+.bep-pilot-ux .pilot-review-indicator[data-review-status="complete"]{border-left-color:#186b4b}
+.bep-pilot-ux .pilot-review-indicator[data-review-status="partial"]{border-left-color:#a26718}
+.bep-pilot-ux .session-item{overflow-wrap:anywhere}
+@media(max-width:650px){.bep-pilot-ux .pilot-session-controls select{width:100%}.bep-pilot-ux .session-item .inline button{flex:1 1 auto}}
