@@ -37,9 +37,11 @@ export function workflowNextAction(report,{canEdit=true,canApprove=false,canExpo
   button='Çıktı bölümüne git';
  }else if(stage.id==='delivery'){
   if(!saved||dirty){
-   title='Taslağı kaydedin';
-   detail='Önce sunucudaki kaydı ve sürüm numarasını doğrulayın. Değişiklikler kaydedilmeden onay ve çıktı işlemleri yapılamaz.';
-   button='Kayıt bölümüne git';
+   title=canEdit?'Taslağı kaydedin':'Yetkili kullanıcı kaydı tamamlamalı';
+   detail=canEdit
+    ?'Önce sunucudaki kaydı ve sürüm numarasını doğrulayın. Değişiklikler kaydedilmeden onay ve çıktı işlemleri yapılamaz.'
+    :'Bu hesabın sınav kaydetme yetkisi yok. Öğretmen veya yetkili koordinatör güncel sürümü kaydetmeli.';
+   button=canEdit?'Kayıt bölümüne git':'Kayıt durumunu incele';
   }else if(!approved){
    title='Yetkili incelemeci onayı gerekiyor';
    detail=canApprove
