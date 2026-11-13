@@ -120,6 +120,7 @@ const allowed={
  '/dou-reader-panel.mjs':['dou-reader-panel.mjs','text/javascript; charset=utf-8'],
  '/dou-reader.css':['dou-reader.css','text/css; charset=utf-8'],
  '/pilot-admin.mjs':['pilot-admin.mjs','text/javascript; charset=utf-8'],
+ '/pilot-review-workbench.mjs':['pilot-review-workbench.mjs','text/javascript; charset=utf-8'],
  '/pilot.css':['pilot.css','text/css; charset=utf-8'],
  '/review-audio.html':['review-audio.html','text/html; charset=utf-8'],
  '/review-audio.js':['review-audio.js','text/javascript; charset=utf-8'],
