@@ -78,3 +78,17 @@ test('split narration rejects overlong text rather than truncating or leaking it
  assert.throws(()=>readerStemText({...q,prompt:'ö'.repeat(20000)}),/sınırını aşıyor/);
  assert.throws(()=>readerChoicesText({...q,options:[{id:'A',label:'ö'.repeat(20000)}]}),/sınırını aşıyor/);
 });
+
+test('split narration keyboard shortcuts are explicit and never intercept composition or handled events',()=>{
+ const base={altKey:true,shiftKey:true,ctrlKey:false,metaKey:false,
+  code:'KeyJ',repeat:false,isComposing:false,defaultPrevented:false,target:{tagName:'DIV'}};
+ assert.equal(readerShortcut(base),'stem');
+ assert.equal(readerShortcut({...base,code:'KeyO'}),'choices');
+ assert.equal(readerShortcut({...base,code:'KeyR'}),'read');
+ assert.equal(readerShortcut({...base,code:'KeyO',isComposing:true}),null);
+ assert.equal(readerShortcut({...base,code:'KeyO',defaultPrevented:true}),null);
+ assert.equal(readerShortcut({...base,code:'KeyO',target:{tagName:'INPUT'}}),null);
+ assert.equal(readerShortcut({...base,code:'KeyJ',target:{isContentEditable:true}}),null);
+ assert.equal(readerShortcut({...base,code:'KeyO',ctrlKey:true}),null);
+ assert.equal(readerShortcut({...base,code:'KeyO',repeat:true}),null);
+});
