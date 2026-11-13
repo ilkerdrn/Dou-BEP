@@ -80,7 +80,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if(destroyed||$('player').hidden)return;
   const action=readerShortcut(event);if(!action)return;
   event.preventDefault();
-  if(action==='read')read();else if(action==='stop')engine.stop();
+  if(action==='read')read();else if(action==='stem')readPart('stem');
+  else if(action==='choices')readPart('choices');else if(action==='stop')engine.stop();
   else if(action==='next')navigate(1);else if(action==='previous')navigate(-1);
   else if(action==='help')$('reader-help').click();
  };
