@@ -1,5 +1,5 @@
 /**
- * DOU Reader MVP: optional local preview of licensed, pre-rendered UI cue WAVs.
+ * DOU Reader MVP: optional local preview of licensed, pre-rendered UI cue MP3/WAV files.
  * Not a speech engine, question narration or automatic announcement.
  * User-selected bytes never leave this browser tab; no network, storage or mic.
  */
@@ -28,7 +28,7 @@ export function inspectFixedCueAudio(bytes,fileName){
  let start=0;
  if(bytes[0]===0x49&&bytes[1]===0x44&&bytes[2]===0x33){
   // ID3v2 uses 4 synchsafe size bytes. Refuse unsupported/invalid headers.
-  if(bytes.length<14||bytes[3]===0xff||bytes[4]===0xff||
+  if(bytes.length<14||![2,3,4].includes(bytes[3])||bytes[4]===0xff||
      (bytes[6]|bytes[7]|bytes[8]|bytes[9])&0x80)return reject('invalid-mp3-header');
   const tagSize=(bytes[6]<<21)|(bytes[7]<<14)|(bytes[8]<<7)|bytes[9];
   start=10+tagSize+((bytes[5]&0x10)?10:0);
@@ -68,13 +68,13 @@ export function attachFixedReaderCuePreview({doc,win}){
  function reset(){
   stop();bytes=null;audioMime=null;file.value='';playButton.disabled=true;
   cueText.textContent=currentCue()?.text||'';
-  report('Bu anons için yerel WAV dosyası seçilmedi. Hiçbir ses otomatik başlamaz.');
+  report('Bu anons için yerel MP3 veya WAV dosyası seçilmedi. Hiçbir ses otomatik başlamaz.');
  }
  async function importFile(){
   stop();bytes=null;audioMime=null;playButton.disabled=true;
   const token=epoch;
   const chosen=file.files?.[0];
-  if(!currentCue()||!chosen)return report('Geçerli bir sabit anons ve WAV dosyası seçin.');
+  if(!currentCue()||!chosen)return report('Geçerli bir sabit anons ve MP3 veya WAV dosyası seçin.');
   if(typeof chosen.name!=='string'||!/\.(wav|mp3)$/i.test(chosen.name)||
      !Number.isInteger(chosen.size)||chosen.size<64||chosen.size>2*1024*1024)
    return report('Yalnızca 2 MB altı MP3 veya PCM16 mono 22.050 Hz WAV kabul edilir.');
@@ -107,7 +107,7 @@ export function attachFixedReaderCuePreview({doc,win}){
    });
    return true;
   }catch{
-   stop();report('Bu tarayıcıda yerel WAV oynatılamadı.');return false;
+   stop();report('Bu tarayıcıda yerel ses dosyası oynatılamadı.');return false;
   }
  }
  const onSelect=()=>reset();
