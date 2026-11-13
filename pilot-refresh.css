@@ -16,3 +16,7 @@ body:not(.high) .option{border-color:#e9e2e8;border-radius:12px}
 body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d69}
 /* Never override high contrast view: it is an intentional accessibility mode. */
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+/* One action per question; review shortcuts wrap without horizontal overflow. */
+.bep-student-pilot .pilot-clear-answer{margin-top:0;min-height:48px}
+.bep-student-pilot .pilot-quick-actions{margin:14px 0;align-items:stretch}
+@media(max-width:520px){.bep-student-pilot .pilot-quick-actions button{width:100%}}
