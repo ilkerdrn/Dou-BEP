@@ -8,6 +8,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const client=readFileSync(resolve(root,'pilot.mjs'),'utf8');
 const page=readFileSync(resolve(root,'pilot.html'),'utf8');
 const sessions=readFileSync(resolve(root,'server-foundation/pilot-sessions.mjs'),'utf8');
+const styles=readFileSync(resolve(root,'pilot-refresh.css'),'utf8');
 
 test('all question types have a keyboard-accessible clear action and auto-save is retained',()=>{
  assert.match(client,/for\(const \[index,q\] of exam\.questions\.entries\(\)\)/);
@@ -35,6 +36,8 @@ test('the pilot warns about flagged review items before one-time submission',()=
 test('flagged and unanswered questions have separate navigation without storing review flags',()=>{
  assert.match(page,/id="pilot-first-empty"/);
  assert.match(page,/id="pilot-first-review"/);
+ assert.match(page,/class="inline pilot-quick-actions" role="group"/);
+ assert.match(styles,/\.pilot-quick-actions button\{width:100%\}/);
  assert.match(client,/\$\('pilot-first-review'\)\.disabled=reviewFlags\.size===0/);
  assert.match(client,/activeQuestionIndex=Math\.min\(\.\.\.reviewFlags\)/);
  assert.match(client,/resetFinalReview\(\);updateQuestionNavigation\(true\)/);
