@@ -16,6 +16,7 @@ import {REVIEW_CRITERIA,goalFingerprint,questionFingerprint,hasAlternative,confi
 import {VERSION, DEFAULT_ADAPTATIONS, starterQuestion, normalizeExam, generateDocx, printableHtml, slugify, escapeHtml} from './core.mjs';
 import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
+import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
 import {variantComparison,inspectQuestionVariant,PRESENTATION_MODES} from './presentation-variants.mjs';
@@ -129,34 +130,58 @@ function renderPreflight(){
  const x=state.exam;if(!x)return;
  const report=getExamPreflight(x,{saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'});
  const body=$('exam-preflight-body');if(!body)return;
+ const guidance=workflowNextAction(report,{
+  canEdit:has('exam.edit'),canApprove:has('exam.approve'),canExport:has('exam.export'),
+  saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'
+ });
+ const nav=$('workflow-next-action');
+ if(nav){
+  $('workflow-readiness-count').textContent=guidance.complete+' / '+guidance.total;
+  $('workflow-next-action-heading').textContent=guidance.title;
+  $('workflow-next-action-detail').textContent=guidance.detail;
+  nav.dataset.readiness=guidance.state;
+  const action=$('workflow-next-action-open');
+  action.textContent=guidance.button;
+  action.dataset.preflightJump=guidance.target;
+  action.disabled=false;
+  const labels={done:'Tamamlandı',pending:'Kontrol gerekli',optional:'İsteğe bağlı'};
+  document.querySelectorAll('.workflow-nav [data-workflow-target]').forEach((step,index)=>{
+   const status=guidance.stepStates[index]||'pending';
+   const label=labels[status];
+   step.dataset.readiness=status;
+   step.dataset.readinessLabel=label;
+   step.setAttribute('aria-label',step.textContent.replace(/\s+/g,' ').trim()+' · '+label);
+  });
+ }
  const nextStage=report.stages.find(step=>!step.done);
  const nextAction=nextStage
   ?`<div class="preflight-next-action"><div><span class="portal-mini-label">SIRADAKİ ADIM</span><strong>${esc(nextStage.title)}</strong><p>${esc(nextStage.detail)}</p></div><button type="button" class="portal-btn primary" data-preflight-jump="${nextStage.target}">Bu aşamayı aç</button></div>`
   :'<div class="preflight-next-action preflight-all-checked"><strong>Hazırlık aşamaları tamamlandı.</strong><p>Son sürümün incelenmesi ve kurum onayı yetkili onaylayıcının sorumluluğundadır.</p></div>';
  body.innerHTML=`${nextAction}<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
 }
-$('exam-preflight-body').addEventListener('click',event=>{
- const btn=event.target.closest('[data-preflight-jump]');if(!btn)return;
- const id=btn.dataset.preflightJump;
+function visitPreflightTarget(id){
  if(!['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'].includes(id))return;
  const target=document.getElementById(id);if(!target)return;
- // Reveal the owning guided stage before scrolling to a validation finding.
- // The quality summary lives inside stage 4; no exam data or approval changes.
+ // Quality lives in wizard stage 4. First reveal its stage, then any details.
  const stageId=id==='exam-quality'?'exam-question-section':id;
  const stageButton=document.querySelector('.workflow-nav [data-workflow-target="'+stageId+'"]');
  if(stageButton&&document.getElementById('exam-editor-card')?.classList.contains('exam-guided-view')){
   stageButton.click();
  }
- // A collapsed details panel makes scroll/focus appear broken.
- // Reveal ancestors before visiting; never change the draft or its approval.
  for(let parent=target.parentElement;parent;parent=parent.parentElement){
   if(parent.tagName==='DETAILS')parent.open=true;
  }
  target.scrollIntoView({behavior:'auto',block:'start'});
- // Scrolling alone leaves keyboard/screen-reader focus on the old tile.
  const focusTarget=target.querySelector('h2,h3,h4')||target;
  focusTarget.setAttribute('tabindex','-1');
  focusTarget.focus({preventScroll:true});
+}
+$('exam-preflight-body').addEventListener('click',event=>{
+ const btn=event.target.closest('[data-preflight-jump]');
+ if(btn)visitPreflightTarget(btn.dataset.preflightJump);
+});
+$('workflow-next-action-open').addEventListener('click',event=>{
+ visitPreflightTarget(event.currentTarget.dataset.preflightJump);
 });
 $('exam-preflight-export').addEventListener('click',()=>{
  if(!state.exam)return;
