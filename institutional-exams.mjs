@@ -1,7 +1,7 @@
 /** Authenticated institutional exam editor. No sensitive learner data or browser persistence. */
 import {makeDeliveryVersion} from './presentation-profiles.mjs';
 import {verifyExamDownload} from './exam-download-verify.mjs';
-import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt} from './exam-delivery-ux.mjs';
+import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt,deliveryProfileLabel} from './exam-delivery-ux.mjs';
 import {prepareQuestionPreview} from './question-preview.mjs';
 import {VISUAL_MATERIALS,findVisualMaterials,visualMaterial,visualMaterialMarkup,applyVisualMaterial} from './visual-materials.mjs';
 import {createAutosaveManager} from './autosave-manager.mjs';
@@ -712,7 +712,7 @@ function syncDeliveryContext(){
  lastDeliverySelectionKey=key;
  clearDeliveryReceipt();
  $('exam-delivery-status').textContent=selection
-  ?'Sürüm '+selection.revision+' · '+selection.profile+' profili seçildi. Dosyayı almadan önce sunucu onayı tekrar doğrulanacak.'
+  ?'Sürüm '+selection.revision+' · '+deliveryProfileLabel(selection.profile)+' profili seçildi. Dosyayı almadan önce sunucu onayı tekrar doğrulanacak.'
   :'Çıktı için önce kaydedilmiş, onaylı ve değişiklik içermeyen bir sınav sürümü seçin.';
 }
 async function getDeliveryReadiness(selection){
@@ -768,7 +768,7 @@ $('exam-delivery-check').addEventListener('click',async()=>{
   selection=currentDeliverySelection();
   status.textContent='Sunucu onay geçmişini ve seçili sürümü kontrol ediyor…';
   const ready=await getDeliveryReadiness(selection);
-  status.textContent=`Kontrol uygun · Sürüm ${ready.revision} · ${ready.questionCount} soru · ${ready.profile} profili · ${ready.qualityWarnings} öğretmen uyarısı · ${ready.structuralChecks}/7 yapısal kontrol. Kaynak SHA-256: ${ready.sourceSha256.slice(0,16)}… Gerçek kullanıcı incelemesi yine gerekli.`;
+  status.textContent=`Kontrol uygun · Sürüm ${ready.revision} · ${ready.questionCount} soru · ${deliveryProfileLabel(ready.profile)} profili · ${ready.qualityWarnings} öğretmen uyarısı · ${ready.structuralChecks}/7 yapısal kontrol. Kaynak SHA-256: ${ready.sourceSha256.slice(0,16)}… Gerçek kullanıcı incelemesi yine gerekli.`;
  }catch(err){
   if(!selection||lastDeliverySelectionKey===deliveryKeyOf(selection))
    status.textContent='Kontrol başarısız: '+err.message;
@@ -800,8 +800,8 @@ async function downloadDelivery(format){
   if(!sameDeliverySelection(selection,currentDeliverySelection()))
    throw Error('Dosya hazırlanırken sınav sürümü veya profil değişti. Önce güncel seçimi kontrol edin.');
   const filename=format==='pdf'
-   ?'bep-'+selection.profile+'-pdf-pilot.pdf'
-   :'anonim-onayli-sinav-'+selection.profile+'.zip';
+   ?'bep-'+selection.profile+'-surum-'+selection.revision+'-pdf-pilot.pdf'
+   :'anonim-onayli-sinav-'+selection.profile+'-surum-'+selection.revision+'.zip';
   const receipt=deliveryReceipt({kind:format,filename,profile:selection.profile,
    revision:selection.revision,sha256:verified.sha256});
   downloadVerified(verified.bytes,verified.mime,filename);
