@@ -133,7 +133,9 @@ export function pilotSessions(db,{StoreError,log}){
   permit(actor);cleanup();
   // Read-only summary: only tenant/owner-scoped records, never answers or stored scores.
   const base=`SELECT p.*,e.title AS exam_title,e.body AS exam_body,
-    e.revision AS exam_revision,e.status AS exam_status,r.entries AS review_entries
+    e.revision AS exam_revision,e.status AS exam_status,
+    e.approved_by AS exam_approved_by,e.approved_at AS exam_approved_at,
+    r.entries AS review_entries
     FROM pilot_sessions p
     JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id
     LEFT JOIN pilot_reviews r ON r.session_id=p.id AND r.tenant_id=p.tenant_id
@@ -144,13 +146,23 @@ export function pilotSessions(db,{StoreError,log}){
   const rows=elevated(actor)?
    db.prepare(query).all(actor.tenantId):
    db.prepare(query).all(actor.tenantId,actor.id);
-  return rows.map(row=>({
-   ...meta(row),
-   examTitle:row.exam_title,
-   ...pilotReviewOverview({status:state(row),revision:row.revision,
+  return rows.map(row=>{
+   const item=meta(row);
+   let summary=pilotReviewOverview({status:item.status,revision:row.revision,
     examStatus:row.exam_status,examRevision:row.exam_revision,
-    examBody:row.exam_body,reviewEntries:row.review_entries})
-  }));
+    examBody:row.exam_body,reviewEntries:row.review_entries});
+   // A previously altered exam must never appear as a safely completed review.
+   if(item.status==='submitted'&&summary.reviewStatus!=='unavailable'){
+    try{
+     approvedExam({id:row.exam_id,tenant_id:row.tenant_id,body:row.exam_body,
+      revision:row.exam_revision,status:row.exam_status,approved_by:row.exam_approved_by,
+      approved_at:row.exam_approved_at});
+    }catch{
+     summary={reviewStatus:'unavailable',reviewedQuestions:0,totalQuestions:0};
+    }
+   }
+   return {...item,examTitle:row.exam_title,...summary};
+  });
  }
  function view(actor,id){return meta(rowFor(actor,id),true);}
  function revoke(actor,id){const row=rowFor(actor,id);if(row.status==='submitted')error('already_submitted','Yanıtları silmek için Sil işlemini kullanın.',409);
