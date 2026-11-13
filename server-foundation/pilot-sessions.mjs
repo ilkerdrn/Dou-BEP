@@ -7,6 +7,7 @@ import {roleCan} from '../roles.mjs';
 import {createStudentPayload} from '../accessible-player.mjs';
 import {reviewExam} from '../quality.mjs';
 import {summarizeAnonymousCohort,anonymousCohortCsv} from '../cohort-summary.mjs';
+import {pilotReviewOverview} from '../pilot-session-overview.mjs';
 const now=()=>Date.now();
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
@@ -128,7 +129,29 @@ export function pilotSessions(db,{StoreError,log}){
   VALUES(?,?,?,?,?,?,'issued',?,?)`).run(id,actor.tenantId,examId,actor.id,exam.revision,sha(raw),stamp,stamp+WAIT_MS);
   log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code};
  }
- function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
+ function list(actor){
+  permit(actor);cleanup();
+  // Read-only summary: only tenant/owner-scoped records, never answers or stored scores.
+  const base=`SELECT p.*,e.title AS exam_title,e.body AS exam_body,
+    e.revision AS exam_revision,e.status AS exam_status,r.entries AS review_entries
+    FROM pilot_sessions p
+    JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id
+    LEFT JOIN pilot_reviews r ON r.session_id=p.id AND r.tenant_id=p.tenant_id
+    WHERE p.tenant_id=?`;
+  const query=elevated(actor)?
+   base+' ORDER BY p.created_at DESC LIMIT 100':
+   base+' AND p.owner_id=? ORDER BY p.created_at DESC LIMIT 100';
+  const rows=elevated(actor)?
+   db.prepare(query).all(actor.tenantId):
+   db.prepare(query).all(actor.tenantId,actor.id);
+  return rows.map(row=>({
+   ...meta(row),
+   examTitle:row.exam_title,
+   ...pilotReviewOverview({status:state(row),revision:row.revision,
+    examStatus:row.exam_status,examRevision:row.exam_revision,
+    examBody:row.exam_body,reviewEntries:row.review_entries})
+  }));
+ }
  function view(actor,id){return meta(rowFor(actor,id),true);}
  function revoke(actor,id){const row=rowFor(actor,id);if(row.status==='submitted')error('already_submitted','Yanıtları silmek için Sil işlemini kullanın.',409);
   db.prepare("UPDATE pilot_sessions SET status='revoked',claim_hash=NULL WHERE id=? AND tenant_id=?").run(id,actor.tenantId);log(actor,'pilot.revoked',id);return {ok:true};
