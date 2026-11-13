@@ -77,3 +77,31 @@ test('voice inventory failure between chunks stops playback instead of using def
  engine.speak('Merhaba dünya. '.repeat(200));fail=true;said[0].onend();
  assert.equal(said.length,1);assert.match(messages.at(-1),/durduruldu/);
 });
+
+test('local speech state correctly reflects speaking, pause, resume and completion',()=>{
+ const {synth,said}=mock([local]);
+ synth.speaking=false;synth.paused=false;
+ synth.speak=u=>{said.push(u);synth.speaking=true;};
+ synth.pause=()=>{synth.paused=true;};
+ synth.resume=()=>{synth.paused=false;};
+ const engine=createLocalSpeech({synth,Utterance:FakeUtterance});
+ assert.equal(engine.isReading,false);assert.equal(engine.isPaused,false);
+ assert.equal(engine.speak('Merhaba'),true);
+ assert.equal(engine.isReading,true);assert.equal(engine.isPaused,false);
+ assert.equal(engine.pause(),true);assert.equal(engine.isPaused,true);
+ assert.equal(engine.pause(),false);
+ assert.equal(engine.resume(),true);assert.equal(engine.isPaused,false);
+ said[0].onend();assert.equal(engine.isReading,false);assert.equal(engine.isPaused,false);
+ assert.equal(engine.pause(),false);
+});
+test('stop cancels a paused read and invalidates late completion',()=>{
+ const {synth,said}=mock([local]);
+ synth.speaking=true;synth.paused=false;
+ synth.pause=()=>{synth.paused=true;};
+ const engine=createLocalSpeech({synth,Utterance:FakeUtterance});
+ engine.speak('Merhaba. '.repeat(150));
+ assert.equal(engine.pause(),true);
+ const old=said[0];engine.stop();
+ assert.equal(engine.isReading,false);assert.equal(engine.isPaused,false);
+ old.onend();assert.equal(said.length,1);
+});
