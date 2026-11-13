@@ -29,14 +29,16 @@ without a separate authorization explicitly allowing that use.
 ## Local preview workflow
 1. Produce a *fixed* phrase using a provider you are authorized to use.
    No ElevenLabs account or API is connected to this code.
-2. Download MP3 or WAV onto your own PC.
-3. If the file is not mono 22,050 Hz PCM16 WAV, convert using your existing
-   offline FFmpeg tool. The example does not overwrite an existing destination:
+2. Download MP3 or WAV onto your own PC. MP3 is directly supported in the
+   local browser player; no FFmpeg conversion is required for MP3.
+3. If you have a WAV that is not mono 22,050 Hz PCM16, either download
+   MP3 instead or convert locally using your existing FFmpeg. The example
+   does not overwrite an existing destination:
    `ffmpeg -n -i "C:\\Users\\Public\\Music\\source.mp3" -ar 22050 -ac 1 -c:a pcm_s16le "C:\\Users\\Public\\Music\\DOU-Welcome.wav"`
    Replace the paths with your actual file locations; do not use protected exam data.
 4. Start the local DOU BEP demo server as usual. Open `/dou-reader-demo`.
 5. Find **Doğal Türkçe sabit anons önizlemesi**, choose the matching cue,
-   select the local WAV in the file picker, and click **Seçili anonsu dinle**.
+   select the local MP3 or WAV in the file picker, and click **Seçili anonsu dinle**.
 6. Listen and verify that the clip speaks the selected fixed phrase. The client
    validates WAV structure, duration and basic signal activity, not spoken words.
    Changing cues clears the loaded clip. Closing the page drops the reference.
@@ -46,8 +48,11 @@ without a separate authorization explicitly allowing that use.
   background requests, analytics, cookies, recordings or storage.
 - Only pre-approved cue IDs are available. No arbitrary spoken content.
 - User interaction is required to select and play a file.
-- Only 22,050 Hz PCM16 mono WAV up to 2 MB is accepted. Strict RIFF checks
-  handle normal FFmpeg metadata and reject silence, clipping, malformed data.
+- MP3 or 22,050 Hz PCM16 mono WAV up to 2 MB is accepted. Strict RIFF
+  checks reject silent, clipped or malformed WAV. MP3 receives bounded
+  filename, ID3 and MPEG frame-header screening; that is NOT a decoder,
+  signal-quality check or intelligibility guarantee. Human listening remains
+  mandatory. Browser decoding failures do not affect exam Reader.
 - CSP permits `media-src 'self' blob:` so local in-memory audio works while
   continuing to block remote media.
 - Status messages are written as text and are accessible as a live region.
