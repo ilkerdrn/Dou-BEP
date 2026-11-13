@@ -62,8 +62,8 @@ export function readerChunks(text,maxLength=600){
  return chunks;
 }
 export function readerShortcut(event){
- if(!event?.altKey||!event?.shiftKey||event.ctrlKey||event.metaKey||event.repeat)return null;
+ if(!event?.altKey||!event?.shiftKey||event.ctrlKey||event.metaKey||event.repeat||event.isComposing||event.defaultPrevented)return null;
  const target=event.target;
  if(target?.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(String(target?.tagName||'').toUpperCase()))return null;
- return ({KeyR:'read',KeyS:'stop',KeyN:'next',KeyP:'previous',KeyH:'help'})[event.code]||null;
+ return ({KeyR:'read',KeyJ:'stem',KeyO:'choices',KeyS:'stop',KeyN:'next',KeyP:'previous',KeyH:'help'})[event.code]||null;
 }
