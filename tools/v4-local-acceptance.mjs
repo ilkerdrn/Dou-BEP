@@ -34,7 +34,8 @@ const QUICK_TESTS=[
  'server-foundation/accessibility-acceptance.test.mjs',
  'tools/v4-synthetic-closure.test.mjs',
  'tools/v4-pilot-approval-ux.test.mjs',
- 'tools/v4-pilot-student-usability.test.mjs'
+ 'tools/v4-pilot-student-usability.test.mjs',
+ 'tools/v4-pilot-manual-review.test.mjs'
 ];
 const allTests=()=>['.','server-foundation','tools'].flatMap(dir=>
  readdirSync(join(ROOT,dir),{withFileTypes:true})
