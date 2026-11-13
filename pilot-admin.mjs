@@ -1,6 +1,7 @@
 /** Teacher session dashboard. HTML elements are created with textContent, not innerHTML. */
 import {summarizeObjectives} from './objective-observations.mjs';
-const $=id=>document.getElementById(id);let csrf='',lastCode='',activeReview=null;
+import {inspectPilotReviewDraft} from './pilot-review-workbench.mjs';
+const $=id=>document.getElementById(id);let csrf='',lastCode='',activeReview=null,reviewSaving=false,showGeneration=0;
 function msg(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 function el(tag,text){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;}
 async function api(path,method='GET',body){const r=await fetch('/api'+path,{method,credentials:'same-origin',headers:{...(body?{'Content-Type':'application/json'}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});const data=await r.json();if(!r.ok)throw Error(data.message||'İşlem başarısız.');return data;}
@@ -31,6 +32,28 @@ async function refresh(){const [candidates,pilots]=await Promise.all([api('/pilo
  }));if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){await api('/pilot/'+item.id+'/revoke','POST',{});await refresh();}}));buttons.append(action('Kaydı sil',async()=>{if(confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?')){await api('/pilot/'+item.id,'DELETE');$('details').hidden=true;await refresh();}},'danger'));section.append(buttons);region.append(section);
  }
 }
+function reviewDraftSnapshot(){
+ if(!activeReview)return null;
+ const entries={};
+ for(const q of activeReview.questions){
+  const score=$('review-questions').querySelector(`[data-score-id="${q.id}"]`);
+  const note=$('review-questions').querySelector(`[data-note-id="${q.id}"]`);
+  if(!score||!note)throw Error('Soru '+q.number+' değerlendirme alanı bulunamadı.');
+  entries[q.id]={score:score.value===''?null:score.value,note:note.value};
+ }
+ return {entries,inspection:inspectPilotReviewDraft(activeReview.questions,entries)};
+}
+function updateReviewDraftStatus(){
+ const snapshot=reviewDraftSnapshot();
+ if(!snapshot)return;
+ const {inspection}=snapshot;
+ const status=`${inspection.reviewed}/${inspection.total} soru puanlandı · ${inspection.missing} soru henüz puanlanmadı · Girilen puan: ${inspection.points}/${inspection.maximum} (yalnızca puanlanan sorular).`;
+ const change=inspection.changed?' Kaydedilmemiş değişiklik var.':' Tüm değişiklikler kaydedilmiş.';
+ const errors=inspection.errors.length?' Kontrol: '+inspection.errors.slice(0,2).join(' '):'';
+ $('review-draft-status').textContent=status+change+errors;
+ $('review-save').disabled=reviewSaving||!inspection.changed||inspection.errors.length>0;
+ $('review-first-unscored').disabled=!inspection.needsAttention.length;
+}
 function renderReview(review){
  activeReview=review;const box=$('review-questions');box.replaceChildren();
  $('review-summary').textContent=`${review.reviewedQuestions}/${review.totalQuestions} soru değerlendirildi. Girilen puan: ${review.assessedPoints}/${review.assessedMaximum}. Bu değerler yalnızca puan girilmiş sorular içindir.`;
@@ -54,26 +77,55 @@ function renderReview(review){
   const noteLabel=el('label','Gözlem notu');const note=el('textarea');note.rows=2;note.maxLength=300;note.placeholder='Kısa, anonim gözlem (en fazla 300 karakter)';note.value=q.note;note.dataset.noteId=q.id;noteLabel.append(note);
   grid.append(scoreLabel,noteLabel);card.append(grid);box.append(card);
  }
+ updateReviewDraftStatus();
 }
-async function show(id){const result=await api('/pilot/'+id);const item=result.item;$('details').hidden=false;
+async function show(id){
+ if(reviewSaving){msg('Değerlendirme kaydedilirken başka oturuma geçilemez.',true);return;}
+ if(reviewDraftSnapshot()?.inspection.changed&&!confirm('Kaydedilmemiş puan veya gözlem notları var. Kaydetmeden başka oturumu açmak istiyor musunuz?'))return;
+ const request=++showGeneration;
+ const result=await api('/pilot/'+id);
+ if(request!==showGeneration)return;
+ const item=result.item;
+ const response=item.answers?await api('/pilot/'+id+'/review'):null;
+ if(request!==showGeneration)return;
+ $('details').hidden=false;
  $('detail-info').textContent='Durum: '+stateLabel(item.status)+' · Referans: '+item.id.slice(0,8).toUpperCase();
  const region=$('answers');region.replaceChildren();$('manual-review').hidden=true;activeReview=null;
  if(!item.answers){region.append(el('p','Henüz yanıt gönderilmedi.'));return;}
- const out=el('p','Yanıtlar teslim edildi. Aşağıdan manuel soru değerlendirmesi yapabilirsiniz.');region.append(out);
- const response=await api('/pilot/'+id+'/review');$('manual-review').hidden=false;renderReview(response.review);
+ region.append(el('p','Yanıtlar teslim edildi. Aşağıdan soru bazında manuel değerlendirme yapabilirsiniz.'));
+ $('manual-review').hidden=false;renderReview(response.review);
 }
-$('review-form').addEventListener('submit',async e=>{e.preventDefault();if(!activeReview)return;
- const btn=$('review-save');btn.disabled=true;
- try{const entries={};for(const q of activeReview.questions){
-  const score=$('review-questions').querySelector(`[data-score-id="${q.id}"]`);
-  const note=$('review-questions').querySelector(`[data-note-id="${q.id}"]`);
-  if(!score||!note)throw Error('Değerlendirme alanı bulunamadı.');
-  if(score.value!==''&&!score.checkValidity())throw Error('Soru '+q.number+' için puan 0–'+q.maxPoints+' arasında olmalı.');
-  entries[q.id]={score:score.value===''?null:Number(score.value),note:note.value};
- }
- const result=await api('/pilot/'+activeReview.sessionId+'/review','PUT',{reviewVersion:activeReview.reviewVersion,entries});
- renderReview(result.review);msg('Manuel değerlendirme güvenli biçimde kaydedildi.');
- }catch(err){msg(err.message,true);}finally{btn.disabled=false;}
+$('review-form').addEventListener('input',event=>{
+ if(event.target.matches('[data-score-id],[data-note-id]'))updateReviewDraftStatus();
+});
+$('review-first-unscored').addEventListener('click',()=>{
+ const item=reviewDraftSnapshot()?.inspection.needsAttention[0];
+ if(!item)return;
+ const question=$('review-questions').querySelectorAll('.review-question')[item.index];
+ question?.scrollIntoView({block:'center',behavior:'auto'});
+ question?.querySelector('[data-score-id]')?.focus();
+});
+$('review-form').addEventListener('submit',async e=>{e.preventDefault();if(!activeReview||reviewSaving)return;
+ const snapshot=reviewDraftSnapshot();
+ if(snapshot.inspection.errors.length){msg(snapshot.inspection.errors[0],true);return;}
+ if(!snapshot.inspection.changed){msg('Kaydedilecek yeni değerlendirme yok.');return;}
+ const sessionId=activeReview.sessionId,revision=activeReview.reviewVersion;
+ const entries=Object.fromEntries(Object.entries(snapshot.entries).map(([id,item])=>
+  [id,{score:item.score===null?null:Number(item.score),note:item.note}]));
+ reviewSaving=true;updateReviewDraftStatus();
+ try{
+  const result=await api('/pilot/'+sessionId+'/review','PUT',{reviewVersion:revision,entries});
+  const latest=reviewDraftSnapshot();
+  activeReview=result.review;
+  if(JSON.stringify(latest?.entries)===JSON.stringify(snapshot.entries)){
+   renderReview(result.review);
+   msg('Manuel değerlendirme güvenli biçimde kaydedildi.');
+  }else{
+   updateReviewDraftStatus();
+   msg('Değerlendirme kaydedildi. Bu sırada yaptığınız daha yeni değişiklikler henüz kaydedilmedi.');
+  }
+ }catch(err){msg(err.message,true);}
+ finally{reviewSaving=false;if(activeReview)updateReviewDraftStatus();}
 });
 $('create').addEventListener('click',async()=>{const btn=$('create');btn.disabled=true;try{const result=await api('/pilot','POST',{examId:$('exams').value});lastCode=result.item.code;$('code').textContent=lastCode;$('new-code').hidden=false;const expires=new Date(result.item.expiresAt);$('pilot-code-expiry').textContent='Kodun son geçerlilik zamanı: '+expires.toLocaleString('tr-TR')+'. Kod yalnızca bir kez kullanılabilir; öğrenci sayfası yenilenirse pilot oturumu yeniden alınamaz.';msg('Kod oluşturuldu. Şimdi kodu kopyalayıp öğrenciye iletin; daha sonra tekrar görüntülenemez.');await refresh();}catch(e){msg(e.message,true);}finally{btn.disabled=false;}});
 $('refresh').addEventListener('click',()=>refresh().catch(e=>msg(e.message,true)));
