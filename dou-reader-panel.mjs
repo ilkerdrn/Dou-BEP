@@ -48,7 +48,7 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if(!question){announce('Önce sınav oturumunu açın.',true);return;}
   try{engine.speak(readerText(question),{rate:$('reader-rate').value});}
   catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
-  finally{syncControls();}
+  finally{refreshVoices();}
  }
  function navigate(direction){if(destroyed)return;engine.stop();moveQuestion(direction);syncQuestion();}
  function onRead(){read();}
