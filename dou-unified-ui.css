@@ -1349,3 +1349,65 @@ body.institution-page[data-design-version="4"] #exam-delivery-receipt .exam-deli
   max-width:100%;
  }
 }
+/* V4 visible next-step navigation: guidance only, never an approval badge. */
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ padding:12px 15px;
+ margin:12px 0;
+ border:1px solid #deded8;
+ border-radius:12px;
+ background:#f8f8f6;
+ color:#252523;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action-content{
+ flex:1 1 290px;
+ min-width:0;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action strong{
+ display:block;
+ margin:4px 0 3px;
+ font-size:15px;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action p{
+ margin:0;
+ font-size:12px;
+ line-height:1.55;
+ color:#4e4e4a;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action button{
+ min-height:42px;
+ white-space:normal;
+ text-align:center;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-step[data-readiness-label]::after{
+ content:attr(data-readiness-label);
+ display:block;
+ font-size:10px;
+ line-height:1.35;
+ font-weight:650;
+ letter-spacing:0;
+ margin-top:5px;
+ opacity:.83;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-step[data-readiness="optional"]::after{
+ font-style:italic;
+}
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-step:focus-visible,
+body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action button:focus-visible{
+ outline:3px solid #156bb4;
+ outline-offset:3px;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action{
+  padding:12px;
+ }
+ body.institution-page[data-design-version="4"] #exam-workspace .workflow-next-action button{
+  width:100%;
+ }
+}
