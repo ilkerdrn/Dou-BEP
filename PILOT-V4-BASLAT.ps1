@@ -70,7 +70,7 @@ try {
     Write-Host 'Koordinator: koordinator@dou-pilot.test'
     Write-Host 'TEST SIFRESI (tumu): BEP-Sentetik-Pilot-2026!' -ForegroundColor Yellow
     Write-Host 'Bu bilgiler ASLA gercek ogrenci veya canli ortamda kullanilmamalidir.' -ForegroundColor Yellow
-    Write-Host 'Pilot veritabanindaki sinavlar korunuyor. Guncel durumu Sınav Hazirla ekranindan inceleyin.'
+    Write-Host 'Pilot veritabanindaki sinavlar korunuyor. Guncel durumu Sinav Hazirla ekranindan inceleyin.'
     Write-Host 'Kapatmak icin Ctrl+C. Pilot DB kalir; mevcut kurum DB degismez.'
     & $node.Source (Join-Path $PSScriptRoot 'server.mjs')
     if ($LASTEXITCODE -ne 0) { throw 'Pilot sunucu baslatilamadi. 4174 portunu kontrol edin.' }
