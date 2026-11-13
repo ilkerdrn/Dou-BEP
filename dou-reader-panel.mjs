@@ -1,4 +1,4 @@
-import {readerText,readerShortcut} from './dou-reader-core.mjs';
+import {readerText,readerStemText,readerChoicesText,readerHasChoices,readerShortcut} from './dou-reader-core.mjs';
 import {createLocalSpeech} from './dou-speech.mjs';
 /** Attach to anonymous exam only. No API calls, cookies, storage or microphone. */
 export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
@@ -9,6 +9,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   const q=getQuestion();
   const allowed=hasVoice&&!!q&&q.audioAllowed!==false;
   $('reader-read').disabled=!allowed;
+  $('reader-stem').disabled=!allowed;
+  $('reader-choices').disabled=!allowed||!readerHasChoices(q);
   $('reader-stop').disabled=!engine.isReading;
   $('reader-pause').disabled=!engine.isReading||engine.isPaused;
   $('reader-resume').disabled=!engine.isReading||!engine.isPaused;
@@ -42,16 +44,23 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   lastQuestion=next;
   refreshVoices();
  }
- function read(){
+ function readPart(part='all'){
   if(destroyed)return;
   const question=getQuestion();
   if(!question){announce('Önce sınav oturumunu açın.',true);return;}
-  try{engine.speak(readerText(question),{rate:$('reader-rate').value});}
-  catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
-  finally{refreshVoices();}
+  try{
+   const text=part==='stem'?readerStemText(question):
+    part==='choices'?readerChoicesText(question):readerText(question);
+   engine.speak(text,{rate:$('reader-rate').value});
+  }catch(e){
+   engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);
+  }finally{refreshVoices();}
  }
+ function read(){readPart('all');}
  function navigate(direction){if(destroyed)return;engine.stop();moveQuestion(direction);syncQuestion();}
  function onRead(){read();}
+ function onStem(){readPart('stem');}
+ function onChoices(){readPart('choices');}
  function onStop(){engine.stop();}
  function onPause(){engine.pause();syncControls();}
  function onResume(){engine.resume();syncControls();}
@@ -60,7 +69,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
  function onVoice(){if(engine.setVoice($('reader-voice').value))$('reader-status').textContent='Ses seçimi güncellendi.';refreshVoices();}
  function onHelp(){const expanded=$('reader-shortcuts').hidden;$('reader-shortcuts').hidden=!expanded;$('reader-help').setAttribute('aria-expanded',String(expanded));}
  const actions=[
-  ['reader-read','click',onRead],['reader-stop','click',onStop],
+  ['reader-read','click',onRead],['reader-stem','click',onStem],
+  ['reader-choices','click',onChoices],['reader-stop','click',onStop],
   ['reader-pause','click',onPause],['reader-resume','click',onResume],
   ['reader-prev','click',onPrevious],['reader-next','click',onNext],
   ['reader-voice','change',onVoice],['reader-help','click',onHelp]
