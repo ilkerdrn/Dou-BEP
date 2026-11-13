@@ -367,9 +367,9 @@ function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-word').disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;
  $('exam-print').disabled=$('exam-word').disabled;
  $('exam-delivery-word').disabled=$('exam-word').disabled;
- $('exam-delivery-check').disabled=$('exam-word').disabled;
- $('exam-delivery-package').disabled=$('exam-word').disabled;
- $('exam-pdf-pilot').disabled=$('exam-word').disabled;
+ $('exam-delivery-check').disabled=$('exam-word').disabled||deliveryInFlight;
+ $('exam-delivery-package').disabled=$('exam-word').disabled||deliveryInFlight;
+ $('exam-pdf-pilot').disabled=$('exam-word').disabled||deliveryInFlight;
  $('exam-audio-preview').disabled=state.busy||!state.exam;
  $('exam-audio-export').disabled=$('exam-word').disabled||auditAudioAccess(x).length>0;
  $('exam-audio-mp3').disabled=$('exam-audio-export').disabled||!state.mp3Available||x.questions.some(q=>questionAccess(q).audioAllowed===false);
@@ -745,14 +745,15 @@ async function getApproved(){
  const id=state.current.id,revision=state.current.revision;
  const r=await api('/exams/'+id+'/export',{method:'POST',body:{}});
  if(r.meta?.id!==id||r.meta?.revision!==revision||r.meta?.status!=='approved'||
-    state.current?.id!==id||state.current?.revision!==revision||state.dirty)
+    state.current?.id!==id||state.current?.revision!==revision||state.dirty||
+    autosave.hasChanges()||autosave.isSaving()||autosave.isBlocked())
   throw Error('Sunucu sürümü değişti. Güncel sınavı yeniden açıp çıktı alın.');
  return r.exam;
 }
-$('exam-word').addEventListener('click',async()=>{try{const exam=await getApproved();download(generateDocx(exam,false),slugify(exam.title)+'-kurumsal.docx');notice('Word belgesi yetkilendirilmiş sunucu sürümünden üretildi.');}catch(err){notice(err.message,true);}});
+$('exam-word').addEventListener('click',async()=>{try{const exam=await getApproved();download(generateDocx(exam,false),slugify(exam.title)+'-surum-'+state.current.revision+'-kurumsal.docx');notice('Word belgesi yetkilendirilmiş sunucu sürümünden üretildi.');}catch(err){notice(err.message,true);}});
 $('exam-delivery-word').addEventListener('click',async()=>{
  try{const exam=await getApproved();const profile=$('exam-delivery-profile').value;const variant=makeDeliveryVersion(exam,profile);
- download(generateDocx(variant,false),slugify(exam.title)+'-'+profile+'-erisebilir.docx');
+ download(generateDocx(variant,false),slugify(exam.title)+'-surum-'+state.current.revision+'-'+profile+'-erisebilir.docx');
  notice('Yalnızca biçimi uyarlanmış onaylı sürüm indirildi. Sorular ve cevap anahtarı değiştirilmedi.');
  }catch(err){notice(err.message,true);}
 });
