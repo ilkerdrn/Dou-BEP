@@ -4,6 +4,7 @@ import {mkdtempSync,writeFileSync,rmSync,readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {inspectReaderNeuralBundle} from '../tools/dou-reader-neural-readiness.mjs';
 
 const fixture=()=>mkdtempSync(join(tmpdir(),'dou-reader-neural-readiness-'));
@@ -65,7 +66,7 @@ test('CLI is read-only and reports not-ready without touching real exam data',()
  const dir=fixture();
  try{
   const result=JSON.parse(execFileSync(process.execPath,
-   ['tools/dou-reader-neural-readiness.mjs','--bundle',dir],
+   [fileURLToPath(new URL('../tools/dou-reader-neural-readiness.mjs',import.meta.url)),'--bundle',dir],
    {encoding:'utf8',timeout:10000,maxBuffer:10000}));
   assert.equal(result.candidateDetected,false);
   assert.equal(result.reason,'piper-executable-missing');
