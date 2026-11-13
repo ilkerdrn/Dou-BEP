@@ -64,6 +64,8 @@ test('review page imports workbench through offline allowlist and protects unfin
  assert.match(js,/reviewDraftSnapshot\(\)\?\.inspection\.changed/);
  assert.match(js,/Kaydedilmemiş puan veya gözlem notları var/);
  assert.match(js,/reviewSaving=true;updateReviewDraftStatus\(\)/);
+ assert.match(js,/window\.addEventListener\('beforeunload',event=>\{/);
+ assert.match(js,/if\(reviewSaving\|\|reviewDraftSnapshot\(\)\?\.inspection\.changed\)/);
  assert.match(js,/JSON\.stringify\(latest\?\.entries\)===JSON\.stringify\(snapshot\.entries\)/);
  assert.match(js,/review_conflict|reviewVersion:revision/);
  assert.match(server,/\x27\/pilot-review-workbench\.mjs\x27:\[/);
