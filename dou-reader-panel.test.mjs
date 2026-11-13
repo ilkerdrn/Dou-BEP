@@ -38,3 +38,81 @@ test('Reader voice event revocation cancels speech, and destroy removes event li
  spoken[0].onend();assert.equal(spoken.length,1);assert.match(stoppedMessage,/Yerel Türkçe ses bulunamadı/);
  reader.destroy();assert.equal(docHandlers.has('keydown'),false);assert.equal(voiceEvents.has('voiceschanged'),false);
 });
+
+function makeInteractiveReader(){
+ const ids=['reader-read','reader-stop','reader-pause','reader-resume','reader-prev',
+ 'reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
+ const nodes=new Map(ids.map(id=>[id,fakeElement()]));
+ const handlers=new Map();
+ const doc={getElementById:id=>nodes.get(id),createElement:()=>fakeElement(),
+  addEventListener:(id,fn)=>handlers.set(id,fn),
+  removeEventListener:(id,fn)=>{if(handlers.get(id)===fn)handlers.delete(id);}};
+ const voices=[{name:'Turkish local',voiceURI:'local-tr',lang:'tr-TR',localService:true}];
+ const said=[],moves=[];
+ const synth={getVoices:()=>voices,speaking:false,paused:false,cancels:0,
+  cancel(){this.cancels++;this.speaking=false;this.paused=false;},
+  speak(utterance){said.push(utterance);this.speaking=true;this.paused=false;},
+  pause(){this.paused=true;},
+  resume(){this.paused=false;}};
+ class Utterance{constructor(text){this.text=text;}}
+ let question={number:1,prompt:'Merhaba dünya.',audioAllowed:true};
+ const reader=attachPilotReader({doc,win:{speechSynthesis:synth,SpeechSynthesisUtterance:Utterance},
+  getQuestion:()=>question,moveQuestion:delta=>moves.push(delta),announce:()=>{}});
+ return {reader,nodes,said,voices,synth,moves,handlers,setQuestion:q=>{question=q;}};
+}
+test('Reader controls only enable pause, resume and stop in meaningful playback states',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ assert.equal(get('reader-read').disabled,false);
+ assert.equal(get('reader-pause').disabled,true);
+ assert.equal(get('reader-resume').disabled,true);
+ assert.equal(get('reader-stop').disabled,true);
+ h.reader.read();
+ assert.equal(h.said.length,1);
+ assert.equal(get('reader-pause').disabled,false);
+ assert.equal(get('reader-resume').disabled,true);
+ assert.equal(get('reader-stop').disabled,false);
+ get('reader-pause').click();
+ assert.equal(h.synth.paused,true);
+ assert.equal(get('reader-pause').disabled,true);
+ assert.equal(get('reader-resume').disabled,false);
+ get('reader-resume').click();
+ assert.equal(h.synth.paused,false);
+ assert.equal(get('reader-pause').disabled,false);
+ h.said[0].onend();
+ assert.equal(get('reader-stop').disabled,true);
+ assert.equal(get('reader-pause').disabled,true);
+ assert.equal(get('reader-resume').disabled,true);
+ assert.match(get('reader-status').textContent,/tamamlandı/);
+ h.reader.destroy();
+});
+test('Reader revokes speech on question switch and never enables disabled question read',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ h.reader.read();
+ const first=h.said[0];
+ const cancels=h.synth.cancels;
+ h.setQuestion({number:2,prompt:'Bu soru seslendirilmez.',audioAllowed:false});
+ h.reader.syncQuestion();
+ assert.ok(h.synth.cancels>cancels);
+ assert.equal(get('reader-read').disabled,true);
+ assert.equal(get('reader-stop').disabled,true);
+ first.onend();
+ assert.equal(h.said.length,1);
+ h.reader.read(); // keyboard or programmatic calls must not bypass teacher rule
+ assert.equal(h.said.length,1);
+ assert.match(get('reader-status').textContent,/kapalıdır/);
+ h.reader.destroy();
+});
+test('No Turkish local voice disables reading and removal cleans all button listeners',()=>{
+ const h=makeInteractiveReader(),get=id=>h.nodes.get(id);
+ h.voices.splice(0);
+ h.reader.refreshVoices();
+ assert.equal(get('reader-read').disabled,true);
+ assert.equal(get('reader-pause').disabled,true);
+ h.reader.read();
+ assert.equal(h.said.length,0);
+ h.reader.destroy();
+ for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev',
+   'reader-next','reader-voice','reader-help'])
+  assert.equal(get(id).handlers.size,0,id);
+ assert.equal(h.handlers.size,0);
+});
