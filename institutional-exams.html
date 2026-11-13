@@ -170,8 +170,15 @@
  <strong>v2.31 · Sunucuda doğrulanmış teslim ve yerel PDF pilotu</strong>
  <p class="portal-help">Seçili profille Word, yazdırılabilir HTML ve çevrimdışı erişilebilir HTML dosyaları hazırlanır. Kaydedilmiş onaylı sınav ve onay geçmişindeki içerik özeti sunucuda eşleştirilir. Dosya SHA-256 özetleri paketin içindeki manifestte bulunur. Öğretmen baskı/ses uygunluğunu ayrıca denetlemelidir.</p>
  <div class="exam-editor-actions"><button type="button" id="exam-delivery-check" class="portal-btn secondary" disabled>Sunucu teslim kontrolü</button><button type="button" id="exam-pdf-pilot" class="portal-btn secondary" disabled>Etiketli PDF (pilot) indir</button><button type="button" id="exam-delivery-package" class="portal-btn primary" disabled>Doğrulanabilir ZIP paketi indir</button></div>
- <p class="portal-help">Etiketli PDF düğmesi ayrı bir araştırma pilotudur; yerel Unicode TTF gerektirir, karmaşık içerikte reddedebilir ve PDF/UA uygunluğu veya ekran okuyucu uyumluluğu anlamına gelmez.</p>
+ <p class="portal-help">ZIP/PDF indirmede sunucu her seferinde onayı ve seçilen sürümü tekrar kontrol eder. Yanlış veya değişmiş sürüm indirilmez. Etiketli PDF ayrı bir araştırma pilotudur; yerel Unicode TTF gerektirir, karmaşık içerikte reddedebilir ve PDF/UA uygunluğu veya ekran okuyucu uyumluluğu anlamına gelmez.</p>
  <p id="exam-delivery-status" role="status" aria-live="polite" class="portal-help">Onaylı sınavı seçin. Kaydedilmemiş düzenlemeler paketlenemez.</p>
+ <section id="exam-delivery-receipt" class="portal-help" aria-labelledby="exam-delivery-receipt-title" hidden>
+ <h4 id="exam-delivery-receipt-title">İndirme doğrulama bilgisi</h4>
+ <p id="exam-delivery-receipt-description"></p>
+ <p><strong>SHA-256:</strong> <code id="exam-delivery-receipt-sha" class="exam-delivery-sha"></code></p>
+ <button type="button" class="portal-btn secondary" id="exam-delivery-copy-sha">SHA-256 özetini kopyala</button>
+ <p>Bu özet yalnızca indirilen dosyanın bütünlüğünü kontrol eder; PDF/UA veya pedagojik uygunluk sertifikası değildir.</p>
+ </section>
  </div>
  <small>Profiller sadece görünümü değiştirir; soru metinleri, kazanımlar, cevap anahtarları ve puanlar aynı kalır. Her profilin pedagojik uygunluğunu öğretmen ayrıca kontrol etmelidir.</small>
  <details class="exam-related-imports"><summary>İçe aktarma araçları — hazırlık aşamasına dön</summary>
