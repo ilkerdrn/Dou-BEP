@@ -100,3 +100,18 @@ test('Reader MVP exposes split audio controls on demo and learner pilot, not res
  assert.equal((await get('/dou-reader-core.test.mjs')).status,404);
  assert.equal((await get('/dou-reader-panel.test.mjs')).status,404);
 });
+
+test('split speech keyboard shortcut hints are available to assistive technology',async()=>{
+ for(const route of ['/dou-reader-demo','/pilot']){
+  const page=await get(route);
+  assert.equal(page.status,200);
+  for(const [id,key] of [
+   ['reader-read','R'],['reader-stem','J'],['reader-choices','O'],
+   ['reader-stop','S'],['reader-prev','P'],['reader-next','N'],['reader-help','H']
+  ]){
+   assert.match(page.body,new RegExp('id="'+id+'" aria-keyshortcuts="Alt\\+Shift\\+'+key+'"'),route+' / '+id);
+  }
+  assert.match(page.body,/Alt\+Shift\+J/);
+  assert.match(page.body,/Alt\+Shift\+O/);
+ }
+});
