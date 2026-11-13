@@ -34,17 +34,16 @@ export function inspectFixedCueAudio(bytes,fileName){
   start=10+tagSize+((bytes[5]&0x10)?10:0);
   if(start>=bytes.length-4)return reject('invalid-mp3-header');
  }
- // Find one plausible MPEG audio frame after any ID3 metadata/padding.
- // The browser decoder, not this predicate, determines whether audio plays.
- const end=Math.min(bytes.length-4,start+8192);
- let found=false;
- for(let i=start;i<=end;i++){
-  const b1=bytes[i+1],b2=bytes[i+2];
-  if(bytes[i]===255&&(b1&0xe0)===0xe0&&((b1>>3)&3)!==1&&
-     ((b1>>1)&3)!==0&&((b2>>4)&15)>0&&((b2>>4)&15)<15&&
-     ((b2>>2)&3)!==3){found=true;break;}
- }
- return found?
+ // MPEG audio must start directly after ID3v2 metadata. Never search arbitrary
+ // bytes: a WAV/ZIP/foreign file can contain an incidental MP3-like bit pattern.
+ // Browsers perform the actual decoding; this remains only a bounded screen.
+ if(start+4>bytes.length)return reject('invalid-mp3-header');
+ const b1=bytes[start+1],b2=bytes[start+2];
+ const isFrame=bytes[start]===0xff&&(b1&0xe0)===0xe0&&
+   ((b1>>3)&3)!==1&&((b1>>1)&3)!==0&&
+   ((b2>>4)&15)>0&&((b2>>4)&15)<15&&
+   ((b2>>2)&3)!==3;
+ return isFrame?
   Object.freeze({valid:true,mimeType:'audio/mpeg',signalValidated:false}):
   reject('invalid-mp3-header');
 }
