@@ -8,14 +8,14 @@ import {validateExam} from './core.mjs';
 const TYPES=new Set(['choice','short','truefalse','matching']);
 function focusField(message){
  const s=String(message||'').toLocaleLowerCase('tr');
+ // Source verification messages also mention answers and points; source action wins.
+ if(/kaynak belge|kaynak|öğretmen tarafından incelenip/.test(s))return 'source';
  if(/metni boş|soru metni/.test(s))return 'prompt';
  if(/kazanım/.test(s))return 'objective';
  if(/puan/.test(s))return 'points';
  if(/seçenek|şık/.test(s))return 'options';
  if(/eşleştirme/.test(s))return 'pairs';
  if(/yanıt|cevap anahtarı|örnek yanıt|doğru\/yanlış/.test(s))return 'answer';
- if(/kaynak belge|kaynak/.test(s))return 'source';
- if(/öğretmen tarafından incelenip/.test(s))return 'source';
  return 'prompt';
 }
 export function questionDraftGuidance(exam){
