@@ -39,7 +39,7 @@ function reviewDraftSnapshot(){
   const score=$('review-questions').querySelector(`[data-score-id="${q.id}"]`);
   const note=$('review-questions').querySelector(`[data-note-id="${q.id}"]`);
   if(!score||!note)throw Error('Soru '+q.number+' değerlendirme alanı bulunamadı.');
-  entries[q.id]={score:score.value===''?null:score.value,note:note.value};
+  entries[q.id]={score:score.validity.badInput?'GEÇERSİZ':score.value===''?null:score.value,note:note.value};
  }
  return {entries,inspection:inspectPilotReviewDraft(activeReview.questions,entries)};
 }
