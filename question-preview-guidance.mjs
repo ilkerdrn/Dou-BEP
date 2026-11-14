@@ -44,7 +44,11 @@ export function previewReviewActions(exam,index,preview){
   const severity=level==='error'?'error':'warning';
   const previous=actions.get(key);
   if(previous&&!(previous.level==='warning'&&severity==='error'))return;
-  actions.set(key,{field:key,level:severity,label:LABELS[key]});
+  const kind=questions[index]?.type;
+  const label=key==='answer'&&kind==='truefalse'?'Doğru/Yanlış cevap anahtarını seç':
+   key==='answer'&&kind==='choice'?'Doğru yanıtın seçeneklerle eşleşmesini kontrol et':
+   key==='answer'&&kind==='short'?'Örnek yanıtı kontrol et':LABELS[key];
+  actions.set(key,{field:key,level:severity,label});
  };
  for(const item of draft.issues)add(item.field,item.level);
  for(const item of preview.problems)add(mappedPreviewField(item.text),item.level);
