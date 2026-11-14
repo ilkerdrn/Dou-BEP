@@ -73,8 +73,12 @@ export function approvalWorkbenchSummary({
    done:stage.done===true,
    status:stage.done===true?'Tamamlandı':stage.id==='delivery'?'Kayıt / onay bekliyor':'İnceleme gerekli'};
  });
- const total=questionDraft.items.length,open=questionDraft.items.filter(item=>item.state!=='ready');
- const questionItems=open.slice(0,LIMIT).map(item=>{
+ const total=questionDraft.items.length;
+ // Fix the actionable order: blocking questions before warnings, stable by
+ // original question number. The entire queue remains navigable (not just 8).
+ const open=questionDraft.items.filter(item=>item.state!=='ready')
+  .sort((a,b)=>Number(b.blocking>0)-Number(a.blocking>0)||a.index-b.index);
+ const questionRecord=item=>{
   const field=Object.hasOwn(FIELD_HINTS,item.focus)?item.focus:'prompt';
   const type=item.blocking>0?'error':'warning';
   return {
@@ -83,8 +87,10 @@ export function approvalWorkbenchSummary({
    detail:FIELD_HINTS[field],
    blocking:safeInt(item.blocking),warnings:safeInt(item.warnings)
   };
- });
- const seen=new Set(questionItems.map(item=>item.index+'|'+item.field+'|'+item.type));
+ };
+ const questionItems=open.slice(0,LIMIT).map(questionRecord);
+ const remainingQuestionItems=open.slice(LIMIT).map(questionRecord);
+ const seen=new Set([...questionItems,...remainingQuestionItems].map(item=>item.index+'|'+item.field+'|'+item.type));
  const findings=[];
  for(const issue of Array.isArray(quality.issues)?quality.issues:[]){
   const item=qualityFinding(issue,total);if(!item)continue;
@@ -147,7 +153,7 @@ export function approvalWorkbenchSummary({
    questionCount:total,questionIncomplete:safeInt(questionDraft.incomplete),
    questionReview:safeInt(questionDraft.review),qualityErrors:errors,qualityWarnings:warnings,
    audioFindings:audio},
-  questionItems,hiddenQuestionCount:Math.max(0,open.length-questionItems.length),
+  questionItems,remainingQuestionItems,hiddenQuestionCount:remainingQuestionItems.length,
   qualityItems,hiddenQualityCount:Math.max(0,findings.length-qualityItems.length),
   canRequestApproval:state==='checkable',approvalConflict:Boolean(preflight.approvalConflict),
   notice:'Bu ekran yalnızca işlem ve kontrol rehberidir. Akademik geçerlilik, WCAG, ses kalitesi veya kurumsal onay sertifikası değildir.'
