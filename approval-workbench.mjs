@@ -1,0 +1,101 @@
+/**
+ * V4 approval workbench: READ-ONLY, privacy-preserving teacher/reviewer overview.
+ *
+ * Preflight (pedagogical workflow) and approval (server-enforced authorization)
+ * are different checks. Never label local preparedness as academic certification.
+ * No answers, question texts, learner data, credentials or notes leave this helper.
+ */
+const STAGE_TARGETS=Object.freeze({
+ identity:'exam-main-fields',
+ goals:'exam-goal-section',
+ questions:'exam-question-section',
+ access:'exam-quality',
+ delivery:'exam-output-section'
+});
+const FIELD_HINTS=Object.freeze({
+ prompt:'Soru metnini kontrol edin',
+ objective:'Kazanım bağlantısını kontrol edin',
+ points:'Soru puanını kontrol edin',
+ options:'Yanıt seçeneklerini kontrol edin',
+ pairs:'Eşleştirme çiftlerini kontrol edin',
+ answer:'Yanıt anahtarını kontrol edin',
+ source:'Öğretmen kaynak karşılaştırmasını tamamlasın'
+});
+const LIMIT=8;
+const safeInt=n=>Number.isSafeInteger(n)&&n>=0?n:0;
+
+export function approvalWorkbenchSummary({
+ preflight,questionDraft,quality,saved=false,dirty=true,saving=false,pending=false,
+ blocked=false,busy=false,approved=false,canEdit=false,canApprove=false,
+ confirmed=false,ownerIsActor=false,audioFindings=0
+}={}){
+ if(!preflight||!Array.isArray(preflight.stages)||preflight.stages.length!==5||
+    !questionDraft||!Array.isArray(questionDraft.items)||
+    !quality||!Number.isSafeInteger(quality.errorCount)||!Number.isSafeInteger(quality.warningCount))
+  throw Error('Onay ön kontrol verisi eksik veya geçersiz.');
+ const stages=preflight.stages.map(stage=>{
+  const target=STAGE_TARGETS[stage.id];
+  if(!target||stage.target!==target)throw Error('Onay kontrolü aşama hedefi geçersiz.');
+  return {id:stage.id,title:stage.title,detail:stage.detail,target,
+   done:stage.done===true,
+   status:stage.done===true?'Tamamlandı':stage.id==='delivery'?'Kayıt / onay bekliyor':'İnceleme gerekli'};
+ });
+ const total=questionDraft.items.length,open=questionDraft.items.filter(item=>item.state!=='ready');
+ const questionItems=open.slice(0,LIMIT).map(item=>{
+  const field=Object.hasOwn(FIELD_HINTS,item.focus)?item.focus:'prompt';
+  const type=item.blocking>0?'error':'warning';
+  return {
+   number:item.number,index:item.index,field,type,target:'exam-question-section',
+   label:'Soru '+item.number+' · '+(type==='error'?'Temel alan hatası':'Ek inceleme'),
+   detail:FIELD_HINTS[field],
+   blocking:safeInt(item.blocking),warnings:safeInt(item.warnings)
+  };
+ });
+ const errors=safeInt(quality.errorCount);
+ const warnings=safeInt(quality.warningCount);
+ const audio=safeInt(audioFindings);
+ const unsaved=dirty||saving||pending||blocked;
+ let state='review',headline='',detail='';
+ if(approved){
+  state='approved';
+  headline=preflight.approvalConflict?'Sunucu onayı var, hazırlık kontrolünde eksik var':'Bu sınav sürümü onaylı';
+  detail=preflight.approvalConflict
+   ?'Onay geçmişi otomatik değiştirilmez. BEP hazırlık ve erişilebilirlik kontrolünü yetkili kullanıcıyla yeniden gözden geçirin.'
+   :'Onaylı sürüm için erişilebilir çıktı ve gerçek kullanıcı incelemesi ayrıca gereklidir.';
+ }else if(!saved){
+  headline='Önce sınav taslağı kaydedilmeli';
+  detail=canEdit?'Sınavı kaydedin; sunucu sürümü oluşmadan onay isteği gönderilemez.':'Kaydedilmesi için yetkili öğretmen veya koordinatöre başvurun.';
+ }else if(unsaved){
+  headline='Kaydedilmemiş veya çakışan değişiklik var';
+  detail='Otomatik kaydın bitmesini ve sunucudaki sürümün doğrulanmasını bekleyin.';
+ }else if(busy){
+  headline='Başka bir işlem devam ediyor';
+  detail='İşlem sona ermeden onay gönderilemez.';
+ }else if(errors>0){
+  headline='Zorunlu kalite hataları var';
+  detail=errors+' engelleyici kalite hatası düzeltilmeli. “Kalite raporunu aç” ile ayrıntıları inceleyin.';
+ }else if(!canApprove){
+  headline='Yetkili incelemeci onayı gerekiyor';
+  detail='Bu hesap onay veremez. Kaydedilmiş sürümü onay yetkisi olan incelemeciye iletin.';
+ }else if(!confirmed){
+  headline='Onay teyidi bekleniyor';
+  detail='Yetkili kullanıcı sürümü, yanıt anahtarını ve erişim kararlarını inceleyip ayrı teyit kutusunu işaretlemeli.';
+ }else{
+  state='checkable';
+  headline='Onay isteği gönderilebilir — son karar sunucuda';
+  detail='Bu yalnızca arayüz ön kontrolüdür. Sunucu bağımsız incelemeci, kurum, yetki, sürüm ve kalite koşullarını tekrar denetler.';
+ }
+ if(ownerIsActor&&!approved&&canApprove){
+  detail+=' Sınav sahibi ile onaylayıcının ayrı olması gereken kurumsal pilotta ikinci bir incelemeci kullanın.';
+ }
+ return {
+  state,headline,detail,stages,
+  summary:{complete:stages.filter(s=>s.done).length,total:stages.length,
+   questionCount:total,questionIncomplete:safeInt(questionDraft.incomplete),
+   questionReview:safeInt(questionDraft.review),qualityErrors:errors,qualityWarnings:warnings,
+   audioFindings:audio},
+  questionItems,hiddenQuestionCount:Math.max(0,open.length-questionItems.length),
+  canRequestApproval:state==='checkable',approvalConflict:Boolean(preflight.approvalConflict),
+  notice:'Bu ekran yalnızca işlem ve kontrol rehberidir. Akademik geçerlilik, WCAG, ses kalitesi veya kurumsal onay sertifikası değildir.'
+ };
+}
