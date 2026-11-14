@@ -44,6 +44,19 @@ export function pilotSessions(db,{StoreError,log}){
    locked_until INTEGER NOT NULL DEFAULT 0
  );CREATE INDEX IF NOT EXISTS idx_pilot_redeem_failures ON pilot_redeem_throttle(last_failure_at);`);
  const error=(code,message,status=400)=>{throw new StoreError(code,message,status);};
+ // Run the authorization, current-revision check, and subsequent mutation under
+ // the same SQLite writer lock. This closes cross-connection TOCTOU windows.
+ function withWriterLock(action){
+  db.exec('BEGIN IMMEDIATE');
+  try{
+   const result=action();
+   db.exec('COMMIT');
+   return result;
+  }catch(err){
+   try{db.exec('ROLLBACK');}catch{} // Preserve the validation/original SQLite error.
+   throw err;
+  }
+ }
  function limiterBlocked(key,time){
   const row=db.prepare('SELECT locked_until FROM pilot_redeem_throttle WHERE identity_hash=?').get(key);
   if(row?.locked_until>time)error('rate_limited','Çok fazla hatalı kod denemesi. Daha sonra tekrar deneyin.',429);
@@ -115,7 +128,8 @@ export function pilotSessions(db,{StoreError,log}){
    return item;
   });
  }
- function issue(actor,examId){permit(actor);cleanup();if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
+ function issue(actor,examId){
+  return withWriterLock(()=>{permit(actor);cleanup();if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
   if(!exam)error('not_found','Sınav bulunamadı.',404);
   if(!elevated(actor)&&exam.owner_id!==actor.id)error('forbidden','Sınav sahibi olmanız gerekiyor.',403);
@@ -128,6 +142,8 @@ export function pilotSessions(db,{StoreError,log}){
   db.prepare(`INSERT INTO pilot_sessions(id,tenant_id,exam_id,owner_id,revision,code_hash,status,created_at,expires_at)
   VALUES(?,?,?,?,?,?,'issued',?,?)`).run(id,actor.tenantId,examId,actor.id,exam.revision,sha(raw),stamp,stamp+WAIT_MS);
   log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code};
+ 
+  });
  }
  function list(actor){
   permit(actor);cleanup();
@@ -167,11 +183,18 @@ export function pilotSessions(db,{StoreError,log}){
   });
  }
  function view(actor,id){return meta(rowFor(actor,id),true);}
- function revoke(actor,id){const row=rowFor(actor,id);if(row.status==='submitted')error('already_submitted','Yanıtları silmek için Sil işlemini kullanın.',409);
+ function revoke(actor,id){
+  return withWriterLock(()=>{const row=rowFor(actor,id);if(row.status==='submitted')error('already_submitted','Yanıtları silmek için Sil işlemini kullanın.',409);
   db.prepare("UPDATE pilot_sessions SET status='revoked',claim_hash=NULL WHERE id=? AND tenant_id=?").run(id,actor.tenantId);log(actor,'pilot.revoked',id);return {ok:true};
+ 
+  });
  }
- function remove(actor,id){rowFor(actor,id);db.prepare('DELETE FROM pilot_sessions WHERE id=? AND tenant_id=?').run(id,actor.tenantId);log(actor,'pilot.deleted',id);return {ok:true};}
+ function remove(actor,id){
+  return withWriterLock(()=>{rowFor(actor,id);db.prepare('DELETE FROM pilot_sessions WHERE id=? AND tenant_id=?').run(id,actor.tenantId);log(actor,'pilot.deleted',id);return {ok:true};
+  });
+ }
  function recoverIssue(actor,id){
+  return withWriterLock(()=>{
   const row=rowFor(actor,id);
   if(row.status!=='started'||row.expires_at<=now())
    error('not_recoverable','Yalnızca süresi dolmamış, devam eden bir pilot oturumu kurtarılabilir.',409);
@@ -189,6 +212,8 @@ export function pilotSessions(db,{StoreError,log}){
   log(actor,'pilot.recovery.issued',id);
   return {id,code,expiresAt:row.expires_at,status:'issued',
    notice:'Eski öğrenci oturumu artık geçersizdir. Kurtarma kodu yalnızca bir kez kullanılabilir; süre uzatılmaz.'};
+ 
+  });
  }
 
  function redeem(code){
@@ -268,6 +293,7 @@ export function pilotSessions(db,{StoreError,log}){
    message:'Anonim ara kayıt. Nihai teslim değildir.'};
  }
  function save(token,answers){
+  return withWriterLock(()=>{
   const {row,payload}=startedSession(token);
   const checked=validate(payload,answers);
   const json=JSON.stringify(checked);
@@ -275,8 +301,11 @@ export function pilotSessions(db,{StoreError,log}){
   const changed=db.prepare("UPDATE pilot_sessions SET answers=? WHERE id=? AND claim_hash=? AND status='started' AND expires_at>?").run(json,row.id,sha(token),now());
   if(!changed.changes)error('invalid_session','Oturum artık aktif değil.',401);
   return {saved:true,expiresAt:row.expires_at,message:'Anonim ara kayıt alındı. Sınav henüz teslim edilmedi.'};
+ 
+  });
  }
- function submit(token,answers){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
+ function submit(token,answers){
+  return withWriterLock(()=>{if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
   const row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
   if(!row||row.status!=='started'||row.expires_at<=now())error('invalid_session','Oturum süresi dolmuş veya teslim edilmiş.',401);
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
@@ -287,6 +316,8 @@ export function pilotSessions(db,{StoreError,log}){
   const result=db.prepare("UPDATE pilot_sessions SET status='submitted',answers=?,submitted_at=?,claim_hash=NULL WHERE id=? AND status='started' AND claim_hash=? AND expires_at>?").run(JSON.stringify(checked),now(),row.id,sha(token),now());
   if(!result.changes)error('invalid_session','Oturum daha önce teslim edilmiş.',409);
   return {ok:true,receipt:row.id.slice(0,8).toUpperCase(),message:'Anonim yanıtlar bir kez kaydedildi. Otomatik puanlama yapılmadı.'};
+ 
+  });
  }
  function reviewContext(actor,id){
   if(!actor||!roleCan(actor.role,'assessment.record'))error('forbidden','Değerlendirme yetkisi gerekli.',403);
@@ -317,6 +348,7 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function reviewGet(actor,id){return reviewState(reviewContext(actor,id));}
  function reviewSave(actor,id,data){
+  return withWriterLock(()=>{
   const ctx=reviewContext(actor,id);
   if(!data||!Number.isSafeInteger(data.reviewVersion)||data.reviewVersion<0)error('bad_revision','Değerlendirme sürüm numarası geçersiz.');
   if(data.reviewVersion!==(ctx.entry?.version||0))error('review_conflict','Bu değerlendirme başka bir oturumda güncellenmiş. Sayfayı yenileyin.',409);
@@ -338,8 +370,6 @@ export function pilotSessions(db,{StoreError,log}){
   }
   const json=JSON.stringify(cleaned),version=(ctx.entry?.version||0)+1;
   if(json.length>20000)error('too_large','Değerlendirme çok büyük.',413);
-  db.exec('BEGIN IMMEDIATE');
-  try{
    if(ctx.entry){
     const updated=db.prepare('UPDATE pilot_reviews SET version=?,entries=?,reviewer_id=?,updated_at=? WHERE session_id=? AND tenant_id=? AND version=?')
       .run(version,json,actor.id,now(),id,actor.tenantId,data.reviewVersion);
@@ -350,9 +380,9 @@ export function pilotSessions(db,{StoreError,log}){
     db.prepare('INSERT INTO pilot_reviews(session_id,tenant_id,reviewer_id,version,entries,updated_at) VALUES (?,?,?,?,?,?)')
       .run(id,actor.tenantId,actor.id,version,json,now());
    }
-   log(actor,'pilot.review.saved',id);db.exec('COMMIT');
-  }catch(err){db.exec('ROLLBACK');throw err;}
-  return reviewGet(actor,id);
+   log(actor,'pilot.review.saved',id);
+   return reviewGet(actor,id);
+  });
  }
  function reviewCsv(actor,id){
   const info=reviewGet(actor,id);
