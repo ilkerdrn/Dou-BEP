@@ -555,7 +555,7 @@ async function main(){
   if(packet.method==='Runtime.exceptionThrown'){
    const details=packet.params?.exceptionDetails;
    if(examStartup.exceptions.length<4)
-    examStartup.exceptions.push(String(details?.text||details?.exception?.className||'JavaScript exception').slice(0,180));
+    examStartup.exceptions.push(String(details?.exception?.description||details?.text||'JavaScript exception').slice(0,320));
   }
   if(packet.method==='Network.responseReceived'){
    const response=packet.params?.response;
@@ -596,7 +596,7 @@ async function main(){
   }
  }finally{
   ws.removeEventListener('message',examStartupEvents);
-  await command('Network.disable');
+  await command('Network.disable').catch(()=>{}); // Do not mask the original startup failure.
  }
  pass(await evaluate('document.body.dataset.examAuth==="authenticated"'),'Exam editor authorizes fixture session');
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
