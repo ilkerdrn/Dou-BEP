@@ -25,7 +25,10 @@ test('approval gets SQLite writer lock BEFORE checking draft and outstanding cor
  before(approve,'exam_review_feedback WHERE tenant_id=?','reviewExam(JSON.parse(row.body))');
  before(approve,'reviewExam(JSON.parse(row.body))',"UPDATE exams SET status='approved'");
  before(approve,"UPDATE exams SET status='approved'",'INSERT INTO exam_approval_history');
- before(approve,'INSERT INTO exam_approval_history',"db.exec('COMMIT')");
+ // The already-approved idempotent branch commits earlier. The final COMMIT
+ // must follow the history insert in the new-approval branch.
+ assert.ok(approve.lastIndexOf("db.exec('COMMIT')")>
+  approve.indexOf('INSERT INTO exam_approval_history'));
  assert.match(approve,/WHERE id=\? AND tenant_id=\? AND revision=\? AND status='draft'/);
  assert.match(approve,/if\(!result\.changes\)fail\('revision_conflict'/);
  assert.match(approve,/if\(row\.status==='approved'\)/);
