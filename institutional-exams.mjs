@@ -17,6 +17,7 @@ import {VERSION, DEFAULT_ADAPTATIONS, starterQuestion, normalizeExam, generateDo
 import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance} from './question-draft-guidance.mjs';
+import {approvalWorkbenchSummary} from './approval-workbench.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
@@ -158,6 +159,64 @@ $('exam-quality').addEventListener('click',event=>{
  if(!focusTarget.matches('input,textarea,select,button'))focusTarget.setAttribute('tabindex','-1');
  focusTarget.focus({preventScroll:true});
 });
+function renderApprovalWorkbench(preflight){
+ const node=$('exam-approval-workbench');if(!node||!state.exam)return;
+ const model=approvalWorkbenchSummary({
+  preflight,questionDraft:questionDraftGuidance(state.exam),quality:reviewExam(state.exam),
+  saved:!!state.current,dirty:state.dirty,saving:autosave.isSaving(),pending:autosave.hasChanges(),
+  blocked:autosave.isBlocked(),busy:state.busy,approved:state.current?.status==='approved',
+  canEdit:has('exam.edit'),canApprove:has('exam.approve'),confirmed:$('exam-confirm').checked,
+  ownerIsActor:Boolean(state.current?.ownerId&&state.current.ownerId===state.actor?.id),
+  audioFindings:auditAudioAccess(state.exam).length
+ });
+ node.dataset.approvalStatus=model.state;
+ $('exam-approval-workbench-headline').textContent=model.headline;
+ $('exam-approval-workbench-detail').textContent=model.detail;
+ $('exam-approval-workbench-progress').textContent=model.summary.complete+' / '+model.summary.total+' aşama';
+ $('exam-approval-workbench-metrics').textContent=
+  model.summary.questionCount+' soru · '+model.summary.questionIncomplete+' soruda zorunlu eksik · '+
+  model.summary.qualityErrors+' kalite hatası · '+model.summary.qualityWarnings+' kalite uyarısı · '+
+  model.summary.audioFindings+' sesli erişim incelemesi';
+ const makeItem=(label,detail,status,target,index,field)=>{
+  const row=document.createElement('div');row.className='exam-approval-workbench-item';
+  row.dataset.status=status;
+  const copy=document.createElement('div');
+  const name=document.createElement('strong');name.textContent=label;
+  const description=document.createElement('p');description.textContent=detail;
+  copy.append(name,description);
+  const button=document.createElement('button');button.type='button';
+  button.className='portal-btn secondary';
+  button.textContent='İncele';
+  button.dataset.approvalJump=target;
+  if(Number.isSafeInteger(index)&&index>=0){
+   button.dataset.questionIndex=String(index);
+   button.dataset.questionField=field||'prompt';
+  }
+  button.setAttribute('aria-label',label+' bölümünü incele');
+  row.append(copy,button);
+  return row;
+ };
+ const stages=$('exam-approval-workbench-stages'),questions=$('exam-approval-workbench-questions');
+ stages.replaceChildren(...model.stages.map(stage=>makeItem(
+  stage.title+' · '+stage.status,stage.detail,
+  stage.done?'done':'needs-review',stage.target
+ )));
+ questions.replaceChildren(...model.questionItems.map(item=>makeItem(
+  item.label,item.detail,item.type==='error'?'needs-review':'warning',
+  item.target,item.index,item.field
+ )));
+ if(!model.questionItems.length){
+  const note=document.createElement('p');note.className='portal-help';
+  note.textContent='Temel soru alanlarında eksik bulunmadı. Kalite, erişilebilirlik ve pedagojik inceleme ayrı yürütülür.';
+  questions.append(note);
+ }
+ $('exam-approval-workbench-question-summary').textContent=model.questionItems.length
+  ?model.summary.questionIncomplete+' soruda zorunlu eksik · '+model.summary.questionReview+
+   ' soruda ek inceleme. '+(model.hiddenQuestionCount?model.hiddenQuestionCount+' soru daha var; soru düzenleme ekranındaki eksik alan kısayolunu kullanın.':'')
+  :'Temel soru alanı uyarısı görünmüyor.';
+ $('exam-approval-workbench-quality').disabled=!has('exam.view');
+ $('exam-approval-workbench-confirm').disabled=!has('exam.view');
+}
 function renderPreflight(){
  const x=state.exam;if(!x)return;
  const report=getExamPreflight(x,{saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'});
@@ -190,6 +249,7 @@ function renderPreflight(){
   ?`<div class="preflight-next-action"><div><span class="portal-mini-label">SIRADAKİ ADIM</span><strong>${esc(nextStage.title)}</strong><p>${esc(nextStage.detail)}</p></div><button type="button" class="portal-btn primary" data-preflight-jump="${nextStage.target}">Bu aşamayı aç</button></div>`
   :'<div class="preflight-next-action preflight-all-checked"><strong>Hazırlık aşamaları tamamlandı.</strong><p>Son sürümün incelenmesi ve kurum onayı yetkili onaylayıcının sorumluluğundadır.</p></div>';
  body.innerHTML=`${nextAction}<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
+ renderApprovalWorkbench(report);
 }
 function visitPreflightTarget(id){
  if(!['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'].includes(id))return;
@@ -208,6 +268,36 @@ function visitPreflightTarget(id){
  focusTarget.setAttribute('tabindex','-1');
  focusTarget.focus({preventScroll:true});
 }
+function visitApprovalQuestion(index,field){
+ if(!Number.isSafeInteger(index)||index<0||index>=(state.exam?.questions?.length||0))return;
+ visitPreflightTarget('exam-question-section');
+ const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+index+'"]');
+ if(!card)return;
+ const allowed=new Set(['prompt','objective','points','options','pairs','answer','source']);
+ const key=allowed.has(field)?field:'prompt';
+ let focusTarget=key==='source'?card.querySelector('[data-source-review]'):
+  card.querySelector('[data-qkey="'+key+'"]');
+ focusTarget ||=card.querySelector('[data-qkey="prompt"]')||card;
+ for(let parent=focusTarget.parentElement;parent;parent=parent.parentElement)
+  if(parent.tagName==='DETAILS')parent.open=true;
+ card.scrollIntoView({block:'center',behavior:'auto'});
+ if(!focusTarget.matches('input,textarea,select,button'))focusTarget.setAttribute('tabindex','-1');
+ focusTarget.focus({preventScroll:true});
+}
+$('exam-approval-workbench').addEventListener('click',event=>{
+ const btn=event.target.closest('[data-approval-jump]');
+ if(!btn||!$('exam-approval-workbench').contains(btn))return;
+ if(btn.dataset.questionIndex!==undefined){
+  visitApprovalQuestion(Number(btn.dataset.questionIndex),btn.dataset.questionField);
+ }else visitPreflightTarget(btn.dataset.approvalJump);
+});
+$('exam-approval-workbench-quality').addEventListener('click',()=>visitPreflightTarget('exam-quality'));
+$('exam-approval-workbench-confirm').addEventListener('click',()=>{
+ visitPreflightTarget('exam-question-section');
+ const target=$('exam-confirm');
+ target.scrollIntoView({behavior:'auto',block:'center'});
+ target.focus({preventScroll:true});
+});
 $('exam-preflight-body').addEventListener('click',event=>{
  const btn=event.target.closest('[data-preflight-jump]');
  if(btn)visitPreflightTarget(btn.dataset.preflightJump);
