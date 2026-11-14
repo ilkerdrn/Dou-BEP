@@ -40,3 +40,13 @@ body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d
 @media (max-width:650px){
  .bep-student-pilot .pilot-access-toolbar,.bep-student-pilot .pilot-access-setup{padding:14px}
 }
+
+/* Accessibility preferences also help BEFORE the one-time exam code is used. */
+.bep-student-pilot.pilot-entry-large #entry label,
+.bep-student-pilot.pilot-entry-large #entry input,
+.bep-student-pilot.pilot-entry-large #entry button{font-size:1.2em}
+.bep-student-pilot.pilot-entry-large #entry input,
+.bep-student-pilot.pilot-entry-large #entry button{min-height:64px}
+.bep-student-pilot.pilot-motor #entry button,
+.bep-student-pilot.pilot-motor #entry input,
+.bep-student-pilot.pilot-motor #entry select{min-height:68px}
