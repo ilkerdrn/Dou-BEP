@@ -89,6 +89,10 @@ test('read-only editor issue navigation preserves all five stages and server app
  assert.match(js,/visitApprovalQuestion\(index,current\.focus\)/);
  assert.match(js,/document\.createElement\('button'\)/);
  assert.match(js,/detail\.textContent=/);
+ assert.match(js,/summary\.total===0/);
+ assert.match(js,/Soru ekleme alanına git/);
+ assert.match(js,/state\.exam\.questions\.length===0/);
+ assert.match(js,/!has\('exam\.edit'\)/);
  assert.match(css,/\.exam-draft-issue-link:focus-visible/);
  assert.match(css,/@media\(max-width:670px\)/);
  const helper=readFileSync(resolve(root,'question-draft-guidance.mjs'),'utf8');
