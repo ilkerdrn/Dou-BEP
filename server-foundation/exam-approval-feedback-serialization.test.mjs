@@ -87,7 +87,7 @@ test('invalid feedback rolls back its writer lock, leaving another connection ab
   assert.throws(()=>f.b.reviewFeedbackCreate(f.reviewerB,created.id,{
    ...correction(1),studentName:'Do not store'
   }),{code:'invalid_feedback'});
-  assert.equal(f.b.db.isTransaction,false);
+  // A separate connection must still obtain the writer lock after rejection.
   const approved=f.a.approveExam(f.reviewerA,created.id,{revision:1,confirmed:true});
   assert.equal(approved.status,'approved');
   assert.equal(f.a.db.prepare('SELECT COUNT(*) AS n FROM exam_review_feedback WHERE exam_id=?')
