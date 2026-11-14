@@ -658,15 +658,26 @@ function renderApprovalWorkbench(preflight){
   item.label,item.detail,item.type==='error'?'needs-review':'warning',
   item.target,item.index,item.field
  )));
+ const more=$('exam-approval-workbench-more'),moreList=$('exam-approval-workbench-more-questions');
+ const wasOpen=more.open;
+ more.hidden=model.hiddenQuestionCount===0;
+ more.querySelector('summary').textContent='Diğer '+model.hiddenQuestionCount+' incelenecek soruyu göster';
+ moreList.replaceChildren(...model.remainingQuestionItems.map(item=>makeItem(
+  item.label,item.detail,item.type==='error'?'needs-review':'warning',
+  item.target,item.index,item.field
+ )));
+ more.open=model.hiddenQuestionCount>0&&wasOpen;
  if(!model.questionItems.length){
   const note=document.createElement('p');note.className='portal-help';
-  note.textContent='Temel soru alanlarında eksik bulunmadı. Kalite, erişilebilirlik ve pedagojik inceleme ayrı yürütülür.';
+  note.textContent=model.summary.questionCount===0?'Henüz soru eklenmedi. Önce öğretmen soru eklemeli.':'Temel soru alanlarında eksik bulunmadı. Kalite, erişilebilirlik ve pedagojik inceleme ayrı yürütülür.';
   questions.append(note);
  }
- $('exam-approval-workbench-question-summary').textContent=model.questionItems.length
-  ?model.summary.questionIncomplete+' soruda zorunlu eksik · '+model.summary.questionReview+
-   ' soruda ek inceleme. '+(model.hiddenQuestionCount?model.hiddenQuestionCount+' soru daha var; soru düzenleme ekranındaki eksik alan kısayolunu kullanın.':'')
-  :'Temel soru alanı uyarısı görünmüyor.';
+ $('exam-approval-workbench-question-summary').textContent=model.summary.questionCount===0
+  ?'Henüz soru yok; önce soru ekleyin. Bu bir onay anlamına gelmez.'
+  :model.questionItems.length
+   ?model.summary.questionIncomplete+' soruda zorunlu eksik · '+model.summary.questionReview+
+    ' soruda ek inceleme. '+(model.hiddenQuestionCount?model.hiddenQuestionCount+' soru daha var; aşağıdan tümünü açabilirsiniz.':'')
+   :'Temel soru alanı uyarısı görünmüyor.';
  const findings=$('exam-approval-workbench-findings');
  findings.replaceChildren(...model.qualityItems.map(item=>makeItem(
   item.label,item.detail,item.type==='error'?'needs-review':'warning',
@@ -743,6 +754,9 @@ function visitApprovalQuestion(index,field){
  let focusTarget=key==='source'?card.querySelector('[data-source-review]'):
   card.querySelector('[data-qkey="'+key+'"]');
  focusTarget ||=card.querySelector('[data-qkey="prompt"]')||card;
+ // Read-only roles navigate to the question heading rather than a disabled input.
+ if(!has('exam.edit')||focusTarget.disabled)
+  focusTarget=card.querySelector('.exam-q-head strong')||card;
  for(let parent=focusTarget.parentElement;parent;parent=parent.parentElement)
   if(parent.tagName==='DETAILS')parent.open=true;
  card.scrollIntoView({block:'center',behavior:'auto'});
