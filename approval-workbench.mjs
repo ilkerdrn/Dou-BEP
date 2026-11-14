@@ -29,7 +29,7 @@ function qualityFinding(issue,questionCount){
  if(issue?.level!=='error'&&issue?.level!=='warning')return null;
  const raw=String(issue.text||'');
  const match=/^(\d+)\.\s*soru\s*:/iu.exec(raw);
- const index=match?Number(match[1])-1:null;
+ let index=match?Number(match[1])-1:null;
  const valid=Number.isSafeInteger(index)&&index>=0&&index<questionCount;
  const lower=raw.toLocaleLowerCase('tr');
  let category='Kalite kontrolü',field='prompt',target='exam-quality';
