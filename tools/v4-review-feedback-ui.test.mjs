@@ -42,6 +42,10 @@ test('unresolved corrections and feedback-loading prevent early on-screen approv
  const waiting=approvalWorkbenchSummary({...base,feedbackLoading:true});
  assert.equal(waiting.canRequestApproval,false);
  assert.match(waiting.headline,/kontrol ediliyor/);
+ const failed=approvalWorkbenchSummary({...base,feedbackLoading:true,feedbackFailed:true});
+ assert.equal(failed.canRequestApproval,false);
+ assert.match(failed.headline,/alınamadı/);
+ assert.match(failed.detail,/yeniden kontrol edin/);
  const blocked=approvalWorkbenchSummary({...base,feedbackPending:true});
  assert.equal(blocked.canRequestApproval,false);
  assert.match(blocked.detail,/Aynı sürüm onaylanamaz/);
