@@ -21,6 +21,11 @@ const tenant='handoff-browser';
 const password='Synthetic-Handoff-2026-Secure-Only!';
 const teacherEmail='teacher@handoff-browser.test',reviewerEmail='reviewer@handoff-browser.test';
 let edge=null,server=null,ws=null,fixtureStore=null,sequence=0,passed=0;
+let currentPhase='startup';
+const progress=(phase)=>{
+ currentPhase=phase;
+ console.log('[BEP V4 HANDOFF] '+phase+' | '+passed+' kontrol doğrulandı');
+};
 const pending=new Map();
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const pass=(condition,label)=>{assert.ok(condition,label);passed++;};
@@ -126,6 +131,7 @@ async function openExam(base,id){
   'Browser exam editor has valid institutional session');
 }
 async function main(){
+ progress('Başlangıç: geçici SQLite ve sentetik hesaplar');
  const port=await freePort();
  process.env.PORT=String(port);
  process.env.BEP_DB_PATH=dbFile;
@@ -170,6 +176,7 @@ async function main(){
   return Number.isSafeInteger(n)&&n>0?n:null;
  },'Edge DevTools startup',20000);
  await connect(debugPort);
+ progress('Edge açıldı: incelemeci düzeltme isteği');
 
  // Reviewer: explicit structured correction request, same revision cannot approve.
  await login(base,reviewerEmail,'reviewer');
@@ -206,6 +213,7 @@ async function main(){
  pass(await evaluate(()=>document.getElementById('exam-approve').disabled),
   'Active correction request blocks browser approval');
  await logout();
+ progress('İncelemeci düzeltmesi kaydedildi: öğretmen sınav düzenlemesi');
 
  // Teacher: both requested questions are reachable, saved new revision remains draft.
  await login(base,teacherEmail,'teacher');
@@ -251,6 +259,7 @@ async function main(){
  pass(await evaluate(()=>document.getElementById('exam-approve').disabled),
   'Teacher cannot independently approve revised exam');
  await logout();
+ progress('Öğretmen yeni sürümü kaydetti: bağımsız incelemeci kontrolü');
 
  // Reviewer: inbox action leads to adjacent diff and unverified correction list.
  await login(base,reviewerEmail,'reviewer');
@@ -304,6 +313,7 @@ async function main(){
  });
  await waitUntil(()=>evaluate(()=>document.getElementById('exam-approve')?.disabled===false),
   'Approval available only after independent confirmation');
+ progress('Sürüm 2 son bağımsız onay kontrolü');
  await evaluate(()=>document.getElementById('exam-approve').click());
  await waitUntil(()=>evaluate(()=>document.getElementById('exam-status')?.textContent==='ONAYLI'),
   'Independent reviewer approves exact current revision',16000);
@@ -314,7 +324,11 @@ async function main(){
  console.log('BROWSER REVIEW HANDOFF PASS: '+passed+' checks, anonymous fixture, isolated Edge and local SQLite.');
 }
 let primaryError=null;
-try{await main();}catch(error){primaryError=error;}
+try{await main();}catch(error){
+ primaryError=error;
+ console.error('[BEP V4 HANDOFF] HATA aşaması: '+currentPhase+
+  ' | Tamamlanan kontroller: '+passed);
+}
 finally{
  try{if(ws)ws.close();}catch{}
  for(const [,task] of pending)task.reject(Error('Browser handoff cleanup'));pending.clear();
