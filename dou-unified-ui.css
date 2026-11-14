@@ -1738,3 +1738,26 @@ body.institution-page[data-design-version="4"] #exam-revision-compare .exam-rech
   background:Canvas;color:CanvasText;border-color:CanvasText;
  }
 }
+/* V4 compact reviewer details: secondary information hidden until requested. */
+body.institution-page[data-design-version="4"] #exam-approval-workbench :is(#exam-revision-compare,#exam-review-feedback)>summary{
+ cursor:pointer;display:list-item;font-size:14px;font-weight:750;
+ line-height:1.5;padding:7px 4px;color:inherit;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-compact-caption{
+ display:inline;font-size:12px;font-weight:500;margin-left:8px;opacity:.78;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench :is(#exam-revision-compare,#exam-review-feedback)>summary:focus-visible{
+ outline:3px solid #156bb4;outline-offset:3px;border-radius:4px;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench details#exam-review-feedback:not([open]){
+ padding-top:8px;padding-bottom:8px;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench details#exam-revision-compare:not([open]){
+ padding-top:10px;padding-bottom:10px;
+}
+@media(max-width:560px){
+ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-compact-caption{
+  display:block;margin:4px 0 0 0;
+ }
+}
