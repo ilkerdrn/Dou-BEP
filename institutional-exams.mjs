@@ -188,19 +188,24 @@ function renderRevisionDelta(){
  if(!box||!status)return;
  box.replaceChildren();
  const current=state.current,view=state.revisionDelta;
+ const compact=$('exam-revision-compare-summary');
  if(!current){
+  compact.textContent='Kaydedilmiş sürüm yok';
   status.textContent='Yeni, kaydedilmemiş taslak için sürüm karşılaştırması yok.';
   return;
  }
  if(!view||view.examId!==current.id||view.currentRevision!==current.revision){
+  compact.textContent='Kontrol ediliyor';
   status.textContent='Sürüm farkları sunucudan kontrol ediliyor.';
   return;
  }
  if(!view.available||!view.comparison){
+  compact.textContent='Karşılaştırma kaydı yok';
   status.textContent=view.note||'Bu sürüm için güvenilir eski-yeni fark kaydı bulunamadı.';
   return;
  }
  const delta=view.comparison;
+ compact.textContent='Sürüm '+delta.fromRevision+' → '+delta.toRevision+' · '+delta.changedQuestions.length+' soru konumu';
  status.textContent=(state.dirty||autosave.hasChanges()||autosave.isSaving()?'Kaydedilmemiş düzenlemeler bu fark özetine dahil değil. ':'')+
   'Sürüm '+delta.fromRevision+' → '+delta.toRevision+' · Önce '+delta.previousQuestionCount+
   ' soru, şimdi '+delta.currentQuestionCount+' soru · '+delta.changedSections.length+
@@ -240,8 +245,10 @@ async function loadRevisionDelta(){
   state.revisionDelta=diff;
   renderRevisionDelta();renderRecheckHints();
  }catch(err){
-  if(ticket===revisionDeltaGeneration&&state.current?.id===id&&state.current?.revision===revision)
+  if(ticket===revisionDeltaGeneration&&state.current?.id===id&&state.current?.revision===revision){
+   $('exam-revision-compare-summary').textContent='Kontrol edilemedi';
    $('exam-revision-compare-status').textContent='Sürüm karşılaştırması alınamadı: '+err.message;
+  }
  }
 }
 let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false;
@@ -254,14 +261,16 @@ function renderReviewFeedback(){
  if(!section)return;
  const current=state.current;
  const status=$('exam-review-feedback-status'),items=$('exam-review-feedback-records');
- const form=$('exam-review-feedback-form');
+ const form=$('exam-review-feedback-form'),compact=$('exam-review-feedback-summary');
  if(!current){
+  compact.textContent='Kaydedilmiş sınav yok';
   items.replaceChildren();form.hidden=true;
   status.textContent='Geri bildirimleri görmek için kaydedilmiş bir sınav seçin.';
   return;
  }
  const feedback=state.reviewFeedback;
- if(!feedback||feedback.examId!==current.id){
+ if(!feedback||feedback.examId!==current.id||feedback.currentRevision!==current.revision){
+  compact.textContent='Kontrol ediliyor';
   form.hidden=true;items.replaceChildren();
   status.textContent='Bu sınavın inceleme kayıtları yükleniyor.';
   return;
@@ -269,6 +278,7 @@ function renderReviewFeedback(){
  items.replaceChildren();
  const records=feedback.items||[];
  const active=records.filter(item=>item.revision===current.revision&&current.status==='draft');
+ compact.textContent=active.length?'Güncel düzeltme isteği: '+active.length:records.length?'Geçmiş kayıt: '+records.length:'Kayıt yok';
  status.textContent=records.length
   ?active.length+' güncel sürüm düzeltme kaydı · '+records.length+' toplam geçmiş kayıt.'
   :'Bu sınav için henüz incelemeci düzeltme kaydı yok.';
@@ -347,6 +357,7 @@ async function loadReviewFeedback(){
   state.reviewFeedback=feedback;refreshApprovalFeedbackUi();renderRecheckHints();
  }catch(err){
   if(ticket===reviewFeedbackGeneration&&state.current?.id===id){
+   $('exam-review-feedback-summary').textContent='Kontrol edilemedi';
    $('exam-review-feedback-status').textContent='İnceleme kayıtları alınamadı: '+err.message;
   }
  }
@@ -385,6 +396,7 @@ $('exam-review-feedback-form').addEventListener('submit',async event=>{
   const result=await api('/exams/'+id+'/review-feedback',{method:'POST',
    body:{revision,stageIds:stages,questionNumbers:numbers,confirmed:true}});
   if(state.current?.id===id&&state.current?.revision===revision){
+   $('exam-review-feedback').open=true;
    state.reviewFeedback=result.feedback;
    refreshApprovalFeedbackUi();renderRecheckHints();
    await refreshList();
@@ -921,6 +933,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
   }
   if(action==='diff'){
    visitPreflightTarget('exam-output-section');
+   $('exam-revision-compare').open=true;
    const heading=$('exam-revision-compare-title');
    heading.setAttribute('tabindex','-1');
    heading.scrollIntoView({behavior:'auto',block:'center'});
@@ -934,6 +947,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
    }
   }else{
    visitPreflightTarget('exam-output-section');
+   if(state.reviewFeedback?.items?.some(x=>x.revision===state.current?.revision))$('exam-review-feedback').open=true;
    const heading=$('exam-approval-workbench-title');
    heading.setAttribute('tabindex','-1');
    heading.scrollIntoView({behavior:'auto',block:'start'});
