@@ -59,7 +59,7 @@ function qualityFinding(issue,questionCount){
 
 export function approvalWorkbenchSummary({
  preflight,questionDraft,quality,saved=false,dirty=true,saving=false,pending=false,
- blocked=false,busy=false,approved=false,feedbackPending=false,feedbackLoading=false,canEdit=false,canApprove=false,
+ blocked=false,busy=false,approved=false,separationBlocked=false,feedbackPending=false,feedbackLoading=false,canEdit=false,canApprove=false,
  confirmed=false,ownerIsActor=false,audioFindings=0
 }={}){
  if(!preflight||!Array.isArray(preflight.stages)||preflight.stages.length!==5||
@@ -115,6 +115,9 @@ export function approvalWorkbenchSummary({
  }else if(busy){
   headline='Başka bir işlem devam ediyor';
   detail='İşlem sona ermeden onay gönderilemez.';
+ }else if(separationBlocked){
+  headline='Bu sınav sürümüne bağımsız onay veremezsiniz';
+  detail='Sınavın ilk sahibi veya güncel sürümünü düzenleyen hesap bu sürüm için bağımsız onaylayıcı olamaz. Farklı yetkili incelemeci kullanılmalıdır.';
  }else if(feedbackLoading){
   headline='İncelemeci düzeltme kayıtları kontrol ediliyor';
   detail='Önce bu sürümde kayıtlı düzeltme isteği olup olmadığını sunucudan doğrulayın.';
