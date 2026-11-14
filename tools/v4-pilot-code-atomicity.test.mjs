@@ -43,7 +43,7 @@ test('multi-instance regression cases remain registered in offline QUICK tests',
  for(const path of ['tools/v4-pilot-two-connection.test.mjs','tools/v4-pilot-code-atomicity.test.mjs'])
   assert.ok(quick.includes("'"+path+"'"),path+' not registered');
  assert.match(multi,/cannot redeem the same code/);
- assert.match(multi,/cannot resurrect/); // wording remains in test title
+ assert.match(multi,/or resurrect the replaced bearer/);
  assert.match(multi,/rejects a stale review version/);
  assert.match(multi,/invalid_session/);
  assert.match(multi,/exam_changed/);
