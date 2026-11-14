@@ -131,12 +131,13 @@ async function main(){
  console.log('DOU Reader seslendirmesi ile NVDA ayni anda konusmasin: ayri ayri deneyin.');
  console.log('Lutfen gercek ogrenci bilgisi veya saglik verisi yazmayin.');
  console.log('Kod daha once kullanildiysa veya suresi dolduysa N + Enter ile YENI kod alin.');
- console.log('Test bitince Ctrl+C: sentetik veritabani silinir.\n');
+ console.log('Test bitince Q + Enter veya Ctrl+C: sentetik veritabani silinir.\n');
  inputControl=createInterface({input:process.stdin,output:process.stdout,terminal:!!process.stdin.isTTY});
  inputControl.on('line',line=>{
   const choice=line.trim().toLowerCase();
+  if(choice==='q'){void closeLab().then(()=>process.exit(0));return;}
   if(choice!=='n'){
-   if(choice)console.log('Yeni sentetik kod icin N ve Enter tuslayin; cikis icin Ctrl+C.');
+   if(choice)console.log('Yeni sentetik kod icin N + Enter, cikis icin Q + Enter veya Ctrl+C.');
    return;
   }
   if(renewing||finished)return;
