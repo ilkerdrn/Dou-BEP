@@ -99,7 +99,7 @@ async function pressEnter(){
  // Dispatch through DevTools so the event is browser-generated and trusted.
  // Do not call element.click() or dispatchEvent(): those bypass keyboard a11y.
  const data={key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13};
- await command('Input.dispatchKeyEvent',{type:'keyDown',text:'\\r',unmodifiedText:'\\r',...data});
+ await command('Input.dispatchKeyEvent',{type:'keyDown',text:'\r',unmodifiedText:'\r',...data});
  await command('Input.dispatchKeyEvent',{type:'keyUp',...data});
 }
 async function navigate(base,path){
