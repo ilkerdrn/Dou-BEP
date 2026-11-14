@@ -64,6 +64,12 @@ test('teacher and reviewer UI fetch feedback through server, guard old revisions
  assert.match(js,/current\.ownerId!==state\.actor\?\.id/);
  assert.match(js,/parseReviewQuestionNumbers\(/);
  assert.match(js,/state\.reviewFeedback=result\.feedback/);
+ assert.match(js,/function refreshApprovalFeedbackUi\(\)/);
+ assert.match(js,/state\.reviewFeedback=feedback;refreshApprovalFeedbackUi\(\)/);
+ assert.match(js,/dataset\.feedbackRevision/);
+ assert.match(js,/dataset\.feedbackTarget/);
+ assert.match(js,/dataset\.feedbackQuestion/);
+ assert.match(js,/visitApprovalQuestion\(Number\(button\.dataset\.feedbackQuestion\)-1,'prompt'\)/);
  assert.match(js,/reviewFeedbackCheckPending\(\)/);
  assert.match(js,/hasCurrentReviewFeedback\(\)/);
  assert.match(js,/reviewFeedbackFormKey/);
