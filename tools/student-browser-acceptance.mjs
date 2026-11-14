@@ -44,6 +44,10 @@ export async function runStudentBrowserAcceptance({
   await pressEnter();
   pass(await evaluate("(function(){return !document.getElementById('player').hidden&&document.body.classList.contains('high')&&document.documentElement.style.getPropertyValue('--student-size')==='28px'&&document.querySelectorAll('#student-questions .question').length>=3&&!!document.getElementById('reader-status');})()"),
    'Student sees high-contrast large-text exam and reader status');
+  // Hearing access must remain possible without audio playback or any TTS service.
+  await evaluate("(function(){const p=document.getElementById('access-profile');p.value='written';p.dispatchEvent(new Event('change',{bubbles:true}));})()");
+  pass(await evaluate("(function(){const q=document.querySelector('#student-questions .question:not([hidden])');return document.getElementById('access-profile').value==='written'&&!!q.querySelector('h2')&&!!q.querySelector('fieldset legend')&&q.querySelectorAll('input[type=\"radio\"]').length>=2&&!!document.getElementById('pilot-time-text').textContent;})()"),
+   'Written-only mode exposes question, choices and timer without using TTS');
 
   await evaluate("(function(){const p=document.getElementById('access-profile');p.value='motor';p.dispatchEvent(new Event('change',{bubbles:true}));const first=document.querySelector('#student-questions .question:not([hidden]) input[type=\"radio\"]');if(first)first.focus();})()");
   pass(await evaluate("document.body.classList.contains('pilot-motor')&&document.activeElement?.matches('input[type=\"radio\"]')"),
@@ -62,6 +66,26 @@ export async function runStudentBrowserAcceptance({
   await pressEnter();
   pass(await evaluate("document.getElementById('pilot-toggle-review').getAttribute('aria-pressed')==='true'"),
    'Keyboard user marks question for review');
+
+  // Cover the matching interaction too; a visual choice test alone misses
+  // accessible native select controls for the pilot's third question type.
+  for(let i=0;i<2;i++){
+   await evaluate("document.getElementById('next-question').focus()");
+   await pressEnter();
+  }
+  pass(await evaluate("(function(){const c=[...document.querySelectorAll('#student-questions .question')];const last=c.at(-1);return !last.hidden&&last.querySelectorAll('select').length>=2&&document.activeElement?.tagName==='H2';})()"),
+   'Keyboard navigation reaches matching question with both labeled selects');
+  const selects=await evaluate("(function(){return [...document.querySelectorAll('#student-questions .question:not([hidden]) select')].map(x=>({labeled:!!x.closest('label'),options:x.options.length}));})()");
+  pass(selects.length>=2&&selects.every(x=>x.labeled&&x.options>=3),
+   'Every matching select is natively labeled and includes all alternatives');
+  for(let i=0;i<selects.length;i++){
+   await evaluate("document.querySelectorAll('#student-questions .question:not([hidden]) select')["+i+"].focus()");
+   const arrow={key:'ArrowDown',code:'ArrowDown',windowsVirtualKeyCode:40,nativeVirtualKeyCode:40};
+   await command('Input.dispatchKeyEvent',{type:'rawKeyDown',...arrow});
+   await command('Input.dispatchKeyEvent',{type:'keyUp',...arrow});
+  }
+  pass(await evaluate("(function(){const controls=[...document.querySelectorAll('#student-questions .question:not([hidden]) select')];return controls.every(x=>x.value!=='')&&document.getElementById('pilot-answer-progress').textContent.includes('2 / ');})()"),
+   'ArrowDown completes matching with keyboard and progress counts complete pairs');
 
   await evaluate("document.getElementById('send').focus()");
   await pressEnter();
