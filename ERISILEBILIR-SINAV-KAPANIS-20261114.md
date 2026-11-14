@@ -77,3 +77,15 @@ Windows üzerinden alınan ikinci gerçek Edge sonucunda `npm run ui:browser:stu
 Bu başarılı koşumdan **sonra**, öğrenci tarayıcı senaryosu sessiz/yazılı erişim düzenini ve eşleştirme sorularında **native ArrowDown seçimini** sınamak üzere genişletildi. Genişletilmiş sürümün kaynak kontrolleri 3/3 başarılı, gerçek Windows/Edge kabulü **BEKLENİYOR**. Test tekrarı: `node --test tools/v4-student-browser-acceptance.test.mjs` ve `npm run ui:browser:student`.
 
 NVDA ile insan gözlemi, yerel TTS ses kalitesi dinleme, tam uçtan uca engelli öğrenci kabulü, üretim güvenlik incelemesi ve resmî kurumsal yetkilendirme ayrı **BEKLEYEN** aşamalardır; hiçbir otomatik PASS bunların yerine geçmez.
+
+## 245 Edge PASS + manuel NVDA laboratuvarı
+
+Kullanıcıdan gelen 14 Kasım Windows/Edge çıktısı: **245/245** otomatik kontrol PASS, öğrenci kaynak kontrolleri **3/3** PASS. Yazılı/sessiz soru kullanımı ve eşleştirme için doğal klavye seçimi yeni kabul senaryosunda çalıştı.
+
+İnsan kabulü için **yeni** yerel sentetik laboratuvar:
+```powershell
+npm run reader:nvda:manual
+```
+Komut mevcut veritabanına dokunmadan yeni temp SQLite ile **bağımsız onaylı dört soruluk** (2 çoktan seçmeli, 1 doğru/yanlış, 1 eşleştirme) öğrenci sınavı üretir. Yalnız `127.0.0.1` arayüzünde çalışır, tek kullanımlık sentetik kodu kullanıcıya konsolda gösterir; Ctrl+C ile geçici veri silinir. Gerçek öğrenci sınavı veya başka bir tarayıcı profili kullanılmaz.
+
+Manuel gözlem rehberi: `NVDA-OGRENCI-MANUEL-KABUL.md`. Kapsam: NVDA odak/okunabilirlik, ayrı DOU Reader ses testi, eşleştirme, sessiz kullanım, motor klavye, teslim. **Bu laboratuvarın Windows'ta başlatılması ve NVDA insan kabulü henüz yapılmadı.** Otomatik 245/245 PASS ile karıştırılmamalıdır.
