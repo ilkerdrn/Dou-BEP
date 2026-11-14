@@ -185,7 +185,17 @@
   <div class="teacher-preview-heading"><div><span class="portal-mini-label">v2.11 · GÜVENLİ ÖNİZLEME</span><h3 id="teacher-preview-title">Soruyu öğrenci gibi görüntüle</h3></div><span class="teacher-preview-badge">Salt okunur · Taslak</span></div>
   <p class="portal-help">Seçilen sorunun öğrenciye görünecek hâlini, mevcut sınavın erişilebilirlik seçenekleri ve seçilen sunum profiliyle inceleyin. Cevap anahtarı bu önizlemeye eklenmez.</p>
   <div class="teacher-preview-controls"><label class="exam-label" for="exam-preview-question">Soru seç<select id="exam-preview-question"></select></label><label class="exam-label" for="exam-preview-profile">Sunum profili<select id="exam-preview-profile"><option value="standard">Standart</option><option value="large">Geniş okuma · 24 punto</option><option value="focus">Odaklanma · tek soru</option><option value="contrast">Yüksek kontrast</option><option value="motor">Geniş yanıt alanları</option></select></label></div>
+  <div class="teacher-preview-navigation" role="group" aria-label="Öğrenci önizlemesindeki sorular arasında gezin">
+   <button type="button" class="portal-btn secondary" id="exam-preview-previous" aria-controls="exam-preview-paper" disabled>Önceki soru</button>
+   <button type="button" class="portal-btn secondary" id="exam-preview-next" aria-controls="exam-preview-paper" disabled>Sonraki soru</button>
+  </div>
   <p id="exam-preview-summary" class="portal-help" role="status" aria-live="polite"></p>
+  <div class="teacher-preview-action-panel" aria-labelledby="exam-preview-actions-heading">
+   <strong id="exam-preview-actions-heading">Bu soruda incelenecek alanlar</strong>
+   <p id="exam-preview-actions-summary" class="portal-help">Soru kontrolleri değerlendiriliyor.</p>
+   <div id="exam-preview-actions" class="teacher-preview-action-list" role="group" aria-label="Eksik alanlara geçiş"></div>
+   <p class="portal-help">Bu düğmeler yalnızca düzenleme alanını açar; soruyu değiştirmez veya onaylamaz.</p>
+  </div>
   <div class="teacher-preview-grid"><div><h4>Öğrenci görünümü</h4><div id="exam-preview-paper" class="teacher-preview-paper"></div></div><div><h4>Öğretmen karşılaştırması</h4><div id="exam-preview-comparison" class="teacher-preview-comparison"></div><div id="exam-preview-issues" class="teacher-preview-issues"></div></div></div>
   <p class="portal-help"><strong>Önemli:</strong> Bu görüntü geçici bir öğretmen kontrolüdür. Farklı sunum profilleri soru içeriklerini veya sınav onayını değiştirmez. Gerçek ekran okuyucu ve baskı doğrulamasının yerini almaz.</p>
  </section>
