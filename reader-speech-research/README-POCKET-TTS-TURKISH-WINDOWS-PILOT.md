@@ -102,3 +102,76 @@ Kaynak kod testleri:
 node --test dou-reader-neural-sample.test.mjs dou-reader.http.test.mjs
 ```
 Bu testler gerçek WAV dosyasını incelemez; gerçek kullanıcı kabulü ayrı yapılmalı.
+
+
+## Aşama 2 — yeni Türkçe deneme cümlesini doğal sesle okutma
+
+Bu yeni özellik **ayrı Windows/PowerShell laboratuvarındadır**. Kurum, öğretmen veya
+öğrenci sayfalarında canlı sentez yoktur; HTTP TTS API'si de eklenmedi.
+Önceki karşılama WAV dosyası ve sentetik robotik motor korunur.
+Modelin 440 MB ağırlıkları zaten yerelde önbelleğe alınmış olmalıdır.
+
+Paketin kurulu olup olmadığını, **hiç metin sormadan veya model çalıştırmadan**
+kontrol edin:
+
+```powershell
+Set-Location "D:\Projects\DOU-READER-SPEECH-INDEPENDENT"
+npm run reader:pocket:live:check
+```
+
+Daha sonra yalnız kendi yazdığınız **anonim, sentetik bir deneme cümlesi**
+için çevrimdışı sentezi başlatın:
+
+```powershell
+npm run reader:pocket:live
+```
+
+Komut 5–220 karakterlik anonim örnek metni etkileşimli olarak sorar.
+Varsayılan ses `female_2` ve duygu `sakin`dir. Sesler:
+`female_1`, `female_2`, `female_3`, `male_1`, `male_2`, `male_3`.
+Çıktı `D:\DOU-POCKET-TTS-LAB\manual-samples\` klasörüne benzersiz WAV
+dosyası olarak yazılır; `-Play` ile Windows varsayılan ses oynatıcısında açılır.
+Mevcut WAV dosyalarının üzerine yazılmaz.
+
+Erkek sesini denemek için:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\tools\dou-reader-pocket-live.ps1" -Speak -Play -Voice male_1 -Emotion sakin
+```
+
+Bu komut metni komut satırına eklemez; `Read-Host` ile alıp
+`--text-file -` üzerinden UTF-8 standart girdiye aktarır.
+Model çağrısında `HF_HUB_OFFLINE=1`, `TRANSFORMERS_OFFLINE=1` ve
+`HF_HUB_DISABLE_TELEMETRY=1` ayarlanır; hiç model veya Python paketi indirilmez.
+Model önbellekte yoksa hata alınır. Bu önlemler işletim sistemi düzeyinde
+**ağ izolasyonunun** yerini almaz; yüksek güvence için ayrıca ağ erişimini
+engelleyin.
+
+**Gizlilik sınırları:** Gerçek sınav sorusu, öğrenci/öğretmen kişisel
+bilgileri, telefon, e-posta, kurum sırrı veya erişim bilgisi girmeyin.
+Ek kimlik örüntüsü kontrolü eksiksiz bir PII sınıflandırıcısı değildir.
+Metin uygulama tarafından ayrı TXT dosyasına yazılmaz, fakat WAV dosyası
+**duyulabilir içeriği kalıcı olarak saklar**; yerel ses kayıtlarını siz yönetin
+ve gerekirse silin. Windows terminalindeki yazılı giriş de ekranda görünür.
+
+### Tarayıcıda ses hızını değiştirme
+
+`http://127.0.0.1:4173/dou-reader-demo` sayfasındaki
+`Yerel doğal Türkçe ses — Pocket TTS denemesi` bölümüne gidin.
+`manual-samples` klasöründen WAV dosyası seçin; `Dinleme hızı`
+alanında 0,75×, 1×, 1,25× veya 1,5× seçin.
+Bu yalnız tarayıcı çalma hızıdır: modelde yeniden ses üretmez,
+WAV dosyasını değiştirmez ve içerik sunucuya yüklenmez.
+Tarayıcı ve Windows sesleri farklı hızlarda perdeyi farklı koruyabilir.
+
+### Teknik kabul kontrolleri
+
+```powershell
+node --test reader-speech-research/reader-pocket-live-source.test.mjs dou-reader-neural-sample.test.mjs dou-reader.http.test.mjs
+```
+
+Bu testler kod ve sentetik dosya doğrulamasını kapsar.
+**Gerçek Windows çalışması, modelin her metinde doğru Türkçe okuması,
+sürekli gerçek zamanlı ses akışı, kurumsal haklar ve üretim kullanımı
+henüz onaylanmadı.** Her çağrıda CLI modeli yeniden açabilir; bu
+aşama kesintisiz ekran okuyucu ses motoru değildir.
