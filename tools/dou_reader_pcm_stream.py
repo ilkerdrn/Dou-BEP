@@ -178,3 +178,37 @@ class WaveOutStream:
             self.opened = False
             self.paused = False
             self._check(self.dll.waveOutClose(self.handle), "waveOutClose")
+
+
+PACKET_SAMPLES = 4800  # 200 ms at 24 kHz
+PACKET_BYTES = PACKET_SAMPLES * 2
+
+
+def produce_pcm_packets(model, text: str, voice: str, emotion: str, cancel, emit) -> bool:
+    """Consume streaming inference, emitting <=200 ms PCM packets.
+
+    emit(pcm: bytes) returns False if canceled; it may block for bounded
+    backpressure. It runs on the inference worker, never on Tk's GUI thread.
+    No filesystem, network access or text serialization.
+    """
+    buffer = bytearray()
+    total = 0
+    for samples in model.stream(text, voice=voice, emotion=emotion):
+        if cancel.is_set():
+            return False
+        pcm = float_chunk_to_pcm16(samples)
+        total += len(pcm)
+        if total > MAX_PCM_BYTES:
+            raise ValueError("Akış en fazla 30 saniyelik anonim ses kabul eder.")
+        buffer.extend(pcm)
+        while len(buffer) >= PACKET_BYTES:
+            if cancel.is_set() or not emit(bytes(buffer[:PACKET_BYTES])):
+                return False
+            del buffer[:PACKET_BYTES]
+    if cancel.is_set():
+        return False
+    if buffer and not emit(bytes(buffer)):
+        return False
+    if total < 2048:
+        raise ValueError("Üretilen ses çok kısa.")
+    return True
