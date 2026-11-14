@@ -55,6 +55,7 @@
    <label for="exam-reviewer-filter">İnceleme durumu
     <select id="exam-reviewer-filter">
      <option value="draft">İncelenecek taslaklar</option>
+     <option value="recheck">Düzeltme sonrası yeniden inceleme</option>
      <option value="approved">Onay kaydı bulunan sınavlar</option>
      <option value="all">Tüm görünür sınavlar</option>
     </select>
@@ -212,6 +213,13 @@
     <div id="exam-approval-workbench-findings" class="exam-approval-workbench-items" role="group" aria-labelledby="exam-approval-workbench-findings-title"></div>
    </section>
   </div>
+  <section class="exam-revision-compare" id="exam-revision-compare" aria-labelledby="exam-revision-compare-title">
+   <h4 id="exam-revision-compare-title">Önceki ve güncel sürüm farkları</h4>
+   <p class="portal-help">Yalnızca kayıt sırasında tespit edilen alan değişiklikleri gösterilir. Soru içeriği ve cevap anahtarı bu özetin parçası değildir.</p>
+   <p id="exam-revision-compare-status" role="status" aria-live="polite">Sürüm farkları kontrol ediliyor.</p>
+   <div id="exam-revision-compare-content"></div>
+   <p class="portal-help">Bu özet yalnızca iki ardışık kayıtlı sürümün teknik farkıdır; düzeltilen kazanımların doğrulandığını veya onaylandığını göstermez.</p>
+  </section>
   <section class="exam-review-feedback" id="exam-review-feedback" aria-labelledby="exam-review-feedback-title">
    <h4 id="exam-review-feedback-title">İncelemeci düzeltme kayıtları</h4>
    <p class="portal-help">Her kayıt bir sınav sürümüne bağlıdır. Yeni sürüm kaydedildiğinde eski geri bildirim geçmişte kalır; düzeltmeler otomatik tamamlandı sayılmaz.</p>
