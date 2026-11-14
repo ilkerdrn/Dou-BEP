@@ -26,7 +26,7 @@ import {variantComparison,inspectQuestionVariant,PRESENTATION_MODES} from './pre
 import {auditAudioAccess,generateAccessibleExamHtml} from './accessible-player.mjs';
 import {NEED_AREAS,DOMAINS,SUPPORTS,recommendSupports,applySupportPlan,normalizeSupportPlan} from './support-plan.mjs';
 const $=id=>document.getElementById(id), esc=escapeHtml;
-const state={actor:null,csrf:null,exams:[],current:null,exam:null,dirty:false,busy:false,approvalHistory:null,reviewFeedback:null,mp3Available:false,needArea:'',supportDraft:[],domainDraft:'general'};
+const state={actor:null,csrf:null,exams:[],current:null,exam:null,dirty:false,busy:false,approvalHistory:null,reviewFeedback:null,revisionDelta:null,mp3Available:false,needArea:'',supportDraft:[],domainDraft:'general'};
 const has=p=>({admin:['exam.view','exam.edit','exam.approve','exam.export'],coordinator:['exam.view','exam.edit','exam.approve','exam.export'],teacher:['exam.view','exam.edit','exam.approve','exam.export'],reviewer:['exam.view','exam.approve'],observer:['exam.view']}[state.actor?.role]||[]).includes(p);
 let previewIndex=0,approvalWorkbenchSnapshot=null,reviewerFeedbackVersionKey='';
 function renderTeacherQuestionPreview(){
@@ -78,7 +78,7 @@ const autosave=createAutosaveManager({
  persist:async (snapshot,{isCurrent})=>{
   const result=snapshot.id?await api('/exams/'+snapshot.id,{method:'PUT',body:{revision:snapshot.revision,exam:snapshot.exam}}):await api('/exams',{method:'POST',body:{exam:snapshot.exam}});
   // Late responses belong only to the draft they were sent for.
-  if(isCurrent()){state.current=result.item;state.approvalHistory=null;state.reviewFeedback=null;void loadReviewFeedback();refreshList().catch(()=>{});}
+  if(isCurrent()){state.current=result.item;state.approvalHistory=null;state.reviewFeedback=null;state.revisionDelta=null;void loadReviewFeedback();void loadRevisionDelta();refreshList().catch(()=>{});}
   return result.item;
  },
  onEvent:(kind,detail)=>{if(kind!=='idle')showAutosave(kind,detail);},delayMs:2400
@@ -89,11 +89,11 @@ const examSelection=createExamSelection({
   autosave.reset();state.approvalHistory=null;state.current=r.item;state.exam=normalizeExam(r.item.exam);
   state.needArea='';state.supportDraft=[...(state.exam.supportPlan?.selected||[])];
   state.domainDraft=state.exam.supportPlan?.domain||'general';state.dirty=false;
-  state.reviewFeedback=null;reviewFeedbackFormKey='';
-  $('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('saved');await Promise.all([loadHistory(),loadReviewFeedback()]);
+  state.reviewFeedback=null;state.revisionDelta=null;reviewFeedbackFormKey='';
+  $('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('saved');await Promise.all([loadHistory(),loadReviewFeedback(),loadRevisionDelta()]);
  }
 });
-function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.reviewFeedback=null;reviewFeedbackGeneration++;reviewFeedbackFormKey='';state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
+function draft(){examSelection.invalidate();previewIndex=0;autosave.reset();state.current=null;state.approvalHistory=null;state.reviewFeedback=null;state.revisionDelta=null;reviewFeedbackGeneration++;revisionDeltaGeneration++;reviewFeedbackFormKey='';state.exam=newExam();state.needArea='';state.supportDraft=[];state.domainDraft='general';state.dirty=false;$('exam-confirm').checked=false;$('exam-questions').dispatchEvent(new Event('exam-question-reset'));draw();showAutosave('new');}
 const field=(key,label,value,tag='input',extra='')=>`<label>${esc(label)}${tag==='textarea'?`<textarea data-field="${key}" rows="${extra||3}">${esc(value)}</textarea>`:`<input data-field="${key}" value="${esc(value)}" ${extra}>`}</label>`;
 function qualityQuestionTarget(message){
  const match=/^(\d+)\.\s*soru\s*:/iu.exec(String(message||''));
@@ -161,6 +161,67 @@ $('exam-quality').addEventListener('click',event=>{
  if(!focusTarget.matches('input,textarea,select,button'))focusTarget.setAttribute('tabindex','-1');
  focusTarget.focus({preventScroll:true});
 });
+let revisionDeltaGeneration=0;
+function renderRevisionDelta(){
+ const box=$('exam-revision-compare-content'),status=$('exam-revision-compare-status');
+ if(!box||!status)return;
+ box.replaceChildren();
+ const current=state.current,view=state.revisionDelta;
+ if(!current){
+  status.textContent='Yeni, kaydedilmemiş taslak için sürüm karşılaştırması yok.';
+  return;
+ }
+ if(!view||view.examId!==current.id||view.currentRevision!==current.revision){
+  status.textContent='Sürüm farkları sunucudan kontrol ediliyor.';
+  return;
+ }
+ if(!view.available||!view.comparison){
+  status.textContent=view.note||'Bu sürüm için güvenilir eski-yeni fark kaydı bulunamadı.';
+  return;
+ }
+ const delta=view.comparison;
+ status.textContent='Sürüm '+delta.fromRevision+' → '+delta.toRevision+' · Önce '+delta.previousQuestionCount+
+  ' soru, şimdi '+delta.currentQuestionCount+' soru · '+delta.changedSections.length+
+  ' sınav alan grubu ve '+delta.changedQuestions.length+' soru konumu değişmiş görünüyor.';
+ const section=document.createElement('p');
+ section.textContent='Değişen bölümler: '+(delta.changedSections.join(', ')||'Genel sınav bölümü değişmedi.');
+ box.append(section);
+ if(delta.changedQuestions.length){
+  const list=document.createElement('ul');
+  for(const item of delta.changedQuestions.slice(0,30)){
+   const li=document.createElement('li');
+   li.textContent='Soru '+item.number+' · '+
+    (item.kind==='added'?'Eklendi':item.kind==='removed'?'Kaldırıldı':'Değişti')+
+    (item.fields.length?' · '+item.fields.join(', '):'');
+   list.append(li);
+  }
+  box.append(list);
+  if(delta.changedQuestions.length>30){
+   const tail=document.createElement('p');
+   tail.textContent=(delta.changedQuestions.length-30)+' başka soru konumu için tam kalite denetimi gereklidir.';
+   box.append(tail);
+  }
+ }else{
+  const note=document.createElement('p');
+  note.textContent='Bu iki sürüm arasında soru konumu değişikliği kaydedilmedi.';
+  box.append(note);
+ }
+}
+async function loadRevisionDelta(){
+ const id=state.current?.id,revision=state.current?.revision,ticket=++revisionDeltaGeneration;
+ state.revisionDelta=null;
+ renderRevisionDelta();
+ if(!id)return;
+ try{
+  const {diff}=await api('/exams/'+id+'/revision-diff');
+  if(ticket!==revisionDeltaGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
+  state.revisionDelta=diff;
+  renderRevisionDelta();
+ }catch(err){
+  if(ticket===revisionDeltaGeneration&&state.current?.id===id&&state.current?.revision===revision)
+   $('exam-revision-compare-status').textContent='Sürüm karşılaştırması alınamadı: '+err.message;
+ }
+}
 let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false;
 const feedbackStageLabels=Object.freeze({
  identity:'Sınav bilgileri',goals:'BEP kazanımları',questions:'Sorular ve yanıtlar',
@@ -386,6 +447,7 @@ function renderApprovalWorkbench(preflight){
  $('exam-approval-workbench-quality').disabled=!has('exam.view');
  $('exam-approval-workbench-confirm').disabled=!has('exam.view');
  renderReviewFeedback();
+ renderRevisionDelta();
 }
 function renderPreflight(){
  const x=state.exam;if(!x)return;
@@ -784,7 +846,8 @@ function renderReviewerInbox(){
  if(!data.enabled)return;
  const count=$('exam-reviewer-count');
  count.textContent='Son 100 görünür sınav içinden '+data.items.length+' kayıt gösteriliyor · '+data.counts.draft+
-  ' taslak · '+data.counts.approved+' onay kaydı bulunan sınav. Bir taslak otomatik olarak onaya hazır sayılmaz.';
+  ' taslak · '+data.counts.recheck+' önceki düzeltmeden sonra yeni sürüm · '+data.counts.approved+
+  ' onay kaydı bulunan sınav. Yeniden inceleme, düzeltmenin doğrulandığı anlamına gelmez.';
  const container=$('exam-reviewer-items');
  container.replaceChildren();
  if(!data.items.length){
@@ -802,7 +865,7 @@ function renderReviewerInbox(){
   const hint=document.createElement('p');hint.textContent=item.hint;
   title.append(heading,status,hint);
   const actions=document.createElement('div');actions.className='exam-reviewer-item-actions';
-  for(const [label,kind] of [['İncele','review'],['Onay geçmişi','history']]){
+  for(const [label,kind] of [['İncele','review'],['Sürüm farkları','diff'],['Onay geçmişi','history']]){
    const button=document.createElement('button');button.type='button';
    button.className='portal-btn secondary';button.textContent=label;
    button.dataset.reviewerAction=kind;button.dataset.examId=item.id;
@@ -824,7 +887,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
  const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
  if(!state.exams.some(item=>item.id===id))return notice('Sınav artık listede görünmüyor. Listeyi yenileyin.',true);
  const action=button.dataset.reviewerAction;
- if(!['review','history'].includes(action))return;
+ if(!['review','history','diff'].includes(action))return;
  button.disabled=true;
  try{
   const opened=await openExam(id);
@@ -833,7 +896,13 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
    notice('Bu sınavın sürümü inceleme listesi açıldıktan sonra değişmiş. Güncel sürüm açıldı; onay vermeden önce yeniden inceleyin.',true);
    await refreshList();
   }
-  if(action==='history'){
+  if(action==='diff'){
+   visitPreflightTarget('exam-output-section');
+   const heading=$('exam-revision-compare-title');
+   heading.setAttribute('tabindex','-1');
+   heading.scrollIntoView({behavior:'auto',block:'center'});
+   heading.focus({preventScroll:true});
+  }else if(action==='history'){
    const details=$('exam-editor-card').querySelector('.exam-approval-history');
    if(details){
     details.open=true;
