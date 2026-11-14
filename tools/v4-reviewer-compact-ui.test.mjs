@@ -52,7 +52,9 @@ test('unsent reviewer selections cannot be lost silently on new, other or page e
  assert.match(client,/\$\('exam-review-feedback-questions'\)\.value\.trim\(\)/);
  assert.match(client,/function confirmLeavingReviewRequest\(\)/);
  assert.match(client,/if\(reviewFeedbackSending\)/);
- assert.match(client,/if\(id!==state\.current\?\.id&&!confirmLeavingReviewRequest\(\)\)return/);
+ assert.match(client,/if\(!sameOpened&&!confirmLeavingReviewRequest\(\)\)return/);
+ assert.match(client,/const sameOpened=state\.current\?\.id===id&&state\.current\?\.revision===expectedRevision/);
+ assert.match(client,/const opened=sameOpened\?true:await openExam\(id\)/);
  assert.match(client,/if\(\(btn\.dataset\.duplicate\|\|btn\.dataset\.open!==state\.current\?\.id\)&&!confirmLeavingReviewRequest\(\)\)return/);
  assert.match(client,/if\(!confirmLeavingReviewRequest\(\)\)return;draft\(\)/);
  assert.match(client,/autosave\.isSaving\(\)\|\|reviewFeedbackSending\|\|hasUnsentReviewRequest\(\)/);
