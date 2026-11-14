@@ -1697,3 +1697,26 @@ body.institution-page[data-design-version="4"] #exam-review-feedback .exam-revie
 @media(max-width:650px){
  body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-shortcuts button{width:100%}
 }
+/* V4 revision change audit: no raw exam text or answer keys are rendered. */
+body.institution-page[data-design-version="4"] #exam-revision-compare{
+ margin:16px 0;padding:14px 16px;border:1px solid #dddcd8;border-radius:12px;
+ background:#fff;color:#242421;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare h4{margin:0 0 8px;font-size:15px}
+body.institution-page[data-design-version="4"] #exam-revision-compare p{
+ margin:8px 0;line-height:1.55;overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare ul{
+ margin:10px 0;padding-left:24px;display:grid;gap:6px;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare li{
+ font-size:13px;line-height:1.5;overflow-wrap:anywhere;
+}
+@media(max-width:620px){
+ body.institution-page[data-design-version="4"] #exam-revision-compare{padding:12px}
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-revision-compare{
+  background:Canvas;color:CanvasText;border-color:CanvasText;
+ }
+}
