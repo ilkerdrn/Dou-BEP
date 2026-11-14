@@ -52,6 +52,8 @@
     "reader:pocket:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pocket-tts.ps1",
     "reader:pocket:live:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pocket-live.ps1",
     "reader:pocket:live": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pocket-live.ps1 -Speak -Play",
+    "reader:pocket:desktop:check": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pocket-desktop.ps1",
+    "reader:pocket:desktop": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-pocket-desktop.ps1 -Start",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
     "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
     "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs",
