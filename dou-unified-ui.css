@@ -1720,3 +1720,21 @@ body.institution-page[data-design-version="4"] #exam-revision-compare li{
   background:Canvas;color:CanvasText;border-color:CanvasText;
  }
 }
+/* V4 reviewer recheck checklist: neutral, non-approval visual treatment. */
+body.institution-page[data-design-version="4"] #exam-revision-compare .exam-recheck-hints{
+ margin:14px 0;padding:12px;border:1px solid #d9ddd9;
+ border-radius:10px;background:#f7f8f6;color:#242421;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare .exam-recheck-hints h5{
+ margin:0 0 7px;font-size:14px;line-height:1.4;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare .exam-recheck-hint-row{
+ border-bottom:1px solid #e3e5e1;padding:8px 0;margin:0;
+ line-height:1.5;font-size:13px;overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-revision-compare .exam-recheck-hint-row:last-child{border-bottom:0}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-revision-compare .exam-recheck-hints{
+  background:Canvas;color:CanvasText;border-color:CanvasText;
+ }
+}
