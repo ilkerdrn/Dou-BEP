@@ -108,7 +108,7 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
    FROM exams e WHERE e.tenant_id=? ORDER BY e.updated_at DESC LIMIT 100`).all(actor.tenantId);
   return rows.filter(x=>visible(actor,x)).map(row=>({...meta(row),feedbackCurrent:Boolean(row.feedback_current),feedbackRecheck:Boolean(row.feedback_recheck)&&!Boolean(row.feedback_current)}));
  }
- function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),lastEditedByCurrentActor:row.last_editor_id===actor.id,exam:JSON.parse(row.body)};}
+ function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),lastEditedByCurrentActor:row.last_editor_id===actor.id,independentApprovalRequired:requireIndependentExamApproval,exam:JSON.parse(row.body)};}
  function createExam(actor,payload){allow(actor,'exam.edit');const exam=sanitize(payload?.exam);const count=db.prepare('SELECT COUNT(*) AS n FROM exams WHERE tenant_id=?').get(actor.tenantId).n;
   if(count>=200)fail('quota','Kurum sınav sınırına ulaşıldı.',409);
   const stamp=Date.now(),id=randomUUID();db.prepare('INSERT INTO exams(id,tenant_id,owner_id,last_editor_id,title,body,revision,status,created_at,updated_at) VALUES(?,?,?,?,?,?,1,\'draft\',?,?)').run(id,actor.tenantId,actor.id,actor.id,exam.title,JSON.stringify(exam),stamp,stamp);
