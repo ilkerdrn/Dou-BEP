@@ -48,6 +48,7 @@
     "reader:acceptance:windows": "powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File tools/dou-reader-windows-acceptance.ps1",
     "ui:browser": "node tools/browser-ui-acceptance.mjs",
     "ui:browser:student": "node tools/browser-ui-acceptance.mjs --student",
+    "reader:nvda:manual": "node tools/v4-nvda-manual-lab.mjs",
     "ui:browser:handoff": "node tools/browser-review-handoff.mjs",
     "reader:voice:diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-voice-readiness.ps1",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
