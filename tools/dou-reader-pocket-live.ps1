@@ -23,6 +23,7 @@ $cliExe = Join-Path $LabPath '.venv\Scripts\pocket-tts-turkish.exe'
 if (-not (Test-Path -LiteralPath $cliExe -PathType Leaf)) {
  Write-Host 'DOU POCKET LIVE: NOT READY - install the isolated model package first.' -ForegroundColor Yellow
  Write-Host 'See tools/dou-reader-pocket-tts.ps1 -Setup (third-party install; permission required).'
+ if ($Speak) { throw 'Cannot synthesize: local Pocket TTS installation is missing.' }
  return
 }
 Write-Host 'DOU POCKET LIVE: PACKAGE DETECTED. Offline cached model required.' -ForegroundColor Green
