@@ -194,23 +194,39 @@ export function pilotSessions(db,{StoreError,log}){
  function redeem(code){
   const raw=typeof code==='string'?code.trim().toUpperCase().replace(/-/g,''):'';
   const time=now(),key=sha('pilot-code:'+raw.slice(0,80));
-  // The global budget stops unlimited random-code guesses; its lock survives restarts.
+  // Keep the persistent global/code-specific limiter and never log attempted codes.
   limiterBlocked(GLOBAL_KEY,time);
   limiterBlocked(key,time);
+  let inTransaction=false;
   try{
    if(!CODE.test(raw))error('invalid_code','Kod geçersiz veya kullanılmış.',401);
+   // Serialize checking the approved revision and consuming the one-time code
+   // against concurrent exam edits and another claim on a separate connection.
+   db.exec('BEGIN IMMEDIATE');
+   inTransaction=true;
    const row=db.prepare('SELECT * FROM pilot_sessions WHERE code_hash=?').get(sha(raw));
-   if(!row||row.status!=='issued'||row.expires_at<=time)error('invalid_code','Kod geçersiz veya kullanılmış.',401);
+   if(!row||row.status!=='issued'||row.expires_at<=now())
+    error('invalid_code','Kod geçersiz veya kullanılmış.',401);
    const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
-   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti. Öğretmenden yeni kod alın.',409);
+   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)
+    error('exam_changed','Sınav sürümü değişti. Öğretmenden yeni kod alın.',409);
    approvedExam(exam);
-   let payload;try{payload=createStudentPayload(JSON.parse(exam.body));}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
+   let payload;
+   try{payload=createStudentPayload(JSON.parse(exam.body));}
+   catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
    const token=randomBytes(32).toString('base64url');
-   const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),now(),row.id,now());
-   if(!changed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
+   const claimed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=? WHERE id=? AND status='issued' AND expires_at>?")
+    .run(sha(token),now(),row.id,now());
+   if(!claimed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
-   return {token,expiresAt:row.expires_at,exam:payload,...(row.answers?{answers:JSON.parse(row.answers)}:{})};
+   const result={token,expiresAt:row.expires_at,exam:payload,
+    ...(row.answers?{answers:JSON.parse(row.answers)}:{})};
+   db.exec('COMMIT');
+   inTransaction=false;
+   return result;
   }catch(err){
+   // Release the writer lock before persistent failed-attempt accounting.
+   if(inTransaction){try{db.exec('ROLLBACK');}catch{}}
    if(err?.code==='invalid_code'){
     recordFailure(key,time,REDEEM_CODE_LIMIT,15*60*1000,REDEEM_LOCK_MS);
     recordFailure(GLOBAL_KEY,time,REDEEM_GLOBAL_LIMIT,REDEEM_WINDOW_MS,REDEEM_WINDOW_MS);
