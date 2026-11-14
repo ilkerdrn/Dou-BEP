@@ -212,6 +212,24 @@
     <div id="exam-approval-workbench-findings" class="exam-approval-workbench-items" role="group" aria-labelledby="exam-approval-workbench-findings-title"></div>
    </section>
   </div>
+  <section class="exam-review-feedback" id="exam-review-feedback" aria-labelledby="exam-review-feedback-title">
+   <h4 id="exam-review-feedback-title">İncelemeci düzeltme kayıtları</h4>
+   <p class="portal-help">Her kayıt bir sınav sürümüne bağlıdır. Yeni sürüm kaydedildiğinde eski geri bildirim geçmişte kalır; düzeltmeler otomatik tamamlandı sayılmaz.</p>
+   <p id="exam-review-feedback-status" role="status" aria-live="polite">Geri bildirimler yükleniyor.</p>
+   <div id="exam-review-feedback-records" class="exam-review-feedback-records"></div>
+   <form id="exam-review-feedback-form" hidden>
+    <fieldset>
+     <legend>Güncel taslağa düzeltme isteği bırak</legend>
+     <p class="portal-help">Yalnızca eksik aşamaları ve soru numaralarını işaretleyin. Öğrenci bilgisi, tanı, cevap anahtarı veya serbest açıklama kaydedilmez.</p>
+     <div id="exam-review-feedback-stages" class="exam-review-feedback-stages"></div>
+     <label for="exam-review-feedback-questions">İncelenecek soru numaraları (virgülle ayırın; en fazla 20)
+      <input id="exam-review-feedback-questions" type="text" inputmode="numeric" maxlength="90" placeholder="Örnek: 1, 3, 5" autocomplete="off">
+     </label>
+     <label class="portal-check"><input id="exam-review-feedback-confirm" type="checkbox"> Bu taslağın mevcut sürümünü gözden geçirdim. Seçili düzeltmelerin yalnızca öğretmen için kontrol talebi olduğunu onaylıyorum.</label>
+     <button id="exam-review-feedback-submit" class="portal-btn secondary" type="submit">Düzeltme kaydını öğretmene ilet</button>
+    </fieldset>
+   </form>
+  </section>
   <div class="exam-approval-workbench-actions">
    <button id="exam-approval-workbench-quality" class="portal-btn secondary" type="button">Kalite raporunu aç</button>
    <button id="exam-approval-workbench-confirm" class="portal-btn secondary" type="button">Onay teyidine git</button>
