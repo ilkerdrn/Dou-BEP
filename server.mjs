@@ -33,6 +33,7 @@ const allowed={
  '/workflow-next-action.mjs':['workflow-next-action.mjs','text/javascript; charset=utf-8'],
  '/question-draft-guidance.mjs':['question-draft-guidance.mjs','text/javascript; charset=utf-8'],
  '/approval-workbench.mjs':['approval-workbench.mjs','text/javascript; charset=utf-8'],
+ '/reviewer-inbox.mjs':['reviewer-inbox.mjs','text/javascript; charset=utf-8'],
  '/':['index.html','text/html; charset=utf-8'],
  '/index.html':['index.html','text/html; charset=utf-8'],
  '/eski-sinav-tasarimci':['index.html','text/html; charset=utf-8'],
