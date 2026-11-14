@@ -190,7 +190,7 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
    return {...meta(db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(id,actor.tenantId)),
     report:{errorCount:0,warningCount:report.warningCount}};
   }catch(err){
-   if(db.isTransaction)db.exec('ROLLBACK');
+   try{db.exec('ROLLBACK');}catch{} // Preserve the original error if COMMIT already completed.
    throw err;
   }
  }
@@ -254,7 +254,7 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
    db.exec('COMMIT');
    return reviewFeedbackList(actor,id);
   }catch(err){
-   if(db.isTransaction)db.exec('ROLLBACK');
+   try{db.exec('ROLLBACK');}catch{} // Preserve the original error if COMMIT already completed.
    throw err;
   }
  }
