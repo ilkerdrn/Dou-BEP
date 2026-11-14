@@ -203,6 +203,29 @@ function renderReviewFeedback(){
   questionLine.textContent='İncelenecek soru numaraları: '+
    ((record.questionNumbers||[]).join(', ')||'Bu kayıtta soru numarası seçilmedi.');
   row.append(heading,stageLine,questionLine);
+  if(currentRecord&&(record.stageIds?.length||record.questionNumbers?.length)){
+   const shortcuts=document.createElement('div');shortcuts.className='exam-review-feedback-shortcuts';
+   if(record.stageIds?.length){
+    const targetId={
+     identity:'exam-main-fields',goals:'exam-goal-section',questions:'exam-question-section',
+     access:'exam-quality',delivery:'exam-output-section'
+    }[record.stageIds[0]];
+    if(targetId){
+     const action=document.createElement('button');action.type='button';action.className='portal-btn secondary';
+     action.textContent='İlk eksik aşamayı aç';action.dataset.feedbackTarget=targetId;
+     action.dataset.feedbackRevision=String(record.revision);
+     shortcuts.append(action);
+    }
+   }
+   if(record.questionNumbers?.length){
+    const action=document.createElement('button');action.type='button';action.className='portal-btn secondary';
+    action.textContent='İlk işaretli soruya git';
+    action.dataset.feedbackQuestion=String(record.questionNumbers[0]);
+    action.dataset.feedbackRevision=String(record.revision);
+    shortcuts.append(action);
+   }
+   row.append(shortcuts);
+  }
   if(!currentRecord){
    const label=document.createElement('p');label.className='portal-help';
    label.textContent='Bu kayıt yeni sürümün düzeltmelerini doğrulamaz. Yeni sürüm ayrı incelenmelidir.';
@@ -245,6 +268,18 @@ async function loadReviewFeedback(){
   }
  }
 }
+$('exam-review-feedback-records').addEventListener('click',event=>{
+ const button=event.target.closest('[data-feedback-target],[data-feedback-question]');
+ if(!button||!$('exam-review-feedback-records').contains(button))return;
+ if(!state.current||state.current.status!=='draft'||
+    Number(button.dataset.feedbackRevision)!==state.current.revision)
+  return notice('Bu kayıt eski bir sürüme ait. Güncel sürümü açın.',true);
+ if(button.dataset.feedbackTarget){
+  visitPreflightTarget(button.dataset.feedbackTarget);
+ }else if(button.dataset.feedbackQuestion){
+  visitApprovalQuestion(Number(button.dataset.feedbackQuestion)-1,'prompt');
+ }
+});
 $('exam-review-feedback-form').addEventListener('submit',async event=>{
  event.preventDefault();
  if(reviewFeedbackSending)return;
