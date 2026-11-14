@@ -69,3 +69,11 @@ npm run ui:browser:student
 Bu komut mevcut `ui:browser` kontrollerini de çalıştırır, sonra **geçici SQLite veritabanında** bağımsız onaylı sentetik sınav oluşturur. Tek kullanımlık kod ile öğrenci ekranını açar; yazılı/görsel/motor sunumunu, klavyede Space/Enter ile yanıtı, tekrar bak işaretini, teslim özetini, tek onayı, anonim teslim makbuzunu ve sunucu teslim durumunu doğrular. Tanı, gerçek sınav/öğrenci verisi, Pocket TTS ses modeli veya kişisel ses kaydı kullanılmaz. Öğrenci tarayıcı kabulünün Windows sonucu henüz **BEKLENİYOR**.
 
 Korumalar: `npm run ui:browser` komutu değişmedi; öğrenci aşaması yalnız `--student` ile çalışır. Yeni kaynak sözleşmesi `node --test tools/v4-student-browser-acceptance.test.mjs` ile kontrol edilebilir. Bu kontrol manuel NVDA/işitme/motor cihaz kabulünün yerini tutmaz.
+
+## Öğrenci Edge kabulü — 14 Kasım 2026
+
+Windows üzerinden alınan ikinci gerçek Edge sonucunda `npm run ui:browser:student` **241/241 kontrolle PASS** verdi. Önceki standart 226 denetime ek olarak, anonim öğrencinin erişim düzeni, tek kullanım kodu, hazırlık onayı, motor erişim, Space/Enter ile radyo yanıtı, tekrar bak işareti ve tek seferlik teslimi tarayıcı + sunucu üzerinde doğrulandı. Bu sonuç yalnız sentetik, geçici SQLite veritabanına dayanır.
+
+Bu başarılı koşumdan **sonra**, öğrenci tarayıcı senaryosu sessiz/yazılı erişim düzenini ve eşleştirme sorularında **native ArrowDown seçimini** sınamak üzere genişletildi. Genişletilmiş sürümün kaynak kontrolleri 3/3 başarılı, gerçek Windows/Edge kabulü **BEKLENİYOR**. Test tekrarı: `node --test tools/v4-student-browser-acceptance.test.mjs` ve `npm run ui:browser:student`.
+
+NVDA ile insan gözlemi, yerel TTS ses kalitesi dinleme, tam uçtan uca engelli öğrenci kabulü, üretim güvenlik incelemesi ve resmî kurumsal yetkilendirme ayrı **BEKLEYEN** aşamalardır; hiçbir otomatik PASS bunların yerine geçmez.
