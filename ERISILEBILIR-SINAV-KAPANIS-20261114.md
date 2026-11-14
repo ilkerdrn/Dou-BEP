@@ -57,3 +57,15 @@ node --test student-access-profiles.test.mjs pilot-student-ux.test.mjs dou-reade
 ```
 
 Mevcut yerel klasör kirliyse dosyaların üzerine yazmayın. Temiz `git worktree` ile ayrı bir test kopyası açın. Testlerin geçmesi **otomatik üretim onayı** değildir; Windows/NVDA gerçek kullanıcı kabulü gerekir.
+
+## 14 Kasım — Windows Edge doğrulama durumu
+
+Kullanıcının gerçek Windows 11 / Node 24 / Edge denemesindeki standart tarayıcı kabul çıktısı: **226 otomatik Edge kontrolü PASS**. Klavye kaynak testleri: **5/5 PASS**. Bu sonuç gerçek NVDA ve doğal Türkçe ses dinleme kabulü değildir.
+
+Öğrenci için ayrıca **opt-in** sentetik Edge kabulü tanımlandı:
+```powershell
+npm run ui:browser:student
+```
+Bu komut mevcut `ui:browser` kontrollerini de çalıştırır, sonra **geçici SQLite veritabanında** bağımsız onaylı sentetik sınav oluşturur. Tek kullanımlık kod ile öğrenci ekranını açar; yazılı/görsel/motor sunumunu, klavyede Space/Enter ile yanıtı, tekrar bak işaretini, teslim özetini, tek onayı, anonim teslim makbuzunu ve sunucu teslim durumunu doğrular. Tanı, gerçek sınav/öğrenci verisi, Pocket TTS ses modeli veya kişisel ses kaydı kullanılmaz. Öğrenci tarayıcı kabulünün Windows sonucu henüz **BEKLENİYOR**.
+
+Korumalar: `npm run ui:browser` komutu değişmedi; öğrenci aşaması yalnız `--student` ile çalışır. Yeni kaynak sözleşmesi `node --test tools/v4-student-browser-acceptance.test.mjs` ile kontrol edilebilir. Bu kontrol manuel NVDA/işitme/motor cihaz kabulünün yerini tutmaz.
