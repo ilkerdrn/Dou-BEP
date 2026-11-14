@@ -104,3 +104,12 @@ Sıradaki insan kabul kanıtı `NVDA-OGRENCI-MANUEL-KABUL.md` matrisi üzerinden
 Kaynak kod incelemesinde öğrencinin `Sınava geri dön` düğmesi kendi bulunduğu gizli son kontrol panelini kapattığı için klavye odağının görünmeyen alanda kalabildiği tespit edildi. Düzeltme: son kontrolden dönünce mevcut **görünür sorunun başlığına** odak aktarılır. Başarılı tek kullanımlık teslimden sonra da anonim makbuzun `pilot-done-title` başlığı odaklanır; makbuz bölümü `aria-labelledby` ile bu başlığa bağlıdır.
 
 `tools/student-browser-acceptance.mjs` artık gerçek Edge'de son kontrolden geri dönüşü, incelemenin yeniden açılmasını ve teslim sonrası makbuz başlığının odağa alınmasını sınar. Bu değişiklikler için **kaynak kontrolü geçti, yeni Windows/Edge sonuçları BEKLENİYOR**. Bilinen son onaylı Windows durumu **246/246**; yeni sayım henüz bu sayıya eklenmemelidir. Manuel NVDA insan testi ve doğal Türkçe ses anlaşılırlığı hâlâ **BEKLENİYOR**.
+
+
+## 249/249 Windows öğrenci erişilebilirlik kabulü — 14 Kasım 2026
+
+Windows/Edge çalışma çıktısı: `pilot-student-ux.test.mjs` ve `tools/v4-student-browser-acceptance.test.mjs` birlikte **16/16 PASS**, `npm run ui:browser:student` **249/249 PASS**. Yeni testler, öğrencinin son kontrolü iptal ettiğinde odağın görünür soru başlığına dönmesini; son kontrolün yeniden açıldığında başlığa odaklanmasını ve tek seferlik teslimden sonra anonim teslim makbuzu başlığının odaklanmasını doğruladı. Bu testler izole, sentetik SQLite veritabanı ve Microsoft Edge üzerinde yapıldı.
+
+**Kalan kabul:** Gerçek NVDA konuşma/odak deneyimi, Türkçe sesin dinlenerek anlaşılabilirlik onayı, işitme/motor kullanıcılarıyla saha kabulü, WCAG manuel değerlendirmesi ve kurumsal üretim güvenliği onayı. Otomatik 249/249 sonucu bunların yerine geçmez.
+
+İnsan gözlemi için mevcut `npm run reader:nvda:manual` laboratuvarı ve `NVDA-OGRENCI-MANUEL-KABUL.md` matrisi kullanılabilir; yeni çalıştırmada önceki tek kullanımlık kod ya da geçici port yeniden kullanılmaz.
