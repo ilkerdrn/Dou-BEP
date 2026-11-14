@@ -22,7 +22,40 @@ const FIELD_HINTS=Object.freeze({
  source:'Öğretmen kaynak karşılaştırmasını tamamlasın'
 });
 const LIMIT=8;
+const QUALITY_LIMIT=5;
 const safeInt=n=>Number.isSafeInteger(n)&&n>=0?n:0;
+// Only fixed descriptions are displayed; a quality issue may contain answer data.
+function qualityFinding(issue,questionCount){
+ if(issue?.level!=='error'&&issue?.level!=='warning')return null;
+ const raw=String(issue.text||'');
+ const match=/^(\d+)\.\s*soru\s*:/iu.exec(raw);
+ const index=match?Number(match[1])-1:null;
+ const valid=Number.isSafeInteger(index)&&index>=0&&index<questionCount;
+ const lower=raw.toLocaleLowerCase('tr');
+ let category='Kalite kontrolü',field='prompt',target='exam-quality';
+ if(/bep hedef|kazanım|hedef bağlantısı/.test(lower)){
+  category='Kazanım bağlantısı';field='objective';target='exam-question-section';
+ }else if(/kaynak belge|kaynak/.test(lower)){
+  category='Kaynak karşılaştırması';field='source';target='exam-question-section';
+ }else if(/görsel|betimleme|alternatif açıklama/.test(lower)){
+  category='Görsel betimlemesi';field='visualAltText';target='exam-question-section';
+ }else if(/seçenek|şık/.test(lower)){
+  category='Seçenekler';field='options';target='exam-question-section';
+ }else if(/eşleştirme/.test(lower)){
+  category='Eşleştirme';field='pairs';target='exam-question-section';
+ }else if(/cevap|yanıt anahtarı|doğru yanıt/.test(lower)){
+  category='Yanıt anahtarı';field='answer';target='exam-question-section';
+ }else if(/puan/.test(lower)){
+  category='Puan';field='points';target='exam-question-section';
+ }else if(/soru metni|metin boş/.test(lower)){
+  category='Soru metni';field='prompt';target='exam-question-section';
+ }
+ // Never create question links from untrusted, non-numbered findings.
+ if(!valid){index=null;target='exam-quality';field=null;}
+ return {index,field,target,type:issue.level,
+  label:(valid?'Soru '+(index+1):'Genel kalite')+' · '+category+' · '+(issue.level==='error'?'Hata':'Uyarı'),
+  detail:issue.level==='error'?'Zorunlu kalite bulgusu: ilgili kontrolü tamamlayın.':'Kalite uyarısı: öğretmen/incelemeci olarak değerlendirin.'};
+}
 
 export function approvalWorkbenchSummary({
  preflight,questionDraft,quality,saved=false,dirty=true,saving=false,pending=false,
@@ -51,6 +84,17 @@ export function approvalWorkbenchSummary({
    blocking:safeInt(item.blocking),warnings:safeInt(item.warnings)
   };
  });
+ const seen=new Set(questionItems.map(item=>item.index+'|'+item.field+'|'+item.type));
+ const findings=[];
+ for(const issue of Array.isArray(quality.issues)?quality.issues:[]){
+  const item=qualityFinding(issue,total);if(!item)continue;
+  const key=item.index+'|'+item.field+'|'+item.type;
+  if(seen.has(key))continue;
+  seen.add(key);findings.push(item);
+ }
+ // Errors first. No raw finding, exam prompt or answer is returned to the UI.
+ findings.sort((a,b)=>(a.type==='error'?0:1)-(b.type==='error'?0:1));
+ const qualityItems=findings.slice(0,QUALITY_LIMIT);
  const errors=safeInt(quality.errorCount);
  const warnings=safeInt(quality.warningCount);
  const audio=safeInt(audioFindings);
@@ -95,6 +139,7 @@ export function approvalWorkbenchSummary({
    questionReview:safeInt(questionDraft.review),qualityErrors:errors,qualityWarnings:warnings,
    audioFindings:audio},
   questionItems,hiddenQuestionCount:Math.max(0,open.length-questionItems.length),
+  qualityItems,hiddenQualityCount:Math.max(0,findings.length-qualityItems.length),
   canRequestApproval:state==='checkable',approvalConflict:Boolean(preflight.approvalConflict),
   notice:'Bu ekran yalnızca işlem ve kontrol rehberidir. Akademik geçerlilik, WCAG, ses kalitesi veya kurumsal onay sertifikası değildir.'
  };
