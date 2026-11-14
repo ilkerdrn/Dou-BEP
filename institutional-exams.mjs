@@ -64,7 +64,7 @@ function showAutosave(kind,detail){
  const labels={new:'Yeni taslak · İlk düzenlemeden sonra otomatik kaydedilecek',idle:'',pending:'Kaydedilmemiş değişiklik var · Otomatik kayıt bekleniyor',saving:'Sunucuya kaydediliyor…',saved:'Tüm değişiklikler sunucuya kaydedildi',conflict:'ÇAKIŞMA: Başka sekmede daha yeni sürüm var. Yerel düzenlemeleriniz korunuyor.',error:'KAYIT BAŞARISIZ: Ağ/oturum kontrolü gerekli. Metin bu sekmede duruyor.'};
  el.textContent=labels[kind]||labels.idle;el.dataset.state=kind;
  recovery.hidden=!['pending','saving','conflict','error'].includes(kind);
- $('exam-autosave-reload').hidden=kind!=='conflict'&&kind!=='error';
+ $('exam-autosave-reload').hidden=!state.current?.id||(kind!=='conflict'&&kind!=='error');
  const ribbon=$('workflow-save-state');if(ribbon)ribbon.textContent={new:'Yeni taslak',pending:'Otomatik kayıt bekliyor',saving:'Kaydediliyor',saved:'Sunucuda kayıtlı',conflict:'Sürüm çakışması',error:'Kayıt başarısız'}[kind]||'Sunucuda kayıtlı';
  if(kind==='saved'&&!autosave.hasChanges()){
   state.dirty=false;
