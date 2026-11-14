@@ -82,6 +82,31 @@ test('question list is capped, navigable by field and contains no prompts or ans
  }
 });
 
+test('quality findings show fixed categories and never expose answer text',()=>{
+ const secret='SECRET_CORRECT_ANSWER_X97';
+ const qualityReport={
+  errorCount:2,warningCount:1,
+  issues:[
+   {level:'error',text:'1. soru: Cevap anahtarı ('+secret+') geçersiz.'},
+   {level:'warning',text:'2. soru: Görselin alternatif açıklaması eksik.'},
+   {level:'error',text:'Onay açıklaması içindeki '+secret+' gözden geçirilmeli.'},
+   {level:'info',text:'Öğretmen bilgilendirmesi '+secret}
+  ]
+ };
+ const model=approvalWorkbenchSummary({
+  preflight:synthetic(),questionDraft:draft(),quality:qualityReport
+ });
+ assert.equal(model.qualityItems.length,3);
+ assert.equal(model.qualityItems[0].index,0);
+ assert.equal(model.qualityItems[0].field,'answer');
+ assert.equal(model.qualityItems[1].target,'exam-quality');
+ assert.equal(model.qualityItems[1].index,null);
+ assert.equal(model.qualityItems[2].field,'visualAltText');
+ assert.equal(model.qualityItems[2].index,1);
+ assert.ok(model.qualityItems.every(item=>!JSON.stringify(item).includes(secret)));
+ assert.equal(JSON.stringify(model).includes(secret),false);
+});
+
 test('accepts the existing five preflight stages and real demo question guidance',()=>{
  const exam=createDemo();
  const preflight=getExamPreflight(exam,{saved:false,dirty:true,approved:false});
@@ -110,7 +135,8 @@ test('UI renders text-only summaries, retains original approval endpoint and key
  const css=readFileSync(resolve(root,'dou-unified-ui.css'),'utf8');
  for(const id of ['exam-approval-workbench','exam-approval-workbench-headline',
   'exam-approval-workbench-stages','exam-approval-workbench-questions',
-  'exam-approval-workbench-quality','exam-approval-workbench-confirm'])
+  'exam-approval-workbench-quality','exam-approval-workbench-confirm',
+  'exam-approval-workbench-findings','exam-approval-workbench-findings-count'])
   assert.match(page,new RegExp('id="'+id+'"'));
  assert.match(page,/id="exam-approval-workbench-headline"[^>]*role="status"/);
  assert.match(js,/function renderApprovalWorkbench\(preflight\)/);
@@ -120,6 +146,8 @@ test('UI renders text-only summaries, retains original approval endpoint and key
  assert.match(js,/description\.textContent=detail/);
  assert.match(js,/stages\.replaceChildren/);
  assert.match(js,/questions\.replaceChildren/);
+ assert.match(js,/findings\.replaceChildren/);
+ assert.match(js,/model\.qualityItems\.map/);
  assert.match(js,/function visitApprovalQuestion\(index,field\)/);
  assert.match(js,/function visitPreflightTarget\(id\)/);
  assert.match(js,/visitPreflightTarget\('exam-quality'\)/);
