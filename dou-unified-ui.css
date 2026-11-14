@@ -2019,6 +2019,11 @@ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-ap
  outline:3px solid var(--dou-ui-focus,#156bb4);
  outline-offset:3px;
 }
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more{
+ background:Canvas;
+ color:CanvasText;
+ border-color:CanvasText;
+}
 @media(forced-colors:active){
  body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more{
   background:Canvas;
