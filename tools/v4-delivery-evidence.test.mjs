@@ -81,3 +81,28 @@ test('browser re-checks server, binds revision on ZIP/PDF, verifies integrity an
  assert.match(api,/if\(readiness\.meta\.revision!==data\.revision\)throw new StoreError\('revision_conflict'/);
  assert.match(server,/'\/exam-delivery-ux\.mjs':\['exam-delivery-ux\.mjs'/);
 });
+
+test('release gate follows shared PDF/ZIP delivery and keeps checksum evidence mandatory',()=>{
+ const client=readFileSync(resolve(root,'institutional-exams.mjs'),'utf8');
+ const release=readFileSync(resolve(root,'release-check.mjs'),'utf8');
+ const font=readFileSync(resolve(root,'tools/pdf-font-check.mjs'),'utf8');
+ const pkg=JSON.parse(readFileSync(resolve(root,'package.json'),'utf8'));
+ const start=client.indexOf('async function downloadDelivery(format){');
+ const end=client.indexOf("$('exam-pdf-pilot').addEventListener",start);
+ assert.ok(start>=0&&end>start,'Shared delivery must remain observable');
+ const flow=client.slice(start,end);
+ assert.match(flow,/await getDeliveryReadiness\(selection\)/);
+ assert.match(flow,/const response=await fetch\('\/api\/exams\/'\+selection\.id\+'\/'\+\(format==='pdf'\?'pdf-pilot':'delivery-package'\)/);
+ assert.match(flow,/const verified=await verifyExamDownload\(response,\{format\}\)/);
+ assert.match(flow,/if\(!sameDeliverySelection\(selection,currentDeliverySelection\(\)\)\)/);
+ const verifyAt=flow.indexOf('const verified=await verifyExamDownload(response,{format});');
+ const downloadAt=flow.indexOf('downloadVerified(verified.bytes,verified.mime,filename);');
+ assert.ok(downloadAt>verifyAt,'No saving unverified PDF/ZIP bytes');
+ assert.match(client,/\$\('exam-pdf-pilot'\)\.addEventListener\('click',\(\)=>downloadDelivery\('pdf'\)\)/);
+ assert.match(client,/\$\('exam-delivery-package'\)\.addEventListener\('click',\(\)=>downloadDelivery\('zip'\)\)/);
+ assert.match(release,/deliveryChecks\.every\(\(index,i\)=>index>=0&&\(!i\|\|index>deliveryChecks\[i-1\]\)\)/);
+ assert.match(release,/binaryVerifier\.includes\('if\(actual!==expected\)'\)/);
+ assert.match(release,/pdfFontCheck\.includes\('findHostPdfFont\(\)'\)/);
+ assert.match(font,/createTaggedPdfPilot\(exam,\{fontPath:path\}\)/);
+ assert.equal(pkg.scripts['pdf:font-check'],'node tools/pdf-font-check.mjs');
+});
