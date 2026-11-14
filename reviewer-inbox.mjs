@@ -43,3 +43,35 @@ export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}
    }))
  };
 }
+
+const STAGE_LABELS=Object.freeze({
+ identity:'Sınav bilgileri',goals:'BEP kazanım bağlantıları',
+ questions:'Sorular ve cevap alanları',access:'Erişilebilirlik ve kalite',
+ delivery:'Kaydetme ve onay'
+});
+/** Copyable, generic revision-specific note. Never copy untrusted issue text. */
+export function reviewerFeedbackText({examId,revision,workbench}={}){
+ if(typeof examId!=='string'||!/^[0-9a-f-]{36}$/.test(examId)||
+    !Number.isSafeInteger(revision)||revision<1||!workbench||
+    !Array.isArray(workbench.stages)||workbench.stages.length!==5)
+  throw Error('İnceleme notu için geçerli sınav sürümü ve kontrol özeti gerekir.');
+ const stages=workbench.stages.map(stage=>{
+  if(!Object.hasOwn(STAGE_LABELS,stage.id))throw Error('Bilinmeyen hazırlık aşaması.');
+  return STAGE_LABELS[stage.id]+': '+(stage.done===true?'Tamamlandı':'Kontrol gerekli');
+ });
+ const m=workbench.summary||{};
+ const count=n=>Number.isSafeInteger(n)&&n>=0?n:0;
+ return [
+  'DOU BEP V4 — SINAV İNCELEME NOTU',
+  'Sınav referansı: '+examId.slice(0,8).toUpperCase()+' · Sürüm '+revision,
+  'Bu mesaj onay kararı değildir; yalnızca öğretmenin incelemesi için kontrol özetidir.',
+  ...stages,
+  'Temel alan eksikliği olan soru sayısı: '+count(m.questionIncomplete),
+  'Ek inceleme gereken soru sayısı: '+count(m.questionReview),
+  'Zorunlu kalite hatası: '+count(m.qualityErrors),
+  'Kalite uyarısı: '+count(m.qualityWarnings),
+  'Sesli erişim kontrol bulgusu: '+count(m.audioFindings),
+  'Öğretmenden beklenen: eksikleri ilgili sürümde inceleyip düzeltmek, kaydetmek ve bağımsız incelemeciye yeniden sunmak.',
+  'Not: Pedagojik geçerlilik, ekran okuyucu uyumluluğu ve kurumsal onay ayrıca değerlendirilir.'
+ ].join('\n');
+}
