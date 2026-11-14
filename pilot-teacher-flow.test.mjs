@@ -13,7 +13,13 @@ test('teacher receives ordered accessible instructions and an actionable empty s
  assert.match(html,/id="pilot-empty-exams"[^>]*hidden/);
  assert.match(html,/href="\/kurumsal-sinav"/);
  assert.match(html,/id="pilot-exam-help"[^>]*role="status"[^>]*aria-live="polite"/);
- assert.match(js,/eligible=exams\.items\.filter\(x=>x\.status==='approved'\)/);
+ // A server-side eligibility gate checks approval integrity, supported question types,
+ // accessibility and the 30-question limit before a code may be issued.
+ assert.match(js,/api\('\/pilot\/eligible-exams'\)/);
+ assert.match(js,/eligible=candidates\.items\.filter\(x=>x\.eligible\)/);
+ assert.match(js,/const unavailable=candidates\.items\.filter\(x=>!x\.eligible\)/);
+ assert.match(store,/approvedExam\(row\)/);
+ assert.match(store,/validatePilotPayload\(row\)/);
  assert.match(js,/menu\.disabled=!eligible\.length/);
  assert.match(js,/\$\('pilot-empty-exams'\)\.hidden=eligible\.length>0/);
 });
