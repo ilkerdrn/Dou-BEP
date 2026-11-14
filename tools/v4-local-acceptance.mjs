@@ -35,6 +35,7 @@ const QUICK_TESTS=[
  'tools/v4-synthetic-closure.test.mjs',
  'tools/v4-synthetic-lifecycle.test.mjs',
  'tools/v4-five-step-handoff.test.mjs',
+ 'tools/v4-browser-role-handoff-contract.test.mjs',
  'tools/v4-pilot-two-connection.test.mjs',
  'tools/v4-pilot-code-atomicity.test.mjs',
  'tools/v4-pilot-writer-atomicity.test.mjs',
