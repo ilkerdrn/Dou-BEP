@@ -62,9 +62,11 @@ try {
  $env:HF_HUB_DISABLE_TELEMETRY = '1'
  $env:PYTHONIOENCODING = 'utf-8'
  $OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+ # Upstream library accepts Turkish names or these exact English aliases.
+ $modelEmotion = @{sakin='calm';mutlu='happy';uzgun='sad';kizgin='angry';saskin='surprised'}[$Emotion]
  Write-Host ('Offline neural synthesis: '+$Voice+', '+$Emotion) -ForegroundColor Cyan
  # Upstream CLI: --text-file - reads STDIN. Never pass user text as a process argument.
- $text | & $cliExe 'generate' '--text-file' '-' '--voice' $Voice '--emotion' $Emotion '-o' $outputPath
+ $text | & $cliExe 'generate' '--text-file' '-' '--voice' $Voice '--emotion' $modelEmotion '-o' $outputPath
  if ($LASTEXITCODE -ne 0) { throw 'Offline synthesis failed. Verify model cache and local environment.' }
  if (-not (Test-Path -LiteralPath $outputPath -PathType Leaf)) {
   throw 'Offline synthesis returned without creating a WAV.'
