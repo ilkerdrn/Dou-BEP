@@ -31,7 +31,7 @@ test('revision status remains accessible in closed header and explicit list navi
  assert.match(client,/compact\.textContent='Karşılaştırma kaydı yok'/);
  assert.match(client,/compact\.textContent='Kontrol ediliyor'/);
  assert.match(client,/\$\('exam-revision-compare'\)\.open=true/);
- assert.match(client,/\$\('exam-revision-compare-title'\)/);
+ assert.match(client,/const heading=\$\(specific\?'exam-recheck-hints-heading':'exam-revision-compare-title'\)/);
  assert.match(client,/heading\.focus\(\{preventScroll:true\}\)/);
  assert.match(client,/revisionDeltaGeneration/);
 });
@@ -43,7 +43,7 @@ test('current correction request opens once, allowing user to collapse it afterw
  assert.match(client,/feedbackAutoOpenKey=activeKey/);
  assert.match(client,/section\.open=true/);
  assert.match(client,/compact\.textContent=active\.length\?'Güncel düzeltme isteği: '/);
- assert.match(client,/\$\('exam-review-feedback-summary'\)\.textContent='Kontrol edilemedi'/);
+ assert.match(client,/compact\.textContent=failed\?'Kontrol edilemedi':'Kontrol ediliyor'/);
 });
 
 test('unsent reviewer selections cannot be lost silently on new, other or page exit',()=>{
@@ -52,12 +52,14 @@ test('unsent reviewer selections cannot be lost silently on new, other or page e
  assert.match(client,/\$\('exam-review-feedback-questions'\)\.value\.trim\(\)/);
  assert.match(client,/function confirmLeavingReviewRequest\(\)/);
  assert.match(client,/if\(reviewFeedbackSending\)/);
- assert.match(client,/if\(!sameOpened&&!confirmLeavingReviewRequest\(\)\)return/);
+ assert.match(client,/if\(!sameOpened&&!confirmDraftSwitch\(\)\)return/);
  assert.match(client,/const sameOpened=state\.current\?\.id===id&&state\.current\?\.revision===expectedRevision/);
  assert.match(client,/const opened=sameOpened\?true:await openExam\(id\)/);
- assert.match(client,/if\(\(btn\.dataset\.duplicate\|\|btn\.dataset\.open!==state\.current\?\.id\)&&!confirmLeavingReviewRequest\(\)\)return/);
- assert.match(client,/if\(!confirmLeavingReviewRequest\(\)\)return;draft\(\)/);
- assert.match(client,/autosave\.isSaving\(\)\|\|reviewFeedbackSending\|\|hasUnsentReviewRequest\(\)/);
+ assert.match(client,/function confirmDraftSwitch\(\)/);
+ assert.match(client,/return confirmLeavingReviewRequest\(\)/);
+ assert.match(client,/if\(!confirmDraftSwitch\(\)\)return;draft\(\)/);
+ assert.match(client,/reviewUnsent:includeReview&&hasUnsentReviewRequest\(\)/);
+ assert.match(client,/reviewSending:reviewFeedbackSending/);
 });
 
 test('compact UI neither changes server-side approval gates nor stores learner data',()=>{
