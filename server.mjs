@@ -90,6 +90,7 @@ const allowed={
  '/accessibility-check.mjs':['accessibility-check.mjs','text/javascript; charset=utf-8'],
  '/accessibility-evidence.mjs':['accessibility-evidence.mjs','text/javascript; charset=utf-8'],
  '/pilot.mjs':['pilot.mjs','text/javascript; charset=utf-8'],
+ '/student-access-profiles.mjs':['student-access-profiles.mjs','text/javascript; charset=utf-8'],
  '/dou-reader-core.mjs':['dou-reader-core.mjs','text/javascript; charset=utf-8'],
  '/dou-speech.mjs':['dou-speech.mjs','text/javascript; charset=utf-8'],
  '/dou-speech-free-text.mjs':['dou-speech-free-text.mjs','text/javascript; charset=utf-8'],
