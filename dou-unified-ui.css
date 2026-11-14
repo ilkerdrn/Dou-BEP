@@ -2065,6 +2065,7 @@ body.institution-page[data-design-version="4"] #exam-review-feedback-retry{
  margin:6px 0 12px;
  white-space:normal;
 }
+body.institution-page[data-design-version="4"] #exam-review-feedback-retry[hidden]{display:none;}
 @media(max-width:650px){
  body.institution-page[data-design-version="4"] #exam-review-feedback-retry{
   width:100%;
