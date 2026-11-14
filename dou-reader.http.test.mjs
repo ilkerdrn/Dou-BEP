@@ -139,6 +139,9 @@ test('Pocket TTS 24 kHz WAV is demo-only, locally previewed with no exam or remo
 test('offline Pocket desktop scripts and local model are not exposed as web assets',async()=>{
  for(const path of [
   '/tools/dou_reader_pocket_desktop.py',
+  '/tools/dou_reader_pcm_stream.py',
+  '/tools/test_dou_reader_pcm_stream.py',
+  '/reader-speech-research/pocket-stream-source.test.mjs',
   '/tools/dou-reader-pocket-desktop.ps1',
   '/tools/test_dou_reader_pocket_desktop.py',
   '/reader-speech-research/README-POCKET-DESKTOP-LAB.md',
