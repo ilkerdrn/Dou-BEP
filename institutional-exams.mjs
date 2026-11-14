@@ -214,6 +214,15 @@ function renderApprovalWorkbench(preflight){
   ?model.summary.questionIncomplete+' soruda zorunlu eksik · '+model.summary.questionReview+
    ' soruda ek inceleme. '+(model.hiddenQuestionCount?model.hiddenQuestionCount+' soru daha var; soru düzenleme ekranındaki eksik alan kısayolunu kullanın.':'')
   :'Temel soru alanı uyarısı görünmüyor.';
+ const findings=$('exam-approval-workbench-findings');
+ findings.replaceChildren(...model.qualityItems.map(item=>makeItem(
+  item.label,item.detail,item.type==='error'?'needs-review':'warning',
+  item.target,item.index,item.field
+ )));
+ $('exam-approval-workbench-findings-count').textContent=model.qualityItems.length
+  ?model.qualityItems.length+' ek kalite bulgusu gösteriliyor. '+(model.hiddenQualityCount?
+    model.hiddenQualityCount+' başka bulgu için kalite raporunu açın.':'')
+  :'Ek bulgu listelenmedi. Tüm kalite kontrolleri için kalite raporunu açın.';
  $('exam-approval-workbench-quality').disabled=!has('exam.view');
  $('exam-approval-workbench-confirm').disabled=!has('exam.view');
 }
@@ -273,7 +282,7 @@ function visitApprovalQuestion(index,field){
  visitPreflightTarget('exam-question-section');
  const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+index+'"]');
  if(!card)return;
- const allowed=new Set(['prompt','objective','points','options','pairs','answer','source']);
+ const allowed=new Set(['prompt','objective','points','options','pairs','answer','source','visualAltText']);
  const key=allowed.has(field)?field:'prompt';
  let focusTarget=key==='source'?card.querySelector('[data-source-review]'):
   card.querySelector('[data-qkey="'+key+'"]');
