@@ -48,6 +48,7 @@ const QUICK_TESTS=[
  'server-foundation/pilot-session-overview.test.mjs',
  'tools/v4-pilot-session-filter-ui.test.mjs',
  'tools/v4-delivery-evidence.test.mjs',
+ 'exam-download-verify.test.mjs',
  'tools/v4-workflow-next-action.test.mjs',
  'tools/v4-question-draft-guidance.test.mjs',
  'tools/v4-question-issue-queue.test.mjs',
