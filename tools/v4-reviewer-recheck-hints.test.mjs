@@ -116,3 +116,25 @@ test('browser navigation and responsive help avoid student/answer details',()=>{
  const helper=readFileSync(resolve(root,'reviewer-recheck-hints.mjs'),'utf8');
  assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|window\.|document\.|approveExam\(/);
 });
+
+test('direct recheck action remains bound to the inbox revision and never auto-confirms an issue',()=>{
+ const html=readFileSync(resolve(root,'institutional-exams.html'),'utf8');
+ const js=readFileSync(resolve(root,'institutional-exams.mjs'),'utf8');
+ const styles=readFileSync(resolve(root,'dou-unified-ui.css'),'utf8');
+ assert.match(html,/id="exam-recheck-hints-status"[^>]*role="status"/);
+ assert.match(js,/item\.feedbackRecheck\?\[\['Düzeltmeleri yeniden incele','recheck'\]\]/);
+ assert.match(js,/\['review','history','diff','recheck'\]/);
+ assert.match(js,/if\(action==='diff'\|\|action==='recheck'\)/);
+ assert.match(js,/const sameOpened=state\.current\?\.id===id&&state\.current\?\.revision===expectedRevision/);
+ assert.match(js,/if\(state\.current\?\.revision!==expectedRevision\)/);
+ assert.match(js,/Number\(button\.dataset\.recheckRevision\)!==current\.revision/);
+ assert.match(js,/state\.revisionDelta\.currentRevision!==current\.revision/);
+ assert.match(js,/state\.reviewFeedback\.currentRevision!==current\.revision/);
+ assert.match(js,/const hints=reviewerRecheckHints\(state\.revisionDelta,state\.reviewFeedback\)/);
+ assert.match(js,/item&&Number\.isSafeInteger\(item\.index\)/);
+ assert.match(js,/button\.dataset\.recheckStage=item\.id/);
+ assert.match(js,/button\.dataset\.recheckQuestion=String\(item\.number\)/);
+ assert.match(js,/Teknik fark, tamamlanan düzeltme veya onay anlamına gelmez/);
+ assert.match(styles,/\.exam-recheck-hint-row button:focus-visible/);
+ assert.doesNotMatch(html,/id="exam-recheck-mark-all-fixed"/);
+});
