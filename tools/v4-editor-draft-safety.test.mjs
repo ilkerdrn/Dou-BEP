@@ -51,7 +51,7 @@ test('editor wires the same guard to navigation and beforeunload without browser
  assert.match(ui,/editorDraftLeaveRisk\(/);
  assert.match(ui,/const risk=currentLeaveRisk\(\{includeReview:true\}\)/);
  assert.match(ui,/if\(risk\.warn\)\{event\.preventDefault\(\);event\.returnValue='';\}/);
- assert.match(ui,/\$\('exam-autosave-reload'\)\.hidden=kind!=='conflict'&&kind!=='error'/);
+ assert.match(ui,/\$\('exam-autosave-reload'\)\.hidden=!state\.current\?\.id\|\|\(kind!=='conflict'&&kind!=='error'\)/);
  assert.match(html,/id="exam-autosave-export"/);
  assert.match(server,/'\/editor-draft-safety\.mjs':\['editor-draft-safety\.mjs'/);
  const helper=readFileSync(new URL('../editor-draft-safety.mjs',import.meta.url),'utf8');
