@@ -50,7 +50,8 @@ const QUICK_TESTS=[
  'tools/v4-reviewer-recheck-hints.test.mjs',
  'tools/v4-reviewer-compact-ui.test.mjs',
  'server-foundation/exam-review-separation.test.mjs',
- 'tools/v4-revision-editor-approval-ui.test.mjs'
+ 'tools/v4-revision-editor-approval-ui.test.mjs',
+ 'tools/v4-pilot-draft-precheck.test.mjs'
 ];
 const allTests=()=>['.','server-foundation','tools'].flatMap(dir=>
  readdirSync(join(ROOT,dir),{withFileTypes:true})
