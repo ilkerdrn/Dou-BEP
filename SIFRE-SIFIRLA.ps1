@@ -34,17 +34,16 @@ if (-not (Test-Path -LiteralPath $selectedDatabase -PathType Leaf)) {
 $selectedDatabase = (Resolve-Path -LiteralPath $selectedDatabase).ProviderPath
 
 $js = @'
-import { resolve, dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { DatabaseSync } from 'node:sqlite';
 import { openStore, passwordHash } from './server-foundation/institutional-store.mjs';
-const root = dirname(fileURLToPath(import.meta.url));
 const file = process.env.BEP_RECOVERY_DATABASE_PATH;
 if (!file) throw new Error('Recovery database path missing.');
-const store = openStore(file);
 const [mode, tenantId, emailArg] = process.argv.slice(2);
+const readOnlyDb = mode === 'list' ? new DatabaseSync(file, {readOnly:true}) : null;
+const store = mode === 'reset' ? openStore(file) : null;
 try {
   if (mode === 'list') {
-    const admins = store.db.prepare("SELECT tenant_id AS tenantId, email, active FROM members WHERE role='admin' ORDER BY tenant_id,email").all();
+    const admins = readOnlyDb.prepare("SELECT tenant_id AS tenantId, email, active FROM members WHERE role='admin' ORDER BY tenant_id,email").all();
     if (!admins.length) {
       console.log('Bu veritabaninda yonetici hesabi yok. KURULUM-YONETICI.ps1 calistirin.');
       process.exitCode = 2;
@@ -71,7 +70,7 @@ try {
     console.log('Giris e-posta: '+account.email);
   } else throw new Error('Gecersiz islem.');
 } catch(e) { console.error('[HATA] '+e.message); process.exitCode=1; }
-finally { store.db.close(); }
+finally { readOnlyDb?.close(); store?.db.close(); }
 '@
 $tmp = Join-Path $PSScriptRoot ('.bep-local-recovery-' + [guid]::NewGuid().ToString('N') + '.mjs')
 $handle = [IntPtr]::Zero
@@ -92,14 +91,14 @@ try {
     $tenantId = (Read-Host 'Listeden KURUM KODUNU girin').Trim()
     $email = (Read-Host 'Listeden YONETICI E-POSTASINI girin').Trim()
     $confirm = Read-Host 'Parolayi sifirlamak icin SIFIRLA yazin'
-    if ($confirm -cne 'SIFIRLA') { Write-Host 'Islem iptal edildi.'; exit 0 }
+    if ($confirm -cne 'SIFIRLA') { Write-Host 'Islem iptal edildi.'; return }
     $secure = Read-Host 'YENI PAROLA (en az 14 karakter)' -AsSecureString
     $handle = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
     $env:BEP_RESET_PASSWORD = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($handle)
     & $nodePath $tmp reset $tenantId $email
     if ($LASTEXITCODE -ne 0) { throw 'Parola sifirlama basarisiz.' }
     Write-Host ''
-    Write-Host 'Simdi BASLAT.bat dosyasini tekrar acip http://127.0.0.1:4173/kurum adresinde giris yapin.' -ForegroundColor Green
+    Write-Host 'Sunucuyu ayni BEP_DB_PATH ile baslatin ve http://127.0.0.1:4173/kurum adresinde giris yapin.' -ForegroundColor Green
 } finally {
     if ($null -eq $oldRecoveryDb) { Remove-Item Env:BEP_RECOVERY_DATABASE_PATH -ErrorAction SilentlyContinue }
     else { $env:BEP_RECOVERY_DATABASE_PATH = $oldRecoveryDb }
