@@ -72,6 +72,8 @@ function showAutosave(kind,detail){
   $('exam-save').disabled=!has('exam.edit');
   $('exam-approve').disabled=true;
   renderPreflight();
+  // Saving must refresh pilot guidance without redrawing the question inputs.
+  renderPilotDraftPrecheck();
  }
  if(kind==='conflict'||kind==='error'){$('exam-status').textContent=kind==='conflict'?'ÇAKIŞMA':'KAYIT HATASI';$('exam-version').textContent=detail?.message||'Düzenlemeler mevcut sekmede korunuyor.';}
 }
