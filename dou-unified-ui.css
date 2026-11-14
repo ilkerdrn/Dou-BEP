@@ -1579,3 +1579,60 @@ body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-ap
   border-left-color:CanvasText;
  }
 }
+/* V4 reviewer task inbox: text-first status, keyboard safe, responsive. */
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox{
+ margin:14px 0 18px;padding:18px;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-controls{
+ display:flex;flex-wrap:wrap;gap:12px;margin:14px 0;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-controls label{
+ display:flex;flex-direction:column;gap:5px;flex:1 1 210px;font-weight:650;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-controls :is(select,input){
+ max-width:100%;width:100%;min-height:42px;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-items{
+ display:grid;gap:10px;margin:12px 0;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item{
+ display:flex;gap:12px;flex-wrap:wrap;justify-content:space-between;align-items:center;
+ padding:12px;border:1px solid #dddcd8;border-radius:11px;
+ background:#fff;color:#242421;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-copy{
+ flex:1 1 280px;min-width:0;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-copy strong{
+ display:block;overflow-wrap:anywhere;font-size:14px;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-copy p{
+ margin:5px 0 0;font-size:12px;line-height:1.5;overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-actions{
+ display:flex;gap:8px;flex-wrap:wrap;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-actions button{
+ min-height:42px;white-space:normal;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-feedback-fallback{
+ margin:12px 0;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-feedback-fallback textarea{
+ display:block;width:100%;min-height:180px;margin:6px 0;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-reviewer-inbox :is(button,input,select):focus-visible,
+body.institution-page[data-design-version="4"] #exam-reviewer-feedback-fallback textarea:focus-visible{
+ outline:3px solid #156bb4;outline-offset:3px;
+}
+@media(max-width:620px){
+ body.institution-page[data-design-version="4"] #exam-reviewer-inbox{padding:12px}
+ body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-actions,
+ body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item-actions button{width:100%}
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-reviewer-inbox .exam-reviewer-item{
+  background:Canvas;color:CanvasText;border-color:CanvasText;
+ }
+}
