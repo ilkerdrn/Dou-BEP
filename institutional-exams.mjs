@@ -18,6 +18,7 @@ import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance} from './question-draft-guidance.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
+import {reviewerInbox} from './reviewer-inbox.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
@@ -568,6 +569,81 @@ $('exam-support-panel').addEventListener('click',event=>{
 });
 function touch(){examSelection.invalidate();state.dirty=true;state.current&&(state.current={...state.current,status:'draft'});$('exam-confirm').checked=false;syncButtons();autosave.changed();if(state.exam){renderQuality(state.exam);renderPreflight();renderGoalMatrix();updateQuestionDraftGuidance();renderTeacherQuestionPreview();}}
 function syncButtons(){ $('exam-status').textContent='KAYDEDİLMEDİ';$('exam-version').textContent='Değişiklikler kısa süre içinde oturumlu sunucuya otomatik kaydedilir.';for(const id of ['exam-approve','exam-word','exam-print','exam-audio-export','exam-audio-mp3','exam-delivery-check','exam-delivery-package','exam-pdf-pilot'])$(id).disabled=true;}
+function renderReviewerInbox(){
+ const section=$('exam-reviewer-inbox');
+ if(!section)return;
+ const role=state.actor?.role;
+ const data=reviewerInbox(state.exams,{role,actorId:state.actor?.id,
+  filter:$('exam-reviewer-filter').value,query:$('exam-reviewer-search').value});
+ section.hidden=!data.enabled;
+ if(!data.enabled)return;
+ const count=$('exam-reviewer-count');
+ count.textContent=data.items.length+' kayıt gösteriliyor · '+data.counts.draft+
+  ' taslak · '+data.counts.approved+' onay kaydı bulunan sınav. Bir taslak otomatik olarak onaya hazır sayılmaz.';
+ const container=$('exam-reviewer-items');
+ container.replaceChildren();
+ if(!data.items.length){
+  const empty=document.createElement('p');empty.className='portal-help';
+  empty.textContent=data.counts.all?'Bu filtrede veya aramada kayıt bulunamadı.':'Kurumda erişebileceğiniz sınav kaydı bulunamadı.';
+  container.append(empty);
+  return;
+ }
+ for(const item of data.items){
+  const row=document.createElement('article');row.className='exam-reviewer-item';
+  const title=document.createElement('div');title.className='exam-reviewer-item-copy';
+  const heading=document.createElement('strong');heading.textContent=item.title;
+  const status=document.createElement('p');status.textContent=item.label+' · Sürüm '+item.revision+
+   ' · '+new Date(item.updatedAt).toLocaleString('tr-TR');
+  const hint=document.createElement('p');hint.textContent=item.hint;
+  title.append(heading,status,hint);
+  const actions=document.createElement('div');actions.className='exam-reviewer-item-actions';
+  for(const [label,kind] of [['İncele','review'],['Onay geçmişi','history']]){
+   const button=document.createElement('button');button.type='button';
+   button.className='portal-btn secondary';button.textContent=label;
+   button.dataset.reviewerAction=kind;button.dataset.examId=item.id;
+   button.dataset.examRevision=String(item.revision);
+   button.setAttribute('aria-label',item.title+' · Sürüm '+item.revision+' · '+label);
+   actions.append(button);
+  }
+  row.append(title,actions);container.append(row);
+ }
+}
+$('exam-reviewer-filter').addEventListener('change',renderReviewerInbox);
+$('exam-reviewer-search').addEventListener('input',renderReviewerInbox);
+$('exam-reviewer-items').addEventListener('click',async event=>{
+ const button=event.target.closest('[data-reviewer-action][data-exam-id]');
+ if(!button||!$('exam-reviewer-items').contains(button))return;
+ if(state.busy||autosave.isSaving())return notice('Devam eden kayıt veya işlemi tamamlayın.',true);
+ if(state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
+ const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
+ if(!state.exams.some(item=>item.id===id))return notice('Sınav artık listede görünmüyor. Listeyi yenileyin.',true);
+ const action=button.dataset.reviewerAction;
+ if(!['review','history'].includes(action))return;
+ button.disabled=true;
+ try{
+  const opened=await openExam(id);
+  if(!opened)return;
+  if(state.current?.revision!==expectedRevision){
+   notice('Bu sınavın sürümü inceleme listesi açıldıktan sonra değişmiş. Güncel sürüm açıldı; onay vermeden önce yeniden inceleyin.',true);
+   await refreshList();
+  }
+  if(action==='history'){
+   const details=$('exam-editor-card').querySelector('.exam-approval-history');
+   if(details){
+    details.open=true;
+    details.scrollIntoView({behavior:'auto',block:'center'});
+    details.querySelector('summary')?.focus({preventScroll:true});
+   }
+  }else{
+   visitPreflightTarget('exam-output-section');
+   const heading=$('exam-approval-workbench-title');
+   heading.setAttribute('tabindex','-1');
+   heading.scrollIntoView({behavior:'auto',block:'start'});
+   heading.focus({preventScroll:true});
+  }
+ }catch(err){notice('Sınav incelemesi açılamadı: '+err.message,true);}
+ finally{button.disabled=false;}
+});
 function drawExamList(){
  const query=($('exam-search')?.value||'').trim().toLocaleLowerCase('tr'),filter=$('exam-status-filter')?.value||'all';
  const items=state.exams.filter(x=>(filter==='all'||x.status===filter)&&(!query||x.title.toLocaleLowerCase('tr').includes(query)));
@@ -576,7 +652,7 @@ function drawExamList(){
  $('exam-list-count').textContent=`${items.length} / ${state.exams.length} sınav gösteriliyor. Kopyalar yeniden öğretmen onayı gerektirir.`;
  $('exam-list').innerHTML=items.length?items.map(x=>`<div class="portal-template"><div class="portal-template-icon">▤</div><div class="portal-template-body"><strong>${esc(x.title)}</strong><small>${x.status==='approved'?'Onaylı':'Taslak'} · Sürüm ${x.revision} · ${new Date(x.updatedAt).toLocaleDateString('tr-TR')}</small></div><div class="exam-list-actions"><button type="button" class="portal-mini-action" data-open="${x.id}">Aç</button>${has('exam.edit')?`<button type="button" class="portal-mini-action" data-duplicate="${x.id}" data-revision="${x.revision}" aria-label="${esc(x.title)} sınavını yeni taslak olarak kopyala">Kopyala</button>`:''}</div></div>`).join(''):'<p class="portal-help">'+(state.exams.length?'Aramaya uygun sınav bulunamadı.':'Henüz bir kurumsal sınav kaydı yok.')+'</p>';
 }
-async function refreshList(){const r=await api('/exams');state.exams=r.items;drawExamList();}
+async function refreshList(){const r=await api('/exams');state.exams=r.items;drawExamList();renderReviewerInbox();}
 $('exam-search').addEventListener('input',drawExamList);
 $('exam-status-filter').addEventListener('change',drawExamList);
 async function openExam(id){return examSelection.open(id);}
