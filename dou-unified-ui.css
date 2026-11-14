@@ -1761,3 +1761,34 @@ body.institution-page[data-design-version="4"] #exam-approval-workbench details#
   display:block;margin:4px 0 0 0;
  }
 }
+/* V4 anonymous pilot format precheck: separate from normal 100-question drafting. */
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+ gap:12px;margin:12px 0 18px;padding:14px 16px;
+ border:1px solid #deded8;border-radius:12px;
+ background:#f8f8f6;color:#252523;
+}
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck .exam-pilot-draft-copy{
+ min-width:0;flex:1 1 270px;
+}
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck strong{
+ display:block;font-size:14px;line-height:1.45;margin-bottom:5px;
+}
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck p{
+ font-size:12px;line-height:1.55;margin:6px 0;overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck button{
+ min-height:44px;white-space:normal;
+}
+body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck button:focus-visible{
+ outline:3px solid #156bb4;outline-offset:3px;
+}
+@media(max-width:660px){
+ body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck{padding:12px}
+ body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck button{width:100%}
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck{
+  background:Canvas;color:CanvasText;border-color:CanvasText;
+ }
+}
