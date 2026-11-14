@@ -35,15 +35,17 @@ $selectedDatabase = (Resolve-Path -LiteralPath $selectedDatabase).ProviderPath
 
 $js = @'
 import { DatabaseSync } from 'node:sqlite';
-import { openStore, passwordHash } from './server-foundation/institutional-store.mjs';
+import { passwordHash } from './server-foundation/institutional-store.mjs';
 const file = process.env.BEP_RECOVERY_DATABASE_PATH;
 if (!file) throw new Error('Recovery database path missing.');
 const [mode, tenantId, emailArg] = process.argv.slice(2);
-const readOnlyDb = mode === 'list' ? new DatabaseSync(file, {readOnly:true}) : null;
-const store = mode === 'reset' ? openStore(file) : null;
+// No app-store initialization or schema migration during account recovery.
+if (!['list','reset'].includes(mode)) throw new Error('Gecersiz islem.');
+const db = new DatabaseSync(file, {readOnly:mode === 'list'});
+if (mode === 'reset') db.exec('PRAGMA foreign_keys=ON; PRAGMA busy_timeout=3000');
 try {
   if (mode === 'list') {
-    const admins = readOnlyDb.prepare("SELECT tenant_id AS tenantId, email, active FROM members WHERE role='admin' ORDER BY tenant_id,email").all();
+    const admins = db.prepare("SELECT tenant_id AS tenantId, email, active FROM members WHERE role='admin' ORDER BY tenant_id,email").all();
     if (!admins.length) {
       console.log('Bu veritabaninda yonetici hesabi yok. KURULUM-YONETICI.ps1 calistirin.');
       process.exitCode = 2;
@@ -53,24 +55,24 @@ try {
     }
   } else if (mode === 'reset') {
     const email = String(emailArg || '').trim().toLowerCase();
-    const account = store.db.prepare("SELECT id,tenant_id,email FROM members WHERE tenant_id=? AND email=? AND role='admin' AND active=1").get(tenantId, email);
+    const account = db.prepare("SELECT id,tenant_id,email FROM members WHERE tenant_id=? AND email=? AND role='admin' AND active=1").get(tenantId, email);
     if (!account) throw new Error('Bu kurum kodu ve e-posta ile etkin yonetici bulunamadi. Ustteki listeyi birebir kullanin.');
     const pw = process.env.BEP_RESET_PASSWORD || '';
     const {salt,hash} = passwordHash(pw);
-    store.db.exec('BEGIN IMMEDIATE');
+    db.exec('BEGIN IMMEDIATE');
     try {
-      store.db.prepare('UPDATE members SET salt=?,hash=? WHERE id=?').run(salt,hash,account.id);
-      store.db.prepare('DELETE FROM sessions WHERE member_id=?').run(account.id);
-      store.db.prepare('INSERT INTO audit(tenant_id,actor_id,event,resource_id,created_at) VALUES(?,?,?,?,?)')
+      db.prepare('UPDATE members SET salt=?,hash=? WHERE id=?').run(salt,hash,account.id);
+      db.prepare('DELETE FROM sessions WHERE member_id=?').run(account.id);
+      db.prepare('INSERT INTO audit(tenant_id,actor_id,event,resource_id,created_at) VALUES(?,?,?,?,?)')
         .run(account.tenant_id,account.id,'admin.password_reset_local',account.id,Date.now());
-      store.db.exec('COMMIT');
-    } catch(e) {store.db.exec('ROLLBACK'); throw e;}
+      db.exec('COMMIT');
+    } catch(e) {db.exec('ROLLBACK'); throw e;}
     console.log('BASARILI: Parola sifirlandi. Tum eski oturumlar gecersiz.');
     console.log('Giris kurum kodu: '+account.tenant_id);
     console.log('Giris e-posta: '+account.email);
   } else throw new Error('Gecersiz islem.');
 } catch(e) { console.error('[HATA] '+e.message); process.exitCode=1; }
-finally { readOnlyDb?.close(); store?.db.close(); }
+finally { db.close(); }
 '@
 $tmp = Join-Path $PSScriptRoot ('.bep-local-recovery-' + [guid]::NewGuid().ToString('N') + '.mjs')
 $handle = [IntPtr]::Zero
