@@ -770,7 +770,7 @@ async function main(){
  pass(await evaluate('document.querySelector("#exam-questions > .exam-question:last-child [data-qkey=prompt]").value==="Anonymous local load test"'),'Text entered in question 100 remains in the editor');
  // Final-step correction queue is still complete after the 100-question stress.
  // The browser is the real anonymous fixture; never touch a user exam/DB.
- const approvalOverflow=await evaluate(\`(function(){
+ const approvalOverflow=await evaluate(`(function(){
   const list=document.getElementById('exam-approval-workbench-questions');
   const more=document.getElementById('exam-approval-workbench-more');
   const all=document.getElementById('exam-approval-workbench-more-questions');
@@ -784,7 +784,7 @@ async function main(){
    promptNotLeaked:!all?.textContent.includes('Anonymous local load test'),
    answerNotLeaked:!all?.textContent.includes('Doğru yanıt:'),
    approvalDisabled:document.getElementById('exam-approve')?.disabled};
- })()\`);
+ })()`);
  console.log('BROWSER EXAM FINAL REVIEW QUEUE: '+JSON.stringify(approvalOverflow));
  pass(approvalOverflow.top===8&&approvalOverflow.remaining===92&&approvalOverflow.count===92&&
       !approvalOverflow.hidden&&approvalOverflow.last,
@@ -799,14 +799,14 @@ async function main(){
   'Native review disclosure keyboard Enter');
  pass(await evaluate('document.activeElement?.id==="exam-approval-workbench-more-title"'),
       'Enter expands the remaining questions without stealing summary focus');
- const lastReviewFocus=await evaluate(\`(function(){
+ const lastReviewFocus=await evaluate(`(function(){
   const button=document.querySelector('#exam-approval-workbench-more-questions [data-question-index="99"]');
   if(!button)return {exists:false};
   button.focus();
   return {exists:true,focused:document.activeElement===button,
     question:button.dataset.questionIndex,field:button.dataset.questionField,
     tag:button.tagName,disabled:button.disabled};
- })()\`);
+ })()`);
  pass(lastReviewFocus.exists&&lastReviewFocus.focused&&lastReviewFocus.question==='99'&&
       lastReviewFocus.tag==='BUTTON'&&!lastReviewFocus.disabled,
       'Last approval issue can be targeted by keyboard without auto-editing the exam');
@@ -817,7 +817,7 @@ async function main(){
       'Approval issue focus matches the canonical corrective field');
  // Simulate a disabled field, as seen by read-only reviewer/observer roles.
  // The navigation must land on the question heading, not a disabled input.
- const disabledTarget=await evaluate(\`(function(){
+ const disabledTarget=await evaluate(`(function(){
   const first=document.querySelector('#exam-approval-workbench-questions [data-question-index="0"]');
   if(!first)return {exists:false};
   const card=document.querySelector('#exam-questions>.exam-question[data-qindex="0"]');
@@ -826,16 +826,16 @@ async function main(){
   field.disabled=true;
   first.focus();
   return {exists:true,focused:document.activeElement===first};
- })()\`);
+ })()`);
  pass(disabledTarget.exists&&disabledTarget.focused,'Read-only fallback fixture prepares a disabled correction field');
  await pressEnter();
  pass(await evaluate('document.activeElement?.closest(".exam-question")?.dataset.qindex==="0"&&document.activeElement?.matches(".exam-q-head strong")'),
       'Disabled editor control routes keyboard focus to the read-only question heading');
- await evaluate(\`(function(){
+ await evaluate(`(function(){
   const card=document.querySelector('#exam-questions>.exam-question[data-qindex="0"]');
   for(const field of card.querySelectorAll('[data-qkey]'))field.disabled=false;
   document.getElementById('exam-approval-workbench-more').open=false;
- })()\`);
+ })()`);
  // Verify actual geometry at a 390px viewport, not merely CSS presence.
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
  pass(await evaluate('getComputedStyle(document.querySelector(".workflow-pager")).display==="flex"'),'Mobile step pager remains visible');
