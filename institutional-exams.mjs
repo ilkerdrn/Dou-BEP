@@ -157,14 +157,14 @@ function updateQuestionDraftGuidance(){
  if(!button)return;
  $('exam-draft-guidance-count').textContent=summary.total+' soru · '+summary.incomplete+' soruda zorunlu eksik · '+summary.review+' soruda ek inceleme · '+summary.basicComplete+' soruda temel kontrol tamamlandı.';
  const next=summary.next;
- button.disabled=!next;
+ button.disabled=!next&&summary.total>0;
  button.dataset.questionIndex=next?String(next.index):'';
  button.dataset.questionField=next?next.focus:'';
- button.textContent=!next?'Temel alanlar incelendi':next.state==='incomplete'?'İlk eksik soruya git':'İlk incelenecek soruya git';
+ button.textContent=!next?(summary.total?'Temel alanlar incelendi':'Soru ekleme alanına git'):next.state==='incomplete'?'İlk eksik soruya git':'İlk incelenecek soruya git';
  const problem=next?.issues.find(i=>i.level==='error')||next?.issues[0];
  $('exam-draft-guidance-detail').textContent=next
   ?'Soru '+next.number+': '+(problem?.text.replace(/^\d+\.\s*soru\s*:\s*/iu,'')||'Temel alanı kontrol edin.')+' Bu rehber taslağı değiştirmez.'
-  :'Temel alan uyarısı bulunmadı. Son kontrol, BEP kazanımı ve kurumsal onay ayrıca gereklidir.';
+  :summary.total?'Temel alan uyarısı bulunmadı. Son kontrol, BEP kazanımı ve kurumsal onay ayrıca gereklidir.':'Henüz soru yok. Soru ekleme alanından ilk sorunuzu oluşturun.';
  renderQuestionIssueQueue(summary);
 }
 function renderQuestionIssueQueue(summary){
@@ -172,8 +172,9 @@ function renderQuestionIssueQueue(summary){
  const root=$('exam-draft-issue-queue'),primary=$('exam-draft-issue-primary');
  const more=$('exam-draft-issue-more'),extra=$('exam-draft-issue-extra');
  if(!root||!primary||!more||!extra)return;
- $('exam-draft-issue-summary').textContent=queue.total
-  ?queue.blocking+' zorunlu eksik sorusu · '+queue.review+' ek inceleme sorusu. Önce zorunlu eksikler gösterilir.'
+ $('exam-draft-issue-summary').textContent=summary.total===0
+  ?'Henüz soru eklenmedi. Sınav hazırlığı için önce soru oluşturun.'
+  :queue.total?queue.blocking+' zorunlu eksik sorusu · '+queue.review+' ek inceleme sorusu. Önce zorunlu eksikler gösterilir.'
   :'Bu sorular için temel alan eksikliği görünmüyor. Akademik ve erişilebilirlik onayı ayrıca gereklidir.';
  const makeButton=item=>{
   const button=document.createElement('button');
@@ -210,7 +211,10 @@ $('exam-draft-issue-queue').addEventListener('click',event=>{
 $('exam-draft-guidance-go').addEventListener('click',()=>{
  if(!state.exam)return;
  const next=questionDraftGuidance(state.exam).next;
- if(!next)return;
+ if(!next){
+  if(state.exam.questions.length===0){visitPreflightTarget('exam-question-section');$('exam-add-question').focus({preventScroll:true});}
+  return;
+ }
  const stage=document.querySelector('.workflow-nav [data-workflow-target="exam-question-section"]');
  if(stage&&$('exam-editor-card').classList.contains('exam-guided-view'))stage.click();
  const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+next.index+'"]');
