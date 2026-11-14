@@ -49,6 +49,7 @@
     "ui:browser": "node tools/browser-ui-acceptance.mjs",
     "ui:browser:student": "node tools/browser-ui-acceptance.mjs --student",
     "reader:nvda:manual": "node tools/v4-nvda-manual-lab.mjs",
+    "reader:nvda:lab:check": "node tools/v4-nvda-code-http-acceptance.mjs",
     "ui:browser:handoff": "node tools/browser-review-handoff.mjs",
     "reader:voice:diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-voice-readiness.ps1",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
