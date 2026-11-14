@@ -65,7 +65,9 @@ test('teacher and reviewer UI fetch feedback through server, guard old revisions
  assert.match(js,/function renderReviewFeedback\(\)/);
  assert.match(js,/async function loadReviewFeedback\(\)/);
  assert.match(js,/reviewFeedbackGeneration/);
- assert.match(js,/current\.ownerId!==state\.actor\?\.id/);
+ assert.match(js,/function independentFeedbackBlocked\(\)\{[\s\S]*?current\.ownerId===state\.actor\?\.id\|\|current\.lastEditedByCurrentActor===true/);
+ assert.match(js,/current\.status==='draft'&&!independentFeedbackBlocked\(\)/);
+ assert.match(repo,/reviewerSeparationViolation\(row,actor\.id\)/);
  assert.match(js,/parseReviewQuestionNumbers\(/);
  assert.match(js,/state\.reviewFeedback=result\.feedback/);
  assert.match(js,/function refreshApprovalFeedbackUi\(\)/);
