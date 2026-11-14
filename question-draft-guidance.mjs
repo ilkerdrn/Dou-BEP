@@ -13,7 +13,7 @@ function focusField(message){
  if(/metni boş|soru metni/.test(s))return 'prompt';
  if(/kazanım/.test(s))return 'objective';
  if(/puan/.test(s))return 'points';
- if(/seçenek|şık/.test(s))return 'options';
+ if(/seçenek|seçeneği|şık/.test(s))return 'options';
  if(/eşleştirme/.test(s))return 'pairs';
  if(/yanıt|cevap anahtarı|örnek yanıt|doğru\/yanlış/.test(s))return 'answer';
  return 'prompt';
