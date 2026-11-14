@@ -42,3 +42,21 @@ test('synthetic student browser walks access preferences, native keyboard answer
  assert.doesNotMatch(script,/localStorage|sessionStorage|indexedDB|production\.sqlite/);
  assert.doesNotMatch(script,/console\.log\(session\.code|console\.log\(password|console\.log\(exam\.questions/);
 });
+
+
+test('written hearing-access mode and matching answers are included in native keyboard acceptance',()=>{
+ const script=read('tools/student-browser-acceptance.mjs');
+ const page=read('pilot.html');
+ const client=read('pilot.mjs');
+ assert.match(script,/Written-only mode exposes question, choices and timer without using TTS/);
+ assert.match(script,/Keyboard navigation reaches matching question with both labeled selects/);
+ assert.match(script,/Every matching select is natively labeled and includes all alternatives/);
+ assert.match(script,/key:'ArrowDown',code:'ArrowDown'/);
+ assert.match(script,/rawKeyDown/);
+ assert.match(script,/ArrowDown completes matching with keyboard and progress counts complete pairs/);
+ assert.match(script,/document\.getElementById\('send'\)\.focus\(\)/);
+ assert.match(page,/value="written">Yazılı anlatım ve uyarılar/);
+ assert.match(client,/if\(q\.type==='matching'\)for\(const left of q\.left\)/);
+ assert.match(client,/if\(Object\.keys\(selected\)\.length!==q\.left\.length\)empty\.push\(i\)/);
+ assert.doesNotMatch(script,/speechSynthesis\.speak|localStorage|sessionStorage/);
+});
