@@ -213,8 +213,8 @@
     <div id="exam-approval-workbench-findings" class="exam-approval-workbench-items" role="group" aria-labelledby="exam-approval-workbench-findings-title"></div>
    </section>
   </div>
-  <section class="exam-revision-compare" id="exam-revision-compare" aria-labelledby="exam-revision-compare-title">
-   <h4 id="exam-revision-compare-title">Önceki ve güncel sürüm farkları</h4>
+  <details class="exam-revision-compare" id="exam-revision-compare" aria-labelledby="exam-revision-compare-title">
+   <summary id="exam-revision-compare-title">Önceki ve güncel sürüm farkları <span id="exam-revision-compare-summary" class="exam-compact-caption">Kaydı kontrol edin</span></summary>
    <p class="portal-help">Yalnızca kayıt sırasında tespit edilen alan değişiklikleri gösterilir. Soru içeriği ve cevap anahtarı bu özetin parçası değildir.</p>
    <p id="exam-revision-compare-status" role="status" aria-live="polite">Sürüm farkları kontrol ediliyor.</p>
    <div id="exam-revision-compare-content"></div>
@@ -225,9 +225,9 @@
     <p class="portal-help">Buradaki “değişti” yalnızca teknik fark anlamına gelir; öğretmen düzeltmesi veya kurumsal onay olarak kabul edilmez.</p>
    </div>
    <p class="portal-help">Bu özet yalnızca iki ardışık kayıtlı sürümün teknik farkıdır; düzeltilen kazanımların doğrulandığını veya onaylandığını göstermez.</p>
-  </section>
-  <section class="exam-review-feedback" id="exam-review-feedback" aria-labelledby="exam-review-feedback-title">
-   <h4 id="exam-review-feedback-title">İncelemeci düzeltme kayıtları</h4>
+  </details>
+  <details class="exam-review-feedback" id="exam-review-feedback" aria-labelledby="exam-review-feedback-title">
+   <summary id="exam-review-feedback-title">İncelemeci düzeltme kayıtları <span id="exam-review-feedback-summary" class="exam-compact-caption">Kaydı kontrol edin</span></summary>
    <p class="portal-help">Her kayıt bir sınav sürümüne bağlıdır. Yeni sürüm kaydedildiğinde eski geri bildirim geçmişte kalır; düzeltmeler otomatik tamamlandı sayılmaz.</p>
    <p id="exam-review-feedback-status" role="status" aria-live="polite">Geri bildirimler yükleniyor.</p>
    <div id="exam-review-feedback-records" class="exam-review-feedback-records"></div>
@@ -243,7 +243,7 @@
      <button id="exam-review-feedback-submit" class="portal-btn secondary" type="submit">Düzeltme kaydını öğretmene ilet</button>
     </fieldset>
    </form>
-  </section>
+  </details>
   <div class="exam-approval-workbench-actions">
    <button id="exam-approval-workbench-quality" class="portal-btn secondary" type="button">Kalite raporunu aç</button>
    <button id="exam-approval-workbench-confirm" class="portal-btn secondary" type="button">Onay teyidine git</button>
