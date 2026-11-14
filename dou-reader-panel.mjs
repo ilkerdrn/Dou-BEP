@@ -16,6 +16,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   $('reader-pause').disabled=!has;
   $('reader-resume').disabled=!has;
   if(!has)$('reader-status').textContent='Yerel Türkçe ses bulunamadı. Yazılı sorular ve klavyeyle gezinme kullanılabilir.';
+  // Voice-list changes must never re-enable reading on a question marked audioAllowed=false.
+  syncQuestion();
  }
  function syncQuestion(){const q=getQuestion();$('reader-read').disabled=!engine.refresh().length||!q||q.audioAllowed===false;}
  function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
