@@ -60,3 +60,16 @@ test('written hearing-access mode and matching answers are included in native ke
  assert.match(client,/if\(Object\.keys\(selected\)\.length!==q\.left\.length\)empty\.push\(i\)/);
  assert.doesNotMatch(script,/speechSynthesis\.speak|localStorage|sessionStorage/);
 });
+
+
+test('NVDA form group names are connected to the matching question heading and prompt',()=>{
+ const student=read('pilot.mjs');
+ const smoke=read('tools/student-browser-acceptance.mjs');
+ assert.match(student,/h\.id='pilot-question-heading-'\+\(index\+1\)/);
+ assert.match(student,/box\.setAttribute\('aria-labelledby',h\.id\)/);
+ assert.match(student,/prompt\.id='pilot-question-prompt-'\+\(index\+1\)/);
+ assert.match(student,/field\.setAttribute\('aria-labelledby',h\.id\+' '\+prompt\.id\)/);
+ assert.match(smoke,/Every student answer fieldset exposes its question number and full prompt to screen readers/);
+ assert.match(smoke,/prompt\.textContent\.trim\(\)\.length>0/);
+ assert.doesNotMatch(student,/aria-label',String\(q\.answer\)|answerKey|studentId/);
+});
