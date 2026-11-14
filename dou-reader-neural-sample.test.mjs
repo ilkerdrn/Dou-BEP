@@ -23,12 +23,13 @@ function element(){
  };
 }
 function harness(){
- const ids=['reader-neural-file','reader-neural-play','reader-neural-stop','reader-neural-status'];
+ const ids=['reader-neural-file','reader-neural-play','reader-neural-stop','reader-neural-status','reader-neural-rate'];
  const nodes=Object.fromEntries(ids.map(id=>[id,element()]));
+ nodes['reader-neural-rate'].value='1';
  let created=0,revoked=0,played=0,paused=0;
  class BlobFake{constructor(parts,opts){this.parts=parts;this.type=opts.type;}}
  class AudioFake{
-  constructor(url){this.url=url;}
+  constructor(url){this.url=url;AudioFake.last=this;}
   play(){played++;return Promise.resolve();}
   pause(){paused++;}
  }
@@ -36,7 +37,7 @@ function harness(){
   createObjectURL(){created++;return 'blob:demo-'+created;},
   revokeObjectURL(){revoked++;}
  }};
- return {nodes,win,doc:{getElementById:id=>nodes[id]},
+ return {nodes,win,AudioFake,doc:{getElementById:id=>nodes[id]},
   metrics:()=>({created,revoked,played,paused})};
 }
 async function importFile(h,bytes,name='DOU-PocketTTS-TR001-female_2.wav'){
@@ -88,7 +89,7 @@ test('stale file import cannot reenable playback after reset or destroy',async()
  await importFile(h,valid);p.destroy();
  assert.equal(h.nodes['reader-neural-play'].disabled,true);
  assert.equal(h.metrics().created,h.metrics().revoked);
- for(const id of ['reader-neural-file','reader-neural-play','reader-neural-stop'])
+ for(const id of ['reader-neural-file','reader-neural-play','reader-neural-stop','reader-neural-rate'])
   assert.equal(h.nodes[id].handlers.size,0,id);
 });
 test('invalid local format remains non-playing and informative',async()=>{
@@ -98,4 +99,18 @@ test('invalid local format remains non-playing and informative',async()=>{
  assert.match(h.nodes['reader-neural-status'].textContent,/24 kHz/);
  assert.equal(h.metrics().played,0);
  p.destroy();
+});
+
+test('natural WAV preview exposes bounded live playback speed without regenerating speech',async()=>{
+ const h=harness(),preview=attachPocketSamplePreview({doc:h.doc,win:h.win});
+ await importFile(h,makeWav());
+ h.nodes['reader-neural-rate'].value='1.25';
+ assert.equal(preview.play(),true);
+ assert.equal(h.AudioFake.last.playbackRate,1.25);
+ h.nodes['reader-neural-rate'].value='0.75';h.nodes['reader-neural-rate'].change();
+ assert.equal(h.AudioFake.last.playbackRate,0.75);
+ h.nodes['reader-neural-rate'].value='invalid';h.nodes['reader-neural-rate'].change();
+ assert.equal(h.AudioFake.last.playbackRate,1);
+ preview.destroy();
+ assert.equal(h.metrics().created,h.metrics().revoked);
 });
