@@ -186,7 +186,7 @@ function renderQuestionIssueQueue(summary){
   const heading=document.createElement('strong');
   heading.textContent='Soru '+item.number+' · '+level;
   const detail=document.createElement('span');
-  detail.textContent=(item.issue.replace(/^\\d+\\.\\s*soru\\s*:\\s*/iu,'').trim()||'Soru alanlarını kontrol edin.').slice(0,180);
+  detail.textContent=(item.issue.replace(/^\d+\.\s*soru\s*:\s*/iu,'').trim()||'Soru alanlarını kontrol edin.').slice(0,180);
   button.append(heading,detail);
   return button;
  };
