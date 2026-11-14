@@ -38,3 +38,31 @@ test('Reader voice event revocation cancels speech, and destroy removes event li
  spoken[0].onend();assert.equal(spoken.length,1);assert.match(stoppedMessage,/Yerel Türkçe ses bulunamadı/);
  reader.destroy();assert.equal(docHandlers.has('keydown'),false);assert.equal(voiceEvents.has('voiceschanged'),false);
 });
+
+test('voice refresh cannot restore speech on a teacher-disabled question',()=>{
+ const ids=['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
+ const nodes=new Map(ids.map(id=>[id,fakeElement()]));
+ const doc={getElementById:id=>nodes.get(id),createElement:()=>fakeElement(),addEventListener(){},removeEventListener(){}};
+ const voices=[{name:'Yerel Türkçe',voiceURI:'local-tr',lang:'tr-TR',localService:true}];
+ const said=[];const synth={getVoices:()=>voices,speak:u=>said.push(u),cancel(){},addEventListener(){},removeEventListener(){}};
+ class Utterance{constructor(text){this.text=text;}}
+ let question={number:1,prompt:'Anonim soru',audioAllowed:false};
+ let notices=0;
+ const reader=attachPilotReader({doc,win:{speechSynthesis:synth,SpeechSynthesisUtterance:Utterance},
+  getQuestion:()=>question,moveQuestion(){},announce:()=>{notices++;}});
+ assert.equal(nodes.get('reader-read').disabled,true);
+ reader.read();
+ assert.equal(said.length,0);
+ assert.ok(notices>=1);
+ question={...question,audioAllowed:true};
+ reader.refreshVoices();
+ assert.equal(nodes.get('reader-read').disabled,false);
+ reader.read();
+ assert.equal(said.length,1);
+ question={...question,audioAllowed:false};
+ reader.refreshVoices();
+ assert.equal(nodes.get('reader-read').disabled,true);
+ reader.read();
+ assert.equal(said.length,1);
+ reader.destroy();
+});
