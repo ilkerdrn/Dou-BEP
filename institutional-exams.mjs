@@ -251,7 +251,7 @@ async function loadRevisionDelta(){
   }
  }
 }
-let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false;
+let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false,feedbackAutoOpenKey='';
 function hasUnsentReviewRequest(){
  const form=$('exam-review-feedback-form');
  return Boolean(form&&!form.hidden&&(
@@ -294,6 +294,11 @@ function renderReviewFeedback(){
  items.replaceChildren();
  const records=feedback.items||[];
  const active=records.filter(item=>item.revision===current.revision&&current.status==='draft');
+ const activeKey=current.id+'|'+current.revision;
+ if(active.length&&feedbackAutoOpenKey!==activeKey){
+  feedbackAutoOpenKey=activeKey;
+  section.open=true;
+ }
  compact.textContent=active.length?'Güncel düzeltme isteği: '+active.length:records.length?'Geçmiş kayıt: '+records.length:'Kayıt yok';
  status.textContent=records.length
   ?active.length+' güncel sürüm düzeltme kaydı · '+records.length+' toplam geçmiş kayıt.'
