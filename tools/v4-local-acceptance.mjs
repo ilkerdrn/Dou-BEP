@@ -46,7 +46,8 @@ const QUICK_TESTS=[
  'server-foundation/exam-review-feedback.test.mjs',
  'tools/v4-review-feedback-ui.test.mjs',
  'server-foundation/exam-revision-delta.test.mjs',
- 'tools/v4-revision-comparison-ui.test.mjs'
+ 'tools/v4-revision-comparison-ui.test.mjs',
+ 'tools/v4-reviewer-recheck-hints.test.mjs'
 ];
 const allTests=()=>['.','server-foundation','tools'].flatMap(dir=>
  readdirSync(join(ROOT,dir),{withFileTypes:true})
