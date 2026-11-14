@@ -12,7 +12,8 @@ test('recovery tool may target one explicit existing pilot DB but never creates 
  assert.match(ps,/if \(\$DatabasePath\)/);
 });
 test('account discovery opens SQLite in true read-only mode',()=>{
- assert.match(ps,/new DatabaseSync\(file, \{readOnly:true\}\)/);
+ assert.match(ps,/new DatabaseSync\(file, \{readOnly:mode === 'list'\}\)/);
+ assert.doesNotMatch(ps,/openStore\(file\)/);
  assert.match(ps,/mode === 'list'/);
  assert.match(ps,/if \(\$ListOnly\)/);
  assert.match(ps,/Sadece hesaplar listelendi/);
