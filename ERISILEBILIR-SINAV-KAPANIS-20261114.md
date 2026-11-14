@@ -122,3 +122,10 @@ Kullanıcı, Windows'ta sentetik NVDA laboratuvarı açıldıktan sonra öğrenc
 Değişiklik **yalnız sentetik NVDA laboratuvarında**: başlangıçta kodun hash/durum/süre kaydı açılan temp SQLite'da doğrulanır; HTTP sunucusu açıldıktan sonra tekrar salt-okunur kontrol edilir. Terminalde `N + Enter` yeni 45 dakikalık sentetik kod oluşturur; önceki `issued` kod iptal edilir, `started` oturum bozulmaz. `Q + Enter` veya `Ctrl+C` geçici veritabanını kapatır. Gerçek kurumsal kod doğrulama ve pilot oturum güvenlik kuralları değiştirilmedi.
 
 Yeni izole kabul komutu: `npm run reader:nvda:lab:check`. Beklenen HTTP sırası: ilk kod **200**, tekrar **401**, yeni kod **200**, tekrar **401**. Hem manuel laboratuvar hem bu test yalnız yeni sistem geçici veritabanı ve `127.0.0.1` kullanır; test kodu veya token rapora yazılmaz. **Kaynak 3/3 PASS, JavaScript sözdizimi PASS; gerçek Windows HTTP sonucu BEKLENİYOR.** NVDA insan kabulü ve doğal ses anlaşılırlığı da BEKLENİYOR.
+
+
+## Birleştirilmiş GitHub denetimi ve sınav geliştirme hattı
+
+14 Kasım itibarıyla "GitHub denetimi" ve "Sınav Geliştirmesine Devam" geçmişleri için [ortak durum ve açık işler](docs/DOU-BEP-V4-BIRLESIK-GITHUB-DENETIMI-VE-SINAV-GELISTIRME-20261114.md) hazırlanmıştır. Aynı feature dalı kullanılmaya devam eder; `main`, PR #26 ve bağımsız Reader/Speech güvenlik dalıyla otomatik merge yapılmaz.
+
+En son doğrulanan öğrenci Edge koşusu **249/249 PASS**, öğretmen–incelemeci Edge handoff **25/25 PASS**. Diğer sohbetin sonrasındaki sentetik NVDA HTTP kod testi `fresh=200, reuse=401, new=200, reuse=401` olarak PASS raporlandı; ancak **gerçek NVDA/Türkçe ses ve erişilebilirlik kullanıcı kabulü hâlâ beklemektedir**. Windows'taki geçici GitHub DNS problemi proje testi başarısızlığı sayılmaz; ağ erişimi yeniden doğrulanmadan güncel kod yerelde varmış gibi değerlendirilmez.
