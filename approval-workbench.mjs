@@ -106,7 +106,15 @@ export function approvalWorkbenchSummary({
  const audio=safeInt(audioFindings);
  const unsaved=dirty||saving||pending||blocked;
  let state='review',headline='',detail='';
- if(approved){
+ // Approval belongs to a specific *saved* server revision. Never describe
+ // an unsaved local working copy as approved, even if the previous server
+ // revision still has an approval history.
+ if(approved&&(!saved||unsaved)){
+  headline='Onaylı sürümden farklı, henüz doğrulanmamış düzenlemeler var';
+  detail=!saved
+   ?'Sunucu kaydı doğrulanmadan kurumsal onay durumu gösterilemez.'
+   :'Sunucudaki kayıtlı sürümün onayı, bu sekmedeki değişiklikleri kapsamaz. Önce güvenli kaydı tamamlayın; yeni sürüm bağımsız inceleme gerektirir.';
+ }else if(approved){
   state='approved';
   headline=preflight.approvalConflict?'Sunucu onayı var, hazırlık kontrolünde eksik var':'Bu sınav sürümü onaylı';
   detail=preflight.approvalConflict
