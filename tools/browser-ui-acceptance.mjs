@@ -117,6 +117,9 @@ async function navigate(base,path,{discardSyntheticDraft=false}={}){
    if(packet.method!=='Page.javascriptDialogOpening')return;
    if(packet.params?.type!=='beforeunload'||++dialogCount!==1){
     dialogError=Error('Unexpected browser dialog during synthetic draft navigation: '+String(packet.params?.type));
+    // Reject unanticipated dialogs instead of approving them or allowing a hang.
+    dialogAck=command('Page.handleJavaScriptDialog',{accept:false})
+     .catch(error=>{dialogError=error;});
     return;
    }
    console.log('BROWSER SYNTHETIC BEFOREUNLOAD: confirming discard of temporary 100-question draft');
@@ -134,6 +137,11 @@ async function navigate(base,path,{discardSyntheticDraft=false}={}){
   const pathname=new URL(base+path).pathname;
   await waitUntil(()=>evaluate('location.pathname==='+JSON.stringify(pathname)+'&&document.readyState==="complete"'),
    'Page loaded '+path);
+ }catch(error){
+  console.error('BROWSER NAVIGATION FAILED: '+JSON.stringify({path,
+   syntheticDiscard:discardSyntheticDraft,dialogEvents:dialogCount,
+   dialogFailure:dialogError?.message||null,error:error.message}));
+  throw error;
  }finally{
   if(dialogListener)ws.removeEventListener('message',dialogListener);
  }
