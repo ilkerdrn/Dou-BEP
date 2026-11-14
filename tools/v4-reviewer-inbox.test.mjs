@@ -108,7 +108,7 @@ test('inbox opens selected current revision and history without writing approval
  assert.match(ui,/field\.select\(\)/);
  assert.match(server,/'\/reviewer-inbox\.mjs':\['reviewer-inbox\.mjs'/);
  assert.match(repo,/requireIndependentExamApproval&&row\.owner_id===actor\.id/);
- assert.match(repo,/SELECT \* FROM exams WHERE tenant_id=\?/);
+ assert.match(repo,/FROM exams e WHERE e\.tenant_id=\?/);
  const helper=readFileSync(resolve(root,'reviewer-inbox.mjs'),'utf8');
  assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.|window\.|approveExam\(|updateExam\(/);
 });
