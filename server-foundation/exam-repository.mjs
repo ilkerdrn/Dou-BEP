@@ -33,6 +33,18 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
    UNIQUE(exam_id,revision)
  );
  CREATE INDEX IF NOT EXISTS idx_exam_approvals_tenant ON exam_approval_history(tenant_id,exam_id,id);
+ CREATE TABLE IF NOT EXISTS exam_review_feedback (
+  id TEXT PRIMARY KEY,
+  tenant_id TEXT NOT NULL REFERENCES tenants(id),
+  exam_id TEXT NOT NULL REFERENCES exams(id),
+  revision INTEGER NOT NULL,
+  reviewer_id TEXT NOT NULL REFERENCES members(id),
+  stage_ids TEXT NOT NULL,
+  question_numbers TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  UNIQUE(tenant_id,exam_id,revision,reviewer_id)
+ );
+ CREATE INDEX IF NOT EXISTS idx_exam_review_feedback ON exam_review_feedback(tenant_id,exam_id,created_at);
  CREATE TABLE IF NOT EXISTS exam_delivery_events (
   id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL REFERENCES tenants(id),
   exam_id TEXT NOT NULL REFERENCES exams(id),actor_id TEXT NOT NULL REFERENCES members(id),
@@ -125,6 +137,59 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   }catch(err){db.exec('ROLLBACK');throw err;}
   return {...meta(db.prepare('SELECT * FROM exams WHERE id=?').get(id)),report:{errorCount:0,warningCount:report.warningCount}};
  }
+ const feedbackStages=new Set(['identity','goals','questions','access','delivery']);
+ function reviewFeedbackList(actor,id){
+  const row=rowFor(actor,id);
+  if(!roleCan(actor.role,'exam.edit')&&!roleCan(actor.role,'exam.approve'))
+   fail('forbidden','İnceleme geri bildirimlerine erişim yetkisi yok.',403);
+  const records=db.prepare(`SELECT id,revision,stage_ids,question_numbers,created_at
+   FROM exam_review_feedback WHERE tenant_id=? AND exam_id=? ORDER BY created_at DESC,id DESC LIMIT 30`)
+   .all(actor.tenantId,id).map(x=>({
+    id:x.id,revision:x.revision,stageIds:JSON.parse(x.stage_ids),
+    questionNumbers:JSON.parse(x.question_numbers),createdAt:x.created_at,
+    current:x.revision===row.revision&&row.status==='draft'
+   }));
+  return {examId:id,currentRevision:row.revision,status:row.status,items:records};
+ }
+ function reviewFeedbackCreate(actor,id,payload){
+  // Only exam approvers can create a revision-specific correction request.
+  allow(actor,'exam.approve');
+  const row=rowFor(actor,id);
+  if(row.owner_id===actor.id)fail('separation_of_duties','Sınav sahibi kendi taslağına bağımsız inceleme kaydı bırakamaz.',403);
+  if(row.status!=='draft')fail('not_draft','Yalnızca taslak sınav sürümü için düzeltme kaydı oluşturulur.',409);
+  if(!payload||typeof payload!=='object'||Array.isArray(payload)||
+     Object.keys(payload).some(key=>!['revision','stageIds','questionNumbers','confirmed'].includes(key)))
+   fail('invalid_feedback','Serbest metin ve tanı bilgisi içermeyen yapılandırılmış inceleme kaydı gerekli.',422);
+  if(!Number.isSafeInteger(payload.revision)||payload.revision<1)
+   fail('bad_revision','İnceleme sürümü geçersiz.',422);
+  if(payload.revision!==row.revision)
+   fail('revision_conflict','Sınav sürümü değişti. Yeni sürümü açıp yeniden inceleyin.',409);
+  if(payload.confirmed!==true)
+   fail('confirmation_required','İncelemeci geri bildirimini açıkça teyit etmeli.',422);
+  const stages=payload.stageIds,numbers=payload.questionNumbers;
+  if(!Array.isArray(stages)||stages.length>5||stages.some(x=>typeof x!=='string'||!feedbackStages.has(x))||
+     new Set(stages).size!==stages.length||
+     !Array.isArray(numbers)||numbers.length>20||numbers.some(n=>!Number.isSafeInteger(n)||n<1)||
+     new Set(numbers).size!==numbers.length)
+   fail('invalid_feedback','Geri bildirim aşama veya soru numarası geçersiz.',422);
+  const questions=JSON.parse(row.body).questions;
+  if(numbers.some(n=>n>questions.length)||!(stages.length||numbers.length))
+   fail('invalid_feedback','En az bir geçerli eksik aşama veya soru numarası seçin.',422);
+  if(db.prepare('SELECT id FROM exam_review_feedback WHERE tenant_id=? AND exam_id=? AND revision=? AND reviewer_id=?')
+    .get(actor.tenantId,id,row.revision,actor.id))
+   fail('feedback_exists','Bu incelemeci aynı sürüme zaten düzeltme kaydı bıraktı. Güncel sınav sürümünü kontrol edin.',409);
+  const recordId=randomUUID();
+  try{
+   db.prepare('INSERT INTO exam_review_feedback(id,tenant_id,exam_id,revision,reviewer_id,stage_ids,question_numbers,created_at) VALUES(?,?,?,?,?,?,?,?)')
+    .run(recordId,actor.tenantId,id,row.revision,actor.id,JSON.stringify(stages),
+      JSON.stringify(numbers),Date.now());
+  }catch(err){
+   if(String(err.message||'').includes('UNIQUE'))fail('feedback_exists','Bu sürüm için inceleme kaydı zaten var.',409);
+   throw err;
+  }
+  log(actor,'exam.review_feedback_created',id);
+  return reviewFeedbackList(actor,id);
+ }
  function approvalHistory(actor,id){
   const row=rowFor(actor,id);
   const records=db.prepare('SELECT id,revision,body_sha256 AS contentHash,approved_by AS approvedBy,approved_at AS approvedAt FROM exam_approval_history WHERE tenant_id=? AND exam_id=? ORDER BY id DESC LIMIT 100').all(actor.tenantId,id);
@@ -168,5 +233,5 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   allow(actor,'audit.view');rowFor(actor,id);
   return db.prepare('SELECT id,revision,profile,source_sha256 AS sourceSha256,package_sha256 AS packageSha256,manifest_sha256 AS manifestSha256,created_at AS createdAt FROM exam_delivery_events WHERE tenant_id=? AND exam_id=? ORDER BY created_at DESC LIMIT 50').all(actor.tenantId,id);
  }
- return {listExams,getExam,createExam,duplicateExam,updateExam,approveExam,approvalHistory,exportExam,deliveryCheck,deliveryProduce,deliveryAudit};
+ return {listExams,getExam,createExam,duplicateExam,updateExam,approveExam,approvalHistory,reviewFeedbackList,reviewFeedbackCreate,exportExam,deliveryCheck,deliveryProduce,deliveryAudit};
 }
