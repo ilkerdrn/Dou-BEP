@@ -43,7 +43,7 @@ test('current correction request opens once, allowing user to collapse it afterw
  assert.match(client,/feedbackAutoOpenKey=activeKey/);
  assert.match(client,/section\.open=true/);
  assert.match(client,/compact\.textContent=active\.length\?'Güncel düzeltme isteği: '/);
- assert.match(client,/compact\.textContent='Kontrol edilemedi'/);
+ assert.match(client,/\$\('exam-review-feedback-summary'\)\.textContent='Kontrol edilemedi'/);
 });
 
 test('unsent reviewer selections cannot be lost silently on new, other or page exit',()=>{
