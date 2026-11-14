@@ -546,8 +546,58 @@ async function main(){
   '.campus-progress-steps','.campus-progress-steps li'
  ]);
 
- await navigate(base,'/kurumsal-sinav');
- await waitUntil(()=>evaluate('document.documentElement.dataset.examAppReady==="ready"'),'Exam editor ready',20000);
+ // Watch the *actual* module startup rather than treating a stuck 20s spinner
+ // as a legitimate slow ready state. Diagnostics contain only this disposable
+ // anonymous fixture: no credentials, session tokens, answers or page markup.
+ const examStartup={exceptions:[],failedResources:[]};
+ const examStartupEvents=event=>{
+  let packet;try{packet=JSON.parse(event.data);}catch{return;}
+  if(packet.method==='Runtime.exceptionThrown'){
+   const details=packet.params?.exceptionDetails;
+   if(examStartup.exceptions.length<4)
+    examStartup.exceptions.push(String(details?.text||details?.exception?.className||'JavaScript exception').slice(0,180));
+  }
+  if(packet.method==='Network.responseReceived'){
+   const response=packet.params?.response;
+   if(response?.status>=400&&examStartup.failedResources.length<12){
+    // Avoid leaking query strings or network bodies in acceptance logs.
+    let path;
+    try{path=new URL(response.url).pathname;}catch{path='unknown';}
+    examStartup.failedResources.push({path,status:response.status});
+   }
+  }
+ };
+ await command('Network.enable');
+ ws.addEventListener('message',examStartupEvents);
+ try{
+  await navigate(base,'/kurumsal-sinav');
+  const started=Date.now();
+  let status={ready:'',auth:'',workspaceHidden:true,recovery:''};
+  for(;;){
+   status=await evaluate(`(function(){
+    return {
+     ready:document.documentElement.dataset.examAppReady||'not-set',
+     auth:document.body?.dataset.examAuth||'not-set',
+     workspaceHidden:document.getElementById('exam-workspace')?.hidden??true,
+     recovery:document.getElementById('exam-recovery-reason')?.textContent?.slice(0,180)||''
+    };
+   })()`);
+   if(status.ready==='ready')break;
+   if(status.ready==='login'||status.ready==='error'||Date.now()-started>=20000){
+    console.error('BROWSER EXAM STARTUP DIAGNOSTIC: '+JSON.stringify({
+     ...status,exceptions:examStartup.exceptions,
+     failedResources:examStartup.failedResources
+    }));
+    throw Error('Exam editor not ready: '+status.ready+
+     (examStartup.failedResources.length?' (HTTP resource failure)':'')+
+     (examStartup.exceptions.length?' (JavaScript exception)':''));
+   }
+   await delay(130);
+  }
+ }finally{
+  ws.removeEventListener('message',examStartupEvents);
+  await command('Network.disable');
+ }
  pass(await evaluate('document.body.dataset.examAuth==="authenticated"'),'Exam editor authorizes fixture session');
  pass(await evaluate('!document.getElementById("exam-workspace").hidden'),'Exam workspace visible');
  const examWidth=await evaluate(`(function(){
