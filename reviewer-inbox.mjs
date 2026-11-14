@@ -22,6 +22,7 @@ export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}
   title:String(item.title||'Adsız sınav').slice(0,250),
   revision:item.revision,
   status:item.status,
+  feedbackCurrent:item.feedbackCurrent===true,
   updatedAt:Number.isFinite(Number(item.updatedAt))?Number(item.updatedAt):0,
   own:Boolean(actorId&&item.ownerId===actorId)
  }));
@@ -34,8 +35,8 @@ export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}
    (!needle||item.title.toLocaleLowerCase('tr').includes(needle))).slice(0,MAX_RESULTS)
    .map(item=>({
     ...item,
-    label:item.status==='draft'?'Taslak · inceleme gerekli':'Onay kaydı var · geçmişi doğrulayın',
-    hint:item.own
+    label:item.feedbackCurrent?'Taslak · düzeltme kaydı var':item.status==='draft'?'Taslak · inceleme gerekli':'Onay kaydı var · geçmişi doğrulayın',
+    hint:item.feedbackCurrent?'Bu sürüm için geri bildirim kayıtlı. Güncel taslağı inceleyin; yeni sürümün düzeltmeleri ayrıca doğrulanır.':item.own
      ?'Bu sınav sizin taslağınız. Bağımsız onay gereken pilotta başka bir incelemeci kullanın.'
      :item.status==='draft'
       ?'Onay için hazır olduğu henüz doğrulanmadı. İçeriği ve kalite raporunu inceleyin.'
