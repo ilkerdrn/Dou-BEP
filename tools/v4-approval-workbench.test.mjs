@@ -55,7 +55,7 @@ test('prior approval cannot mark unsaved editor changes or missing server record
  assert.equal(pending.canRequestApproval,false);
  assert.match(pending.headline,/henüz doğrulanmamış/);
  assert.match(pending.detail,/kapsamaz/);
- for(const kind of ['saving','pending','blocked']){
+ for(const kind of ['saving','pending','blocked','failed']){
   const result=approvalWorkbenchSummary({...base,saved:true,dirty:false,approved:true,[kind]:true});
   assert.equal(result.state,'review');
   assert.equal(result.canRequestApproval,false);
