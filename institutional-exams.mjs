@@ -238,7 +238,7 @@ async function loadReviewFeedback(){
  try{
   const {feedback}=await api('/exams/'+id+'/review-feedback');
   if(ticket!==reviewFeedbackGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
-  state.reviewFeedback=feedback;renderReviewFeedback();
+  state.reviewFeedback=feedback;renderReviewFeedback();draw();
  }catch(err){
   if(ticket===reviewFeedbackGeneration&&state.current?.id===id){
    $('exam-review-feedback-status').textContent='İnceleme kayıtları alınamadı: '+err.message;
@@ -268,7 +268,7 @@ $('exam-review-feedback-form').addEventListener('submit',async event=>{
    body:{revision,stageIds:stages,questionNumbers:numbers,confirmed:true}});
   if(state.current?.id===id&&state.current?.revision===revision){
    state.reviewFeedback=result.feedback;
-   renderReviewFeedback();
+   renderReviewFeedback();draw();
    await refreshList();
    notice('Düzeltme kaydı bu sınav sürümü için kaydedildi. Öğretmen sınavı açınca görebilir.');
   }else notice('Düzeltme kaydı sunucuya işlendi. Bu sırada ekrandaki sınav değişti.',true);
@@ -283,6 +283,7 @@ function renderApprovalWorkbench(preflight){
   blocked:autosave.isBlocked(),busy:state.busy,approved:state.current?.status==='approved',
   canEdit:has('exam.edit'),canApprove:has('exam.approve'),confirmed:$('exam-confirm').checked,
   ownerIsActor:Boolean(state.current?.ownerId&&state.current.ownerId===state.actor?.id),
+  feedbackPending:hasCurrentReviewFeedback(),feedbackLoading:reviewFeedbackCheckPending(),
   audioFindings:auditAudioAccess(state.exam).length
  });
  const latestKey=(state.current?.id||'')+'|'+(state.current?.revision||'');
@@ -631,6 +632,15 @@ $('exam-material-apply').addEventListener('click',()=>{
  notice(`“${p.label}” materyali ${index+1}. soruya eklendi. Görsel açıklamalar ayarını, kazanım uygunluğunu ve eşdeğerliği öğretmen olarak yeniden denetleyin.`);
  $('exam-questions').querySelector(`[data-qindex="${index}"] [data-qkey="visualAltText"]`)?.focus({preventScroll:true});
 });
+function reviewFeedbackCheckPending(){
+ return Boolean(state.current&&state.current.status==='draft'&&
+  (!state.reviewFeedback||state.reviewFeedback.examId!==state.current.id||
+   state.reviewFeedback.currentRevision!==state.current.revision));
+}
+function hasCurrentReviewFeedback(){
+ return Boolean(state.current?.status==='draft'&&state.reviewFeedback?.examId===state.current.id&&
+  state.reviewFeedback.items?.some(item=>item.revision===state.current.revision));
+}
 function updateApprovalGuidance(report){
  const role=state.actor?.role;
  const label=role==='reviewer'
@@ -644,6 +654,8 @@ function updateApprovalGuidance(report){
   :state.current.status==='approved'?'Bu sınav sürümü zaten onaylı.'
   :state.busy||autosave.isSaving()?'Devam eden işlem veya kaydın bitmesini bekleyin.'
   :state.dirty||autosave.hasChanges()||autosave.isBlocked()?'Kaydedilmemiş veya çakışan değişiklikler var.'
+  :reviewFeedbackCheckPending()?'İncelemeci düzeltme kayıtları kontrol ediliyor. Kayıtlar yüklenmeden onay verilmez.'
+  :hasCurrentReviewFeedback()?'Bu sınav sürümünde açık düzeltme isteği var. Öğretmen yeni sürümü kaydedip incelemeciye yeniden sunmalı.'
   :report.errorCount>0?report.errorCount+' zorunlu kalite kontrol hatası düzeltilmeli.'
   :!$('exam-confirm').checked?'Onay için yukarıdaki gözden geçirme teyidini işaretleyin.'
   :'Bu sınav sürümü onay işlemine hazır. Sunucu son kontrolü ayrıca yapacaktır.';
@@ -666,7 +678,7 @@ function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-adjustments').innerHTML=`<label class="exam-label">Yazı boyutu<select data-adapt="fontSize">${[16,18,20,22,24].map(v=>`<option value="${v}" ${x.adaptations.fontSize===v?'selected':''}>${v} punto</option>`).join('')}</select></label>${[['highContrast','Yüksek kontrast'],['simpleInstructions','Sadeleştirilmiş yönerge'],['onePerPage','Her sayfada bir soru'],['largerAnswerArea','Geniş cevap alanı'],['visualCues','Görsel açıklamalar']].map(([k,label])=>`<label class="portal-check"><input type="checkbox" data-adapt="${k}" ${x.adaptations[k]?'checked':''}> ${label}</label>`).join('')}`;
  const report=renderQuality(x);renderPreflight();const coverage=objectiveCoverage(x);$('exam-objective-coverage').textContent=`Kazanım kapsamı: ${coverage.groups.length} hedef · BEP bankası: ${(x.bepGoals||[]).length} amaç · ${coverage.total} soru · ${coverage.missing} kazanımsız soru. Bu özet ölçme yeterliliğini doğrulamaz.`;
  $('exam-save').disabled=!has('exam.edit')||state.busy;
- $('exam-approve').disabled=!has('exam.approve')||!state.current||state.dirty||state.current.status==='approved'||state.busy||report.errorCount>0||!$('exam-confirm').checked;
+ $('exam-approve').disabled=!has('exam.approve')||!state.current||state.dirty||state.current.status==='approved'||state.busy||report.errorCount>0||reviewFeedbackCheckPending()||hasCurrentReviewFeedback()||!$('exam-confirm').checked;
  updateApprovalGuidance(report);
  syncDeliveryContext();
  $('exam-word').disabled=!has('exam.export')||!state.current||state.dirty||state.current.status!=='approved'||state.busy;
