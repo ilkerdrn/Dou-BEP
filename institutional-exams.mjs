@@ -601,6 +601,13 @@ $('exam-review-feedback-form').addEventListener('submit',async event=>{
  }catch(err){notice('Düzeltme kaydı oluşturulamadı: '+err.message,true);}
  finally{reviewFeedbackSending=false;$('exam-review-feedback-submit').disabled=false;renderReviewFeedback();}
 });
+function updateApprovalQuestionDisclosure(){
+ const more=$('exam-approval-workbench-more');
+ if(!more)return;
+ const count=Number(more.dataset.remainingCount)||0;
+ more.querySelector('summary').textContent='Diğer '+count+' incelenecek soruyu '+(more.open?'gizle':'göster');
+}
+$('exam-approval-workbench-more').addEventListener('toggle',updateApprovalQuestionDisclosure);
 function renderApprovalWorkbench(preflight){
  const node=$('exam-approval-workbench');if(!node||!state.exam)return;
  const model=approvalWorkbenchSummary({
@@ -661,12 +668,13 @@ function renderApprovalWorkbench(preflight){
  const more=$('exam-approval-workbench-more'),moreList=$('exam-approval-workbench-more-questions');
  const wasOpen=more.open;
  more.hidden=model.hiddenQuestionCount===0;
- more.querySelector('summary').textContent='Diğer '+model.hiddenQuestionCount+' incelenecek soruyu göster';
+ more.dataset.remainingCount=String(model.hiddenQuestionCount);
  moreList.replaceChildren(...model.remainingQuestionItems.map(item=>makeItem(
   item.label,item.detail,item.type==='error'?'needs-review':'warning',
   item.target,item.index,item.field
  )));
  more.open=model.hiddenQuestionCount>0&&wasOpen;
+ updateApprovalQuestionDisclosure();
  if(!model.questionItems.length){
   const note=document.createElement('p');note.className='portal-help';
   note.textContent=model.summary.questionCount===0?'Henüz soru eklenmedi. Önce öğretmen soru eklemeli.':'Temel soru alanlarında eksik bulunmadı. Kalite, erişilebilirlik ve pedagojik inceleme ayrı yürütülür.';
