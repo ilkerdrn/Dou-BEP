@@ -20,7 +20,12 @@ test('recovery does not extend expiry, preserves anonymous drafts and invalidate
  assert.match(store,/SET code_hash=\?,claim_hash=NULL,status='issued'/);
  assert.match(store,/\.run\(sha\(raw\),id,actor\.tenantId,now\(\)\)/);
  assert.match(store,/expiresAt:row\.expires_at,status:'issued'/);
- assert.match(store,/return \{token,expiresAt:row\.expires_at,exam:payload,\.\.\.\(row\.answers\?\{answers:JSON\.parse\(row\.answers\)\}:\{\}\)\}/);
+ // The redeemed capability is returned only AFTER the SQLite transaction commits.
+ assert.match(store,/const result=\{token,expiresAt:row\.expires_at,exam:payload,\s*\.\.\.\(row\.answers\?\{answers:JSON\.parse\(row\.answers\)\}:\{\}\)\};/);
+ assert.match(store,/db\.exec\('COMMIT'\);\s*inTransaction=false;\s*return result;/);
+ // Recovery must rotate capabilities without rewriting the original deadline or draft.
+ assert.match(store,/UPDATE pilot_sessions SET code_hash=\?,claim_hash=NULL,status='issued' WHERE id=\? AND tenant_id=\? AND status='started' AND expires_at>\?/);
+ assert.match(store,/function recoverIssue\(actor,id\)\{\s*return withWriterLock\(/);
  assert.match(store,/log\(actor,'pilot\.recovery\.issued',id\)/);
 });
 test('teacher controls and learner restore are explicit and preserve existing pilot submission',()=>{
