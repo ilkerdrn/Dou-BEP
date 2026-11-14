@@ -84,10 +84,10 @@ export async function runStudentBrowserAcceptance({
    await command('Input.dispatchKeyEvent',{type:'rawKeyDown',...arrow});
    await command('Input.dispatchKeyEvent',{type:'keyUp',...arrow});
   }
+  // A native select's change event can fire on blur in Chromium.
+  await evaluate("document.getElementById('send').focus()");
   pass(await evaluate("(function(){const controls=[...document.querySelectorAll('#student-questions .question:not([hidden]) select')];return controls.every(x=>x.value!=='')&&document.getElementById('pilot-answer-progress').textContent.includes('2 / ');})()"),
    'ArrowDown completes matching with keyboard and progress counts complete pairs');
-
-  await evaluate("document.getElementById('send').focus()");
   await pressEnter();
   pass(await evaluate("(function(){return !document.getElementById('pilot-final-review').hidden&&document.getElementById('pilot-final-summary').textContent.includes('tekrar bakılacak')&&document.getElementById('send').textContent==='Kesin teslim et';})()"),
    'Final review contains unanswered and flagged question status');
