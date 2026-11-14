@@ -41,6 +41,20 @@
 <p id="reader-status" role="status" aria-live="polite" aria-atomic="true">Yerel sesler kontrol ediliyor.</p>
 <div id="reader-shortcuts" hidden><p>Alt+Shift+R: tüm soruyu ve seçenekleri oku · Alt+Shift+J: yalnız soru metnini oku · Alt+Shift+O: yalnız seçenekleri oku · Alt+Shift+S: durdur · Alt+Shift+N: sonraki · Alt+Shift+P: önceki · Alt+Shift+H: yardım. Form alanlarında kısayollar kapatılır.</p></div>
 </section>
+<section class="card reader-panel" aria-labelledby="reader-neural-title">
+<h2 id="reader-neural-title">Yerel doğal Türkçe ses — Pocket TTS denemesi</h2>
+<p>Bu bölüm yalnızca bilgisayarınızda önceden oluşturduğunuz <strong>24 kHz PCM16 mono WAV</strong> dosyasını dinler. Gerçek sınavları, öğrenci yanıtlarını veya istediğiniz metni seslendirmez. Ses dosyası sunucuya yüklenmez, saklanmaz ve otomatik çalınmaz. Model kalitesi ve lisansı henüz kurumsal kullanıma onaylanmadı.</p>
+<p><strong>Beklenen anonim test metni:</strong> Doğuş Üniversitesi erişilebilir sınav sistemine hoş geldiniz. Devam etmek için ileri düğmesine basınız.</p>
+<label for="reader-neural-file">Bilgisayarınızdan yerel Pocket TTS WAV dosyasını seçin (24 kHz, PCM16 mono, en fazla 2 MB)
+<input id="reader-neural-file" type="file" accept=".wav,audio/wav"/>
+</label>
+<div class="reader-actions" role="group" aria-label="Yerel yapay zekâ sesini deneme denetimleri">
+<button id="reader-neural-play" type="button" disabled>Doğal ses örneğini dinle</button>
+<button id="reader-neural-stop" type="button" class="ghost" disabled>Örneği durdur</button>
+</div>
+<p id="reader-neural-status" role="status" aria-live="polite" aria-atomic="true">Yerel Pocket TTS WAV dosyası seçilmedi.</p>
+<p class="muted">Bu bir araştırma önizlemesidir; Pocket TTS henüz Reader'ın gerçek sınav okuma motoru değildir. Cümlenin anlaşılırlığını ve doğal vurgusunu dinleyerek değerlendirin.</p>
+</section>
 <section class="card reader-panel" aria-labelledby="reader-cue-title">
 <h2 id="reader-cue-title">Doğal Türkçe sabit anons önizlemesi</h2>
 <p>İzinli bir ses sağlayıcısında önceden üretilmiş <strong>sabit arayüz anonsunu</strong>, yalnızca kendi bilgisayarınızda dinleyin. Dosya sunucuya yüklenmez, saklanmaz, otomatik oynatılmaz ve sınav sorularını seslendirmez. Bu özellik çevrimdışı bir TTS motoru değildir. Kullandığınız sesin lisansını kontrol edin.</p>
@@ -130,4 +144,4 @@
 <section class="card"><h2>Anonim dinleme karşılaştırması</h2><p>Önceki hece-vurgu modeli ile yeni fonem geçişi denemesini, ses sürümleri gizlenmiş şekilde dinlemek için <a href="/dou-speech-listening">kör A/B dinleme laboratuvarını aç</a>. Sunucuya yanıt gönderilmez.</p></section>
 <section class="card"><h2>Yeni: Ünsüz tanıma alıştırması</h2><p>Yalnız sabit sentetik örneklerle, hangi sözcüğün duyulduğunu seçmek için <a href="/dou-speech-phoneme">yerel fonem tanıma laboratuvarını aç</a>. Kişisel veri veya ses kaydı tutulmaz; sonuçlar yalnız toplam sayılardır. Bu bilimsel bir doğruluk belgesi değildir.</p></section>
 <section class="card"><h2>Yeni: toplu fonem araştırması</h2><p>Yalnız anonim sonuçları birleştirmek için <a href="/dou-speech-pool">yerel fonem analiz ekranını aç</a>.</p></section><p class="notice" id="message" role="status" aria-live="polite"></p><p class="muted">BAP araştırma prototipi; canlı kullanım, NVDA eşdeğerliği veya Türkçe ses motoru geliştirildiği iddiası değildir.</p></main>
-<script type="module" src="/dou-reader-demo.mjs"></script><script type="module" src="/dou-reader-cue-preview-ui.mjs"></script><script type="module" src="/dou-speech-free-text-ui.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>
+<script type="module" src="/dou-reader-demo.mjs"></script><script type="module" src="/dou-reader-cue-preview-ui.mjs"></script><script type="module" src="/dou-reader-neural-sample-ui.mjs"></script><script type="module" src="/dou-speech-free-text-ui.mjs"></script><script defer src="/admin-navigation.js"></script></body></html>
