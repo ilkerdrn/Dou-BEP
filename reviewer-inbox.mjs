@@ -75,3 +75,17 @@ export function reviewerFeedbackText({examId,revision,workbench}={}){
   'Not: Pedagojik geçerlilik, ekran okuyucu uyumluluğu ve kurumsal onay ayrıca değerlendirilir.'
  ].join('\n');
 }
+/** Parse only bounded numeric question references; never persist freeform comments. */
+export function parseReviewQuestionNumbers(input,maxQuestions){
+ if(!Number.isSafeInteger(maxQuestions)||maxQuestions<1||maxQuestions>100)
+  throw Error('Sınav soru sayısı geçersiz.');
+ const raw=String(input||'').trim();
+ if(!raw)return [];
+ if(raw.length>90||!/^\d+(?:\s*,\s*\d+)*$/.test(raw))
+  throw Error('Soru numaralarını yalnızca virgülle ayırarak yazın (örnek: 1, 3, 5).');
+ const numbers=raw.split(',').map(part=>Number(part.trim()));
+ if(numbers.length>20||new Set(numbers).size!==numbers.length||
+    numbers.some(n=>!Number.isSafeInteger(n)||n<1||n>maxQuestions))
+  throw Error('Soru numaraları benzersiz, 1 ile '+maxQuestions+' arasında ve en fazla 20 adet olmalı.');
+ return numbers;
+}
