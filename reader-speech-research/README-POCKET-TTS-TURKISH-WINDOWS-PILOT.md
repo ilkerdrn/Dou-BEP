@@ -77,3 +77,28 @@ kanıt değildir. Her türlü entegrasyon önce bu kapılardan geçmelidir.
 node --test reader-speech-research/reader-pocket-tts-source.test.mjs
 node --test reader-speech-research/reader-neural-readiness.test.mjs
 ```
+
+
+## Demo ekranında yerel 24 kHz WAV dinleme
+Yeni `dou-reader-neural-sample.mjs` dosyası yalnız demo sayfasında
+`Yerel doğal Türkçe ses — Pocket TTS denemesi` bölümünü sağlar.
+Piper/ElevenLabs sabit anons önizlemesinden ayrıdır çünkü o bölüm
+22.050 Hz WAV isterken Pocket TTS Turkish 24 kHz PCM16 mono WAV üretir.
+
+1. `npm start` ile `http://localhost:4173/dou-reader-demo` adresini açın.
+2. Deneysel Pocket TTS bölümünde yalnız `D:\DOU-POCKET-TTS-LAB\DOU-PocketTTS-TR001-female_2.wav`
+   dosyasını yerel dosya seçiciyle yükleyin.
+3. `Doğal ses örneğini dinle` düğmesine basın. Yazılı sabit örnek metnini
+   gerçekten okuduğunu ve doğal olup olmadığını kulakla doğrulayın.
+4. `Örneği durdur` düğmesi çalışmalı. Başka bir WAV sürüklenip seçilse bile
+   hiçbir ses otomatik başlamaz.
+
+Dosyalar sunucuya gönderilmez; `Blob` URL'si tarayıcı belleğinde
+oluşturulur ve durdurmada ya da sayfadan çıkarken kaldırılır.
+Sınav oynatıcıya bağlantı eklenmedi; hiçbir üretim onayı verilmedi.
+
+Kaynak kod testleri:
+```powershell
+node --test dou-reader-neural-sample.test.mjs dou-reader.http.test.mjs
+```
+Bu testler gerçek WAV dosyasını incelemez; gerçek kullanıcı kabulü ayrı yapılmalı.
