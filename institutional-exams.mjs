@@ -524,7 +524,10 @@ function renderReviewFeedback(){
    if(remaining.length){
     const more=document.createElement('details');more.className='exam-review-feedback-more';
     const summary=document.createElement('summary');
-    summary.textContent='Diğer '+remaining.length+' düzeltme bağlantısını göster';
+    const updateSummary=()=>{summary.textContent='Diğer '+remaining.length+
+     ' düzeltme bağlantısını '+(more.open?'gizle':'göster');};
+    more.addEventListener('toggle',updateSummary);
+    updateSummary();
     const extra=document.createElement('div');extra.className='exam-review-feedback-shortcuts';
     extra.append(...remaining.map(item=>actionFor(item)));
     more.append(summary,extra);shortcuts.append(more);
