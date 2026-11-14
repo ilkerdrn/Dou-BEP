@@ -122,9 +122,9 @@ function updateAnswerProgress(){
  updateQuestionMap();
 }
 function render(){const area=$('student-questions');area.replaceChildren();
- for(const [index,q] of exam.questions.entries()){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
+ for(const [index,q] of exam.questions.entries()){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.id='pilot-question-heading-'+(index+1);h.tabIndex=-1;box.setAttribute('aria-labelledby',h.id);box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}const prompt=el('p',q.prompt);prompt.id='pilot-question-prompt-'+(index+1);box.append(prompt);if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
-  const field=el('fieldset');const legend=el('legend','Yanıt');field.append(legend);
+  const field=el('fieldset');field.setAttribute('aria-labelledby',h.id+' '+prompt.id);const legend=el('legend','Yanıt');field.append(legend);
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);
