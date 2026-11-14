@@ -120,3 +120,30 @@ test('student timer displays server expiry in preparation and test without autom
  assert.match(js,/stopPilotClock\(\);douReader\?\.stop\(\)/);
  assert.doesNotMatch(js,/post\('\/api\/pilot\/submit',\{answers\},claim\);\s*setInterval/);
 });
+
+test('student may choose in-session access presentation before and during exam',()=>{
+ const css=readFileSync(new URL('./pilot-refresh.css',import.meta.url),'utf8');
+ const server=readFileSync(new URL('./server.mjs',import.meta.url),'utf8');
+ assert.match(html,/id="ready-access-profile"/);
+ assert.match(html,/id="access-profile"/);
+ assert.match(html,/id="access-profile-note"[^>]*role="status"[^>]*aria-live="polite"/);
+ for(const mode of ['standard','listen','written','vision','motor']){
+  assert.ok(html.includes('value="'+mode+'"'),mode);
+ }
+ assert.match(js,/import \{studentAccessProfile\} from '\.\/student-access-profiles\.mjs'/);
+ assert.match(js,/function applyStudentAccessProfile\(id\)/);
+ assert.match(js,/applyStudentAccessProfile\(\$\('ready-access-profile'\)\.value\)/);
+ assert.match(js,/document\.body\.classList\.toggle\('pilot-motor',profile\.largeTargets\)/);
+ assert.match(js,/document\.body\.classList\.toggle\('high',profile\.highContrast\)/);
+ assert.match(css,/\.bep-student-pilot\.pilot-motor \.question label\.option/);
+ assert.match(server,/\/'student-access-profiles\.mjs'/);
+});
+test('access choice neither changes exam timing nor enters server-facing answer or bearer payload',()=>{
+ assert.match(js,/post\('\/api\/pilot\/redeem',\{code:\$\('code'\)\.value\}\)/);
+ assert.match(js,/post\('\/api\/pilot\/save',\{answers\},token\)/);
+ assert.match(js,/post\('\/api\/pilot\/submit',\{answers\},claim\)/);
+ assert.match(js,/startPilotClock\(r\.expiresAt\)/);
+ assert.doesNotMatch(js,/post\([^\n]*accessProfile|localStorage|sessionStorage|indexedDB/);
+ assert.match(html,/herhangi bir engel veya sağlık bilgisi kaydedilmez/);
+ assert.match(html,/İşitme engelli öğrenciler ses kullanmadan sınavı tamamlayabilir/);
+});
