@@ -17,7 +17,7 @@ import {REVIEW_CRITERIA,goalFingerprint,questionFingerprint,hasAlternative,confi
 import {VERSION, DEFAULT_ADAPTATIONS, starterQuestion, normalizeExam, generateDocx, printableHtml, slugify, escapeHtml} from './core.mjs';
 import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
-import {questionDraftGuidance} from './question-draft-guidance.mjs';
+import {questionDraftGuidance,questionIssueQueue} from './question-draft-guidance.mjs';
 import {pilotDraftPrecheck} from './pilot-draft-precheck.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
 import {reviewerInbox,reviewerFeedbackText,parseReviewQuestionNumbers} from './reviewer-inbox.mjs';
@@ -165,7 +165,48 @@ function updateQuestionDraftGuidance(){
  $('exam-draft-guidance-detail').textContent=next
   ?'Soru '+next.number+': '+(problem?.text.replace(/^\d+\.\s*soru\s*:\s*/iu,'')||'Temel alanı kontrol edin.')+' Bu rehber taslağı değiştirmez.'
   :'Temel alan uyarısı bulunmadı. Son kontrol, BEP kazanımı ve kurumsal onay ayrıca gereklidir.';
+ renderQuestionIssueQueue(summary);
 }
+function renderQuestionIssueQueue(summary){
+ const queue=questionIssueQueue(summary);
+ const root=$('exam-draft-issue-queue'),primary=$('exam-draft-issue-primary');
+ const more=$('exam-draft-issue-more'),extra=$('exam-draft-issue-extra');
+ if(!root||!primary||!more||!extra)return;
+ $('exam-draft-issue-summary').textContent=queue.total
+  ?queue.blocking+' zorunlu eksik sorusu · '+queue.review+' ek inceleme sorusu. Önce zorunlu eksikler gösterilir.'
+  :'Bu sorular için temel alan eksikliği görünmüyor. Akademik ve erişilebilirlik onayı ayrıca gereklidir.';
+ const makeButton=item=>{
+  const button=document.createElement('button');
+  button.type='button';button.className='exam-draft-issue-link';
+  button.dataset.issueIndex=String(item.index);
+  button.dataset.issueField=item.field||'prompt';
+  button.dataset.issueKind=item.state;
+  const level=item.state==='incomplete'?'Zorunlu eksik':'İnceleme önerisi';
+  button.setAttribute('aria-label','Soru '+item.number+' · '+level+' · ilgili alana git');
+  const heading=document.createElement('strong');
+  heading.textContent='Soru '+item.number+' · '+level;
+  const detail=document.createElement('span');
+  detail.textContent=(item.issue.replace(/^\\d+\\.\\s*soru\\s*:\\s*/iu,'').trim()||'Soru alanlarını kontrol edin.').slice(0,180);
+  button.append(heading,detail);
+  return button;
+ };
+ primary.replaceChildren(...queue.visible.map(makeButton));
+ const opened=more.open;
+ more.hidden=queue.remaining.length===0;
+ more.querySelector('summary').textContent='Diğer '+queue.remaining.length+' incelenecek soruyu göster';
+ extra.replaceChildren(...queue.remaining.map(makeButton));
+ more.open=queue.remaining.length>0&&opened;
+}
+$('exam-draft-issue-queue').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-issue-index]');
+ if(!button||!$('exam-draft-issue-queue').contains(button)||!state.exam)return;
+ const index=Number(button.dataset.issueIndex);
+ if(!Number.isSafeInteger(index)||index<0||index>=state.exam.questions.length)return;
+ // Always re-check the canonical guidance: a previous click may now be stale.
+ const current=questionDraftGuidance(state.exam).items[index];
+ if(!current||current.state==='ready')return;
+ visitApprovalQuestion(index,current.focus);
+});
 $('exam-draft-guidance-go').addEventListener('click',()=>{
  if(!state.exam)return;
  const next=questionDraftGuidance(state.exam).next;
