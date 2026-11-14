@@ -26,6 +26,7 @@ const folder=mkdtempSync(join(tmpdir(),'dou-bep-v4-gate-'));
 const reportFile=join(folder,'result.json');
 const pilotReport=join(folder,'anonymous-pilot.json');
 const QUICK_TESTS=[
+ 'exam-page-startup.test.mjs',
  'server-foundation/synthetic-permit-report-csv.test.mjs',
  'server-foundation/synthetic-session-permits.test.mjs',
  'server-foundation/accommodation-decisions.test.mjs',
