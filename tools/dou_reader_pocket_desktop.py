@@ -342,7 +342,7 @@ def run_desktop() -> None:
                     if voice not in self.model.voices:
                         raise ValueError("Seçili hazır ses modelde bulunamadı.")
                     if self.streaming:
-                        from tools.dou_reader_pcm_stream import produce_pcm_packets
+                        from dou_reader_pcm_stream import produce_pcm_packets
 
                         def emit(packet: bytes) -> bool:
                             while not self.cancel_event.is_set():
@@ -426,7 +426,10 @@ def run_desktop() -> None:
             if self.busy:
                 self.canceled = True
                 self.cancel_event.set()
-                self.set_status("Durdurma istendi. Sentez paketi tamamlanınca akış kapanacak.")
+                if self.streaming:
+                    self.set_status("Durdurma istendi. Sentez paketi tamamlanınca akış kapanacak.")
+                else:
+                    self.set_status("Durdurma istendi. WAV hazırlanırsa çalınmadan silinecek.")
             else:
                 self.set_status("Yerel ses durduruldu.")
             self.player.close()
@@ -465,7 +468,7 @@ def run_desktop() -> None:
                         if not self.closing and not self.canceled and self.streaming:
                             try:
                                 if self.stream_player is None:
-                                    from tools.dou_reader_pcm_stream import WaveOutStream
+                                    from dou_reader_pcm_stream import WaveOutStream
                                     self.stream_player = WaveOutStream()
                                 self.stream_player.write(value)
                                 if not self.first_packet:
@@ -475,7 +478,9 @@ def run_desktop() -> None:
                                         f"İlk PCM paketi: {elapsed:.2f} saniye. "
                                         "Deneysel yerel akış çalıyor."
                                     )
-                                self.pause_button.configure(state="normal")
+                                self.pause_button.configure(
+                                    state="disabled" if self.stream_player.paused else "normal"
+                                )
                             except Exception:
                                 self.canceled = True
                                 self.cancel_event.set()
