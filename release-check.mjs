@@ -142,7 +142,19 @@ check('v2.32 PDF table text labels each cell and rejects malformed rows',pdfRich
 check('v2.32 code font offline readiness command is available',packageJson.includes('pdf:code-font-check')&&readFileSync(join(root,'tools/pdf-code-font-check.mjs'),'utf8').includes('createTaggedPdfPilot'));
 check('v2.32 PDF refuses clipping and does not certify PDF/UA',taggedPdf.includes('Kod satırı PDF sayfasına sığmıyor')&&taggedPdf.includes('preflightPdf(pdf)')&&pdfRich.includes('NOT a claim of PDF/UA'));
 check('PDF API exports approved source with CSRF, tenant and integrity verification',api.includes("action==='pdf-pilot'")&&api.includes('store.deliveryCheck(actor,id,data.profile)')&&api.includes('store.exportExam(actor,id)')&&api.includes('X-PDF-Status'));
-check('PDF pilot UI and font check are available without cloud APIs',readFileSync(join(root,'institutional-exams.html'),'utf8').includes('exam-pdf-pilot')&&readFileSync(join(root,'institutional-exams.mjs'),'utf8').includes('/pdf-pilot')&&packageJson.includes('pdf:font-check'));
+// Shared delivery flow must retain the approved PDF button, local font preflight,
+// server-owned endpoint and explicit structural-only PDF status (not PDF/UA).
+const pdfEditor=readFileSync(join(root,'institutional-exams.mjs'),'utf8');
+const pdfFontCheck=readFileSync(join(root,'tools/pdf-font-check.mjs'),'utf8');
+check('PDF pilot UI and font check are available without cloud APIs',
+ readFileSync(join(root,'institutional-exams.html'),'utf8').includes('id="exam-pdf-pilot"')&&
+ pdfEditor.includes("$('exam-pdf-pilot').addEventListener('click',()=>downloadDelivery('pdf'))")&&
+ pdfEditor.includes("const response=await fetch('/api/exams/'+selection.id+'/'+(format==='pdf'?'pdf-pilot':'delivery-package')")&&
+ pdfEditor.includes("if(format==='pdf'&&response.headers.get('x-pdf-status')!=='structural-pilot-not-pdfua')")&&
+ packageJson.includes('"pdf:font-check": "node tools/pdf-font-check.mjs"')&&
+ pdfFontCheck.includes('findHostPdfFont()')&&
+ pdfFontCheck.includes('createTaggedPdfPilot(exam,{fontPath:path})')&&
+ !/\bfetch\s*\(|https?:\/\//.test(pdfFontCheck));
 const reviewedAlts=readFileSync(join(root,'server-foundation/pdf-reviewed-alternatives.mjs'),'utf8');
 check('v2.33 math and visual descriptions require source, explanatory text, and manual comparison',reviewedAlts.includes('Kaynak')&&reviewedAlts.includes('Açıklama')&&reviewedAlts.includes('kaynakla karşılaştırıldı')&&pdfRich.includes('parseReviewedAlternative'));
 check('v2.33 prohibits automatic Office/remote visuals and unreviewed alternative blocks',reviewedAlts.includes('https?')&&reviewedAlts.includes('unsafe.test')&&pdfRich.includes('Bilinmeyen veya kapanmamış'));
@@ -607,11 +619,28 @@ const closureScript=readFileSync(join(root,'tools/exam-closure-smoke.mjs'),'utf8
 check('v2.81 only the browser verification module is public; tests and closure script stay private',
  server.includes("'/exam-download-verify.mjs'")&&!server.includes("'/exam-download-verify.test.mjs'")&&
  !server.includes("'/tools/exam-closure-smoke.mjs'"));
+// Shared downloadDelivery(format) must verify the browser-received Response
+// before producing a local file URL. Do not certify separate obsolete calls.
+const deliveryStart=teacherEditor.indexOf('async function downloadDelivery(format){');
+const deliveryEnd=teacherEditor.indexOf("$('exam-pdf-pilot').addEventListener",deliveryStart);
+const deliveryFlow=deliveryStart>=0&&deliveryEnd>deliveryStart
+ ?teacherEditor.slice(deliveryStart,deliveryEnd):'';
+const deliveryChecks=[
+ 'await getDeliveryReadiness(selection);',
+ "const response=await fetch('/api/exams/'+selection.id+'/'+(format==='pdf'?'pdf-pilot':'delivery-package')",
+ 'if(!response.ok){',
+ "if(format==='pdf'&&response.headers.get('x-pdf-status')!=='structural-pilot-not-pdfua')",
+ 'const verified=await verifyExamDownload(response,{format});',
+ 'if(!sameDeliverySelection(selection,currentDeliverySelection()))',
+ 'downloadVerified(verified.bytes,verified.mime,filename);'
+].map(fragment=>deliveryFlow.indexOf(fragment));
 check('v2.81 approved PDF and ZIP downloads compare the real browser-received SHA-256',
- teacherEditor.includes("verifyExamDownload(response,{format:'pdf'})")&&
- teacherEditor.includes("verifyExamDownload(response,{format:'zip'})")&&
+ deliveryChecks.every((index,i)=>index>=0&&(!i||index>deliveryChecks[i-1]))&&
+ teacherEditor.includes("$('exam-pdf-pilot').addEventListener('click',()=>downloadDelivery('pdf'))")&&
+ teacherEditor.includes("$('exam-delivery-package').addEventListener('click',()=>downloadDelivery('zip'))")&&
+ deliveryFlow.includes('sha256:verified.sha256')&&
  binaryVerifier.includes('crypto.subtle.digest')&&binaryVerifier.includes('bytes.length!==declared')&&
- binaryVerifier.includes('spec.signature.every'));
+ binaryVerifier.includes('spec.signature.every')&&binaryVerifier.includes('if(actual!==expected)'));
 check('v2.81 tampered and truncated downloads are rejected before saving',
  binaryVerifierTest.includes('wrong hash')&&binaryVerifierTest.includes('declared:zip.length+1')&&
  binaryVerifierTest.includes('missing crypto API fails safely'));
