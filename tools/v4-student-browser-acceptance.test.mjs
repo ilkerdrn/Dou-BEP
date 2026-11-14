@@ -73,3 +73,19 @@ test('NVDA form group names are connected to the matching question heading and p
  assert.match(smoke,/prompt\.textContent\.trim\(\)\.length>0/);
  assert.doesNotMatch(student,/aria-label',String\(q\.answer\)|answerKey|studentId/);
 });
+
+
+test('return from hidden final review and completed submission keep NVDA focus visible',()=>{
+ const student=read('pilot.mjs');
+ const page=read('pilot.html');
+ const browser=read('tools/student-browser-acceptance.mjs');
+ assert.match(student,/\$\('pilot-cancel-final'\)\.addEventListener\('click',\(\)=>\{\s*\/\/[^]*?resetFinalReview\(\);\s*\$\('one-question'\)\.checked=true;\s*updateQuestionNavigation\(true\);/);
+ assert.match(student,/updateQuestionNavigation\(true\)/);
+ assert.match(page,/<section id="done"[^>]*aria-labelledby="pilot-done-title"/);
+ assert.match(page,/<h2 id="pilot-done-title" tabindex="-1">Anonim yanıtlar gönderildi<\/h2>/);
+ assert.match(student,/\$\('pilot-done-title'\)\.focus\(\)/);
+ assert.match(browser,/Canceling final review moves focus to a visible question heading/);
+ assert.match(browser,/Reopening final review focuses its accessible title without submitting/);
+ assert.match(browser,/Successful one-time delivery focuses accessible receipt heading/);
+ assert.doesNotMatch(student,/localStorage|sessionStorage|indexedDB/);
+});
