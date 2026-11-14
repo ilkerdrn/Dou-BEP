@@ -1932,3 +1932,62 @@ body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-
   border:1px solid CanvasText;
  }
 }
+
+/* V4 safe teacher preview actions: keyboard-first, presentation-only navigation. */
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-navigation{
+ display:flex;
+ flex-wrap:wrap;
+ gap:8px;
+ margin:8px 0 12px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-navigation button{
+ min-height:44px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action-panel{
+ padding:12px 14px;
+ margin:12px 0;
+ border:1px solid #dfe2e0;
+ border-radius:12px;
+ background:#f9faf8;
+ color:#25292c;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action-panel>strong{
+ display:block;
+ font-size:14px;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action-list{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;
+ margin:10px 0;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action{
+ width:100%;
+ min-height:48px;
+ text-align:left;
+ white-space:normal;
+ overflow-wrap:anywhere;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action[data-issue-level="error"]{
+ border-left:3px solid #a72d38;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-navigation button:focus-visible,
+body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action:focus-visible{
+ outline:3px solid var(--dou-ui-focus,#156bb4);
+ outline-offset:3px;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action-list{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-navigation button{
+  flex:1 1 135px;
+ }
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-editor-card .teacher-preview-action-panel{
+  border:1px solid CanvasText;
+ }
+}
