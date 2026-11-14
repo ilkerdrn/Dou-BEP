@@ -86,7 +86,7 @@ test('new draft after reviewer feedback appears for recheck but is not deemed co
   });
   assert.equal(f.store.listExams(f.reviewer).find(x=>x.id===created.id).feedbackCurrent,true);
   const next=structuredClone(original);
-  next.questions[0].prompt='REVISED_PROMPT_LOCAL';
+  next.questions[0].visualNote+=' Öğretmen yeni görsel açıklamayı gözden geçirmeli.';
   const saved=f.store.updateExam(f.teacher,created.id,{revision:1,exam:next});
   assert.equal(saved.status,'draft');
   const row=f.store.listExams(f.reviewer).find(x=>x.id===created.id);
