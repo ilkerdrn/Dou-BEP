@@ -6,6 +6,7 @@ import {roleCan} from '../roles.mjs';
 import {detectSensitive} from '../bep-plan-import.mjs';
 import {deliveryReadiness,makeDeliveryPackage} from './delivery-package.mjs';
 import {examRevisionDelta} from '../exam-revision-delta.mjs';
+import {reviewerSeparationViolation} from './exam-review-separation.mjs';
 
 const identifier=/^[a-f0-9-]{36}$/;
 export function examRepository(db,{StoreError,log,requireIndependentExamApproval=false}){
@@ -14,6 +15,7 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   id TEXT PRIMARY KEY,
   tenant_id TEXT NOT NULL REFERENCES tenants(id),
   owner_id TEXT NOT NULL REFERENCES members(id),
+  last_editor_id TEXT REFERENCES members(id),
   title TEXT NOT NULL,
   body TEXT NOT NULL,
   revision INTEGER NOT NULL DEFAULT 1,
@@ -62,6 +64,10 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   revision INTEGER NOT NULL,profile TEXT NOT NULL,source_sha256 TEXT NOT NULL,
   package_sha256 TEXT NOT NULL,manifest_sha256 TEXT NOT NULL, created_at INTEGER NOT NULL
  );CREATE INDEX IF NOT EXISTS idx_delivery_events ON exam_delivery_events(tenant_id,exam_id,created_at);`);
+ // Additive migration: legacy author identity is unknown, so never fabricate it.
+ const examColumns=new Set(db.prepare('PRAGMA table_info(exams)').all().map(column=>column.name));
+ if(!examColumns.has('last_editor_id'))
+  db.exec('ALTER TABLE exams ADD COLUMN last_editor_id TEXT REFERENCES members(id)');
  const allow=(actor,permission)=>{if(!roleCan(actor?.role,permission))fail('forbidden','Bu işlem için yetkiniz yok.',403);};
  const checkId=id=>{if(!identifier.test(id||''))fail('bad_id','Sınav kimliği geçersiz.');};
  const elevated=actor=>['admin','coordinator'].includes(actor.role);
@@ -102,10 +108,10 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
    FROM exams e WHERE e.tenant_id=? ORDER BY e.updated_at DESC LIMIT 100`).all(actor.tenantId);
   return rows.filter(x=>visible(actor,x)).map(row=>({...meta(row),feedbackCurrent:Boolean(row.feedback_current),feedbackRecheck:Boolean(row.feedback_recheck)&&!Boolean(row.feedback_current)}));
  }
- function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),exam:JSON.parse(row.body)};}
+ function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),lastEditedByCurrentActor:row.last_editor_id===actor.id,exam:JSON.parse(row.body)};}
  function createExam(actor,payload){allow(actor,'exam.edit');const exam=sanitize(payload?.exam);const count=db.prepare('SELECT COUNT(*) AS n FROM exams WHERE tenant_id=?').get(actor.tenantId).n;
   if(count>=200)fail('quota','Kurum sınav sınırına ulaşıldı.',409);
-  const stamp=Date.now(),id=randomUUID();db.prepare('INSERT INTO exams(id,tenant_id,owner_id,title,body,revision,status,created_at,updated_at) VALUES(?,?,?,?,?,1,\'draft\',?,?)').run(id,actor.tenantId,actor.id,exam.title,JSON.stringify(exam),stamp,stamp);
+  const stamp=Date.now(),id=randomUUID();db.prepare('INSERT INTO exams(id,tenant_id,owner_id,last_editor_id,title,body,revision,status,created_at,updated_at) VALUES(?,?,?,?,?,?,1,\'draft\',?,?)').run(id,actor.tenantId,actor.id,actor.id,exam.title,JSON.stringify(exam),stamp,stamp);
   log(actor,'exam.created',id);return getExam(actor,id);
  }
  /** Copy a visible exam into a new, independently owned draft. Never transfer approvals. */
@@ -127,8 +133,8 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   const count=db.prepare('SELECT COUNT(*) AS n FROM exams WHERE tenant_id=?').get(actor.tenantId).n;
   if(count>=200)fail('quota','Kurum sınav sınırına ulaşıldı.',409);
   const stamp=Date.now(),newId=randomUUID();
-  db.prepare('INSERT INTO exams(id,tenant_id,owner_id,title,body,revision,status,created_at,updated_at) VALUES(?,?,?,?,?,1,\'draft\',?,?)')
-   .run(newId,actor.tenantId,actor.id,exam.title,JSON.stringify(exam),stamp,stamp);
+  db.prepare('INSERT INTO exams(id,tenant_id,owner_id,last_editor_id,title,body,revision,status,created_at,updated_at) VALUES(?,?,?,?,?,?,1,\'draft\',?,?)')
+   .run(newId,actor.tenantId,actor.id,actor.id,exam.title,JSON.stringify(exam),stamp,stamp);
   log(actor,'exam.duplicated',newId);
   return getExam(actor,newId);
  }
@@ -138,8 +144,8 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   const delta=examRevisionDelta(JSON.parse(row.body),exam,expectedRevision);
   db.exec('BEGIN IMMEDIATE');
   try{
-   const result=db.prepare('UPDATE exams SET title=?,body=?,revision=revision+1,status=\'draft\',approved_by=NULL,approved_at=NULL,updated_at=? WHERE id=? AND tenant_id=? AND revision=?')
-    .run(exam.title,JSON.stringify(exam),Date.now(),id,actor.tenantId,expectedRevision);
+   const result=db.prepare('UPDATE exams SET title=?,body=?,revision=revision+1,status=\'draft\',approved_by=NULL,approved_at=NULL,last_editor_id=?,updated_at=? WHERE id=? AND tenant_id=? AND revision=?')
+    .run(exam.title,JSON.stringify(exam),actor.id,Date.now(),id,actor.tenantId,expectedRevision);
    if(!result.changes)fail('revision_conflict','Başka bir oturum kaydı değiştirdi; yeniden açıp kontrol edin.',409);
    db.prepare('INSERT INTO exam_revision_deltas(tenant_id,exam_id,from_revision,to_revision,summary,created_at) VALUES(?,?,?,?,?,?)')
     .run(actor.tenantId,id,expectedRevision,expectedRevision+1,JSON.stringify(delta),Date.now());
@@ -149,7 +155,8 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   return getExam(actor,id);
  }
  function approveExam(actor,id,payload){allow(actor,'exam.approve');const row=rowFor(actor,id);
-  if(requireIndependentExamApproval&&row.owner_id===actor.id)fail('separation_of_duties','Sınavın taslağını oluşturan hesap bu sınavı onaylayamaz.',403);
+  if(requireIndependentExamApproval&&reviewerSeparationViolation(row,actor.id))
+   fail('separation_of_duties','Sınavın ilk sahibi veya güncel sürümünü düzenleyen hesap bu sınavı onaylayamaz.',403);
   if(payload?.confirmed!==true)fail('confirmation_required','Sınav sürümünün onaylanması için yetkili onaylayıcının açık teyidi gerekli.');
   if(!Number.isInteger(payload.revision)||payload.revision!==row.revision)fail('revision_conflict','Sınav sürümü değişmiş. Yeniden gözden geçirin.',409);
   if(db.prepare('SELECT 1 AS flagged FROM exam_review_feedback WHERE tenant_id=? AND exam_id=? AND revision=? LIMIT 1')
@@ -187,7 +194,8 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   // Only exam approvers can create a revision-specific correction request.
   allow(actor,'exam.approve');
   const row=rowFor(actor,id);
-  if(row.owner_id===actor.id)fail('separation_of_duties','Sınav sahibi kendi taslağına bağımsız inceleme kaydı bırakamaz.',403);
+  if(reviewerSeparationViolation(row,actor.id))
+   fail('separation_of_duties','Sınavın ilk sahibi veya güncel sürümünü düzenleyen hesap bağımsız inceleme kaydı bırakamaz.',403);
   if(row.status!=='draft')fail('not_draft','Yalnızca taslak sınav sürümü için düzeltme kaydı oluşturulur.',409);
   if(!payload||typeof payload!=='object'||Array.isArray(payload)||
      Object.keys(payload).some(key=>!['revision','stageIds','questionNumbers','confirmed'].includes(key)))
