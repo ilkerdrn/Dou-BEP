@@ -3,6 +3,7 @@ import {makeDeliveryVersion} from './presentation-profiles.mjs';
 import {verifyExamDownload} from './exam-download-verify.mjs';
 import {deliverySelection,sameDeliverySelection,assertDeliveryReady,deliveryReceipt,deliveryProfileLabel} from './exam-delivery-ux.mjs';
 import {prepareQuestionPreview} from './question-preview.mjs';
+import {previewReviewActions} from './question-preview-guidance.mjs';
 import {VISUAL_MATERIALS,findVisualMaterials,visualMaterial,visualMaterialMarkup,applyVisualMaterial} from './visual-materials.mjs';
 import {createAutosaveManager} from './autosave-manager.mjs';
 import {createExamSelection} from './exam-selection.mjs';
@@ -39,8 +40,14 @@ function renderTeacherQuestionPreview(){
  previewIndex=Math.max(0,Math.min(previousIndex,(exam.questions?.length||1)-1));
  selector.innerHTML=(exam.questions||[]).map((q,i)=>`<option value="${i}">${i+1}. soru · ${esc(String(q.prompt||'').slice(0,55)||'Boş soru')}</option>`).join('');
  selector.value=String(previewIndex);
+ const prev=$('exam-preview-previous'),next=$('exam-preview-next'),count=exam.questions?.length||0;
+ prev.disabled=count===0||previewIndex<=0;
+ next.disabled=count===0||previewIndex>=count-1;
+ prev.setAttribute('aria-label','Önceki soruyu önizle'+(previewIndex>0?': Soru '+previewIndex:''));
+ next.setAttribute('aria-label','Sonraki soruyu önizle'+(previewIndex<count-1?': Soru '+(previewIndex+2):''));
+ const actionList=$('exam-preview-actions'),actionSummary=$('exam-preview-actions-summary');
  const sheet=$('exam-preview-paper'),comparison=$('exam-preview-comparison'),issues=$('exam-preview-issues'),summary=$('exam-preview-summary');
- if(!exam.questions?.length){sheet.textContent='Henüz soru eklenmedi.';comparison.textContent='';issues.textContent='';summary.textContent='Önizlenecek soru yok.';return;}
+ if(!count){sheet.textContent='Henüz soru eklenmedi.';comparison.textContent='';issues.textContent='';summary.textContent='Önizlenecek soru yok.';actionList.replaceChildren();actionSummary.textContent='Önce bir soru ekleyin.';return;}
  try{
   const snapshot=prepareQuestionPreview(exam,previewIndex,profile.value||'standard');
   sheet.className='teacher-preview-paper paper'+(snapshot.highContrast?' paper-highcontrast':'');
@@ -48,11 +55,49 @@ function renderTeacherQuestionPreview(){
   sheet.innerHTML=snapshot.questionMarkup;
   comparison.innerHTML=`<strong>Özgün soru</strong><p>${esc(snapshot.original)||'<em>Boş</em>'}</p><strong>Öğretmenin sadeleştirilmiş metni</strong><p>${esc(snapshot.alternative)||'<em>Yazılmadı</em>'}</p><strong>Öğrenciye seçilen metin</strong><p>${esc(snapshot.active)||'<em>Boş</em>'}</p>`;
   issues.innerHTML=snapshot.problems.length?`<h5>Öğretmen kontrolleri (${snapshot.problems.length})</h5><ul>${snapshot.problems.map(x=>`<li class="${x.level==='error'?'preview-error':'preview-warning'}">${esc(x.text)}</li>`).join('')}</ul>`:'<p>Otomatik önizleme kontrollerinde bulgu yok. Bu, pedagojik onay anlamına gelmez.</p>';
+  const guidance=previewReviewActions(exam,previewIndex,snapshot);
+  actionSummary.textContent=guidance.items.length
+   ?guidance.blocking+' zorunlu kontrol · '+guidance.warnings+' ek inceleme. Bu işlemler onay vermez.'
+   :'Bu soru için temel alan bulgusu yok. Pedagojik ve gerçek erişilebilirlik kabulü ayrıca gerekir.';
+  actionList.replaceChildren(...guidance.items.map(item=>{
+   const button=document.createElement('button');
+   button.type='button';button.className='portal-btn secondary teacher-preview-action';
+   button.dataset.previewFixField=item.field;
+   button.dataset.previewFixQuestion=String(previewIndex);
+   button.dataset.issueLevel=item.level;
+   button.textContent=item.label+' · İlgili alana git';
+   button.setAttribute('aria-label','Soru '+(previewIndex+1)+' · '+item.label+' · İlgili alana git');
+   return button;
+  }));
   summary.textContent=`${snapshot.number}. soru · ${snapshot.label} · ${snapshot.fontSize} punto · ${snapshot.problems.length} kontrol bulgusu · Geçici öğretmen önizlemesi`;
- }catch(err){sheet.textContent='Önizleme oluşturulamadı.';comparison.textContent='';issues.textContent='';summary.textContent=err.message;}
+ }catch(err){sheet.textContent='Önizleme oluşturulamadı.';comparison.textContent='';issues.textContent='';summary.textContent=err.message;actionList.replaceChildren();actionSummary.textContent='Önizleme kontrolü başarısız. Soru alanlarını ve kalite raporunu inceleyin.';}
 }
 $('exam-preview-question').addEventListener('change',event=>{previewIndex=Number(event.target.value)||0;renderTeacherQuestionPreview();});
 $('exam-preview-profile').addEventListener('change',renderTeacherQuestionPreview);
+$('exam-preview-previous').addEventListener('click',()=>{
+ if(previewIndex<=0)return;
+ previewIndex--;renderTeacherQuestionPreview();
+});
+$('exam-preview-next').addEventListener('click',()=>{
+ if(previewIndex>=(state.exam?.questions?.length||0)-1)return;
+ previewIndex++;renderTeacherQuestionPreview();
+});
+$('exam-preview-actions').addEventListener('click',event=>{
+ const button=event.target.closest('[data-preview-fix-field][data-preview-fix-question]');
+ if(!button||!$('exam-preview-actions').contains(button)||!state.exam)return;
+ const index=Number(button.dataset.previewFixQuestion);
+ if(!Number.isSafeInteger(index)||index!==previewIndex||index<0||index>=state.exam.questions.length)return;
+ const field=button.dataset.previewFixField;
+ let snapshot;
+ try{snapshot=prepareQuestionPreview(state.exam,index,$('exam-preview-profile').value||'standard');}
+ catch{return;}
+ if(!previewReviewActions(state.exam,index,snapshot).items.some(item=>item.field===field))return;
+ if(field==='visualCues'){
+  visitPreflightTarget('exam-quality');
+  const control=$('exam-adjustments').querySelector('[data-adapt="visualCues"]');
+  control?.focus({preventScroll:true});
+ }else visitApprovalQuestion(index,field);
+});
 const newExam=()=>({version:VERSION,title:'Yeni üniversite sınavı',subject:'',grade:'Önlisans / Lisans',duration:30,profile:'',objective:'',instruction:'Soruları dikkatle okuyunuz.',adaptations:{...DEFAULT_ADAPTATIONS, institutionalHeader:true},reviewPolicy:'guided',bepGoals:[],goalAttestations:[],supportPlan:{version:1,domain:'general',selected:[]},questions:[{...starterQuestion('choice'),prompt:'',options:['',''],answer:''}]});
 function notice(message,isError=false){$('exam-notice').className=isError?'portal-error':'portal-success';$('exam-notice').textContent=message;}
 async function api(path,{method='GET',body}={}){
@@ -693,7 +738,7 @@ function visitApprovalQuestion(index,field){
  visitPreflightTarget('exam-question-section');
  const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+index+'"]');
  if(!card)return;
- const allowed=new Set(['prompt','objective','points','options','pairs','answer','source','visualAltText','type']);
+ const allowed=new Set(['prompt','objective','points','options','pairs','answer','source','visualAltText','type','simplifiedPrompt','numberLineEnd']);
  const key=allowed.has(field)?field:'prompt';
  let focusTarget=key==='source'?card.querySelector('[data-source-review]'):
   card.querySelector('[data-qkey="'+key+'"]');
