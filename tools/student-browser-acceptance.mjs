@@ -93,6 +93,17 @@ export async function runStudentBrowserAcceptance({
   await pressEnter();
   pass(await evaluate("(function(){return !document.getElementById('pilot-final-review').hidden&&document.getElementById('pilot-final-summary').textContent.includes('tekrar bakılacak')&&document.getElementById('send').textContent==='Kesin teslim et';})()"),
    'Final review contains unanswered and flagged question status');
+  // A native Enter on the cancel button hides the focused panel. A screen
+  // reader user must land at the active, visible question rather than body.
+  await evaluate("document.getElementById('pilot-cancel-final').focus()");
+  await pressEnter();
+  pass(await evaluate("(function(){const all=[...document.querySelectorAll('#student-questions .question')];const focus=document.activeElement;return document.getElementById('pilot-final-review').hidden&&document.getElementById('send').textContent==='Teslim özetini kontrol et'&&focus?.tagName==='H2'&&all.some(q=>!q.hidden&&q.contains(focus));})()"),
+   'Canceling final review moves focus to a visible question heading');
+  // Review must still be accessible again without losing previous answers.
+  await evaluate("document.getElementById('send').focus()");
+  await pressEnter();
+  pass(await evaluate("!document.getElementById('pilot-final-review').hidden&&document.activeElement?.id==='pilot-final-title'"),
+   'Reopening final review focuses its accessible title without submitting');
 
   let seen=0,reply=Promise.resolve(),dialogFailure=null;
   const onDialog=event=>{
@@ -117,6 +128,8 @@ export async function runStudentBrowserAcceptance({
   pass(seen===1,'One-time delivery requires exactly one browser confirmation');
   pass(await evaluate("document.getElementById('player').hidden&&document.getElementById('receipt').textContent.startsWith('Teslim referansı: ')"),
    'Submission hides answer editor and displays anonymous receipt');
+  pass(await evaluate("(function(){const title=document.getElementById('pilot-done-title');const region=document.getElementById('done');return !region.hidden&&region.getAttribute('aria-labelledby')==='pilot-done-title'&&document.activeElement===title&&title.textContent.includes('Anonim yanıtlar gönderildi');})()"),
+   'Successful one-time delivery focuses accessible receipt heading');
   pass(db.pilotList(admin).find(item=>item.id===session.id)?.status==='submitted',
    'Server confirms a single submitted pilot session');
   console.log('BROWSER ANONYMOUS STUDENT ACCEPTANCE PASS: synthetic only; NVDA and voice remain manual.');
