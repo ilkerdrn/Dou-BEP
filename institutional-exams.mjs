@@ -939,15 +939,17 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
  if(!button||!$('exam-reviewer-items').contains(button))return;
  if(!['reviewer','coordinator','admin'].includes(state.actor?.role))return;
  if(state.busy||autosave.isSaving())return notice('Devam eden kayıt veya işlemi tamamlayın.',true);
- if(state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
  const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
- if(id!==state.current?.id&&!confirmLeavingReviewRequest())return;
  if(!state.exams.some(item=>item.id===id))return notice('Sınav artık listede görünmüyor. Listeyi yenileyin.',true);
  const action=button.dataset.reviewerAction;
  if(!['review','history','diff'].includes(action))return;
+ const sameOpened=state.current?.id===id&&state.current?.revision===expectedRevision;
+ if(!sameOpened&&state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
+ if(!sameOpened&&!confirmLeavingReviewRequest())return;
  button.disabled=true;
  try{
-  const opened=await openExam(id);
+  // Navigating within an already-open revision must not discard unsent review fields.
+  const opened=sameOpened?true:await openExam(id);
   if(!opened)return;
   if(state.current?.revision!==expectedRevision){
    notice('Bu sınavın sürümü inceleme listesi açıldıktan sonra değişmiş. Güncel sürüm açıldı; onay vermeden önce yeniden inceleyin.',true);
