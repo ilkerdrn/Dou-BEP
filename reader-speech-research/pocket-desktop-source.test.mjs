@@ -14,7 +14,7 @@ test('desktop pilot is separately opt-in and never binds a network/API listener'
  assert.match(python,/options\.add_argument\("--check"/);
  assert.match(python,/options\.add_argument\("--gui"/);
  assert.doesNotMatch(python,/http\.server|httpx|requests\.get|FastAPI\(|uvicorn|listen\(|WebSocket/);
- assert.doesNotMatch(python,/BEP_DB_PATH|pilot\.sqlite|institution\.sqlite|\\/api\\/|exam-answer|voice_from_file/);
+ assert.doesNotMatch(python,/BEP_DB_PATH|pilot\.sqlite|institution\.sqlite|\/api\/|exam-answer|voice_from_file/);
 });
 
 test('neural weights are loaded from a cached local folder without downloading',()=>{
