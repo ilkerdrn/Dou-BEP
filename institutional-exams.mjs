@@ -252,6 +252,22 @@ async function loadRevisionDelta(){
  }
 }
 let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false;
+function hasUnsentReviewRequest(){
+ const form=$('exam-review-feedback-form');
+ return Boolean(form&&!form.hidden&&(
+  $('exam-review-feedback-questions').value.trim()||
+  $('exam-review-feedback-confirm').checked||
+  form.querySelector('[data-feedback-stage]:checked')
+ ));
+}
+function confirmLeavingReviewRequest(){
+ if(reviewFeedbackSending){
+  notice('İncelemeci düzeltme kaydı gönderilirken sınav değiştirilemez.',true);
+  return false;
+ }
+ return !hasUnsentReviewRequest()||
+  confirm('İncelemeci düzeltme isteği henüz gönderilmedi. Seçili alanları kaybetmek istiyor musunuz?');
+}
 const feedbackStageLabels=Object.freeze({
  identity:'Sınav bilgileri',goals:'BEP kazanımları',questions:'Sorular ve yanıtlar',
  access:'Erişilebilirlik ve kalite',delivery:'Kaydetme ve onay'
@@ -920,6 +936,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
  if(state.busy||autosave.isSaving())return notice('Devam eden kayıt veya işlemi tamamlayın.',true);
  if(state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
  const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
+ if(id!==state.current?.id&&!confirmLeavingReviewRequest())return;
  if(!state.exams.some(item=>item.id===id))return notice('Sınav artık listede görünmüyor. Listeyi yenileyin.',true);
  const action=button.dataset.reviewerAction;
  if(!['review','history','diff'].includes(action))return;
@@ -1165,6 +1182,7 @@ $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
  if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
  if(state.dirty&&!confirm('Kaydedilmemiş değişiklikler var. Devam ederseniz bunlar kaybolabilir. Devam edilsin mi?'))return;
+ if((btn.dataset.duplicate||btn.dataset.open!==state.current?.id)&&!confirmLeavingReviewRequest())return;
  if(btn.dataset.duplicate){
   if(!has('exam.edit'))return;
   if(!confirm('Bu sınavdan bağımsız bir TASLAK oluşturulacak. Kaynak onaylı olsa bile kopya yeniden öğretmen kontrolü ve onayı isteyecek. Devam edilsin mi?'))return;
@@ -1174,7 +1192,7 @@ $('exam-list').addEventListener('click',async ev=>{
   }catch(err){notice(err.message,true);}finally{state.busy=false;btn.disabled=false;draw();}
  }else{try{if(await openExam(btn.dataset.open))notice('Sınav sürümü açıldı.');}catch(err){notice(err.message,true);}}
 });
-$('exam-new').addEventListener('click',()=>{if(state.busy)return notice('Devam eden işlem tamamlanmalı.',true);if(autosave.isSaving())return notice('Otomatik kayıt sürüyor.',true);if(state.dirty&&!confirm('Kaydedilmemiş değişiklikleri bırakmak istiyor musunuz?'))return;draft();});
+$('exam-new').addEventListener('click',()=>{if(state.busy)return notice('Devam eden işlem tamamlanmalı.',true);if(autosave.isSaving())return notice('Otomatik kayıt sürüyor.',true);if(state.dirty&&!confirm('Kaydedilmemiş değişiklikleri bırakmak istiyor musunuz?'))return;if(!confirmLeavingReviewRequest())return;draft();});
 $('exam-refresh').addEventListener('click',()=>refreshList().catch(err=>notice(err.message,true)));
 $('exam-confirm').addEventListener('change',()=>{draw();});
 $('exam-save').addEventListener('click',async()=>{if(!has('exam.edit')||state.busy)return;
@@ -1220,7 +1238,7 @@ $('exam-resume-last').addEventListener('click',async()=>{
  if(!latest)return notice('Bu kullanıcıya ait kaydedilmiş taslak bulunamadı.',true);
  try{if(await openExam(latest.id))notice('Son sunucu taslağı açıldı.');}catch(err){notice(err.message,true);}
 });
-window.addEventListener('beforeunload',event=>{if(state.dirty||autosave.isSaving()){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(state.dirty||autosave.isSaving()||reviewFeedbackSending||hasUnsentReviewRequest()){event.preventDefault();event.returnValue='';}});
 document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&String(event.key).toLowerCase()==='s'){event.preventDefault();if(has('exam.edit'))$('exam-save').click();}});
 $('exam-approve').addEventListener('click',async()=>{
  let checkpoint=null;
