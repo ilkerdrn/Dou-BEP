@@ -414,6 +414,10 @@ async function loadRevisionDelta(){
  }
 }
 let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false,feedbackAutoOpenKey='',reviewFeedbackLoadFailure=null;
+function reviewFeedbackFetchFailed(){
+ return Boolean(state.current&&reviewFeedbackLoadFailure?.id===state.current.id&&
+  reviewFeedbackLoadFailure.revision===state.current.revision);
+}
 function hasUnsentReviewRequest(){
  const form=$('exam-review-feedback-form');
  return Boolean(form&&!form.hidden&&(
@@ -464,8 +468,7 @@ function renderReviewFeedback(){
  }
  const feedback=state.reviewFeedback;
  if(!feedback||feedback.examId!==current.id||feedback.currentRevision!==current.revision){
-  const failed=reviewFeedbackLoadFailure?.id===current.id&&
-   reviewFeedbackLoadFailure.revision===current.revision;
+  const failed=reviewFeedbackFetchFailed();
   compact.textContent=failed?'Kontrol edilemedi':'Kontrol ediliyor';
   form.hidden=true;items.replaceChildren();
   status.textContent=failed?'Bu sürümün geri bildirimleri alınamadı. Yeniden kontrol edin. Sunucu yanıtı doğrulanmadan onay verilemez.':
@@ -573,6 +576,7 @@ async function loadReviewFeedback(){
  }catch(err){
   if(ticket===reviewFeedbackGeneration&&state.current?.id===id&&state.current?.revision===revision){
    reviewFeedbackLoadFailure={id,revision};
+   $('exam-review-feedback').open=true;
    renderReviewFeedback();
    refreshApprovalFeedbackUi();
   }
@@ -642,6 +646,7 @@ function renderApprovalWorkbench(preflight){
   canEdit:has('exam.edit'),canApprove:has('exam.approve'),confirmed:$('exam-confirm').checked,
   ownerIsActor:independentSelfApprovalBlocked(),separationBlocked:independentSelfApprovalBlocked(),
   feedbackPending:hasCurrentReviewFeedback(),feedbackLoading:reviewFeedbackCheckPending(),
+  feedbackFailed:reviewFeedbackFetchFailed(),
   audioFindings:auditAudioAccess(state.exam).length
  });
  const latestKey=(state.current?.id||'')+'|'+(state.current?.revision||'');
@@ -1051,6 +1056,7 @@ function updateApprovalGuidance(report){
   :state.busy||autosave.isSaving()?'Devam eden işlem veya kaydın bitmesini bekleyin.'
   :state.dirty||autosave.hasChanges()||autosave.isBlocked()?'Kaydedilmemiş veya çakışan değişiklikler var.'
   :independentSelfApprovalBlocked()?'Bu sınavın ilk sahibi veya güncel sürümünü düzenleyen hesap kendi sürümüne bağımsız onay veremez.'
+  :reviewFeedbackFetchFailed()?'İncelemeci düzeltme kayıtları alınamadı. Geri bildirimler bölümünden yeniden kontrol edin; doğrulanmadan onay verilmez.'
   :reviewFeedbackCheckPending()?'İncelemeci düzeltme kayıtları kontrol ediliyor. Kayıtlar yüklenmeden onay verilmez.'
   :hasCurrentReviewFeedback()?'Bu sınav sürümünde açık düzeltme isteği var. Öğretmen yeni sürümü kaydedip incelemeciye yeniden sunmalı.'
   :report.errorCount>0?report.errorCount+' zorunlu kalite kontrol hatası düzeltilmeli.'
