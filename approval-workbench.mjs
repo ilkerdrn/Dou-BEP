@@ -59,7 +59,7 @@ function qualityFinding(issue,questionCount){
 
 export function approvalWorkbenchSummary({
  preflight,questionDraft,quality,saved=false,dirty=true,saving=false,pending=false,
- blocked=false,busy=false,approved=false,separationBlocked=false,feedbackPending=false,feedbackLoading=false,feedbackFailed=false,canEdit=false,canApprove=false,
+ blocked=false,failed=false,busy=false,approved=false,separationBlocked=false,feedbackPending=false,feedbackLoading=false,feedbackFailed=false,canEdit=false,canApprove=false,
  confirmed=false,ownerIsActor=false,audioFindings=0
 }={}){
  if(!preflight||!Array.isArray(preflight.stages)||preflight.stages.length!==5||
@@ -104,7 +104,7 @@ export function approvalWorkbenchSummary({
  const errors=safeInt(quality.errorCount);
  const warnings=safeInt(quality.warningCount);
  const audio=safeInt(audioFindings);
- const unsaved=dirty||saving||pending||blocked;
+ const unsaved=dirty||saving||pending||blocked||failed;
  let state='review',headline='',detail='';
  // Approval belongs to a specific *saved* server revision. Never describe
  // an unsaved local working copy as approved, even if the previous server
