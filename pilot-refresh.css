@@ -20,3 +20,23 @@ body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d
 .bep-student-pilot .pilot-clear-answer{margin-top:0;min-height:48px}
 .bep-student-pilot .pilot-quick-actions{margin:14px 0;align-items:stretch}
 @media(max-width:520px){.bep-student-pilot .pilot-quick-actions button{width:100%}}
+
+/* In-session access preference only; no disability/health data is stored. */
+.bep-student-pilot .pilot-access-setup,.bep-student-pilot .pilot-access-toolbar{
+  padding:14px 18px;margin:12px 0 18px;border:1px solid #d8dee5;border-radius:13px;background:#f7f8fa;
+}
+.bep-student-pilot .pilot-access-setup label,.bep-student-pilot .pilot-access-toolbar label{font-weight:750}
+.bep-student-pilot .pilot-access-setup select,.bep-student-pilot .pilot-access-toolbar select{width:100%;max-width:560px}
+.bep-student-pilot .pilot-access-toolbar p{margin:8px 0 0}
+.bep-student-pilot.high .pilot-access-toolbar,.bep-student-pilot.high .pilot-access-setup{
+  background:#101010;color:#fff;border:2px solid #fff;
+}
+.bep-student-pilot.pilot-motor .question label.option{min-height:84px;padding:22px 18px}
+.bep-student-pilot.pilot-motor .question input[type="radio"]{width:32px;height:32px;flex-basis:32px}
+.bep-student-pilot.pilot-motor .question select{min-height:70px}
+.bep-student-pilot.pilot-motor .question button{min-height:64px;padding:17px 20px}
+.bep-student-pilot.pilot-motor .pilot-question-jump,
+.bep-student-pilot.pilot-motor #question-navigation button{min-height:64px;min-width:64px}
+@media (max-width:650px){
+ .bep-student-pilot .pilot-access-toolbar,.bep-student-pilot .pilot-access-setup{padding:14px}
+}
