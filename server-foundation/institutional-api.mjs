@@ -320,7 +320,7 @@ export function createApiHandler(store,{port=4173}={}){
    if(timetable&&req.method==='DELETE'){const body=await readJson(req);response(res,200,store.coordinationDelete(actor,timetable[1],body.version));return true;}
    if(path==='/api/exams'&&req.method==='GET'){response(res,200,{items:store.listExams(actor)});return true;}
    if(path==='/api/exams'&&req.method==='POST'){const data=await readJson(req);response(res,201,{item:store.createExam(actor,data)});return true;}
-   const examPath=path.match(/^\/api\/exams\/([a-f0-9-]{36})(?:\/(approve|duplicate|export|audio-mp3|approval-history|review-feedback|delivery-readiness|delivery-package|delivery-audit|pdf-pilot))?$/);
+   const examPath=path.match(/^\/api\/exams\/([a-f0-9-]{36})(?:\/(approve|duplicate|export|audio-mp3|approval-history|review-feedback|revision-diff|delivery-readiness|delivery-package|delivery-audit|pdf-pilot))?$/);
    if(examPath){
     const [,id,action]=examPath;
     if(!action&&req.method==='GET'){response(res,200,{item:store.getExam(actor,id)});return true;}
@@ -328,6 +328,7 @@ export function createApiHandler(store,{port=4173}={}){
     if(action==='duplicate'&&req.method==='POST'){const data=await readJson(req);response(res,201,{item:store.duplicateExam(actor,id,data)});return true;}
     if(action==='approval-history'&&req.method==='GET'){response(res,200,{history:store.approvalHistory(actor,id)});return true;}
     if(action==='review-feedback'&&req.method==='GET'){response(res,200,{feedback:store.reviewFeedbackList(actor,id)});return true;}
+    if(action==='revision-diff'&&req.method==='GET'){response(res,200,{diff:store.revisionDelta(actor,id)});return true;}
     if(action==='review-feedback'&&req.method==='POST'){
      const data=await readJson(req,1300);
      response(res,201,{feedback:store.reviewFeedbackCreate(actor,id,data)});return true;
