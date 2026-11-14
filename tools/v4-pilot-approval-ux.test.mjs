@@ -26,7 +26,7 @@ test('approval screen labels the actual reviewer and explains its disabled state
 });
 
 test('role-specific text never substitutes for server-side separation of duties',()=>{
- assert.match(exams,/requireIndependentExamApproval&&row\.owner_id===actor\.id/);
+ assert.match(exams,/requireIndependentExamApproval&&reviewerSeparationViolation\(row,actor\.id\)/);
  assert.match(exams,/separation_of_duties/);
  assert.match(exams,/if\(payload\?\.confirmed!==true\)fail\('confirmation_required'/);
  assert.match(exams,/reviewExam\(JSON\.parse\(row\.body\)\)/);
