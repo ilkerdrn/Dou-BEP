@@ -157,10 +157,16 @@ function applyStudentAccessProfile(id){
  document.documentElement.style.setProperty('--student-size',profile.fontSize+'px');
  document.body.classList.toggle('high',profile.highContrast);
  document.body.classList.toggle('pilot-motor',profile.largeTargets);
+ document.body.classList.toggle('pilot-entry-large',profile.fontSize>=24);
  $('access-profile-note').textContent=profile.description;
  if(exam)updateQuestionNavigation();
 }
 $('access-profile').addEventListener('change',()=>applyStudentAccessProfile($('access-profile').value));
+$('entry-access-profile').addEventListener('change',()=>{
+ const profile=studentAccessProfile($('entry-access-profile').value);
+ $('ready-access-profile').value=profile.id;
+ applyStudentAccessProfile(profile.id);
+});
 function updateReadyStart(){
  $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam||pilotTimeState(pilotExpiresAt).phase==='expired';
 }
@@ -178,6 +184,7 @@ $('ready-start').addEventListener('click',()=>{
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
  try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;startPilotClock(r.expiresAt);$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
  $('ready-understand').checked=false;$('ready-device').checked=false;
+  $('ready-access-profile').value=studentAccessProfile($('entry-access-profile').value).id;
  $('ready-exam-details').textContent=exam.title+' · '+exam.subject+' · '+exam.questions.length+' soru · Pilot süre sınırı 45 dakika.';
  updateReadyStart();announce('Kod kabul edildi. Önce sınav hazırlık bilgilerini kontrol edin.');
  $('ready-title').focus();}
