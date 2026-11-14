@@ -143,6 +143,7 @@ const allowed={
  '/exam-selection.mjs':['exam-selection.mjs','text/javascript; charset=utf-8'],
  '/exam-approval-transition.mjs':['exam-approval-transition.mjs','text/javascript; charset=utf-8'],
  '/draft-recovery.mjs':['draft-recovery.mjs','text/javascript; charset=utf-8'],
+ '/editor-draft-safety.mjs':['editor-draft-safety.mjs','text/javascript; charset=utf-8'],
  '/accessible-player.mjs':['accessible-player.mjs','text/javascript; charset=utf-8'],
  '/institution.html':['institution.html','text/html; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
