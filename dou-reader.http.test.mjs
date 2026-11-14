@@ -120,7 +120,7 @@ test('Pocket TTS 24 kHz WAV is demo-only, locally previewed with no exam or remo
  const demo=await get('/dou-reader-demo');
  assert.equal(demo.status,200);
  for(const id of ['reader-neural-title','reader-neural-file','reader-neural-play',
-   'reader-neural-stop','reader-neural-status'])
+   'reader-neural-stop','reader-neural-status','reader-neural-rate'])
   assert.match(demo.body,new RegExp('id="'+id+'"'));
  assert.match(demo.body,/24 kHz PCM16 mono WAV/);
  assert.match(demo.body,/dou-reader-neural-sample-ui\.mjs/);
