@@ -81,3 +81,22 @@ test('100-question fixture accepts ONLY its own native beforeunload during dashb
  assert.match(browser,/BROWSER NAVIGATION FAILED:/);
  assert.doesNotMatch(browser,/window\.onbeforeunload\s*=\s*null|removeEventListener\('beforeunload'/);
 });
+
+
+test('exam editor readiness diagnoses app error or missing script instead of silently timing out',()=>{
+ const browser=read('tools/browser-ui-acceptance.mjs');
+ const editor=read('institutional-exams.mjs');
+ const health=read('exam-page-health.js');
+ assert.match(browser,/BROWSER EXAM STARTUP DIAGNOSTIC/);
+ assert.match(browser,/status\.ready==='login'\|\|status\.ready==='error'/);
+ assert.match(browser,/examStartup\.failedResources/);
+ assert.match(browser,/Network\.responseReceived/);
+ assert.match(browser,/Runtime\.exceptionThrown/);
+ assert.match(browser,/new URL\(response\.url\)\.pathname/);
+ assert.match(browser,/workspaceHidden:document\.getElementById\('exam-workspace'\)/);
+ assert.match(browser,/await command\('Network\.disable'\)\.catch\(\(\)=>\{\}\)/);
+ assert.match(editor,/document\.documentElement\.dataset\.examAppReady='ready'/);
+ assert.match(editor,/document\.documentElement\.dataset\.examAppReady='error'/);
+ assert.match(health,/if\(ready==='error'\)/);
+ assert.doesNotMatch(browser,/console\.log\([^)]*password|localStorage\.getItem|JSON\.stringify\(document\.body\.innerHTML\)/);
+});
