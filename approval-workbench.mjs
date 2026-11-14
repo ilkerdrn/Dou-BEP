@@ -59,7 +59,7 @@ function qualityFinding(issue,questionCount){
 
 export function approvalWorkbenchSummary({
  preflight,questionDraft,quality,saved=false,dirty=true,saving=false,pending=false,
- blocked=false,busy=false,approved=false,canEdit=false,canApprove=false,
+ blocked=false,busy=false,approved=false,feedbackPending=false,feedbackLoading=false,canEdit=false,canApprove=false,
  confirmed=false,ownerIsActor=false,audioFindings=0
 }={}){
  if(!preflight||!Array.isArray(preflight.stages)||preflight.stages.length!==5||
@@ -115,6 +115,12 @@ export function approvalWorkbenchSummary({
  }else if(busy){
   headline='Başka bir işlem devam ediyor';
   detail='İşlem sona ermeden onay gönderilemez.';
+ }else if(feedbackLoading){
+  headline='İncelemeci düzeltme kayıtları kontrol ediliyor';
+  detail='Önce bu sürümde kayıtlı düzeltme isteği olup olmadığını sunucudan doğrulayın.';
+ }else if(feedbackPending){
+  headline='Bu sürümde açık incelemeci düzeltme isteği var';
+  detail='Öğretmen eksikleri gidermeli, yeni sürümü kaydetmeli ve incelemeciye yeniden sunmalı. Aynı sürüm onaylanamaz.';
  }else if(errors>0){
   headline='Zorunlu kalite hataları var';
   detail=errors+' engelleyici kalite hatası düzeltilmeli. “Kalite raporunu aç” ile ayrıntıları inceleyin.';
