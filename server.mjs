@@ -83,6 +83,7 @@ const allowed={
  '/question-frames.mjs':['question-frames.mjs','text/javascript; charset=utf-8'],
  '/guided-questions.mjs':['guided-questions.mjs','text/javascript; charset=utf-8'],
  '/question-preview.mjs':['question-preview.mjs','text/javascript; charset=utf-8'],
+ '/question-preview-guidance.mjs':['question-preview-guidance.mjs','text/javascript; charset=utf-8'],
  '/visual-materials.mjs':['visual-materials.mjs','text/javascript; charset=utf-8'],
  '/presentation-profiles.mjs':['presentation-profiles.mjs','text/javascript; charset=utf-8'],
  '/erisilebilirlik-kontrol':['accessibility-check.html','text/html; charset=utf-8'],
