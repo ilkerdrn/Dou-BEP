@@ -18,7 +18,7 @@ import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance} from './question-draft-guidance.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
-import {reviewerInbox} from './reviewer-inbox.mjs';
+import {reviewerInbox,reviewerFeedbackText} from './reviewer-inbox.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
@@ -28,7 +28,7 @@ import {NEED_AREAS,DOMAINS,SUPPORTS,recommendSupports,applySupportPlan,normalize
 const $=id=>document.getElementById(id), esc=escapeHtml;
 const state={actor:null,csrf:null,exams:[],current:null,exam:null,dirty:false,busy:false,approvalHistory:null,mp3Available:false,needArea:'',supportDraft:[],domainDraft:'general'};
 const has=p=>({admin:['exam.view','exam.edit','exam.approve','exam.export'],coordinator:['exam.view','exam.edit','exam.approve','exam.export'],teacher:['exam.view','exam.edit','exam.approve','exam.export'],reviewer:['exam.view','exam.approve'],observer:['exam.view']}[state.actor?.role]||[]).includes(p);
-let previewIndex=0;
+let previewIndex=0,approvalWorkbenchSnapshot=null,reviewerFeedbackVersionKey='';
 function renderTeacherQuestionPreview(){
  const exam=state.exam,selector=$('exam-preview-question'),profile=$('exam-preview-profile');if(!exam||!selector||!profile)return;
  const previousIndex=Number.isInteger(previewIndex)?previewIndex:0;
@@ -170,6 +170,14 @@ function renderApprovalWorkbench(preflight){
   ownerIsActor:Boolean(state.current?.ownerId&&state.current.ownerId===state.actor?.id),
   audioFindings:auditAudioAccess(state.exam).length
  });
+ const latestKey=(state.current?.id||'')+'|'+(state.current?.revision||'');
+ if(latestKey!==reviewerFeedbackVersionKey){
+  reviewerFeedbackVersionKey=latestKey;
+  $('exam-reviewer-feedback-fallback').hidden=true;
+  $('exam-reviewer-feedback-text').value='';
+ }
+ approvalWorkbenchSnapshot={id:state.current?.id,revision:state.current?.revision,model};
+ $('exam-reviewer-feedback-copy').hidden=!['reviewer','coordinator','admin'].includes(state.actor?.role);
  node.dataset.approvalStatus=model.state;
  $('exam-approval-workbench-headline').textContent=model.headline;
  $('exam-approval-workbench-detail').textContent=model.detail;
@@ -300,6 +308,29 @@ $('exam-approval-workbench').addEventListener('click',event=>{
  if(btn.dataset.questionIndex!==undefined){
   visitApprovalQuestion(Number(btn.dataset.questionIndex),btn.dataset.questionField);
  }else visitPreflightTarget(btn.dataset.approvalJump);
+});
+$('exam-reviewer-feedback-copy').addEventListener('click',async()=>{
+ if(!['reviewer','coordinator','admin'].includes(state.actor?.role))return;
+ const current=state.current,snapshot=approvalWorkbenchSnapshot;
+ if(!current||!snapshot||snapshot.id!==current.id||snapshot.revision!==current.revision){
+  return notice('Önce güncel sınav sürümünü açıp kontrol edin.',true);
+ }
+ if(state.busy||state.dirty||autosave.isSaving()||autosave.hasChanges()||autosave.isBlocked()){
+  return notice('Özet için önce devam eden işlemi ve kayıt çakışmasını tamamlayın.',true);
+ }
+ let note;
+ try{note=reviewerFeedbackText({examId:current.id,revision:current.revision,workbench:snapshot.model});}
+ catch(err){return notice(err.message,true);}
+ const backup=$('exam-reviewer-feedback-fallback'),field=$('exam-reviewer-feedback-text');
+ field.value=note;backup.hidden=false;
+ try{
+  if(!navigator.clipboard?.writeText)throw Error('clipboard');
+  await navigator.clipboard.writeText(note);
+  notice('İnceleme özeti kopyalandı. Öğretmene kurumunuzun güvenli iletişim kanalıyla iletebilirsiniz.');
+ }catch{
+  field.focus({preventScroll:true});field.select();
+  notice('Otomatik kopyalama kullanılamadı. Hazır inceleme notunu aşağıdan elle kopyalayabilirsiniz.',true);
+ }
 });
 $('exam-approval-workbench-quality').addEventListener('click',()=>visitPreflightTarget('exam-quality'));
 $('exam-approval-workbench-confirm').addEventListener('click',()=>{
