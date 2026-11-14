@@ -130,6 +130,9 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   if(requireIndependentExamApproval&&row.owner_id===actor.id)fail('separation_of_duties','Sınavın taslağını oluşturan hesap bu sınavı onaylayamaz.',403);
   if(payload?.confirmed!==true)fail('confirmation_required','Sınav sürümünün onaylanması için yetkili onaylayıcının açık teyidi gerekli.');
   if(!Number.isInteger(payload.revision)||payload.revision!==row.revision)fail('revision_conflict','Sınav sürümü değişmiş. Yeniden gözden geçirin.',409);
+  if(db.prepare('SELECT 1 AS flagged FROM exam_review_feedback WHERE tenant_id=? AND exam_id=? AND revision=? LIMIT 1')
+    .get(actor.tenantId,id,row.revision))
+   fail('review_feedback_pending','Bu sürümde incelemeci düzeltme isteği var. Öğretmen eksikleri giderip yeni sürüm kaydettikten sonra yeniden inceleyin.',409);
   const report=reviewExam(JSON.parse(row.body));if(report.errorCount>0)fail('quality_errors',`${report.errorCount} zorunlu kontrol hatası bulundu.`,422);
   if(row.status==='approved')return {...meta(row),report:{errorCount:report.errorCount,warningCount:report.warningCount}};
   const stamp=Date.now();
