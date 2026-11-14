@@ -100,6 +100,12 @@ test('V4: review request -> revised approval -> pilot recovery -> anonymous subm
   assert.equal(f.store.pilotView(f.teacher,issued.id).answers,null);
 
   const first=f.store.pilotRedeem(issued.code);
+  const storedCapability=f.store.db.prepare('SELECT code_hash,claim_hash FROM pilot_sessions WHERE id=?')
+   .get(issued.id);
+  assert.match(storedCapability.code_hash,/^[a-f0-9]{64}$/);
+  assert.match(storedCapability.claim_hash,/^[a-f0-9]{64}$/);
+  assert.notEqual(storedCapability.code_hash,issued.code.replaceAll('-',''));
+  assert.notEqual(storedCapability.claim_hash,first.token);
   assert.equal(first.exam.questions.length,4);
   assert.equal(JSON.stringify(first.exam).includes('"answer"'),false);
   assert.equal(JSON.stringify(first.exam).includes('teacherNote'),false);
@@ -118,7 +124,10 @@ test('V4: review request -> revised approval -> pilot recovery -> anonymous subm
   assert.deepEqual(resumed.answers,{q1:'B',q2:'A'});
   assert.deepEqual(f.store.pilotProgress(resumed.token).answers,{q1:'B',q2:'A'});
   const responses={q1:'B',q2:'A',q3:'A',q4:{'1':'A','2':'B'}};
-  assert.equal(f.store.pilotSubmit(resumed.token,responses).ok,true);
+  const receipt=f.store.pilotSubmit(resumed.token,responses);
+  assert.equal(receipt.ok,true);
+  assert.match(receipt.message,/Otomatik puanlama yapılmadı/);
+  assert.equal(f.store.db.prepare('SELECT claim_hash FROM pilot_sessions WHERE id=?').get(issued.id).claim_hash,null);
   assert.throws(()=>f.store.pilotSubmit(resumed.token,responses),{code:'invalid_session'});
   assert.equal(f.store.pilotView(f.teacher,issued.id).status,'submitted');
   assert.deepEqual(f.store.pilotView(f.teacher,issued.id).answers,responses);
@@ -149,6 +158,10 @@ test('V4: review request -> revised approval -> pilot recovery -> anonymous subm
   assert.equal(finalReview.reviewedQuestions,4);
   assert.equal(finalReview.complete,true);
   assert.equal(finalReview.questions[0].score,0);
+  // Results remain on the authorized teacher path, not on the student or
+  // anonymous session metadata path.
+  assert.equal(JSON.stringify(f.store.pilotView(f.teacher,issued.id)).includes('Sadece sentetik öğretmen gözlemi'),false);
+  assert.equal(f.store.pilotList(f.teacher).some(item=>Object.hasOwn(item,'answers')),false);
   const csv=f.store.pilotReviewCsv(f.teacher,issued.id);
   assert.match(csv,/Oturum referans/);
   assert.match(csv,/Sadece sentetik öğretmen gözlemi/);
