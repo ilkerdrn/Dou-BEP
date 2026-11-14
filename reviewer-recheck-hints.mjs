@@ -4,11 +4,11 @@
  * Not an approval, grading, verification, or pedagogical equivalence engine.
  */
 const STAGES=Object.freeze({
- identity:{title:'Sınav bilgileri',categories:['Sınav bilgileri']},
- goals:{title:'BEP kazanımları',categories:['BEP hedefleri','Kazanım']},
- questions:{title:'Sorular ve yanıtlar',categories:[]},
- access:{title:'Erişilebilirlik ve kalite',categories:['Erişilebilirlik','Görsel ve erişim']},
- delivery:{title:'Kaydetme ve onay',categories:[]}
+ identity:{title:'Sınav bilgileri',target:'exam-main-fields',categories:['Sınav bilgileri']},
+ goals:{title:'BEP kazanımları',target:'exam-goal-section',categories:['BEP hedefleri','Kazanım']},
+ questions:{title:'Sorular ve yanıtlar',target:'exam-question-section',categories:[]},
+ access:{title:'Erişilebilirlik ve kalite',target:'exam-quality',categories:['Erişilebilirlik','Görsel ve erişim']},
+ delivery:{title:'Kaydetme ve onay',target:'exam-output-section',categories:[]}
 });
 const LIMIT=20;
 export function reviewerRecheckHints(diff,feedback){
@@ -33,18 +33,25 @@ export function reviewerRecheckHints(diff,feedback){
   const differs=id==='questions'?comparison.changedQuestions.length>0:
    item.categories.some(category=>sections.has(category)||
     comparison.changedQuestions.some(q=>q.fields?.includes(category)));
-  return {id,label:item.title,changed:differs,
+  return {id,label:item.title,target:item.target,changed:differs,
    text:differs?'Bu aşamayla ilişkili teknik alan değişmiş; içeriği yeniden inceleyin.':
     'Bu aşamaya ait görünür teknik fark yok; eksikliğin giderildiğini varsaymayın.'};
  });
+ // A removed question or a position outside the new revision must never
+ // navigate to a different current question. Missing counts also fail closed.
+ const currentCount=Number.isSafeInteger(comparison.currentQuestionCount)&&
+  comparison.currentQuestionCount>=0&&comparison.currentQuestionCount<=150
+  ?comparison.currentQuestionCount:0;
  const questions=questionNumbers.map(number=>{
   const entry=questionChanges.get(number);
-  return {number,changed:Boolean(entry),
+  const canJump=number<=currentCount&&entry?.kind!=='removed';
+  return {number,index:canJump?number-1:null,canJump,changed:Boolean(entry),
    label:entry?'Soru '+number+' · teknik fark var ('+
     (entry.kind==='removed'?'kaldırıldı':entry.kind==='added'?'eklendi':'alan değişikliği')+')':
     'Soru '+number+' · bu konumda teknik fark görülmedi',
-   detail:entry?'Yeni sürümde içeriği, BEP bağlantısını ve erişilebilirliği tekrar değerlendirin.':
-    'Önceki düzeltme isteğini kapatmak için bu soruyu yine inceleyin.'};
+   detail:!canJump?'Bu soru konumu yeni sürümde yok veya karşılaştırma sayısı doğrulanamadı; sınavın soru listesini inceleyin.':
+    entry?'Yeni sürümde aynı konumdaki içeriği, BEP bağlantısını ve erişilebilirliği tekrar değerlendirin.':
+    'Önceki düzeltme isteğini kapatmak için bu konumu yine inceleyin.'};
  });
  return {status:'recheck',intro:'Sürüm '+from+' için önceki düzeltme istekleri ile sürüm '+to+
   ' teknik farkları karşılaştırıldı. Soru konumları sıralama değişirse kayabilir.',
