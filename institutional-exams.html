@@ -46,6 +46,27 @@
  </section><div class="workflow-pager" role="group" aria-label="Hazırlama adımları arasında geçiş"><button type="button" id="workflow-prev" class="portal-btn secondary" disabled>Önceki adım</button><span id="workflow-step-count">Adım 1 / 5</span><span id="workflow-next-hint" class="workflow-next-hint" aria-live="polite">Sıradaki: BEP kazanımı</span><span id="workflow-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span><button type="button" id="workflow-next" class="portal-btn primary">Sonraki adım</button></div></nav>
  <div class="portal-user"><div><span class="portal-mini-label">OTURUM</span><h2 id="exam-actor">—</h2><p id="exam-tenant">—</p></div><div class="exam-toolbar"><button class="portal-btn secondary" id="exam-refresh" type="button">Listeyi yenile</button><button class="portal-btn primary" id="exam-new" type="button">+ Yeni sınav</button></div></div>
  <details class="exam-overview"><summary>Sınav kayıt özeti <span>İstatistikler ve çalışma durumu</span></summary><div class="portal-kpis"><div><span>Sınav kaydı</span><strong id="exam-total">0</strong><small>Erişilebilen kayıtlar</small></div><div><span>Onaylı</span><strong id="exam-approved">0</strong><small>Bu kurumda görünür</small></div><div><span>Çalışma biçimi</span><strong>Yerel</strong><small>Hassas veri girmeyin</small></div></div></details>
+ <section class="portal-card" id="exam-reviewer-inbox" aria-labelledby="exam-reviewer-inbox-title" hidden>
+  <div class="portal-card-head"><div><span class="portal-mini-label">KURUMSAL İNCELEMECİ MASASI</span>
+    <h3 id="exam-reviewer-inbox-title">Sınav inceleme iş listesi</h3>
+    <p class="portal-help">Taslakların onaya hazır olduğu varsayılmaz. Sürümü, kalite kontrollerini ve bağımsız onay koşullarını inceleyin.</p>
+  </div></div>
+  <div class="exam-reviewer-controls">
+   <label for="exam-reviewer-filter">İnceleme durumu
+    <select id="exam-reviewer-filter">
+     <option value="draft">İncelenecek taslaklar</option>
+     <option value="approved">Onay kaydı bulunan sınavlar</option>
+     <option value="all">Tüm görünür sınavlar</option>
+    </select>
+   </label>
+   <label for="exam-reviewer-search">Sınav ara
+    <input id="exam-reviewer-search" type="search" placeholder="Başlığa göre ara" autocomplete="off" maxlength="100">
+   </label>
+  </div>
+  <p id="exam-reviewer-count" class="portal-help" role="status" aria-live="polite" aria-atomic="true">İnceleme kayıtları yükleniyor.</p>
+  <div id="exam-reviewer-items" class="exam-reviewer-items"></div>
+  <p class="portal-help">İncelemek veya geçmişi görüntülemek kayıtları değiştirmez. Onay yalnızca ayrı teyit ve sunucu yetki kontrolüyle yapılır.</p>
+ </section>
  <div class="exam-grid"><section class="portal-card" id="exam-drafts-panel" aria-label="Sınav taslakları"><div class="portal-card-head"><div><span class="portal-mini-label">KURUM KÜTÜPHANESİ</span><h3>Sınav taslakları</h3></div><div class="exam-recovery-actions"><button type="button" id="exam-resume-last" class="portal-btn secondary">Son taslağı aç</button><button type="button" id="exam-recovery-choose" class="portal-btn secondary">JSON taslağı geri yükle</button><input type="file" id="exam-recovery-file" accept=".json,application/json" hidden></div></div><div class="exam-list-controls"><label for="exam-search">Sınav ara<input id="exam-search" type="search" placeholder="Başlığa göre ara" autocomplete="off"></label><label for="exam-status-filter">Durum<select id="exam-status-filter"><option value="all">Tüm sınavlar</option><option value="draft">Taslaklar</option><option value="approved">Onaylılar</option></select></label></div><p class="portal-help" id="exam-list-count" role="status" aria-live="polite"></p><div id="exam-list" class="portal-template-list"><p class="portal-help">Kayıtlar yükleniyor…</p></div></section>
  <section class="portal-card" id="exam-editor-card"><div class="portal-card-head"><div><span class="portal-mini-label">SINAV EDİTÖRÜ</span><h3 id="exam-editor-title">Yeni sınav</h3></div><span class="portal-outline-label" id="exam-status">KAYDEDİLMEDİ</span></div>
  <div class="editor-ribbon"><span class="editor-ribbon-dot" aria-hidden="true"></span><span>Düzenlemeler otomatik kaydedilir; onay her sürüm için ayrıca gereklidir</span><span class="editor-ribbon-tag" id="workflow-save-state">Yeni taslak</span></div>
