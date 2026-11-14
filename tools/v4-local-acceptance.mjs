@@ -45,6 +45,7 @@ const QUICK_TESTS=[
  'tools/v4-approval-workbench.test.mjs',
  'tools/v4-reviewer-inbox.test.mjs',
  'server-foundation/exam-review-feedback.test.mjs',
+ 'server-foundation/exam-approval-feedback-serialization.test.mjs',
  'tools/v4-review-feedback-ui.test.mjs',
  'server-foundation/exam-revision-delta.test.mjs',
  'tools/v4-revision-comparison-ui.test.mjs',
