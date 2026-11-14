@@ -96,9 +96,11 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   allow(actor,'exam.view');
   const rows=db.prepare(`SELECT e.*,
    EXISTS(SELECT 1 FROM exam_review_feedback f WHERE f.tenant_id=e.tenant_id
-     AND f.exam_id=e.id AND f.revision=e.revision AND e.status='draft') AS feedback_current
+     AND f.exam_id=e.id AND f.revision=e.revision AND e.status='draft') AS feedback_current,
+   EXISTS(SELECT 1 FROM exam_review_feedback f WHERE f.tenant_id=e.tenant_id
+     AND f.exam_id=e.id AND f.revision<e.revision AND e.status='draft') AS feedback_recheck
    FROM exams e WHERE e.tenant_id=? ORDER BY e.updated_at DESC LIMIT 100`).all(actor.tenantId);
-  return rows.filter(x=>visible(actor,x)).map(row=>({...meta(row),feedbackCurrent:Boolean(row.feedback_current)}));
+  return rows.filter(x=>visible(actor,x)).map(row=>({...meta(row),feedbackCurrent:Boolean(row.feedback_current),feedbackRecheck:Boolean(row.feedback_recheck)&&!Boolean(row.feedback_current)}));
  }
  function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),exam:JSON.parse(row.body)};}
  function createExam(actor,payload){allow(actor,'exam.edit');const exam=sanitize(payload?.exam);const count=db.prepare('SELECT COUNT(*) AS n FROM exams WHERE tenant_id=?').get(actor.tenantId).n;
