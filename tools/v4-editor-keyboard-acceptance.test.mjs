@@ -16,7 +16,7 @@ test('keyboard smoke sends Chromium key events rather than only clicking synthet
  assert.match(browser,/async function pressEnter\(\)/);
  // CDP's rawKeyDown lacks the character event required by native <summary>.
  // Keep a trusted keyDown with CR so Enter activates native details AND buttons.
- assert.match(browser,/type:'keyDown',text:'\\\\r',unmodifiedText:'\\\\r'/);
+ assert.match(browser,/type:'keyDown',text:'\\r',unmodifiedText:'\\r'/);
  assert.match(browser,/BROWSER NATIVE SUMMARY ENTER DIAGNOSTIC/);
  assert.match(browser,/Input\.dispatchKeyEvent/);
  assert.match(browser,/type:'rawKeyDown'/);
