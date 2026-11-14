@@ -94,8 +94,12 @@ async function evaluate(expression){
 // Actual Chromium input events, not synthetic DOM .click(), used by the
 // keyboard acceptance scenarios. Browser automation is not a manual NVDA test.
 async function pressEnter(){
+ // Chromium's native <summary> activation needs an ordinary keyDown with
+ // the Enter text payload, not rawKeyDown (which suppresses character input).
+ // Dispatch through DevTools so the event is browser-generated and trusted.
+ // Do not call element.click() or dispatchEvent(): those bypass keyboard a11y.
  const data={key:'Enter',code:'Enter',windowsVirtualKeyCode:13,nativeVirtualKeyCode:13};
- await command('Input.dispatchKeyEvent',{type:'rawKeyDown',...data});
+ await command('Input.dispatchKeyEvent',{type:'keyDown',text:'\\r',unmodifiedText:'\\r',...data});
  await command('Input.dispatchKeyEvent',{type:'keyUp',...data});
 }
 async function navigate(base,path){
@@ -794,9 +798,29 @@ async function main(){
  await evaluate('document.querySelector("#exam-approval-workbench-more>summary").focus()');
  pass(await evaluate('document.activeElement?.id==="exam-approval-workbench-more-title"'),
       'Native disclosure summary receives keyboard focus');
+ // Instrument the actual native keyboard event, never synthetic click.
+ await evaluate(`(function(){
+  const summary=document.getElementById('exam-approval-workbench-more-title');
+  window.__douReviewKeyProbe=[];
+  for(const type of ['keydown','keyup'])summary.addEventListener(type,e=>{
+   window.__douReviewKeyProbe.push({type:e.type,key:e.key,trusted:e.isTrusted,prevented:e.defaultPrevented});
+  },{once:true});
+ })()`);
  await pressEnter();
- await waitUntil(()=>evaluate('document.getElementById("exam-approval-workbench-more")?.open===true'),
-  'Native review disclosure keyboard Enter');
+ try{
+  await waitUntil(()=>evaluate('document.getElementById("exam-approval-workbench-more")?.open===true'),
+   'Native review disclosure keyboard Enter',3000);
+ }catch(error){
+  const info=await evaluate(`(function(){
+   const more=document.getElementById('exam-approval-workbench-more');
+   return {hidden:more?.hidden,open:more?.open,
+    focused:document.activeElement?.id,events:window.__douReviewKeyProbe||[]};
+  })()`);
+  console.error('BROWSER NATIVE SUMMARY ENTER DIAGNOSTIC: '+JSON.stringify(info));
+  throw error;
+ }finally{
+  await evaluate('delete window.__douReviewKeyProbe');
+ }
  pass(await evaluate('document.activeElement?.id==="exam-approval-workbench-more-title"'),
       'Enter expands the remaining questions without stealing summary focus');
  await command('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,nativeVirtualKeyCode:9});
