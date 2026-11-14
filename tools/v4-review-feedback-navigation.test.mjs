@@ -71,6 +71,9 @@ test('UI permits all requested links and explicit revision-safe retry without ch
  assert.match(js,/more\.addEventListener\('toggle',updateSummary\)/);
  assert.match(js,/if\(!state\.current\|\|!has\('exam\.view'\)\|\|state\.busy\|\|autosave\.isSaving\(\)\)return/);
  assert.match(js,/reviewFeedbackLoadFailure=\{id,revision\}/);
+ assert.match(js,/reviewFeedbackFetchFailed\(\)/);
+ assert.match(js,/feedbackFailed:reviewFeedbackFetchFailed\(\)/);
+ assert.match(js,/\$\('exam-review-feedback'\)\.open=true/);
  assert.match(js,/state\.current\?\.revision===revision/);
  assert.match(js,/retry\.hidden=!failed/);
  assert.match(js,/visitApprovalQuestion\(Number\(button\.dataset\.feedbackQuestion\)-1,'prompt'\)/);
