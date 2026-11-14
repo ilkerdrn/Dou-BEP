@@ -8,6 +8,7 @@ import {createAutosaveManager} from './autosave-manager.mjs';
 import {createExamSelection} from './exam-selection.mjs';
 import {assertApprovalReady,submitExamApproval} from './exam-approval-transition.mjs';
 import {makeRecoveryDocument,parseRecoveryDocument} from './draft-recovery.mjs';
+import {editorDraftLeaveRisk} from './editor-draft-safety.mjs';
 import {createQuestionFrame} from './question-frames.mjs';
 import {GUIDED_PATTERNS,guidedPattern,createGuidedQuestion} from './guided-questions.mjs';
 import {parseCatalog,objectivesTemplate} from './catalog.mjs';
@@ -62,7 +63,8 @@ function showAutosave(kind,detail){
  const el=$('exam-autosave-state'),recovery=$('exam-autosave-recovery');if(!el)return;
  const labels={new:'Yeni taslak · İlk düzenlemeden sonra otomatik kaydedilecek',idle:'',pending:'Kaydedilmemiş değişiklik var · Otomatik kayıt bekleniyor',saving:'Sunucuya kaydediliyor…',saved:'Tüm değişiklikler sunucuya kaydedildi',conflict:'ÇAKIŞMA: Başka sekmede daha yeni sürüm var. Yerel düzenlemeleriniz korunuyor.',error:'KAYIT BAŞARISIZ: Ağ/oturum kontrolü gerekli. Metin bu sekmede duruyor.'};
  el.textContent=labels[kind]||labels.idle;el.dataset.state=kind;
- recovery.hidden=kind!=='conflict'&&kind!=='error';
+ recovery.hidden=!['pending','saving','conflict','error'].includes(kind);
+ $('exam-autosave-reload').hidden=kind!=='conflict'&&kind!=='error';
  const ribbon=$('workflow-save-state');if(ribbon)ribbon.textContent={new:'Yeni taslak',pending:'Otomatik kayıt bekliyor',saving:'Kaydediliyor',saved:'Sunucuda kayıtlı',conflict:'Sürüm çakışması',error:'Kayıt başarısız'}[kind]||'Sunucuda kayıtlı';
  if(kind==='saved'&&!autosave.hasChanges()){
   state.dirty=false;
@@ -314,6 +316,20 @@ function confirmLeavingReviewRequest(){
  }
  return !hasUnsentReviewRequest()||
   confirm('İncelemeci düzeltme isteği henüz gönderilmedi. Seçili alanları kaybetmek istiyor musunuz?');
+}
+function currentLeaveRisk({includeReview=false}={}){
+ return editorDraftLeaveRisk({
+  dirty:state.dirty,pending:autosave.hasChanges(),saving:autosave.isSaving(),
+  conflict:autosave.isBlocked(),failed:autosave.hasFailure(),busy:state.busy,
+  reviewSending:reviewFeedbackSending,
+  reviewUnsent:includeReview&&hasUnsentReviewRequest()
+ });
+}
+function confirmDraftSwitch(){
+ const risk=currentLeaveRisk();
+ if(risk.blocked){notice(risk.message,true);return false;}
+ if(risk.warn&&!confirm(risk.message))return false;
+ return confirmLeavingReviewRequest();
 }
 const feedbackStageLabels=Object.freeze({
  identity:'Sınav bilgileri',goals:'BEP kazanımları',questions:'Sorular ve yanıtlar',
@@ -1002,8 +1018,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
  const action=button.dataset.reviewerAction;
  if(!['review','history','diff'].includes(action))return;
  const sameOpened=state.current?.id===id&&state.current?.revision===expectedRevision;
- if(!sameOpened&&state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
- if(!sameOpened&&!confirmLeavingReviewRequest())return;
+ if(!sameOpened&&!confirmDraftSwitch())return;
  button.disabled=true;
  try{
   // Navigating within an already-open revision must not discard unsent review fields.
@@ -1245,9 +1260,8 @@ $('exam-add-ten-questions').addEventListener('click',()=>{
 });
 $('exam-list').addEventListener('click',async ev=>{
  const btn=ev.target.closest('[data-open],[data-duplicate]');if(!btn)return;
- if(state.busy||autosave.isSaving())return notice('Kayıt işlemi devam ederken sınav değiştirmeyin.',true);
- if(state.dirty&&!confirm('Kaydedilmemiş değişiklikler var. Devam ederseniz bunlar kaybolabilir. Devam edilsin mi?'))return;
- if((btn.dataset.duplicate||btn.dataset.open!==state.current?.id)&&!confirmLeavingReviewRequest())return;
+ if(!btn.dataset.duplicate&&btn.dataset.open===state.current?.id){notice('Bu sınav zaten açık. Kaydedilmemiş düzenlemeleriniz korunuyor.');return;}
+ if(!confirmDraftSwitch())return;
  if(btn.dataset.duplicate){
   if(!has('exam.edit'))return;
   if(!confirm('Bu sınavdan bağımsız bir TASLAK oluşturulacak. Kaynak onaylı olsa bile kopya yeniden öğretmen kontrolü ve onayı isteyecek. Devam edilsin mi?'))return;
@@ -1257,7 +1271,7 @@ $('exam-list').addEventListener('click',async ev=>{
   }catch(err){notice(err.message,true);}finally{state.busy=false;btn.disabled=false;draw();}
  }else{try{if(await openExam(btn.dataset.open))notice('Sınav sürümü açıldı.');}catch(err){notice(err.message,true);}}
 });
-$('exam-new').addEventListener('click',()=>{if(state.busy)return notice('Devam eden işlem tamamlanmalı.',true);if(autosave.isSaving())return notice('Otomatik kayıt sürüyor.',true);if(state.dirty&&!confirm('Kaydedilmemiş değişiklikleri bırakmak istiyor musunuz?'))return;if(!confirmLeavingReviewRequest())return;draft();});
+$('exam-new').addEventListener('click',()=>{if(!confirmDraftSwitch())return;draft();});
 $('exam-refresh').addEventListener('click',()=>refreshList().catch(err=>notice(err.message,true)));
 $('exam-confirm').addEventListener('change',()=>{draw();});
 $('exam-save').addEventListener('click',async()=>{if(!has('exam.edit')||state.busy)return;
@@ -1277,8 +1291,7 @@ $('exam-autosave-export').addEventListener('click',()=>{
 });
 $('exam-autosave-reload').addEventListener('click',async()=>{
  if(!state.current?.id)return notice('Bu taslağın henüz sunucu kaydı yok.',true);
- if(autosave.isSaving())return notice('Devam eden kayıt işlemini tamamlayın.',true);
- if(!confirm('Bu sekmedeki kaydedilmemiş değişiklikler kaybolacak. Gerekirse önce JSON kopyasını indirin. Sunucudaki son sürümü açalım mı?'))return;
+ if(!confirmDraftSwitch())return;
  try{if(await openExam(state.current.id))notice('Sunucudaki en son kaydedilmiş sürüm açıldı.');}catch(err){notice(err.message,true);}
 });
 $('exam-recovery-choose').addEventListener('click',()=>{if(state.busy)return notice('Onay veya başka işlem sürerken kurtarma yapılamaz.',true);if(!has('exam.edit'))return notice('Taslak geri yükleme izniniz yok.',true);$('exam-recovery-file').click();});
@@ -1289,21 +1302,21 @@ $('exam-recovery-file').addEventListener('change',async event=>{
  if(file.size>300000)return notice('Kurtarma dosyası 300 KB sınırını aşıyor.',true);
  try{const exam=parseRecoveryDocument(await file.text());
   if(state.busy)return notice('Onay devam ederken seçilen kurtarma dosyası uygulanmadı.',true);
-  if(state.dirty&&!confirm('Bu sekmedeki kaydedilmemiş değişiklikler yeni taslakla değiştirilecek. Devam?'))return;
-  if(!confirm('Dosya yalnızca anonim BEP sınavı içermelidir. Yeni bir taslak olarak açıp otomatik kaydetmek istiyor musunuz?'))return;
+  if(!confirm('Bu anonim JSON dosyasını yeni bir sınav taslağı olarak açmak istiyor musunuz?'))return;
+  if(!confirmDraftSwitch())return;
   examSelection.invalidate();autosave.reset();state.current=null;state.approvalHistory=null;state.exam=exam;state.needArea='';state.supportDraft=[...(exam.supportPlan?.selected||[])];state.domainDraft=exam.supportPlan?.domain||'general';
   state.dirty=true;draw();autosave.changed();
   notice('Yerel JSON taslak yeni sınav olarak açıldı. Sunucuda kayıt tamamlanınca durum çubuğu değişecek.');
  }catch(err){notice('Kurtarma reddedildi: '+err.message,true);}
 });
 $('exam-resume-last').addEventListener('click',async()=>{
- if(autosave.isSaving())return notice('Kaydetme işlemi sürüyor.',true);
- if(state.dirty&&!confirm('Bu sekmedeki kaydedilmemiş düzenlemeler silinebilir. Devam edilsin mi?'))return;
  const latest=state.exams.find(e=>e.ownerId===state.actor?.id&&e.status==='draft');
  if(!latest)return notice('Bu kullanıcıya ait kaydedilmiş taslak bulunamadı.',true);
+ if(latest.id===state.current?.id){notice('Son taslak zaten açık. Düzenlemeleriniz korunuyor.');return;}
+ if(!confirmDraftSwitch())return;
  try{if(await openExam(latest.id))notice('Son sunucu taslağı açıldı.');}catch(err){notice(err.message,true);}
 });
-window.addEventListener('beforeunload',event=>{if(state.dirty||autosave.isSaving()||reviewFeedbackSending||hasUnsentReviewRequest()){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{const risk=currentLeaveRisk({includeReview:true});if(risk.warn){event.preventDefault();event.returnValue='';}});
 document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&String(event.key).toLowerCase()==='s'){event.preventDefault();if(has('exam.edit'))$('exam-save').click();}});
 $('exam-approve').addEventListener('click',async()=>{
  let checkpoint=null;
