@@ -39,7 +39,7 @@ test('list endpoint returns only summary metadata and respects prior authorizati
 
 test('deleting or leaving a scored session cannot silently discard unsaved review',()=>{
  assert.match(ui,/if\(activeReview\?\.sessionId===item\.id&&\(reviewSaving\|\|reviewDraftSnapshot\(\)\?\.inspection\.changed\)\)/);
- assert.match(ui,/Kaydedilmemiş değişiklik var\. Önce kaydedin/);
+ assert.match(ui,/Bu oturumun değerlendirmesinde kaydedilmemiş değişiklik var\. Önce kaydedin/);
  assert.match(ui,/reviewDraftSnapshot\(\)\?\.inspection\.changed&&!confirm/);
  assert.match(ui,/beforeunload/);
  assert.match(ui,/void refresh\(\)\.catch/);
