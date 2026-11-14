@@ -9,8 +9,16 @@
 1. Windows PowerShell ile **temiz test çalışma ağacına** girin.
 2. `npm run reader:nvda:manual` çalıştırın. Komut ekranda yalnız localhost'a açık öğrenci adresini ve **tek kullanımlık sentetik kodu** gösterir. Sunucu açıkken PowerShell'i kapatmayın.
 3. Güncel NVDA ekran okuyucusunu etkinleştirin, Microsoft Edge'de komutun yazdığı `http://127.0.0.1:<PORT>/pilot` adresini açın. **Port örnektir; komutun verdiği adres geçerlidir.**
-4. Sınav kodu, üretildiği andan itibaren 45 dakika geçerlidir. Testte süre dolarsa önceki kodu tekrar kullanmak yerine laboratuvarı durdurup yeniden başlatın.
-5. Test bitince sunucu penceresinde **Ctrl+C** ile durdurun; yalnız sentetik geçici veriler silinir. Var olan BEP veritabanı ve Git çalışma dosyaları değiştirilmez.
+4. Kod **tek kullanımlıktır** ve üretildiği andan itibaren 45 dakika geçerlidir. Süresi dolmuş, daha önce girilmiş veya yanlış yazılmış kodu tekrar kullanmayın. Laboratuvar penceresinde **N + Enter** ile yeni sentetik kod üretin; yeni kod farklıdır, kullanılmamış eski kod iptal edilir. Yeni kod farklı bir anonim deneme başlatır; sürmekte olan öğrenci oturumunun yanıtları otomatik olarak taşınmaz.
+5. Test bitince sunucu penceresinde **Q + Enter** veya **Ctrl+C** ile durdurun; yalnız sentetik geçici veriler silinir. Var olan BEP veritabanı ve Git çalışma dosyaları değiştirilmez.
+
+## Kod geçersiz görünürse
+
+- Edge adresinin **aynı açık laboratuvar penceresinde** yazan yeni `127.0.0.1` adresi olduğunu kontrol edin; önceki portu kullanmayın.
+- Yalnız 4 grup, her biri 5 harf/rakam içeren sentetik kodu yapıştırın; başlığını veya `KOD:` kelimesini yapıştırmayın.
+- Önceden giriş yaptıysanız veya sayfayı yenilediyseniz eski kod kullanılamaz. NVDA laboratuvarı PowerShell penceresinde **N + Enter** yazın, gösterilen **yeni** kodu alın. Sınavı aynı anda birden fazla sekmede açmayın.
+- Yeni kod da kabul edilmiyorsa `npm run reader:nvda:lab:check` komutunu **ayrı bir PowerShell penceresinde** çalıştırın. Bu kontrol yalnız yeni bir sentetik veritabanında gerçek HTTP kod kabulü (ilk istek 200, tekrar 401, yeni kod 200) yapar; öğretmen/öğrenci verileri kullanılmaz. Test hatasının çıktısını paylaşın, kod veya tokenları paylaşmayın.
+- Gerçek bir sınavda kod yenileme farklı ve yetkili süreçtir; bu kolaylık yalnızca anonim NVDA kabul laboratuvarına aittir.
 
 ## Manuel kabul matrisi
 
