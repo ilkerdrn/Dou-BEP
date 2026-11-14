@@ -17,6 +17,7 @@ import {VERSION, DEFAULT_ADAPTATIONS, starterQuestion, normalizeExam, generateDo
 import {reviewExam} from './quality.mjs';
 import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance} from './question-draft-guidance.mjs';
+import {pilotDraftPrecheck} from './pilot-draft-precheck.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
 import {reviewerInbox,reviewerFeedbackText,parseReviewQuestionNumbers} from './reviewer-inbox.mjs';
 import {reviewerRecheckHints} from './reviewer-recheck-hints.mjs';
@@ -102,6 +103,50 @@ function qualityQuestionTarget(message){
  const index=Number(match[1])-1;
  return Number.isSafeInteger(index)&&index>=0&&index<(state.exam?.questions?.length||0)?index:null;
 }
+function renderPilotDraftPrecheck(){
+ if(!state.exam)return;
+ const report=reviewExam(state.exam);
+ const preview=pilotDraftPrecheck(state.exam,{
+  saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved',
+  qualityErrors:report.errorCount,accessibilityErrors:auditAudioAccess(state.exam).length
+ });
+ const wrapper=$('exam-pilot-draft-precheck');
+ if(!wrapper)return;
+ wrapper.dataset.pilotPrecheck=preview.state;
+ $('exam-pilot-draft-title').textContent=preview.heading;
+ $('exam-pilot-draft-count').textContent=preview.total+' / '+preview.maxPilotQuestions+
+  ' soru · '+preview.unsupportedCount+' pilotta desteklenmeyen tür';
+ $('exam-pilot-draft-description').textContent=preview.detail+' '+preview.notice;
+ $('exam-pilot-draft-types').textContent=preview.counts
+  .filter(item=>item.count>0).map(item=>item.label+': '+item.count).join(' · ')||
+  'Bu taslakta henüz soru bulunmuyor.';
+ const button=$('exam-pilot-draft-action');
+ button.textContent=preview.questionIndex!==null
+  ?'Soru '+(preview.questionIndex+1)+' türünü düzelt'
+  :preview.state==='too_many'?'31. soruyu incele'
+  :preview.state==='review'?'Kalite denetimine git'
+  :preview.formatOk?'Kaydetme ve onay bölümüne git'
+  :'Soru düzenleme bölümüne git';
+}
+$('exam-pilot-draft-action').addEventListener('click',()=>{
+ if(!state.exam)return;
+ const preview=pilotDraftPrecheck(state.exam,{
+  saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved',
+  qualityErrors:reviewExam(state.exam).errorCount,
+  accessibilityErrors:auditAudioAccess(state.exam).length
+ });
+ if(preview.questionIndex!==null){
+  visitApprovalQuestion(preview.questionIndex,'type');
+ }else if(preview.state==='too_many'){
+  // Show the first out-of-range question but never delete/modify it.
+  visitApprovalQuestion(30,'type');
+ }else if(preview.state==='empty'){
+  visitPreflightTarget('exam-question-section');
+  $('exam-add-question').focus({preventScroll:true});
+ }else{
+  visitPreflightTarget(preview.target);
+ }
+});
 function updateQuestionDraftGuidance(){
  if(!state.exam)return;
  const summary=questionDraftGuidance(state.exam),button=$('exam-draft-guidance-go');
@@ -561,7 +606,7 @@ function visitApprovalQuestion(index,field){
  visitPreflightTarget('exam-question-section');
  const card=$('exam-questions').querySelector('.exam-question[data-qindex="'+index+'"]');
  if(!card)return;
- const allowed=new Set(['prompt','objective','points','options','pairs','answer','source','visualAltText']);
+ const allowed=new Set(['prompt','objective','points','options','pairs','answer','source','visualAltText','type']);
  const key=allowed.has(field)?field:'prompt';
  let focusTarget=key==='source'?card.querySelector('[data-source-review]'):
   card.querySelector('[data-qkey="'+key+'"]');
@@ -849,6 +894,7 @@ function draw(){if(!state.exam)return;const x=state.exam;
  $('exam-questions').innerHTML=x.questions.map((q,i)=>`<article class="exam-question" data-qindex="${i}"><div class="exam-q-head"><strong>Soru ${i+1}</strong><button type="button" class="portal-btn secondary exam-delete-q" data-delete="${i}">Kaldır</button></div><label class="exam-label">Soru türü<select data-qkey="type" data-qindex="${i}">${Object.entries({choice:'Çoktan seçmeli',short:'Kısa yanıt',truefalse:'Doğru / Yanlış',matching:'Eşleştirme'}).map(([v,l])=>`<option value="${v}" ${q.type===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="exam-label">Soru metni<textarea data-qkey="prompt" data-qindex="${i}" rows="2">${esc(q.prompt)}</textarea></label><details class="portal-help" style="margin:8px 0 16px"><summary>PDF için öğretmen açıklamalı denklem / görsel blokları</summary><p>Yalnız öğretmenin kaynakla karşılaştırdığı metinsel dökümü ekleyin. Gerçek Office denklemi veya görsel otomatik aktarılmaz; belgeyi ayrıca uzmanla değerlendirin. Yeni açıklama kaydedilince sınav tekrar kurumsal onay ister.</p><button type="button" class="btn-secondary btn-small" data-pdf-alt="denklem" data-qindex="${i}">Denklem örneği ekle</button> <button type="button" class="btn-secondary btn-small" data-pdf-alt="gorsel" data-qindex="${i}">Görsel örneği ekle</button></details><div class="exam-two"><label class="exam-label">Kazanım<textarea data-qkey="objective" data-qindex="${i}" rows="2">${esc(q.objective)}</textarea></label><label class="exam-label">Puan<input type="number" min="1" max="1000" data-qkey="points" data-qindex="${i}" value="${q.points}"></label></div><label class="exam-label">Bu soru için kullanılacak metin<select data-qkey="presentationMode" data-qindex="${i}" aria-label="Soru ${i+1} için sunum metni">${Object.entries(PRESENTATION_MODES).map(([k,v])=>`<option value="${k}" ${q.presentationMode===k?'selected':''}>${esc(v)}</option>`).join('')}</select></label><div class="variant-comparison" id="variant-comparison-${i}" role="region" aria-label="Soru ${i+1} metin karşılaştırması">${variantHtml(q,i,x)}</div><div id="review-slot-${i}">${reviewPanelHtml(q,i,x)}</div>${accessPanelHtml(q,i)}${q.provenance?.kind==='source-import'?`<label class="portal-check" style="margin:14px 0;display:flex;gap:10px;align-items:center"><input type="checkbox" data-source-review="${i}" ${q.provenance.reviewed?'checked':''}> Bu sorunun metnini, seçeneklerini, puanını, doğru yanıtını ve erişilebilirliğini özgün belgeyle karşılaştırdım.</label>`:''}${q.type==='choice'?`<label class="exam-label">Seçenekler (her satır bir seçenek)<textarea data-qkey="options" data-qindex="${i}" rows="3">${esc(q.options.join('\n'))}</textarea></label>`:''}${q.type==='matching'?`<label class="exam-label">Eşleştirmeler (her satır: sol = sağ)<textarea data-qkey="pairs" data-qindex="${i}" rows="3">${esc(q.pairs.map(p=>p.left+' = '+p.right).join('\n'))}</textarea></label>`:q.type==='truefalse'?'':''}<label class="exam-label">${q.type==='matching'?'Örnek cevap (isteğe bağlı)':q.type==='truefalse'?'Doğru yanıt: Doğru veya Yanlış':'Doğru yanıt'}<input data-qkey="answer" data-qindex="${i}" value="${esc(q.answer)}" placeholder="${q.type==='choice'?'Seçeneklerden birini aynen yazın':''}"></label><label class="exam-label">Sadeleştirilmiş yönerge (isteğe bağlı)<textarea data-qkey="simplifiedPrompt" data-qindex="${i}" rows="2">${esc(q.simplifiedPrompt||'')}</textarea></label><div class="exam-two"><label class="exam-label">Görsel türü<select data-qkey="visualMode" data-qindex="${i}"><option value="shapes" ${q.visualMode!=='numberline'?'selected':''}>Nesne grubu</option><option value="numberline" ${q.visualMode==='numberline'?'selected':''}>Sayı doğrusu</option></select></label><label class="exam-label">Görsel betimlemesi<input data-qkey="visualAltText" data-qindex="${i}" value="${esc(q.visualAltText||'')}"></label></div>${q.visualMode==='numberline'?`<div class="exam-two"><label class="exam-label">Sayı doğrusu başlangıç<input data-qkey="numberLineStart" data-qindex="${i}" type="number" min="0" max="30" value="${q.numberLineStart??0}"></label><label class="exam-label">Sayı doğrusu bitiş<input data-qkey="numberLineEnd" data-qindex="${i}" type="number" min="1" max="30" value="${q.numberLineEnd??10}"></label></div>`:`<div class="exam-two"><label class="exam-label">Görsel nesne grubu A (0–12)<input data-qkey="visualDotsA" data-qindex="${i}" type="number" min="0" max="12" value="${q.visualDots?.groupA||0}"></label><label class="exam-label">Görsel nesne grubu B (0–12)<input data-qkey="visualDotsB" data-qindex="${i}" type="number" min="0" max="12" value="${q.visualDots?.groupB||0}"></label></div>`}<label class="exam-label">Görsele yönelik kısa açıklama<input data-qkey="visualNote" data-qindex="${i}" value="${esc(q.visualNote||'')}"></label></article>`).join('');
  renderTeacherQuestionPreview();
  updateQuestionDraftGuidance();
+ renderPilotDraftPrecheck();
  $('exam-adjustments').innerHTML=`<label class="exam-label">Yazı boyutu<select data-adapt="fontSize">${[16,18,20,22,24].map(v=>`<option value="${v}" ${x.adaptations.fontSize===v?'selected':''}>${v} punto</option>`).join('')}</select></label>${[['highContrast','Yüksek kontrast'],['simpleInstructions','Sadeleştirilmiş yönerge'],['onePerPage','Her sayfada bir soru'],['largerAnswerArea','Geniş cevap alanı'],['visualCues','Görsel açıklamalar']].map(([k,label])=>`<label class="portal-check"><input type="checkbox" data-adapt="${k}" ${x.adaptations[k]?'checked':''}> ${label}</label>`).join('')}`;
  const report=renderQuality(x);renderPreflight();const coverage=objectiveCoverage(x);$('exam-objective-coverage').textContent=`Kazanım kapsamı: ${coverage.groups.length} hedef · BEP bankası: ${(x.bepGoals||[]).length} amaç · ${coverage.total} soru · ${coverage.missing} kazanımsız soru. Bu özet ölçme yeterliliğini doğrulamaz.`;
  $('exam-save').disabled=!has('exam.edit')||state.busy;
@@ -900,7 +946,7 @@ $('exam-support-panel').addEventListener('click',event=>{
   touch();draw();notice('Uyarlama seçimleri uygulandı. Kaydedilince sürüme bağlanır; öğretmen onayı gereklidir.');
  }
 });
-function touch(){examSelection.invalidate();state.dirty=true;state.current&&(state.current={...state.current,status:'draft'});$('exam-confirm').checked=false;syncButtons();autosave.changed();if(state.exam){renderQuality(state.exam);renderPreflight();renderGoalMatrix();updateQuestionDraftGuidance();renderTeacherQuestionPreview();}}
+function touch(){examSelection.invalidate();state.dirty=true;state.current&&(state.current={...state.current,status:'draft'});$('exam-confirm').checked=false;syncButtons();autosave.changed();if(state.exam){renderQuality(state.exam);renderPreflight();renderGoalMatrix();updateQuestionDraftGuidance();renderPilotDraftPrecheck();renderTeacherQuestionPreview();}}
 function syncButtons(){ $('exam-status').textContent='KAYDEDİLMEDİ';$('exam-version').textContent='Değişiklikler kısa süre içinde oturumlu sunucuya otomatik kaydedilir.';for(const id of ['exam-approve','exam-word','exam-print','exam-audio-export','exam-audio-mp3','exam-delivery-check','exam-delivery-package','exam-pdf-pilot'])$(id).disabled=true;}
 function renderReviewerInbox(){
  const section=$('exam-reviewer-inbox');
