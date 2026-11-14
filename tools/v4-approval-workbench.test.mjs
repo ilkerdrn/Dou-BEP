@@ -47,6 +47,27 @@ test('panel separates local preparation from server-enforced approval and never 
  assert.ok(!Object.hasOwn(candidate,'approved'));
 });
 
+test('prior approval cannot mark unsaved editor changes or missing server record as approved',()=>{
+ const base={preflight:synthetic([true,true,true,true,false]),
+  questionDraft:draft(0),quality:quality(),canApprove:true,confirmed:true};
+ const pending=approvalWorkbenchSummary({...base,saved:true,dirty:true,approved:true});
+ assert.equal(pending.state,'review');
+ assert.equal(pending.canRequestApproval,false);
+ assert.match(pending.headline,/henüz doğrulanmamış/);
+ assert.match(pending.detail,/kapsamaz/);
+ for(const kind of ['saving','pending','blocked']){
+  const result=approvalWorkbenchSummary({...base,saved:true,dirty:false,approved:true,[kind]:true});
+  assert.equal(result.state,'review');
+  assert.equal(result.canRequestApproval,false);
+ }
+ const missing=approvalWorkbenchSummary({...base,saved:false,dirty:false,approved:true});
+ assert.equal(missing.state,'review');
+ assert.match(missing.detail,/Sunucu kaydı doğrulanmadan/);
+ const saved=approvalWorkbenchSummary({...base,saved:true,dirty:false,approved:true});
+ assert.equal(saved.state,'approved');
+ assert.equal(saved.canRequestApproval,false);
+});
+
 test('historically approved exam with incomplete BEP preflight keeps the conflict visible',()=>{
  const result=approvalWorkbenchSummary({
   preflight:synthetic([true,false,true,true,false],true),questionDraft:draft(0),
