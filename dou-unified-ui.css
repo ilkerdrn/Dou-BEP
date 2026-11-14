@@ -1991,3 +1991,38 @@ body.institution-page[data-design-version="4"] #exam-editor-card .teacher-previe
   border:1px solid CanvasText;
  }
 }
+
+/* V4 approval question overflow disclosure: native details/summary, no script-only toggle. */
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more{
+ margin:10px 0 18px;
+ padding:8px 10px 10px;
+ border:1px solid #dbdeda;
+ border-radius:10px;
+ background:#fff;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more[hidden]{
+ display:none;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more summary{
+ min-height:44px;
+ padding:11px 5px;
+ cursor:pointer;
+ font-size:13px;
+ font-weight:700;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more .exam-approval-workbench-items{
+ margin:8px 0 0;
+}
+body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more summary:focus-visible{
+ outline:3px solid var(--dou-ui-focus,#156bb4);
+ outline-offset:3px;
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-more{
+  background:Canvas;
+  color:CanvasText;
+  border:1px solid CanvasText;
+ }
+}
