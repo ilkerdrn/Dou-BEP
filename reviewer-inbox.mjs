@@ -22,7 +22,7 @@ export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}
   title:String(item.title||'Adsız sınav').slice(0,250),
   revision:item.revision,
   status:item.status,
-  feedbackCurrent:item.feedbackCurrent===true,
+  feedbackCurrent:item.feedbackCurrent===true&&item.status==='draft',
   feedbackRecheck:item.feedbackRecheck===true&&item.feedbackCurrent!==true&&item.status==='draft',
   updatedAt:Number.isFinite(Number(item.updatedAt))?Number(item.updatedAt):0,
   own:Boolean(actorId&&item.ownerId===actorId)
