@@ -2031,3 +2031,54 @@ body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-ap
   border:1px solid CanvasText;
  }
 }
+
+/* V4 feedback link disclosure and retry: no answer content or visual-only states. */
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more{
+ flex:1 0 100%;
+ width:100%;
+ min-width:0;
+ padding:6px 10px 10px;
+ border:1px solid #d9dcdb;
+ border-radius:10px;
+ background:#fafaf8;
+}
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more>summary{
+ cursor:pointer;
+ padding:10px 6px;
+ min-height:44px;
+ line-height:1.5;
+ font-size:13px;
+ font-weight:700;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more .exam-review-feedback-shortcuts{
+ margin-top:8px;
+}
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more>summary:focus-visible,
+body.institution-page[data-design-version="4"] #exam-review-feedback-retry:focus-visible{
+ outline:3px solid var(--dou-ui-focus,#156bb4);
+ outline-offset:3px;
+}
+body.institution-page[data-design-version="4"] #exam-review-feedback-retry{
+ min-height:44px;
+ max-width:100%;
+ margin:6px 0 12px;
+ white-space:normal;
+}
+@media(max-width:650px){
+ body.institution-page[data-design-version="4"] #exam-review-feedback-retry{
+  width:100%;
+ }
+}
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more{
+ border-color:CanvasText;
+ background:Canvas;
+ color:CanvasText;
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-more{
+  border:1px solid CanvasText;
+  background:Canvas;
+  color:CanvasText;
+ }
+}
