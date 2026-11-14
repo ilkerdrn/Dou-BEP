@@ -18,6 +18,8 @@ export function attachPocketSamplePreview({doc,win}){
  const $=id=>doc.getElementById(id);
  const file=$('reader-neural-file'),playButton=$('reader-neural-play');
  const stopButton=$('reader-neural-stop'),status=$('reader-neural-status');
+ const rate=$('reader-neural-rate');
+ const safeRate=()=>[0.75,1,1.25,1.5].includes(Number(rate?.value))?Number(rate.value):1;
  if(!file||!playButton||!stopButton||!status)throw Error('Pocket TTS demo denetimleri eksik.');
  let bytes=null,track=null,objectUrl=null,epoch=0,destroyed=false;
  function report(message){if(!destroyed)status.textContent=message;}
@@ -59,6 +61,7 @@ export function attachPocketSamplePreview({doc,win}){
   try{
    objectUrl=win.URL.createObjectURL(new win.Blob([bytes],{type:'audio/wav'}));
    track=new win.Audio(objectUrl);
+   track.playbackRate=safeRate();
    const active=track;
    active.onended=()=>{if(!destroyed&&token===epoch){
     stopAudio();report('Deneysel ses tamamlandı. Anlaşılırlık ve doğallığı dinleyerek değerlendirin.');
@@ -81,9 +84,11 @@ export function attachPocketSamplePreview({doc,win}){
  const onFile=()=>{void importFile();};
  const onPlay=()=>play();
  const onStop=()=>{stopAudio();report('Deneysel ses durduruldu.');};
+ const onRate=()=>{if(track)track.playbackRate=safeRate();};
  file.addEventListener('change',onFile);
  playButton.addEventListener('click',onPlay);
  stopButton.addEventListener('click',onStop);
+ rate?.addEventListener('change',onRate);
  reset();
  return {play,reset,destroy(){
   if(destroyed)return;
@@ -91,5 +96,6 @@ export function attachPocketSamplePreview({doc,win}){
   file.removeEventListener('change',onFile);
   playButton.removeEventListener('click',onPlay);
   stopButton.removeEventListener('click',onStop);
+  rate?.removeEventListener('change',onRate);
  }};
 }
