@@ -67,9 +67,9 @@ test('reviewer can navigate to current technical comparison without opening old 
  assert.match(client,/revisionDeltaGeneration/);
  assert.match(client,/ticket!==revisionDeltaGeneration/);
  assert.match(client,/state\.current\?\.revision!==revision/);
- assert.match(client,/\.\.\.\[loadHistory\(\),loadReviewFeedback\(\),loadRevisionDelta\(\)\]/);
+ assert.match(client,/Promise\.all\(\[loadHistory\(\),loadReviewFeedback\(\),loadRevisionDelta\(\)\]\)/);
  assert.match(client,/Sürüm farkları/);
- assert.match(client,/\.\.\.\(\['review','history','diff'\]/);
+ assert.match(client,/\['Sürüm farkları','diff'\]/);
  assert.match(client,/data\.counts\.recheck/);
  assert.match(server,/CREATE TABLE IF NOT EXISTS exam_revision_deltas/);
  assert.match(server,/PRIMARY KEY\(tenant_id,exam_id,to_revision\)/);
