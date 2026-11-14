@@ -20,6 +20,10 @@ test('keyboard smoke sends Chromium key events rather than only clicking synthet
  assert.match(browser,/Native review disclosure keyboard Enter/);
  assert.match(browser,/await pressEnter\(\)/);
  assert.match(browser,/Enter on last approval issue focuses the original 100th question/);
+ assert.match(browser,/Tab after native disclosure reaches the first remaining approval issue/);
+ assert.match(browser,/windowsVirtualKeyCode:9,nativeVirtualKeyCode:9/);
+ assert.match(browser,/Mobile final review disclosure fits the 390px viewport/);
+ assert.match(browser,/Mobile review action remains reachable with a usable minimum tap target/);
  assert.match(browser,/Disabled editor control routes keyboard focus to the read-only question heading/);
  assert.match(browser,/anonymous isolated DB/);
  assert.match(browser,/mkdtempSync\(join\(tmpdir\(\),'dou-bep-browser-'\)\)/);
