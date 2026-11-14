@@ -23,6 +23,7 @@ import {pilotDraftPrecheck} from './pilot-draft-precheck.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
 import {approvalRevisionStatus} from './approval-revision-status.mjs';
 import {reviewerInbox,reviewerFeedbackText,parseReviewQuestionNumbers} from './reviewer-inbox.mjs';
+import {reviewFeedbackNavigation} from './review-feedback-navigation.mjs';
 import {reviewerRecheckHints} from './reviewer-recheck-hints.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
@@ -412,7 +413,7 @@ async function loadRevisionDelta(){
   }
  }
 }
-let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false,feedbackAutoOpenKey='';
+let reviewFeedbackGeneration=0,reviewFeedbackFormKey='',reviewFeedbackSending=false,feedbackAutoOpenKey='',reviewFeedbackLoadFailure=null;
 function hasUnsentReviewRequest(){
  const form=$('exam-review-feedback-form');
  return Boolean(form&&!form.hidden&&(
@@ -453,6 +454,8 @@ function renderReviewFeedback(){
  const current=state.current;
  const status=$('exam-review-feedback-status'),items=$('exam-review-feedback-records');
  const form=$('exam-review-feedback-form'),compact=$('exam-review-feedback-summary');
+ const retry=$('exam-review-feedback-retry');
+ retry.hidden=true;
  if(!current){
   compact.textContent='Kaydedilmiş sınav yok';
   items.replaceChildren();form.hidden=true;
@@ -461,9 +464,13 @@ function renderReviewFeedback(){
  }
  const feedback=state.reviewFeedback;
  if(!feedback||feedback.examId!==current.id||feedback.currentRevision!==current.revision){
-  compact.textContent='Kontrol ediliyor';
+  const failed=reviewFeedbackLoadFailure?.id===current.id&&
+   reviewFeedbackLoadFailure.revision===current.revision;
+  compact.textContent=failed?'Kontrol edilemedi':'Kontrol ediliyor';
   form.hidden=true;items.replaceChildren();
-  status.textContent='Bu sınavın inceleme kayıtları yükleniyor.';
+  status.textContent=failed?'Bu sürümün geri bildirimleri alınamadı. Yeniden kontrol edin. Sunucu yanıtı doğrulanmadan onay verilemez.':
+   'Bu sınavın inceleme kayıtları yükleniyor.';
+  retry.hidden=!failed;
   return;
  }
  items.replaceChildren();
@@ -492,26 +499,35 @@ function renderReviewFeedback(){
   questionLine.textContent='İncelenecek soru numaraları: '+
    ((record.questionNumbers||[]).join(', ')||'Bu kayıtta soru numarası seçilmedi.');
   row.append(heading,stageLine,questionLine);
-  if(currentRecord&&(record.stageIds?.length||record.questionNumbers?.length)){
+  const navigation=reviewFeedbackNavigation(record,{
+   revision:current.revision,questionCount:state.exam?.questions?.length||0
+  });
+  if(currentRecord&&navigation.count){
    const shortcuts=document.createElement('div');shortcuts.className='exam-review-feedback-shortcuts';
-   if(record.stageIds?.length){
-    const targetId={
-     identity:'exam-main-fields',goals:'exam-goal-section',questions:'exam-question-section',
-     access:'exam-quality',delivery:'exam-output-section'
-    }[record.stageIds[0]];
-    if(targetId){
-     const action=document.createElement('button');action.type='button';action.className='portal-btn secondary';
-     action.textContent='İlk eksik aşamayı aç';action.dataset.feedbackTarget=targetId;
-     action.dataset.feedbackRevision=String(record.revision);
-     shortcuts.append(action);
+   const actionFor=(item,primary=false)=>{
+    const action=document.createElement('button');action.type='button';
+    action.className='portal-btn secondary';
+    if('target' in item){
+     action.textContent=primary?'İlk eksik aşamayı aç':item.label;
+     action.dataset.feedbackTarget=item.target;
+    }else{
+     action.textContent=primary?'İlk işaretli soruya git':item.label;
+     action.dataset.feedbackQuestion=String(item.number);
     }
-   }
-   if(record.questionNumbers?.length){
-    const action=document.createElement('button');action.type='button';action.className='portal-btn secondary';
-    action.textContent='İlk işaretli soruya git';
-    action.dataset.feedbackQuestion=String(record.questionNumbers[0]);
     action.dataset.feedbackRevision=String(record.revision);
-    shortcuts.append(action);
+    action.setAttribute('aria-label',item.label+' · Sürüm '+record.revision);
+    return action;
+   };
+   if(navigation.stages[0])shortcuts.append(actionFor(navigation.stages[0],true));
+   if(navigation.questions[0])shortcuts.append(actionFor(navigation.questions[0],true));
+   const remaining=[...navigation.stages.slice(1),...navigation.questions.slice(1)];
+   if(remaining.length){
+    const more=document.createElement('details');more.className='exam-review-feedback-more';
+    const summary=document.createElement('summary');
+    summary.textContent='Diğer '+remaining.length+' düzeltme bağlantısını göster';
+    const extra=document.createElement('div');extra.className='exam-review-feedback-shortcuts';
+    extra.append(...remaining.map(item=>actionFor(item)));
+    more.append(summary,extra);shortcuts.append(more);
    }
    row.append(shortcuts);
   }
@@ -544,7 +560,7 @@ function renderReviewFeedback(){
 }
 async function loadReviewFeedback(){
  const id=state.current?.id,revision=state.current?.revision,ticket=++reviewFeedbackGeneration;
- state.reviewFeedback=null;
+ state.reviewFeedback=null;reviewFeedbackLoadFailure=null;
  renderReviewFeedback();
  if(!id)return;
  try{
@@ -552,12 +568,17 @@ async function loadReviewFeedback(){
   if(ticket!==reviewFeedbackGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
   state.reviewFeedback=feedback;refreshApprovalFeedbackUi();renderRecheckHints();
  }catch(err){
-  if(ticket===reviewFeedbackGeneration&&state.current?.id===id){
-   $('exam-review-feedback-summary').textContent='Kontrol edilemedi';
-   $('exam-review-feedback-status').textContent='İnceleme kayıtları alınamadı: '+err.message;
+  if(ticket===reviewFeedbackGeneration&&state.current?.id===id&&state.current?.revision===revision){
+   reviewFeedbackLoadFailure={id,revision};
+   renderReviewFeedback();
+   refreshApprovalFeedbackUi();
   }
  }
 }
+$('exam-review-feedback-retry').addEventListener('click',()=>{
+ if(!state.current||!has('exam.view')||state.busy||autosave.isSaving())return;
+ void loadReviewFeedback();
+});
 $('exam-review-feedback-records').addEventListener('click',event=>{
  const button=event.target.closest('[data-feedback-target],[data-feedback-question]');
  if(!button||!$('exam-review-feedback-records').contains(button))return;
