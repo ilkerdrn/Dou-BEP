@@ -136,7 +136,7 @@ test('student may choose in-session access presentation before and during exam',
  assert.match(js,/document\.body\.classList\.toggle\('pilot-motor',profile\.largeTargets\)/);
  assert.match(js,/document\.body\.classList\.toggle\('high',profile\.highContrast\)/);
  assert.match(css,/\.bep-student-pilot\.pilot-motor \.question label\.option/);
- assert.match(server,/\/'student-access-profiles\.mjs'/);
+ assert.match(server,/'\/student-access-profiles\.mjs'/);
 });
 test('access choice neither changes exam timing nor enters server-facing answer or bearer payload',()=>{
  assert.match(js,/post\('\/api\/pilot\/redeem',\{code:\$\('code'\)\.value\}\)/);
