@@ -215,6 +215,21 @@
    </div>
    <div id="exam-approval-workbench-progress" class="exam-approval-workbench-progress">0 / 5 aşama</div>
   </div>
+  <div id="exam-approval-revision-status" class="exam-approval-revision-status" role="group" aria-label="Sınavın üç ayrı durumu: sunucu sürümü, bu sekmedeki kayıt ve kurumsal onay">
+   <div data-revision-part="server" data-state="new">
+    <span>01 · SUNUCU SÜRÜMÜ</span><strong>Sunucuda kayıt yok</strong>
+    <p>Yeni taslak için kayıt bekleniyor.</p>
+   </div>
+   <div data-revision-part="editor" data-state="new">
+    <span>02 · KAYIT DURUMU</span><strong>Yeni taslak</strong>
+    <p>Bu sekmedeki düzenlemeler henüz kaydedilmedi.</p>
+   </div>
+   <div data-revision-part="approval" data-state="not-approved">
+    <span>03 · KURUMSAL ONAY</span><strong>Bu düzenlemeler onaylı değil</strong>
+    <p>Onay, sunucuda kayıtlı sürüm için ayrı verilir.</p>
+   </div>
+  </div>
+  <p class="portal-help exam-approval-revision-note">Kaydedildi, onaylandı anlamına gelmez. Sürüm ve onay sunucudan doğrulanır.</p>
   <p id="exam-approval-workbench-metrics" class="exam-approval-workbench-metrics">Soru ve kalite kontrolleri inceleniyor.</p>
   <div class="exam-approval-workbench-columns">
    <section aria-labelledby="exam-approval-workbench-stages-title">
