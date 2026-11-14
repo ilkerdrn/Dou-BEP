@@ -157,7 +157,7 @@ function updateQuestionDraftGuidance(){
  if(!button)return;
  $('exam-draft-guidance-count').textContent=summary.total+' soru · '+summary.incomplete+' soruda zorunlu eksik · '+summary.review+' soruda ek inceleme · '+summary.basicComplete+' soruda temel kontrol tamamlandı.';
  const next=summary.next;
- button.disabled=!next&&summary.total>0;
+ button.disabled=!next&&(summary.total>0||!has('exam.edit'));
  button.dataset.questionIndex=next?String(next.index):'';
  button.dataset.questionField=next?next.focus:'';
  button.textContent=!next?(summary.total?'Temel alanlar incelendi':'Soru ekleme alanına git'):next.state==='incomplete'?'İlk eksik soruya git':'İlk incelenecek soruya git';
