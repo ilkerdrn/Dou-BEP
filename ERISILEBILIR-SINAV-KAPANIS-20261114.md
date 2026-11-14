@@ -113,3 +113,12 @@ Windows/Edge çalışma çıktısı: `pilot-student-ux.test.mjs` ve `tools/v4-st
 **Kalan kabul:** Gerçek NVDA konuşma/odak deneyimi, Türkçe sesin dinlenerek anlaşılabilirlik onayı, işitme/motor kullanıcılarıyla saha kabulü, WCAG manuel değerlendirmesi ve kurumsal üretim güvenliği onayı. Otomatik 249/249 sonucu bunların yerine geçmez.
 
 İnsan gözlemi için mevcut `npm run reader:nvda:manual` laboratuvarı ve `NVDA-OGRENCI-MANUEL-KABUL.md` matrisi kullanılabilir; yeni çalıştırmada önceki tek kullanımlık kod ya da geçici port yeniden kullanılmaz.
+
+
+## NVDA anonim testinde tek kullanımlık kod reddi — 14 Kasım 2026
+
+Kullanıcı, Windows'ta sentetik NVDA laboratuvarı açıldıktan sonra öğrencinin sınav kodunu **"geçersiz"** bulduğunu bildirdi. Kaynak incelemesi: sunucu kodları 20 hex karakterden üretir; kodu doğrularken tireleri temizler, `issued` durumunu, süreyi ve tek kullanım kuralını kontrol eder. Kodun daha önce tüketilmesi, oturumun değişmesi veya 45 dakika dolması bu hatayı üretebilir. Kullanıcı cihazında hangisinin gerçekleştiğine dair kesin kanıt **yoktur**.
+
+Değişiklik **yalnız sentetik NVDA laboratuvarında**: başlangıçta kodun hash/durum/süre kaydı açılan temp SQLite'da doğrulanır; HTTP sunucusu açıldıktan sonra tekrar salt-okunur kontrol edilir. Terminalde `N + Enter` yeni 45 dakikalık sentetik kod oluşturur; önceki `issued` kod iptal edilir, `started` oturum bozulmaz. `Q + Enter` veya `Ctrl+C` geçici veritabanını kapatır. Gerçek kurumsal kod doğrulama ve pilot oturum güvenlik kuralları değiştirilmedi.
+
+Yeni izole kabul komutu: `npm run reader:nvda:lab:check`. Beklenen HTTP sırası: ilk kod **200**, tekrar **401**, yeni kod **200**, tekrar **401**. Hem manuel laboratuvar hem bu test yalnız yeni sistem geçici veritabanı ve `127.0.0.1` kullanır; test kodu veya token rapora yazılmaz. **Kaynak 3/3 PASS, JavaScript sözdizimi PASS; gerçek Windows HTTP sonucu BEKLENİYOR.** NVDA insan kabulü ve doğal ses anlaşılırlığı da BEKLENİYOR.
