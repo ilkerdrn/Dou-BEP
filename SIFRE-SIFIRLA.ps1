@@ -1,6 +1,11 @@
 ﻿# DOU BEP Sinav Atolyesi - yerel yonetici parola kurtarma
 # Bu dosyayi BASLAT.bat ile AYNI klasore koyun.
 # Gercek ogrenci/ozel nitelikli veri icin kullanmayin.
+[CmdletBinding()]
+param(
+    [string]$DatabasePath = '',
+    [switch]$ListOnly
+)
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
 
@@ -15,19 +20,27 @@ if (-not $nodePath) { throw 'Node.js bulunamadi. node --version komutunu kontrol
 if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'server-foundation\institutional-store.mjs'))) {
     throw 'Yanlis klasor. SIFRE-SIFIRLA.ps1, BASLAT.bat ve server-foundation klasoru ile ayni yerde olmali.'
 }
-if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'data\institution.sqlite'))) {
-    Write-Host '[BILGI] Bu klasorde kurulmus hesap veritabani yok.' -ForegroundColor Yellow
-    Write-Host 'BASLAT.bat dosyasinin BULUNDUGU klasoru kontrol edin.'
-    Write-Host 'Ilk kurulum yapilmadiysa KURULUM-YONETICI.ps1 dosyasini calistirin.'
-    exit 2
+# Explicit override is for an existing pilot DB only; never silently create a new DB.
+# The default (no arguments) remains fully backward-compatible.
+$selectedDatabase = if ($DatabasePath) { $DatabasePath } elseif ($env:BEP_DB_PATH) {
+    $env:BEP_DB_PATH
+} else { Join-Path $PSScriptRoot 'data\institution.sqlite' }
+if (-not [System.IO.Path]::IsPathRooted($selectedDatabase)) {
+    throw 'Veritabani yolu mutlak olmalidir. -DatabasePath ile tam yol verin.'
 }
+if (-not (Test-Path -LiteralPath $selectedDatabase -PathType Leaf)) {
+    throw ('Veritabani bulunamadi; hicbir sey degistirilmedi: ' + $selectedDatabase)
+}
+$selectedDatabase = (Resolve-Path -LiteralPath $selectedDatabase).ProviderPath
 
 $js = @'
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { openStore, passwordHash } from './server-foundation/institutional-store.mjs';
 const root = dirname(fileURLToPath(import.meta.url));
-const store = openStore(join(root, 'data', 'institution.sqlite'));
+const file = process.env.BEP_RECOVERY_DATABASE_PATH;
+if (!file) throw new Error('Recovery database path missing.');
+const store = openStore(file);
 const [mode, tenantId, emailArg] = process.argv.slice(2);
 try {
   if (mode === 'list') {
@@ -62,12 +75,19 @@ finally { store.db.close(); }
 '@
 $tmp = Join-Path $PSScriptRoot ('.bep-local-recovery-' + [guid]::NewGuid().ToString('N') + '.mjs')
 $handle = [IntPtr]::Zero
+$oldRecoveryDb = [Environment]::GetEnvironmentVariable('BEP_RECOVERY_DATABASE_PATH','Process')
 try {
+    $env:BEP_RECOVERY_DATABASE_PATH = $selectedDatabase
     [System.IO.File]::WriteAllText($tmp, $js, (New-Object System.Text.UTF8Encoding($false)))
     Write-Host ''
     Write-Host '=== DOU BEP YONETICI PAROLA KURTARMA ===' -ForegroundColor Cyan
+    Write-Host ('[VERITABANI] ' + $selectedDatabase)
     & $nodePath $tmp list
-    if ($LASTEXITCODE -ne 0) { throw 'Bu klasorde kurtarilacak etkin hesap bulunamadi.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Secilen veritabaninda yonetici hesabi bulunamadi.' }
+    if ($ListOnly) {
+        Write-Host 'Sadece hesaplar listelendi. Parola degistirilmedi.' -ForegroundColor Green
+        return
+    }
     Write-Host ''
     $tenantId = (Read-Host 'Listeden KURUM KODUNU girin').Trim()
     $email = (Read-Host 'Listeden YONETICI E-POSTASINI girin').Trim()
@@ -81,6 +101,8 @@ try {
     Write-Host ''
     Write-Host 'Simdi BASLAT.bat dosyasini tekrar acip http://127.0.0.1:4173/kurum adresinde giris yapin.' -ForegroundColor Green
 } finally {
+    if ($null -eq $oldRecoveryDb) { Remove-Item Env:BEP_RECOVERY_DATABASE_PATH -ErrorAction SilentlyContinue }
+    else { $env:BEP_RECOVERY_DATABASE_PATH = $oldRecoveryDb }
     Remove-Item Env:BEP_RESET_PASSWORD -ErrorAction SilentlyContinue
     if ($handle -ne [IntPtr]::Zero) { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($handle) }
     Remove-Item -LiteralPath $tmp -Force -ErrorAction SilentlyContinue
