@@ -92,3 +92,71 @@ sahte WinMM çağrılarıyla denetim dizisini sınar; gerçek Windows aygıtın�
   yanlışlıkla seslendirilmesini önleyen ayrı güvenlik kapısı.
 
 **Bu kapılar tamamlanmadan üretim Reader bağlantısı yapılmayacak.**
+
+
+## Aşama 3 — deneysel düşük gecikmeli PCM akışı (opt-in)
+
+Aynı masaüstü penceresinde **Deneysel erken ses akışı** kutusu eklendi.
+Varsayılan olarak **işaretsiz** gelir. İşaretlenmediğinde önceki sağlam
+\`generate() -> geçici WAV -> MCI/WaveAudio oynat\` akışı korunur.
+
+İşaretlenirse Pocket TTS'in yerel \`stream()\` fonksiyonu (~80 ms model
+parçaları) CPU üzerinde çalışır. Çıkış, 24 kHz PCM16 mono
+**200 ms paketleriyle** Windows \`waveOut\` aygıtına gönderilir; uzun WAV
+dosyası bitene kadar beklenmez. Model önbellekten yalnız bir kez yüklenir.
+İlk PCM paketi gönderildiğinde ekranda **ilk paket gecikmesi** (saniye)
+yazar. Bu sayı ses aygıtından duyulmaya başlanan anın kesin ölçümü
+değildir.
+
+Yeni akış için ayrıca paket boyutu, 30 saniye toplam ses sınırı,
+en fazla 16 olaylık kuyruk, iptal ve açık ses tamponlarını temizleme
+kuralları bulunur. **Deneysel akış sırasında yeniden dinleme** yoktur.
+Önceki WAV modunda tekrar dinleme korunur.
+
+### Test
+
+\`\`\`powershell
+Set-Location "D:\Projects\DOU-READER-SPEECH-INDEPENDENT"
+
+$py = "D:\DOU-POCKET-TTS-LAB\.venv\Scripts\python.exe"
+
+& $py -m unittest tools.test_dou_reader_pcm_stream tools.test_dou_reader_pocket_desktop -v
+if ($LASTEXITCODE -ne 0) { throw "PYTHON TEST FAIL" }
+
+node --test reader-speech-research/pocket-stream-source.test.mjs reader-speech-research/pocket-desktop-source.test.mjs dou-reader.http.test.mjs
+if ($LASTEXITCODE -ne 0) { throw "NODE TEST FAIL" }
+
+npm run reader:pocket:desktop:check
+if ($LASTEXITCODE -ne 0) { throw "MODEL CHECK FAIL" }
+
+npm run reader:pocket:desktop
+\`\`\`
+
+Önce **kutuyu işaretlemeden** 1–2 anonim cümleyi okut. Ardından
+**deneysel akış kutusunu işaretleyip** aynı cümleyi tekrar dinle.
+İlk paket süresini ve sesin kopup kopmadığını gözlemle.
+**Duraklat → Sürdür → Durdur** düğmelerini test et. Akışın çalışması
+Windows sürücüsü, CPU ve ses aygıtına bağlıdır; testlerin geçmesi
+kusursuz, kesintisiz ya da ölçülmüş düşük gecikmeli konuşma garantisi
+değildir.
+
+Ses sorunu olursa pencereyi kapatıp yeniden aç ve deneysel kutuyu
+işaretleme. \`npm run reader:pocket:live\` ile önceki bağımsız CLI
+yolu da kullanılabilir. **Sınav DB/öğrenci verisi değişmez.**
+
+### Yeni regresyon sınırları
+
+- \`tools/dou_reader_pcm_stream.py\` — yalnız Windows \`waveOut\` API'si;
+  modelden gelen PCM dışında dosya/ağ içermez.
+- \`tools/test_dou_reader_pcm_stream.py\` — sentetik numpy örnekleriyle
+  200 ms segmentleme, 30 s limit, iptal, sahte Windows sürücüsüyle
+  duraklatma/sürdürme/tampon temizliği.
+- \`reader-speech-research/pocket-stream-source.test.mjs\` — önceki
+  WAV yolunun korunması, opt-in GUI, veri tabanı/ağ bağımsızlığı.
+- \`dou-reader.http.test.mjs\` — yerel Python dosyalarının web
+  sunucusundan açılmaması.
+
+**Şimdiki sınır:** Bu bir bağımsız, cihaz üzerinde çalışan *streaming Ar-Ge*
+prototipidir. Windows gerçek aygıt kabulü, erişilebilirlik, kalite,
+donanım gecikmesi ve kurum lisans kapıları tamamlanmadan
+kurumsal Reader ya da gerçek sınav verilerine bağlanmayacaktır.
