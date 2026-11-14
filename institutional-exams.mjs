@@ -19,6 +19,7 @@ import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance} from './question-draft-guidance.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
 import {reviewerInbox,reviewerFeedbackText,parseReviewQuestionNumbers} from './reviewer-inbox.mjs';
+import {reviewerRecheckHints} from './reviewer-recheck-hints.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
 import {buildGoalCoverage,goalCoverageCsv} from './goal-coverage.mjs';
 import {questionAccess,objectiveCoverage} from './question-access.mjs';
@@ -162,6 +163,26 @@ $('exam-quality').addEventListener('click',event=>{
  focusTarget.focus({preventScroll:true});
 });
 let revisionDeltaGeneration=0;
+function renderRecheckHints(){
+ const panel=$('exam-recheck-hints'),list=$('exam-recheck-hints-items');
+ if(!panel||!list)return;
+ const current=state.current,feedback=state.reviewFeedback,delta=state.revisionDelta;
+ const hasPast=Boolean(current&&feedback?.examId===current.id&&
+  feedback.currentRevision===current.revision&&
+  feedback.items?.some(item=>item.revision<current.revision));
+ panel.hidden=!hasPast;
+ list.replaceChildren();
+ if(!hasPast)return;
+ const hints=reviewerRecheckHints(delta,feedback);
+ $('exam-recheck-hints-intro').textContent=hints.intro;
+ if(hints.status!=='recheck')return;
+ for(const item of [...hints.stages,...hints.questions]){
+  const row=document.createElement('p');
+  row.className='exam-recheck-hint-row';
+  row.textContent=('number' in item?item.label:item.label+' · '+item.text);
+  list.append(row);
+ }
+}
 function renderRevisionDelta(){
  const box=$('exam-revision-compare-content'),status=$('exam-revision-compare-status');
  if(!box||!status)return;
@@ -180,7 +201,8 @@ function renderRevisionDelta(){
   return;
  }
  const delta=view.comparison;
- status.textContent='Sürüm '+delta.fromRevision+' → '+delta.toRevision+' · Önce '+delta.previousQuestionCount+
+ status.textContent=(state.dirty||autosave.hasChanges()||autosave.isSaving()?'Kaydedilmemiş düzenlemeler bu fark özetine dahil değil. ':'')+
+  'Sürüm '+delta.fromRevision+' → '+delta.toRevision+' · Önce '+delta.previousQuestionCount+
   ' soru, şimdi '+delta.currentQuestionCount+' soru · '+delta.changedSections.length+
   ' sınav alan grubu ve '+delta.changedQuestions.length+' soru konumu değişmiş görünüyor.';
  const section=document.createElement('p');
@@ -216,7 +238,7 @@ async function loadRevisionDelta(){
   const {diff}=await api('/exams/'+id+'/revision-diff');
   if(ticket!==revisionDeltaGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
   state.revisionDelta=diff;
-  renderRevisionDelta();
+  renderRevisionDelta();renderRecheckHints();
  }catch(err){
   if(ticket===revisionDeltaGeneration&&state.current?.id===id&&state.current?.revision===revision)
    $('exam-revision-compare-status').textContent='Sürüm karşılaştırması alınamadı: '+err.message;
@@ -322,7 +344,7 @@ async function loadReviewFeedback(){
  try{
   const {feedback}=await api('/exams/'+id+'/review-feedback');
   if(ticket!==reviewFeedbackGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
-  state.reviewFeedback=feedback;refreshApprovalFeedbackUi();
+  state.reviewFeedback=feedback;refreshApprovalFeedbackUi();renderRecheckHints();
  }catch(err){
   if(ticket===reviewFeedbackGeneration&&state.current?.id===id){
    $('exam-review-feedback-status').textContent='İnceleme kayıtları alınamadı: '+err.message;
@@ -364,7 +386,7 @@ $('exam-review-feedback-form').addEventListener('submit',async event=>{
    body:{revision,stageIds:stages,questionNumbers:numbers,confirmed:true}});
   if(state.current?.id===id&&state.current?.revision===revision){
    state.reviewFeedback=result.feedback;
-   refreshApprovalFeedbackUi();
+   refreshApprovalFeedbackUi();renderRecheckHints();
    await refreshList();
    notice('Düzeltme kaydı bu sınav sürümü için kaydedildi. Öğretmen sınavı açınca görebilir.');
   }else notice('Düzeltme kaydı sunucuya işlendi. Bu sırada ekrandaki sınav değişti.',true);
@@ -448,6 +470,7 @@ function renderApprovalWorkbench(preflight){
  $('exam-approval-workbench-confirm').disabled=!has('exam.view');
  renderReviewFeedback();
  renderRevisionDelta();
+ renderRecheckHints();
 }
 function renderPreflight(){
  const x=state.exam;if(!x)return;
