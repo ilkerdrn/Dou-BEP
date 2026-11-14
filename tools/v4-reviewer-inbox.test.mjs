@@ -107,7 +107,7 @@ test('inbox opens selected current revision and history without writing approval
  assert.match(ui,/navigator\.clipboard\.writeText\(note\)/);
  assert.match(ui,/field\.select\(\)/);
  assert.match(server,/'\/reviewer-inbox\.mjs':\['reviewer-inbox\.mjs'/);
- assert.match(repo,/requireIndependentExamApproval&&row\.owner_id===actor\.id/);
+ assert.match(repo,/requireIndependentExamApproval&&reviewerSeparationViolation\(row,actor\.id\)/);
  assert.match(repo,/FROM exams e WHERE e\.tenant_id=\?/);
  const helper=readFileSync(resolve(root,'reviewer-inbox.mjs'),'utf8');
  assert.doesNotMatch(helper,/fetch\(|localStorage|sessionStorage|document\.|window\.|approveExam\(|updateExam\(/);
