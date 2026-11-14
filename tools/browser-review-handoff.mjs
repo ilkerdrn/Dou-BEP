@@ -190,6 +190,15 @@ async function main(){
  await waitUntil(()=>evaluate(()=>
   document.getElementById('exam-review-feedback-summary')?.textContent.includes('Güncel düzeltme isteği')),
  'Feedback registered on original revision');
+ const savedRequest=await evaluate(async id=>{
+  const response=await fetch('/api/exams/'+id+'/review-feedback',{credentials:'same-origin'});
+  if(!response.ok)return {valid:false};
+  const body=(await response.json()).feedback;
+  return {valid:body.currentRevision===1&&body.items?.some(item=>
+   item.revision===1&&item.questionNumbers.join(',')==='1,2'&&
+   item.stageIds.includes('questions')&&item.stageIds.includes('access'))};
+ },id);
+ pass(savedRequest.valid,'Server stores exact revision-bound reviewer correction request');
  await evaluate(()=>{
   const control=document.getElementById('exam-confirm');
   control.checked=true;control.dispatchEvent(new Event('change',{bubbles:true}));
@@ -231,6 +240,14 @@ async function main(){
  await waitUntil(()=>evaluate(()=>
   document.getElementById('exam-review-feedback-summary')?.textContent.includes('Geçmiş kayıt')),
  'Prior review remains in revision history');
+ const savedRevision=await evaluate(async id=>{
+  const response=await fetch('/api/exams/'+id,{credentials:'same-origin'});
+  if(!response.ok)return {revision:0,status:'error'};
+  const item=(await response.json()).item;
+  return {revision:item?.revision,status:item?.status};
+ },id);
+ pass(savedRevision.revision===2&&savedRevision.status==='draft',
+  'Server verifies exact unapproved revision 2 after teacher save');
  pass(await evaluate(()=>document.getElementById('exam-approve').disabled),
   'Teacher cannot independently approve revised exam');
  await logout();
@@ -253,6 +270,16 @@ async function main(){
   !document.getElementById('exam-recheck-hints').hidden&&
   !!document.querySelector('#exam-recheck-hints-items [data-recheck-question]')),
  'Old request and adjacent revision comparison');
+ const serverDelta=await evaluate(async id=>{
+  const response=await fetch('/api/exams/'+id+'/revision-diff',{credentials:'same-origin'});
+  if(!response.ok)return {valid:false};
+  const body=(await response.json()).diff;
+  return {valid:body?.available&&body.currentRevision===2&&
+   body.comparison?.fromRevision===1&&body.comparison?.toRevision===2,
+   changed:body?.comparison?.changedSections?.length||0};
+ },id);
+ pass(serverDelta.valid&&serverDelta.changed>=1,
+  'Server confirms an adjacent and sanitized saved revision difference');
  const recheck=await evaluate(()=>{
   const panel=document.getElementById('exam-recheck-hints-items');
   return {
