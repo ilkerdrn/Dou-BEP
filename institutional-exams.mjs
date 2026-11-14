@@ -64,7 +64,11 @@ function renderRevisionStatus(){
  const root=$('exam-approval-revision-status');if(!root)return;
  const status=approvalRevisionStatus({
   saved:!!state.current,revision:state.current?.revision??null,
-  dirty:state.dirty,pending:autosave.hasChanges(),saving:autosave.isSaving(),
+  dirty:state.dirty,pending:autosave.hasChanges(),
+  // The autosave manager reports 'saved' before its Promise-finally clears inFlight.
+  // Its settled event is authoritative for this display, never for API authorization.
+  saving:$('exam-autosave-state')?.dataset.state==='saving'||
+   (autosave.isSaving()&&$('exam-autosave-state')?.dataset.state!=='saved'),
   blocked:autosave.isBlocked(),failed:autosave.hasFailure(),
   approved:state.current?.status==='approved'
  });
@@ -556,7 +560,8 @@ function renderApprovalWorkbench(preflight){
  const node=$('exam-approval-workbench');if(!node||!state.exam)return;
  const model=approvalWorkbenchSummary({
   preflight,questionDraft:questionDraftGuidance(state.exam),quality:reviewExam(state.exam),
-  saved:!!state.current,dirty:state.dirty,saving:autosave.isSaving(),pending:autosave.hasChanges(),
+  saved:!!state.current,dirty:state.dirty,
+  saving:autosave.isSaving()&&$('exam-autosave-state')?.dataset.state!=='saved',pending:autosave.hasChanges(),
   blocked:autosave.isBlocked(),busy:state.busy,approved:state.current?.status==='approved',
   canEdit:has('exam.edit'),canApprove:has('exam.approve'),confirmed:$('exam-confirm').checked,
   ownerIsActor:independentSelfApprovalBlocked(),separationBlocked:independentSelfApprovalBlocked(),
