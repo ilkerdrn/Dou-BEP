@@ -1299,6 +1299,12 @@ async function main(){
     x.page+' ('+x.changedElements+'): '+x.selectors.join(', ')).join(' | '));
   }
  }
+ if(process.argv.includes('--student')){
+  const {runStudentBrowserAcceptance}=await import('./student-browser-acceptance.mjs');
+  await runStudentBrowserAcceptance({
+   temp,tenant,email,password,base,command,evaluate,navigate,pressEnter,pass,waitUntil,ws
+  });
+ }
  console.log('BROWSER UI ACCEPTANCE PASS: '+checks+' Edge checks, anonymous isolated DB, mobile viewport 390px.');
 }
 // Preserve the first actionable test failure. Windows Edge subprocesses can
