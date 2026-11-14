@@ -27,6 +27,7 @@ function fixture(){
  store.addMember(admin,{email:'viewer@campus-a.test',role:'observer',password,reauthPassword:password});
  return {
   dir,dbPath,get store(){return store;},reopen(){store.db.close();store=openStore(dbPath,{requireIndependentExamApproval:true});},
+  admin,
   teacher:signed('campus-a','teacher@campus-a.test'),
   reviewer:signed('campus-a','reviewer@campus-a.test'),
   observer:signed('campus-a','viewer@campus-a.test'),
@@ -96,6 +97,30 @@ test('feedback requires independent reviewer, current draft, structured stages a
   const revision=f.store.approvalHistory(f.reviewer,id);
   assert.equal(revision.records.length,0);
   assert.equal(f.store.getExam(f.teacher,id).status,'draft');
+ }finally{f.close();}
+});
+
+test('independent approval and feedback reject the coordinator who last edited the current revision',()=>{
+ const f=fixture();
+ try{
+  const exam=sample(),created=f.store.createExam(f.teacher,{exam});
+  assert.equal(f.store.getExam(f.teacher,created.id).lastEditedByCurrentActor,true);
+  const changed=structuredClone(exam);
+  changed.title+=' Koordinator duzenlemesi';
+  const saved=f.store.updateExam(f.admin,created.id,{revision:1,exam:changed});
+  assert.equal(saved.revision,2);
+  assert.equal(saved.lastEditedByCurrentActor,true);
+  assert.equal(saved.independentApprovalRequired,true);
+  assert.equal(f.store.getExam(f.teacher,created.id).lastEditedByCurrentActor,false);
+  assert.throws(()=>f.store.approveExam(f.admin,created.id,{revision:2,confirmed:true}),
+   {code:'separation_of_duties'});
+  assert.throws(()=>f.store.reviewFeedbackCreate(f.admin,created.id,{
+   revision:2,stageIds:['questions'],questionNumbers:[1],confirmed:true
+  }),{code:'separation_of_duties'});
+  // Original owner also remains barred, despite another member's later edits.
+  assert.throws(()=>f.store.approveExam(f.teacher,created.id,{revision:2,confirmed:true}),
+   {code:'separation_of_duties'});
+  assert.equal(f.store.approveExam(f.reviewer,created.id,{revision:2,confirmed:true}).status,'approved');
  }finally{f.close();}
 });
 
