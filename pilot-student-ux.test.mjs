@@ -70,7 +70,7 @@ test('pre-exam readiness requires two explicit checks before showing questions',
  assert.match(html,/id="ready-understand"/);
  assert.match(html,/id="ready-device"/);
  assert.match(html,/id="ready-start"[^>]*disabled/);
- assert.match(html,/45 dakikalık pilot oturum süresi işlemeye başladı/);
+ assert.match(html,/45 dakikalık pilot süresi, kodun öğretmen tarafından oluşturulduğu andan itibaren hesaplanır/);
  assert.match(js,/function updateReadyStart\(\)/);
  assert.match(js,/\$\('ready-start'\)\.disabled=!\$\('ready-understand'\)\.checked\|\|!\$\('ready-device'\)\.checked\|\|!claim\|\|!exam\|\|pilotTimeState\(pilotExpiresAt\)\.phase==='expired'/);
  assert.match(js,/\$\('exam-ready'\)\.hidden=true;\$\('player'\)\.hidden=false/);
@@ -124,6 +124,7 @@ test('student timer displays server expiry in preparation and test without autom
 test('student may choose in-session access presentation before and during exam',()=>{
  const css=readFileSync(new URL('./pilot-refresh.css',import.meta.url),'utf8');
  const server=readFileSync(new URL('./server.mjs',import.meta.url),'utf8');
+ assert.match(html,/id="entry-access-profile"/);
  assert.match(html,/id="ready-access-profile"/);
  assert.match(html,/id="access-profile"/);
  assert.match(html,/id="access-profile-note"[^>]*role="status"[^>]*aria-live="polite"/);
@@ -133,6 +134,8 @@ test('student may choose in-session access presentation before and during exam',
  assert.match(js,/import \{studentAccessProfile\} from '\.\/student-access-profiles\.mjs'/);
  assert.match(js,/function applyStudentAccessProfile\(id\)/);
  assert.match(js,/applyStudentAccessProfile\(\$\('ready-access-profile'\)\.value\)/);
+ assert.match(js,/\$\('entry-access-profile'\)\.addEventListener\('change'/);
+ assert.match(js,/document\.body\.classList\.toggle\('pilot-entry-large',profile\.fontSize>=24\)/);
  assert.match(js,/document\.body\.classList\.toggle\('pilot-motor',profile\.largeTargets\)/);
  assert.match(js,/document\.body\.classList\.toggle\('high',profile\.highContrast\)/);
  assert.match(css,/\.bep-student-pilot\.pilot-motor \.question label\.option/);
