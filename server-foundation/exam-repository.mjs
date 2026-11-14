@@ -81,7 +81,14 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   return exam;
  }
  function meta(row){return {id:row.id,title:row.title,ownerId:row.owner_id,revision:row.revision,status:row.status,approvedBy:row.approved_by||null,approvedAt:row.approved_at||null,updatedAt:row.updated_at,createdAt:row.created_at};}
- function listExams(actor){allow(actor,'exam.view');const rows=db.prepare('SELECT * FROM exams WHERE tenant_id=? ORDER BY updated_at DESC LIMIT 100').all(actor.tenantId);return rows.filter(x=>visible(actor,x)).map(meta);}
+ function listExams(actor){
+  allow(actor,'exam.view');
+  const rows=db.prepare(`SELECT e.*,
+   EXISTS(SELECT 1 FROM exam_review_feedback f WHERE f.tenant_id=e.tenant_id
+     AND f.exam_id=e.id AND f.revision=e.revision AND e.status='draft') AS feedback_current
+   FROM exams e WHERE e.tenant_id=? ORDER BY e.updated_at DESC LIMIT 100`).all(actor.tenantId);
+  return rows.filter(x=>visible(actor,x)).map(row=>({...meta(row),feedbackCurrent:Boolean(row.feedback_current)}));
+ }
  function getExam(actor,id){const row=rowFor(actor,id);return {...meta(row),exam:JSON.parse(row.body)};}
  function createExam(actor,payload){allow(actor,'exam.edit');const exam=sanitize(payload?.exam);const count=db.prepare('SELECT COUNT(*) AS n FROM exams WHERE tenant_id=?').get(actor.tenantId).n;
   if(count>=200)fail('quota','Kurum sınav sınırına ulaşıldı.',409);
@@ -142,10 +149,10 @@ export function examRepository(db,{StoreError,log,requireIndependentExamApproval
   const row=rowFor(actor,id);
   if(!roleCan(actor.role,'exam.edit')&&!roleCan(actor.role,'exam.approve'))
    fail('forbidden','İnceleme geri bildirimlerine erişim yetkisi yok.',403);
-  const records=db.prepare(`SELECT id,revision,stage_ids,question_numbers,created_at
+  const records=db.prepare(`SELECT id,revision,reviewer_id,stage_ids,question_numbers,created_at
    FROM exam_review_feedback WHERE tenant_id=? AND exam_id=? ORDER BY created_at DESC,id DESC LIMIT 30`)
    .all(actor.tenantId,id).map(x=>({
-    id:x.id,revision:x.revision,stageIds:JSON.parse(x.stage_ids),
+    id:x.id,revision:x.revision,mine:x.reviewer_id===actor.id,stageIds:JSON.parse(x.stage_ids),
     questionNumbers:JSON.parse(x.question_numbers),createdAt:x.created_at,
     current:x.revision===row.revision&&row.status==='draft'
    }));
