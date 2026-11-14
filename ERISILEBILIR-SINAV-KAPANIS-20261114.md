@@ -97,3 +97,10 @@ Kullanıcının gerçek Windows/Edge çıktısı: `node --test` **6/6 PASS**, `n
 `npm run reader:nvda:manual` sentetik ve yalnız localhost üzerinde çalışan dört soruluk laboratuvarı **başarıyla başlattı**; konsol tek kullanımlık test kodu üretti. Kod ya da geçici port bu rapora kopyalanmadı. **Gerçek NVDA ile okuma, kullanıcı odak deneyimi ve Türkçe sesin anlaşılırlığı henüz TEST EDİLMEDİ.** Bu aşama ürünün üretim veya kurumsal erişilebilirlik onayı değildir.
 
 Sıradaki insan kabul kanıtı `NVDA-OGRENCI-MANUEL-KABUL.md` matrisi üzerinden kimliksiz PASS / FAIL / TEST EDİLMEDİ durumlarıdır. 
+
+
+## NVDA odak güvenliği — son kontrol/teslim (14 Kasım)
+
+Kaynak kod incelemesinde öğrencinin `Sınava geri dön` düğmesi kendi bulunduğu gizli son kontrol panelini kapattığı için klavye odağının görünmeyen alanda kalabildiği tespit edildi. Düzeltme: son kontrolden dönünce mevcut **görünür sorunun başlığına** odak aktarılır. Başarılı tek kullanımlık teslimden sonra da anonim makbuzun `pilot-done-title` başlığı odaklanır; makbuz bölümü `aria-labelledby` ile bu başlığa bağlıdır.
+
+`tools/student-browser-acceptance.mjs` artık gerçek Edge'de son kontrolden geri dönüşü, incelemenin yeniden açılmasını ve teslim sonrası makbuz başlığının odağa alınmasını sınar. Bu değişiklikler için **kaynak kontrolü geçti, yeni Windows/Edge sonuçları BEKLENİYOR**. Bilinen son onaylı Windows durumu **246/246**; yeni sayım henüz bu sayıya eklenmemelidir. Manuel NVDA insan testi ve doğal Türkçe ses anlaşılırlığı hâlâ **BEKLENİYOR**.
