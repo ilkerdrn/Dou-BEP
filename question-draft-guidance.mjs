@@ -47,3 +47,25 @@ export function questionDraftGuidance(exam){
   next:items.find(q=>q.state==='incomplete')||items.find(q=>q.state==='review')||null,
   items,notice:'Bu yalnızca temel alan rehberidir; kazanım, pedagojik eşdeğerlik, erişilebilirlik veya kurumsal onay sertifikası değildir.'};
 }
+
+/**
+ * Compact, read-only queue for the question editor. Blocking issues are shown
+ * before review warnings, retaining original question order within each group.
+ * This never changes answers, approval state, exam revisions or storage.
+ */
+export function questionIssueQueue(guidance,{visibleLimit=6}={}){
+ const limit=Number.isSafeInteger(visibleLimit)&&visibleLimit>=1&&visibleLimit<=20?visibleLimit:6;
+ const source=Array.isArray(guidance?.items)?guidance.items:[];
+ const ordered=source.filter(item=>item&&(item.blocking>0||item.warnings>0))
+  .sort((a,b)=>Number(b.blocking>0)-Number(a.blocking>0)||a.index-b.index)
+  .map(item=>({
+   index:item.index,number:item.number,field:item.focus,
+   blocking:item.blocking,warnings:item.warnings,
+   state:item.blocking>0?'incomplete':'review',
+   issue:item.issues.find(issue=>issue.level==='error')?.text||item.issues[0]?.text||''
+  }));
+ return {total:ordered.length,blocking:ordered.filter(item=>item.blocking>0).length,
+  review:ordered.filter(item=>item.blocking===0).length,
+  visible:ordered.slice(0,limit),remaining:ordered.slice(limit),
+  notice:'Soru kontrol sırası yalnızca düzenleme rehberidir; tek başına onay veya erişilebilirlik sertifikası değildir.'};
+}
