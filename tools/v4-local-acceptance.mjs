@@ -37,6 +37,7 @@ const QUICK_TESTS=[
  'tools/v4-pilot-two-connection.test.mjs',
  'tools/v4-pilot-code-atomicity.test.mjs',
  'tools/v4-pilot-writer-atomicity.test.mjs',
+ 'tools/v4-editor-draft-safety.test.mjs',
  'tools/v4-pilot-approval-ux.test.mjs',
  'tools/v4-pilot-student-usability.test.mjs',
  'tools/v4-pilot-manual-review.test.mjs',
