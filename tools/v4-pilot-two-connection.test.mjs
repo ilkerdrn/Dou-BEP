@@ -142,6 +142,7 @@ test('an exam revision changed on instance A invalidates an in-flight learner on
   edited.title+=' sürüm 2';
   assert.equal(f.a.updateExam(f.teacherA,created.id,{revision:1,exam:edited}).revision,2);
   assert.throws(()=>f.b.pilotProgress(started.token),{code:'exam_changed'});
+  assert.throws(()=>f.b.pilotSave(started.token,{q1:'B'}),{code:'exam_changed'});
   assert.throws(()=>f.a.pilotSubmit(started.token,values()),{code:'exam_changed'});
   assert.throws(()=>f.b.pilotRecoverIssue(f.teacherB,issued.id),{code:'exam_changed'});
   f.b.approveExam(f.reviewer,created.id,{revision:2,confirmed:true});
@@ -150,5 +151,38 @@ test('an exam revision changed on instance A invalidates an in-flight learner on
   assert.equal(fresh.revision,2);
   assert.notEqual(fresh.id,issued.id);
   assert.equal(f.a.pilotRedeem(fresh.code).exam.questions.length,4);
+ }finally{f.close();}
+});
+
+test('manual scoring cannot attach to a revised exam from a second connection',()=>{
+ const f=fixture();
+ try{
+  const exam=makeExam();
+  const created=f.a.createExam(f.teacherA,{exam});
+  f.b.approveExam(f.reviewer,created.id,{revision:1,confirmed:true});
+  const issued=f.a.pilotIssue(f.teacherA,created.id);
+  const learner=f.b.pilotRedeem(issued.code);
+  f.a.pilotSubmit(learner.token,values());
+  assert.equal(f.b.pilotReviewGet(f.teacherB,issued.id).reviewVersion,0);
+  const edited=structuredClone(exam);
+  edited.title+=' yeni kurumsal sürüm';
+  assert.equal(f.a.updateExam(f.teacherA,created.id,{revision:1,exam:edited}).revision,2);
+  assert.throws(()=>f.b.pilotReviewSave(f.teacherB,issued.id,{
+   reviewVersion:0,entries:{q1:{score:0,note:'Güncel olmayan değerlendirme'}}
+  }),{code:'exam_changed'});
+  assert.equal(f.a.db.prepare('SELECT COUNT(*) AS n FROM pilot_reviews WHERE session_id=?').get(issued.id).n,0);
+ }finally{f.close();}
+});
+
+test('a completed anonymous pilot cannot be revoked from a second connection',()=>{
+ const f=fixture();
+ try{
+  const created=f.a.createExam(f.teacherA,{exam:makeExam()});
+  f.b.approveExam(f.reviewer,created.id,{revision:1,confirmed:true});
+  const issued=f.a.pilotIssue(f.teacherA,created.id);
+  const learner=f.b.pilotRedeem(issued.code);
+  assert.equal(f.b.pilotSubmit(learner.token,values()).ok,true);
+  assert.throws(()=>f.a.pilotRevoke(f.teacherA,issued.id),{code:'already_submitted'});
+  assert.equal(f.b.pilotView(f.teacherB,issued.id).status,'submitted');
  }finally{f.close();}
 });
