@@ -3,7 +3,7 @@
 No HTTP server, browser exam bridge, speaker cloning or file upload.
 This standalone Windows app loads cached Pocket TTS once per session.
 All spoken preview WAVs are temporary and removed on normal exit.
-It is NOT an accessible production screen reader or streaming TTS.
+It is NOT an accessible production screen reader; WinMM streaming is opt-in and experimental.
 """
 from __future__ import annotations
 
@@ -18,6 +18,7 @@ import shutil
 import struct
 import sys
 import tempfile
+import time
 import threading
 import uuid
 import wave
@@ -191,7 +192,13 @@ def run_desktop() -> None:
 
     class Desktop:
         def __init__(self):
-            self.events = queue.Queue()
+            self.events = queue.Queue(maxsize=16)
+            self.stream_player = None
+            self.streaming = False
+            self.stream_generation_done = False
+            self.cancel_event = threading.Event()
+            self.started_at = 0.0
+            self.first_packet = False
             self.player = WindowsWavePlayer()
             self.model = None
             self.active_worker = None
@@ -241,6 +248,13 @@ def run_desktop() -> None:
             self.emotion.set("Sakin")
             self.emotion.grid(row=1, column=1, sticky="w", padx=(20, 0), pady=(4, 10))
 
+            self.stream_enabled = tk.BooleanVar(value=False)
+            self.stream_box = ttk.Checkbutton(
+                frame, variable=self.stream_enabled,
+                text="Deneysel erken ses akışı (Windows waveOut; varsayılan WAV modu korunur)"
+            )
+            self.stream_box.pack(anchor="w", pady=(0, 8))
+
             self.confirm = tk.BooleanVar(value=False)
             self.confirm_box = ttk.Checkbutton(
                 frame, variable=self.confirm,
@@ -271,7 +285,7 @@ def run_desktop() -> None:
             ttk.Label(
                 frame,
                 text=("Bu bir sınav okuyucusu değildir. Gerçek sınav, öğrenci veya gizli veri girmeyin. "
-                      "Sentez bitince WAV oynatılır; canlı ses akışı henüz yok. "
+                      "Varsayılan mod WAV bitince çalar; deneysel mod ilk PCM paketinden başlayabilir. "
                       "Sesler geçici klasörde tutulur ve normal çıkışta temizlenir."),
                 style="Hint.TLabel", wraplength=755, justify="left"
             ).pack(anchor="w", pady=(12, 0))
@@ -299,6 +313,14 @@ def run_desktop() -> None:
                 self.set_status("Geçersiz ses seçimi.")
                 return
             self.player.close()
+            if self.stream_player:
+                self.stream_player.close()
+                self.stream_player = None
+            self.streaming = bool(self.stream_enabled.get())
+            self.stream_generation_done = False
+            self.cancel_event = threading.Event()
+            self.started_at = time.perf_counter()
+            self.first_packet = False
             self.sequence += 1
             current = self.sequence
             self.canceled = False
@@ -319,11 +341,28 @@ def run_desktop() -> None:
                         self.model = TurkishTTS.from_pretrained(str(source), device="cpu")
                     if voice not in self.model.voices:
                         raise ValueError("Seçili hazır ses modelde bulunamadı.")
-                    from pocket_tts_turkish import save_wav
-                    samples = self.model.generate(phrase, voice=voice, emotion=emotion)
-                    save_wav(path, samples, self.model.sample_rate)
-                    duration = inspect_local_wav(path)
-                    self.events.put(("ready", current, path, duration))
+                    if self.streaming:
+                        from tools.dou_reader_pcm_stream import produce_pcm_packets
+
+                        def emit(packet: bytes) -> bool:
+                            while not self.cancel_event.is_set():
+                                try:
+                                    self.events.put(("pcm", current, packet), timeout=0.1)
+                                    return True
+                                except queue.Full:
+                                    continue
+                            return False
+
+                        complete = produce_pcm_packets(
+                            self.model, phrase, voice, emotion, self.cancel_event, emit
+                        )
+                        self.events.put(("stream_done", current, complete))
+                    else:
+                        from pocket_tts_turkish import save_wav
+                        samples = self.model.generate(phrase, voice=voice, emotion=emotion)
+                        save_wav(path, samples, self.model.sample_rate)
+                        duration = inspect_local_wav(path)
+                        self.events.put(("ready", current, path, duration))
                 except Exception as err:
                     path.unlink(missing_ok=True)
                     # Never echo the user phrase, package exception detail or path into UI/logs.
@@ -351,6 +390,12 @@ def run_desktop() -> None:
 
         def pause(self) -> None:
             try:
+                if self.streaming and self.stream_player and self.stream_player.opened:
+                    self.stream_player.pause()
+                    self.pause_button.configure(state="disabled")
+                    self.resume_button.configure(state="normal")
+                    self.set_status("Deneysel ses akışı duraklatıldı.")
+                    return
                 if self.player.opened and self.player.mode() == "playing":
                     self.player.pause()
                     self.pause_button.configure(state="disabled")
@@ -361,6 +406,12 @@ def run_desktop() -> None:
 
         def resume(self) -> None:
             try:
+                if self.streaming and self.stream_player and self.stream_player.opened:
+                    self.stream_player.resume()
+                    self.pause_button.configure(state="normal")
+                    self.resume_button.configure(state="disabled")
+                    self.set_status("Deneysel ses akışı sürdürülüyor.")
+                    return
                 if self.player.opened:
                     self.player.resume()
                     self.pause_button.configure(state="normal")
@@ -374,33 +425,109 @@ def run_desktop() -> None:
                 return
             if self.busy:
                 self.canceled = True
-                self.set_status("Durdurma istendi. Sentez tamamlanınca ses açılmadan silinecek.")
+                self.cancel_event.set()
+                self.set_status("Durdurma istendi. Sentez paketi tamamlanınca akış kapanacak.")
             else:
                 self.set_status("Yerel ses durduruldu.")
             self.player.close()
+            if self.stream_player:
+                self.stream_player.close()
+                self.stream_player = None
             self.pause_button.configure(state="disabled")
             self.resume_button.configure(state="disabled")
 
+        def _finish_stream(self) -> None:
+            if self.stream_player:
+                self.stream_player.close()
+                self.stream_player = None
+            self.busy = False
+            self.streaming = False
+            self.speak_button.configure(state="normal")
+            self.pause_button.configure(state="disabled")
+            self.resume_button.configure(state="disabled")
+            self.repeat_button.configure(state="disabled")
+            self.set_status(
+                "Deneysel akış durduruldu." if self.canceled
+                else "Deneysel doğal ses akışı tamamlandı."
+            )
+
         def poll(self) -> None:
             try:
-                while True:
+                processed = 0
+                while processed < 24:
                     kind, request, value, *extra = self.events.get_nowait()
-                    if kind == "ready":
+                    processed += 1
+                    if request != self.sequence:
+                        if kind == "ready":
+                            value.unlink(missing_ok=True)
+                        continue
+                    if kind == "pcm":
+                        if not self.closing and not self.canceled and self.streaming:
+                            try:
+                                if self.stream_player is None:
+                                    from tools.dou_reader_pcm_stream import WaveOutStream
+                                    self.stream_player = WaveOutStream()
+                                self.stream_player.write(value)
+                                if not self.first_packet:
+                                    self.first_packet = True
+                                    elapsed = time.perf_counter() - self.started_at
+                                    self.set_status(
+                                        f"İlk PCM paketi: {elapsed:.2f} saniye. "
+                                        "Deneysel yerel akış çalıyor."
+                                    )
+                                self.pause_button.configure(state="normal")
+                            except Exception:
+                                self.canceled = True
+                                self.cancel_event.set()
+                                if self.stream_player:
+                                    self.stream_player.close()
+                                    self.stream_player = None
+                                self.set_status("Deneysel Windows ses aygıtı hatası. Akış iptal edildi.")
+                    elif kind == "stream_done":
+                        self.stream_generation_done = True
+                        if not value:
+                            self.canceled = True
+                    elif kind == "ready":
                         path: Path = value
-                        if self.closing or self.canceled or request != self.sequence:
+                        if self.closing or self.canceled:
                             path.unlink(missing_ok=True)
                         else:
                             self.last_file = path
                             self._play(path)
-                    elif not self.closing and request == self.sequence:
-                        self.set_status("Ses hazırlanamadı. Model/önbellek veya WAV denetimini kontrol edin: " + value)
-                    if request == self.sequence:
                         self.busy = False
                         self.speak_button.configure(state="normal")
-                        if self.canceled:
-                            self.set_status("Sentez iptal edildi; oynatma başlatılmadı.")
+                    elif kind == "error":
+                        if not self.closing:
+                            self.set_status(
+                                "Ses hazırlanamadı. Model/önbellek veya WAV denetimini kontrol edin: " + value
+                            )
+                        self.canceled = True
+                        self.cancel_event.set()
+                        if self.stream_player:
+                            self.stream_player.close()
+                            self.stream_player = None
+                        self.busy = False
+                        self.streaming = False
+                        self.speak_button.configure(state="normal")
             except queue.Empty:
                 pass
+
+            if self.stream_player and self.streaming and not self.closing:
+                try:
+                    pending = self.stream_player.reap()
+                except OSError:
+                    self.canceled = True
+                    self.cancel_event.set()
+                    self.stream_player.close()
+                    self.stream_player = None
+                    pending = 0
+                    self.set_status("Akış sürücüsünde hata; oynatma iptal edildi.")
+            else:
+                pending = 0
+
+            if (self.streaming and self.stream_generation_done and
+                    self.events.empty() and pending == 0):
+                self._finish_stream()
 
             if self.player.opened and not self.busy and not self.closing:
                 try:
@@ -414,12 +541,16 @@ def run_desktop() -> None:
                 if not self.busy:
                     self._shutdown()
                     return
-            root.after(130, self.poll)
+            root.after(75, self.poll)
 
         def close(self) -> None:
             self.closing = True
             self.canceled = True
+            self.cancel_event.set()
             self.player.close()
+            if self.stream_player:
+                self.stream_player.close()
+                self.stream_player = None
             if self.busy:
                 self.set_status("Açık ses üretimi sonlandırılınca geçici dosyalar temizlenecek.")
                 self.speak_button.configure(state="disabled")
@@ -428,6 +559,9 @@ def run_desktop() -> None:
 
         def _shutdown(self) -> None:
             self.player.close()
+            if self.stream_player:
+                self.stream_player.close()
+                self.stream_player = None
             shutil.rmtree(self.files, ignore_errors=True)
             root.destroy()
 
