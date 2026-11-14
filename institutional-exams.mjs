@@ -1284,10 +1284,12 @@ $('exam-save').addEventListener('click',async()=>{if(!has('exam.edit')||state.bu
 });
 $('exam-autosave-export').addEventListener('click',()=>{
  if(!state.exam||!has('exam.edit'))return;
+ try{
  const payload=makeRecoveryDocument(state.exam);
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
  a.href=url;a.download='bep-taslak-kurtarma-'+Date.now()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);
  notice('Düzenlenmiş taslağın bir kopyası bu bilgisayara indirildi. Dosyayı güvenli saklayın; otomatik sunucu kaydı değildir.');
+ }catch(err){notice('JSON taslak yedeği oluşturulamadı: '+err.message,true);}
 });
 $('exam-autosave-reload').addEventListener('click',async()=>{
  if(!state.current?.id)return notice('Bu taslağın henüz sunucu kaydı yok.',true);
