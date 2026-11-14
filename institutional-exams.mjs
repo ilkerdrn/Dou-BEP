@@ -1217,10 +1217,10 @@ function renderReviewerInbox(){
   const hint=document.createElement('p');hint.textContent=item.hint;
   title.append(heading,status,hint);
   const actions=document.createElement('div');actions.className='exam-reviewer-item-actions';
-  const actions=[['İncele','review'],
+  const actionChoices=[['İncele','review'],
    ...(item.feedbackRecheck?[['Düzeltmeleri yeniden incele','recheck']]:[]),
    ['Sürüm farkları','diff'],['Onay geçmişi','history']];
-  for(const [label,kind] of actions){
+  for(const [label,kind] of actionChoices){
    const button=document.createElement('button');button.type='button';
    button.className='portal-btn secondary';button.textContent=label;
    button.dataset.reviewerAction=kind;button.dataset.examId=item.id;
