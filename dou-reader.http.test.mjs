@@ -135,3 +135,18 @@ test('Pocket TTS 24 kHz WAV is demo-only, locally previewed with no exam or remo
  }
  assert.equal((await get('/dou-reader-neural-sample.test.mjs')).status,404);
 });
+
+test('offline Pocket desktop scripts and local model are not exposed as web assets',async()=>{
+ for(const path of [
+  '/tools/dou_reader_pocket_desktop.py',
+  '/tools/dou-reader-pocket-desktop.ps1',
+  '/tools/test_dou_reader_pocket_desktop.py',
+  '/reader-speech-research/README-POCKET-DESKTOP-LAB.md',
+  '/reader-speech-research/pocket-desktop-source.test.mjs'
+ ]){
+  assert.equal((await get(path)).status,404,path);
+ }
+ const pilot=await get('/pilot');
+ assert.equal(pilot.status,200);
+ assert.doesNotMatch(pilot.body,/pocket-desktop|dou_reader_pocket_desktop/);
+});
