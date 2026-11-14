@@ -799,6 +799,10 @@ async function main(){
   'Native review disclosure keyboard Enter');
  pass(await evaluate('document.activeElement?.id==="exam-approval-workbench-more-title"'),
       'Enter expands the remaining questions without stealing summary focus');
+ await command('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,nativeVirtualKeyCode:9});
+ await command('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9,nativeVirtualKeyCode:9});
+ pass(await evaluate('document.activeElement?.closest("#exam-approval-workbench-more-questions")!==null&&document.activeElement?.dataset.questionIndex==="8"'),
+      'Tab after native disclosure reaches the first remaining approval issue');
  const lastReviewFocus=await evaluate(`(function(){
   const button=document.querySelector('#exam-approval-workbench-more-questions [data-question-index="99"]');
   if(!button)return {exists:false};
@@ -853,6 +857,29 @@ async function main(){
  await captureSyntheticSection('exam-output-section','exam-output-mobile');
  pass(mobileExam.scroll<=mobileExam.width+2,'No horizontal page overflow on 390px exam editor');
  pass(mobileExam.editor<=mobileExam.width+2,'Exam editor card fits mobile viewport');
+ const mobileReview=await evaluate(`(function(){
+  const more=document.getElementById('exam-approval-workbench-more');
+  const summary=more.querySelector('summary');
+  const items=document.getElementById('exam-approval-workbench-more-questions');
+  more.open=true;
+  const first=items.querySelector('button');
+  const report={
+   available:document.documentElement.clientWidth,
+   scroll:document.documentElement.scrollWidth,
+   box:Math.round(more.getBoundingClientRect().width),
+   summaryWidth:Math.round(summary.getBoundingClientRect().width),
+   firstHeight:Math.round(first?.getBoundingClientRect().height||0),
+   buttonCount:items.querySelectorAll('button[data-question-index]').length
+  };
+  more.open=false;
+  return report;
+ })()`);
+ console.log('BROWSER MOBILE FINAL REVIEW: '+JSON.stringify(mobileReview));
+ pass(mobileReview.scroll<=mobileReview.available+2&&mobileReview.box<=mobileReview.available+2&&
+      mobileReview.summaryWidth<=mobileReview.box+2,
+      'Mobile final review disclosure fits the 390px viewport without horizontal overflow');
+ pass(mobileReview.buttonCount===92&&mobileReview.firstHeight>=40,
+      'Mobile review action remains reachable with a usable minimum tap target');
 
  const v4MobileColumns=await evaluate(`(function(){
   const library=document.getElementById('exam-drafts-panel').getBoundingClientRect();
