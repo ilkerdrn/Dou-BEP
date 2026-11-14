@@ -698,7 +698,7 @@ function renderApprovalWorkbench(preflight){
   preflight,questionDraft:questionDraftGuidance(state.exam),quality:reviewExam(state.exam),
   saved:!!state.current,dirty:state.dirty,
   saving:autosave.isSaving()&&$('exam-autosave-state')?.dataset.state!=='saved',pending:autosave.hasChanges(),
-  blocked:autosave.isBlocked(),busy:state.busy,approved:state.current?.status==='approved',
+  blocked:autosave.isBlocked(),failed:autosave.hasFailure(),busy:state.busy,approved:state.current?.status==='approved',
   canEdit:has('exam.edit'),canApprove:has('exam.approve'),confirmed:$('exam-confirm').checked,
   ownerIsActor:independentSelfApprovalBlocked(),separationBlocked:independentSelfApprovalBlocked(),
   feedbackPending:hasCurrentReviewFeedback(),feedbackLoading:reviewFeedbackCheckPending(),
