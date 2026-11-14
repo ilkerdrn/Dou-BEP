@@ -43,6 +43,7 @@ const QUICK_TESTS=[
  'tools/v4-pilot-approval-ux.test.mjs',
  'tools/v4-pilot-student-usability.test.mjs',
  'tools/v4-student-browser-acceptance.test.mjs',
+ 'tools/v4-nvda-manual-lab.test.mjs',
  'tools/v4-pilot-manual-review.test.mjs',
  'server-foundation/pilot-session-overview.test.mjs',
  'tools/v4-pilot-session-filter-ui.test.mjs',
