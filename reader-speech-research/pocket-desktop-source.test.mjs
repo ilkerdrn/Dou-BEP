@@ -48,7 +48,9 @@ test('six bundled voices and Windows pause/resume/stop/replay implemented in sta
   assert.ok(python.includes(text),text);
  }
  assert.match(python,/threading\.Thread\(target=worker, daemon=True/);
- assert.match(python,/if self\.closing or self\.canceled or request != self\.sequence:/);
+ assert.match(python,/if request != self\.sequence:/);
+ assert.match(python,/if self\.closing or self\.canceled:/);
+ assert.match(python,/if not self\.closing and not self\.canceled and self\.streaming:/);
 });
 
 test('npm commands are explicit and cannot silently install models',()=>{
