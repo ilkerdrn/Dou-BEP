@@ -1792,3 +1792,87 @@ body.institution-page[data-design-version="4"] #exam-pilot-draft-precheck button
   background:Canvas;color:CanvasText;border-color:CanvasText;
  }
 }
+
+/* V4 question correction queue: read-only navigation, no editor state duplication. */
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-queue{
+ flex:1 0 100%;
+ width:100%;
+ min-width:0;
+ padding-top:12px;
+ border-top:1px solid #e4e4e1;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-queue>.portal-help{
+ margin:0 0 10px;
+ color:#4b4d50;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-links{
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:8px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link{
+ appearance:none;
+ display:flex;
+ flex-direction:column;
+ align-items:flex-start;
+ text-align:left;
+ width:100%;
+ min-width:0;
+ min-height:58px;
+ padding:10px 12px;
+ border:1px solid #dddeda;
+ border-left:3px solid #7b7c81;
+ border-radius:9px;
+ background:#fff;
+ color:#26282c;
+ cursor:pointer;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link[data-issue-kind="incomplete"]{
+ border-left-color:#af2331;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link strong{
+ display:block;
+ font-size:12px;
+ margin:0 0 4px;
+ line-height:1.45;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link span{
+ font-size:12px;
+ line-height:1.5;
+ color:#54575b;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link:hover{
+ border-color:#9da0a5;
+ background:#fafafa;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link:focus-visible,
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-more summary:focus-visible{
+ outline:3px solid var(--dou-ui-focus,#156bb4);
+ outline-offset:3px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-more{
+ margin-top:12px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-more summary{
+ width:fit-content;
+ max-width:100%;
+ padding:8px 4px;
+ border-radius:6px;
+ cursor:pointer;
+ font-weight:650;
+ font-size:12px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-more .exam-draft-issue-links{
+ margin-top:8px;
+}
+@media(max-width:670px){
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-links{
+  grid-template-columns:minmax(0,1fr);
+ }
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-issue-link{
+  border:1px solid ButtonText;
+ }
+}
