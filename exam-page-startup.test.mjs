@@ -315,12 +315,46 @@ test('Readiness checklist reveals collapsed parent panels before scrolling and f
  const end=editor.indexOf("$('exam-preflight-export').addEventListener(",start);
  assert.ok(start>=0&&end>start,'Readiness checklist jump handler exists');
  const handler=editor.slice(start,end);
- const reveal=handler.indexOf("if(parent.tagName==='DETAILS')parent.open=true");
- const scroll=handler.indexOf("target.scrollIntoView({behavior:'auto',block:'start'})");
- const focus=handler.indexOf('focusTarget.focus({preventScroll:true})');
- assert.ok(reveal>=0&&scroll>reveal&&focus>scroll,'Reveal must precede scroll and focus');
- assert.match(handler,/if\(!\['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'\]\.includes\(id\)\)return/);
- assert.doesNotMatch(handler,/state\.exam\s*=|autosave\.changed\(/);
+ assert.match(handler,/if\(btn\)visitPreflightTarget\(btn\.dataset\.preflightJump\)/);
+ assert.match(handler,/visitPreflightTarget\(event\.currentTarget\.dataset\.preflightJump\)/);
+ const helperStart=editor.indexOf('function visitPreflightTarget(id){');
+ const helperEnd=editor.indexOf('function visitApprovalQuestion(',helperStart);
+ assert.ok(helperStart>=0&&helperEnd>helperStart,'Readiness navigation helper exists');
+ const helper=editor.slice(helperStart,helperEnd);
+ assert.match(helper,/if\(!\['exam-main-fields','exam-goal-section','exam-question-section','exam-quality','exam-output-section'\]\.includes\(id\)\)return/);
+ const stage=helper.indexOf('stageButton.click()');
+ const reveal=helper.indexOf("if(parent.tagName==='DETAILS')parent.open=true");
+ const scroll=helper.indexOf("target.scrollIntoView({behavior:'auto',block:'start'})");
+ const focus=helper.indexOf('focusTarget.focus({preventScroll:true})');
+ assert.ok(stage>=0&&reveal>stage&&scroll>reveal&&focus>scroll,
+  'Guided stage and collapsed parents must open before scroll and focus');
+ assert.doesNotMatch(handler+helper,/state\.exam\s*=|autosave\.changed\(|state\.current\s*=/);
+
+ // Execute the isolated helper with fake DOM; verify focus and stage ordering.
+ const order=[];
+ const parent={tagName:'DETAILS',open:false,parentElement:null};
+ const heading={setAttribute(key,value){assert.equal(key,'tabindex');assert.equal(value,'-1');},
+  focus(options){assert.equal(options.preventScroll,true);assert.equal(parent.open,true);order.push('focus');}};
+ const target={parentElement:parent,querySelector(){return heading;},
+  scrollIntoView(options){assert.equal(parent.open,true);assert.equal(options.block,'start');order.push('scroll');}};
+ const stageButton={click(){order.push('stage');}};
+ const document={
+  getElementById(id){
+   if(id==='exam-quality')return target;
+   if(id==='exam-editor-card')return {classList:{contains(value){return value==='exam-guided-view';}}};
+   return null;
+  },
+  querySelector(selector){
+   assert.match(selector,/data-workflow-target="exam-question-section"/);
+   return stageButton;
+  }
+ };
+ runInNewContext(helper+"\nvisitPreflightTarget('exam-quality');",{document});
+ assert.deepEqual(order,['stage','scroll','focus']);
+ assert.equal(parent.open,true);
+ order.length=0;
+ runInNewContext(helper+"\nvisitPreflightTarget('unsafe-target');",{document});
+ assert.deepEqual(order,[],'Unknown target cannot navigate');
 });
 
 test('Readiness summary directs teachers to the first incomplete stage without auto-approving',()=>{
@@ -410,9 +444,38 @@ test('Batch question creation redraws only once and preserves permissions and fo
  const handler=editor.slice(start,end);
  assert.match(handler,/if\(!has\('exam.edit'\)\|\|state.busy\|\|!state.exam\)return/);
  assert.match(handler,/count<1\|\|count>10/);
- assert.match(handler,/for\(let i=0;i<count;i\+\+\)state.exam.questions.push\(starterQuestion\('choice'\)\)/);
+ assert.match(handler,/const chosen=count===1\?\$\('exam-quick-question-type'\)\.value:'choice'/);
+ assert.match(handler,/if\(!\['choice','truefalse','matching','short'\]\.includes\(chosen\)\)/);
+ assert.match(handler,/for\(let i=0;i<count;i\+\+\)state.exam.questions.push\(starterQuestion\(chosen\)\)/);
  assert.match(handler,/touch\(\);draw\(\)/);
  assert.match(handler,/field\?\.focus\(\{preventScroll:true\}\)/);
  assert.match(handler,/appendBlankQuestions\(1\)/);
  assert.match(handler,/appendBlankQuestions\(10\)/);
+ const fn=handler.slice(0,handler.indexOf("$('exam-add-question').addEventListener"));
+ const exercise=(count,selected,canEdit=true,initial=0)=>{
+  const exam={questions:Array.from({length:initial},()=>({type:'choice'}))};
+  const audit={touched:0,drawn:0,focused:0,notices:0};
+  const context={
+   state:{exam,busy:false},has:()=>canEdit,
+   starterQuestion:type=>({type}),
+   touch:()=>{audit.touched++;},draw:()=>{audit.drawn++;},
+   notice:()=>{audit.notices++;},
+   $:id=>id==='exam-quick-question-type'?{value:selected}:
+    id==='exam-questions'?{querySelector:()=>({focus(){audit.focused++;}})}:null
+  };
+  runInNewContext(fn+'\nappendBlankQuestions('+count+');',context);
+  return {exam,audit};
+ };
+ const one=exercise(1,'matching');
+ assert.equal(one.exam.questions.length,1);
+ assert.equal(one.exam.questions[0].type,'matching');
+ assert.deepEqual(one.audit,{touched:1,drawn:1,focused:1,notices:1});
+ const ten=exercise(10,'matching');
+ assert.deepEqual(ten.exam.questions.map(q=>q.type),Array(10).fill('choice'));
+ assert.deepEqual(ten.audit,{touched:1,drawn:1,focused:1,notices:1});
+ for(const denied of [exercise(1,'matching',false),exercise(10,'matching',true,95)]){
+  assert.equal(denied.audit.touched,0);
+  assert.equal(denied.audit.drawn,0);
+  assert.equal(denied.audit.focused,0);
+ }
 });
