@@ -20,7 +20,7 @@ test('anonymous learner sees an accessible answer completion status and first-un
 test('missing or incomplete matching responses are never counted as complete',()=>{
  assert.match(js,/if\(Object\.keys\(selected\)\.length!==q\.left\.length\)empty\.push\(i\)/);
  assert.match(js,/if\(value\)answers\[q\.id\]=value;else empty\.push\(i\)/);
- assert.match(js,/if\(!confirm\(warning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
+
  assert.match(js,/empty\.length\+' soru boş veya tamamlanmamış/);
 });
 
@@ -89,7 +89,8 @@ test('final submission requires a separate question status review and allows ret
  assert.match(js,/button\.addEventListener\('click',\(\)=>\{\s*resetFinalReview\(\);activeQuestionIndex=i/);
  assert.match(js,/const answered=exam\.questions\.length-empty\.length/);
  assert.match(js,/const flagged=\[\.\.\.reviewFlags\]\.sort/);
- assert.match(js,/if\(!confirm\(warning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
+ assert.match(js,/const reviewWarning=reviewFlags\.size\?reviewFlags\.size\+' soru tekrar bakılacak olarak işaretli\. ':'';/);
+ assert.match(js,/if\(!confirm\(warning\+reviewWarning\+'Anonim yanıtları tek seferlik teslim etmek istiyor musunuz\?'\)\)return/);
  assert.match(js,/post\('\/api\/pilot\/submit',\{answers\},claim\)/);
  assert.match(js,/if\(event\.target\.matches\('input\[type="radio"\],select'\)\)\{\s*resetFinalReview\(\);updateAnswerProgress\(\);scheduleAutoSave\(\);/);
  assert.doesNotMatch(js,/\b(?:localStorage|sessionStorage|indexedDB)\b/);
