@@ -1553,3 +1553,29 @@ body.institution-page[data-design-version="4"] #exam-approval-workbench :is(butt
   width:100%;
  }
 }
+/* V4 approval workbench high-contrast: preserve the selected reader palette. */
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench,
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-item,
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-progress{
+ background:Canvas;
+ color:CanvasText;
+ border-color:CanvasText;
+}
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench :is(p,.portal-help){
+ color:CanvasText;
+}
+body.institution-page:is(.high,.high-contrast)[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-item[data-status]{
+ border-left-color:CanvasText;
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-approval-workbench,
+ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-item,
+ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-progress{
+  background:Canvas;
+  color:CanvasText;
+  border-color:CanvasText;
+ }
+ body.institution-page[data-design-version="4"] #exam-approval-workbench .exam-approval-workbench-item[data-status]{
+  border-left-color:CanvasText;
+ }
+}
