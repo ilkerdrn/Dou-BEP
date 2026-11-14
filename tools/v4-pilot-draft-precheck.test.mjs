@@ -87,6 +87,7 @@ test('pilot UI has safe navigation, live updates, offline allowlist, and no appr
  assert.match(ui,/function renderPilotDraftPrecheck\(\)/);
  assert.match(ui,/renderGoalMatrix\(\);updateQuestionDraftGuidance\(\);renderPilotDraftPrecheck\(\)/);
  assert.match(ui,/updateQuestionDraftGuidance\(\);\s*renderPilotDraftPrecheck\(\)/);
+ assert.match(ui,/if\(kind==='saved'&&!autosave\.hasChanges\(\)\)\{[\s\S]*?renderPreflight\(\);\s*\/\/ Saving must refresh pilot guidance without redrawing the question inputs\.\s*renderPilotDraftPrecheck\(\)/);
  assert.match(ui,/visitApprovalQuestion\(preview\.questionIndex,'type'\)/);
  assert.match(ui,/visitApprovalQuestion\(30,'type'\)/);
  assert.match(ui,/const allowed=new Set\(\['prompt'.*'type'\]\)/);
