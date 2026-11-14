@@ -9,7 +9,8 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const id='11111111-1111-4111-8111-111111111111';
 const direct=()=>({
  examId:id,currentRevision:2,available:true,comparison:{
-  fromRevision:1,toRevision:2,changedSections:['BEP hedefleri'],
+  fromRevision:1,toRevision:2,previousQuestionCount:3,currentQuestionCount:3,
+  changedSections:['BEP hedefleri'],
   changedQuestions:[
    {number:1,kind:'changed',fields:['Soru metni','Yanıt anahtarı']},
    {number:3,kind:'added',fields:[]}
@@ -35,6 +36,35 @@ test('only adjacent revision feedback is correlated; changed is never marked res
  assert.match(result.notice,/kanıtlamaz/);
  assert.ok(!JSON.stringify(result).includes('CONFIDENTIAL_ANSWER_TEST_131'));
  assert.equal(Object.hasOwn(result,'approved'),false);
+});
+
+test('recheck stage links and current question positions are bounded and cannot auto-approve',()=>{
+ const view=reviewerRecheckHints(direct(),feedback());
+ assert.deepEqual(view.stages.map(x=>x.target),['exam-goal-section','exam-question-section']);
+ assert.deepEqual(view.questions.map(x=>x.canJump),[true,true,true]);
+ assert.deepEqual(view.questions.map(x=>x.index),[0,1,2]);
+ assert.ok(view.questions.every(x=>!Object.hasOwn(x,'verified')&&!Object.hasOwn(x,'approved')));
+ assert.equal(Object.hasOwn(view,'canApprove'),false);
+});
+
+test('removed questions and positions absent in the new revision cannot be opened as different questions',()=>{
+ const f=feedback(),delta=direct();
+ delta.comparison.currentQuestionCount=2;
+ delta.comparison.changedQuestions=[
+  {number:1,kind:'changed',fields:['Soru metni']},
+  {number:3,kind:'removed',fields:[]}
+ ];
+ const result=reviewerRecheckHints(delta,f);
+ assert.deepEqual(result.questions.map(x=>x.canJump),[true,true,false]);
+ assert.deepEqual(result.questions.map(x=>x.index),[0,1,null]);
+ assert.match(result.questions[2].detail,/yeni sürümde yok/);
+ const withoutCount={...direct(),comparison:{...direct().comparison}};
+ delete withoutCount.comparison.currentQuestionCount;
+ assert.ok(reviewerRecheckHints(withoutCount,f).questions.every(x=>!x.canJump));
+ const secret='SECRET_CORRECT_ANSWER_393';
+ delta.comparison.changedQuestions[0].rawAnswer=secret;
+ f.items[0].privateNote=secret;
+ assert.ok(!JSON.stringify(reviewerRecheckHints(delta,f)).includes(secret));
 });
 
 test('skipped or unrelated revisions and missing comparison fail closed',()=>{
@@ -68,6 +98,15 @@ test('browser navigation and responsive help avoid student/answer details',()=>{
  assert.match(html,/id="exam-recheck-hints"[^>]*hidden/);
  assert.match(html,/id="exam-recheck-hints-items"/);
  assert.match(js,/function renderRecheckHints\(\)/);
+ assert.match(html,/id="exam-recheck-hints-status"[^>]*role="status"/);
+ assert.match(html,/id="exam-recheck-hints-items"[^>]*role="group"/);
+ assert.match(js,/dataset\.recheckRevision=String\(current\.revision\)/);
+ assert.match(js,/more\.open=true|\$\('exam-revision-compare'\)\.open=true/);
+ assert.match(js,/if\(hints\.status!=='recheck'\)return/);
+ assert.match(js,/visitApprovalQuestion\(item\.index,'prompt'\)/);
+ assert.match(js,/visitPreflightTarget\(stage\.target\)/);
+ assert.match(js,/item\.index<\(state\.exam\?\.questions\?\.length\|\|0\)/);
+ assert.match(styles,/V4 revision recheck action rows/);
  assert.match(js,/reviewerRecheckHints\(delta,feedback\)/);
  assert.match(js,/state\.reviewFeedback=feedback;refreshApprovalFeedbackUi\(\);renderRecheckHints\(\)/);
  assert.match(js,/state\.revisionDelta=diff;\s*renderRevisionDelta\(\);renderRecheckHints\(\)/);
