@@ -1876,3 +1876,59 @@ body.institution-page[data-design-version="4"] #exam-editor-card .exam-draft-iss
   border:1px solid ButtonText;
  }
 }
+
+/* V4 three-part server/editor/approval status: text is authoritative, not color. */
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:10px;
+ margin:15px 0 8px;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div{
+ background:#fff;
+ border:1px solid #dbdeda;
+ border-radius:11px;
+ padding:12px;
+ min-width:0;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div[data-state="pending"],
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div[data-state="saving"],
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div[data-state="conflict"],
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div[data-state="error"]{
+ border-left:3px solid #a42e37;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status span{
+ display:block;
+ margin-bottom:6px;
+ font-size:11px;
+ font-weight:750;
+ letter-spacing:.045em;
+ color:#55585b;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status strong{
+ display:block;
+ font-size:14px;
+ line-height:1.45;
+ color:#252628;
+ overflow-wrap:anywhere;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status p{
+ margin:5px 0 0;
+ font-size:12px;
+ line-height:1.5;
+ overflow-wrap:anywhere;
+ color:#45494d;
+}
+body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-note{
+ margin:3px 0 12px;
+}
+@media(max-width:760px){
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status{
+  grid-template-columns:minmax(0,1fr);
+ }
+}
+@media(forced-colors:active){
+ body.institution-page[data-design-version="4"] #exam-editor-card .exam-approval-revision-status>div{
+  border:1px solid CanvasText;
+ }
+}
