@@ -288,8 +288,11 @@ $('pilot-first-review').addEventListener('click',()=>{
  announce('Tekrar bakılacak ilk soru: '+(activeQuestionIndex+1)+'.');
 });
 $('pilot-cancel-final').addEventListener('click',()=>{
+ // Closing the disclosure hides its focused button: move keyboard/NVDA focus
+ // to a visible question heading instead of leaving focus in hidden content.
  resetFinalReview();
- $('question-navigation').scrollIntoView({block:'start'});
+ $('one-question').checked=true;
+ updateQuestionNavigation(true);
 });
 function showFinalReview(){
  const {empty}=collectAnswers(),unanswered=new Set(empty),list=$('pilot-final-questions');
@@ -324,7 +327,7 @@ $('answer-form').addEventListener('submit',async event=>{event.preventDefault();
   // A failed autosave does not invalidate a direct final submission; submit
   // carries the complete current answer snapshot and is validated by the server.
   const {answers}=collectAnswers();
-  const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;stopPilotClock();douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');}
+  const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;stopPilotClock();douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;$('pilot-done-title').focus();announce('Yanıtlar bir kez kaydedildi.');}
  catch(e){announce(e.message,true);btn.disabled=false;}});
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
 $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.max(0,activeQuestionIndex-1);updateQuestionNavigation(true);});
