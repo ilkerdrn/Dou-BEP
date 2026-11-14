@@ -90,7 +90,8 @@ test('pilot UI has safe navigation, live updates, offline allowlist, and no appr
  assert.match(ui,/if\(kind==='saved'&&!autosave\.hasChanges\(\)\)\{[\s\S]*?renderPreflight\(\);\s*\/\/ Saving must refresh pilot guidance without redrawing the question inputs\.\s*renderPilotDraftPrecheck\(\)/);
  assert.match(ui,/visitApprovalQuestion\(preview\.questionIndex,'type'\)/);
  assert.match(ui,/visitApprovalQuestion\(30,'type'\)/);
- assert.match(ui,/const allowed=new Set\(\['prompt'.*'type'\]\)/);
+ assert.match(ui,/const allowed=new Set\(\['prompt','objective','points','options','pairs','answer','source','visualAltText','type'/);
+ assert.match(ui,/const key=allowed\.has\(field\)\?field:'prompt'/);
  assert.match(server,/'\/pilot-draft-precheck\.mjs':\['pilot-draft-precheck\.mjs'/);
  assert.match(css,/V4 anonymous pilot format precheck/);
  assert.match(pilot,/payload\.questions\.length<1\|\|payload\.questions\.length>30/);
