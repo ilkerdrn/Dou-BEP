@@ -1688,3 +1688,12 @@ body.institution-page[data-design-version="4"] #exam-review-feedback :is(button,
   background:Canvas;color:CanvasText;border-color:CanvasText;
  }
 }
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-shortcuts{
+ display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px;
+}
+body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-shortcuts button{
+ min-height:42px;white-space:normal;
+}
+@media(max-width:650px){
+ body.institution-page[data-design-version="4"] #exam-review-feedback .exam-review-feedback-shortcuts button{width:100%}
+}
