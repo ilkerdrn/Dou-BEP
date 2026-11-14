@@ -1,5 +1,6 @@
 import {attachPilotReader} from './dou-reader-panel.mjs';
 import {pilotTimeState} from './pilot-time.mjs';
+import {studentAccessProfile} from './student-access-profiles.mjs';
 /** One-time anonymous pilot. Token lives only in JS memory. No identity, audio, or browser storage. */
 const $=id=>document.getElementById(id);let claim=null,exam=null,activeQuestionIndex=0;
 // Review flags are an optional local navigation aid, never part of submitted answers.
@@ -147,6 +148,19 @@ function render(){const area=$('student-questions');area.replaceChildren();
  }
  reviewFlags.clear();resetFinalReview();activeQuestionIndex=0;updateQuestionNavigation();updateAnswerProgress();
 }
+function applyStudentAccessProfile(id){
+ const profile=studentAccessProfile(id);
+ $('access-profile').value=profile.id;
+ $('size').value=String(profile.fontSize);
+ $('contrast').checked=profile.highContrast;
+ $('one-question').checked=profile.single;
+ document.documentElement.style.setProperty('--student-size',profile.fontSize+'px');
+ document.body.classList.toggle('high',profile.highContrast);
+ document.body.classList.toggle('pilot-motor',profile.largeTargets);
+ $('access-profile-note').textContent=profile.description;
+ if(exam)updateQuestionNavigation();
+}
+$('access-profile').addEventListener('change',()=>applyStudentAccessProfile($('access-profile').value));
 function updateReadyStart(){
  $('ready-start').disabled=!$('ready-understand').checked||!$('ready-device').checked||!claim||!exam||pilotTimeState(pilotExpiresAt).phase==='expired';
 }
@@ -154,6 +168,7 @@ $('ready-understand').addEventListener('change',updateReadyStart);
 $('ready-device').addEventListener('change',updateReadyStart);
 $('ready-start').addEventListener('click',()=>{
  if(!claim||!exam||$('ready-start').disabled)return;
+ applyStudentAccessProfile($('ready-access-profile').value);
  $('exam-ready').hidden=true;$('player').hidden=false;
  announce('Sınav soruları açıldı. Sınav süresi kodu kullandığınızda başlamıştı.');
  douReader?.refreshVoices();
