@@ -84,8 +84,12 @@ const steps=[
 ];
 if(full)steps.push({id:'anonymous_pilot',description:'İzole anonim pilot uçtan uca kabulü',
  argv:['tools/acceptance-pilot.mjs','--report',pilotReport]});
-if(browser)steps.push({id:'browser_edge',description:'İzole Edge tarayıcı kabulü',
- argv:['tools/browser-ui-acceptance.mjs']});
+if(browser){
+ steps.push({id:'browser_edge',description:'İzole Edge arayüz ve klavye kabulü',
+  argv:['tools/browser-ui-acceptance.mjs']});
+ steps.push({id:'browser_handoff',description:'Gerçek Edge öğretmen ve incelemeci devir teslim kabulü',
+  argv:['tools/browser-review-handoff.mjs']});
+}
 const results=[];
 console.log('DOU BEP V4 — yerel genel kabul | profil: '+(full?'FULL':'QUICK')+(browser?'+BROWSER':''));
 console.log('Kaynak: '+ROOT);
