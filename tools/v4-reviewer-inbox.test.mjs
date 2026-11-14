@@ -39,7 +39,7 @@ test('only authorized reviewer-role screens derive a local read-only inbox',()=>
  for(const role of ['reviewer','admin','coordinator']){
   const result=reviewerInbox(data,{role,actorId:'reviewer-1'});
   assert.equal(result.enabled,true);
-  assert.deepEqual(result.counts,{draft:2,approved:1,all:3});
+  assert.deepEqual(result.counts,{draft:2,recheck:0,approved:1,all:3});
   assert.deepEqual(result.items.map(x=>x.id),[data[2].id,data[0].id]);
   assert.equal(result.items[0].own,true);
   assert.match(result.items[0].hint,/başka bir incelemeci/);
