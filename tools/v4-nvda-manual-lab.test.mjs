@@ -36,3 +36,28 @@ test('one-command manual NVDA review clearly remains an unapproved human accepta
  }
  assert.doesNotMatch(guide,/üretime hazırdır|sertifikalandırılmıştır/);
 });
+
+
+test('manual NVDA lab can renew a used code without weakening single-use sessions',()=>{
+ const lab=read('tools/v4-nvda-manual-lab.mjs');
+ const http=read('tools/v4-nvda-code-http-acceptance.mjs');
+ const scripts=JSON.parse(read('package.json')).scripts;
+ assert.equal(scripts['reader:nvda:lab:check'],'node tools/v4-nvda-code-http-acceptance.mjs');
+ assert.match(lab,/function verifyUnusedCode\(store,session\)/);
+ assert.match(lab,/SELECT status,expires_at FROM pilot_sessions WHERE code_hash=\?/);
+ assert.match(lab,/if\(record\?\.status!=='issued'\|\|record\.expires_at<=Date\.now\(\)\)/);
+ assert.match(lab,/function issueNewManualCode\(\)/);
+ assert.match(lab,/if\(previous\.status==='issued'\)store\.pilotRevoke\(admin,issuedSessionId\)/);
+ assert.match(lab,/const next=store\.pilotIssue\(admin,examId\)/);
+ assert.match(lab,/verifyUnusedCode\(store,next\)/);
+ assert.match(lab,/inputControl\.on\('line',line=>\{/);
+ assert.match(lab,/if\(choice==='q'\)/);
+ assert.match(lab,/if\(choice!=='n'\)/);
+ assert.match(lab,/process\.env\.BEP_DB_PATH=dbPath/);
+ assert.match(http,/assert\.equal\(first\.status,200/);
+ assert.match(http,/assert\.equal\(\(await redeem\(base,code\)\)\.status,401/);
+ assert.match(http,/child\.stdin\.write\('n\\n'\)/);
+ assert.match(http,/assert\.equal\(second\.status,200/);
+ assert.match(http,/assert\.equal\(\(await redeem\(base,code2\)\)\.status,401/);
+ assert.doesNotMatch(http,/console\.log\(code|console\.log\(payload\.token|fs\.writeFileSync/);
+});
