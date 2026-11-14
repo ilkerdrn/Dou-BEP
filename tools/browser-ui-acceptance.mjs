@@ -102,9 +102,41 @@ async function pressEnter(){
  await command('Input.dispatchKeyEvent',{type:'keyDown',text:'\r',unmodifiedText:'\r',...data});
  await command('Input.dispatchKeyEvent',{type:'keyUp',...data});
 }
-async function navigate(base,path){
- await command('Page.navigate',{url:base+path});
- await waitUntil(()=>evaluate('document.readyState==="complete"'),'Page loaded '+path);
+async function navigate(base,path,{discardSyntheticDraft=false}={}){
+ // The 100-question stress editor is deliberately unsaved. Its real
+ // beforeunload confirmation is a safety feature, not an app error.
+ // Only this disposable-fixture return to /kurum may accept it.
+ if(discardSyntheticDraft&&path!=='/kurum')
+  throw Error('Synthetic draft discard permitted only on /kurum return');
+ let dialogListener=null,dialogAck=Promise.resolve(),dialogError=null,dialogCount=0;
+ if(discardSyntheticDraft){
+  const eligible=await evaluate(`location.pathname==="/kurumsal-sinav"&&document.querySelectorAll("#exam-questions>.exam-question").length===100`);
+  if(!eligible)throw Error('Synthetic 100-question exam fixture is not active; refusing automated discard');
+  dialogListener=event=>{
+   let packet;try{packet=JSON.parse(event.data);}catch{return;}
+   if(packet.method!=='Page.javascriptDialogOpening')return;
+   if(packet.params?.type!=='beforeunload'||++dialogCount!==1){
+    dialogError=Error('Unexpected browser dialog during synthetic draft navigation: '+String(packet.params?.type));
+    return;
+   }
+   console.log('BROWSER SYNTHETIC BEFOREUNLOAD: confirming discard of temporary 100-question draft');
+   dialogAck=command('Page.handleJavaScriptDialog',{accept:true})
+    .catch(error=>{dialogError=error;});
+  };
+  ws.addEventListener('message',dialogListener);
+ }
+ try{
+  console.log('BROWSER NAVIGATE: '+path+(discardSyntheticDraft?' (disposable draft)':''));
+  const outcome=await command('Page.navigate',{url:base+path});
+  if(outcome.errorText)throw Error('Browser route navigation failed ('+path+'): '+outcome.errorText);
+  await dialogAck;
+  if(dialogError)throw dialogError;
+  const pathname=new URL(base+path).pathname;
+  await waitUntil(()=>evaluate('location.pathname==='+JSON.stringify(pathname)+'&&document.readyState==="complete"'),
+   'Page loaded '+path);
+ }finally{
+  if(dialogListener)ws.removeEventListener('message',dialogListener);
+ }
  if(process.argv.includes('--without-v3')){
   // Experiment only: toggle stylesheet in disposable Edge DOM, not source files.
   // Guest/authenticated routes may not all load this stylesheet.
@@ -944,7 +976,7 @@ async function main(){
   pass(geometry.nextWidth>=40&&geometry.nextHeight>=32,'Step control stays usable at '+width+'px');
  }
  await command('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
- await navigate(base,'/kurum');
+ await navigate(base,'/kurum',{discardSyntheticDraft:true});
  await waitUntil(()=>evaluate('document.body.dataset.portalAuth==="authenticated"'),'Mobile session restoration');
  pass(await evaluate('document.body.dataset.portalAuth==="authenticated"'),'Session remains valid on mobile');
  const mobileDashboard=await evaluate('({width:innerWidth,scroll:document.documentElement.scrollWidth})');
