@@ -61,6 +61,9 @@ test('feedback, revision mismatch and independent approval are distinct observab
   'Review summary omits exam text and answer keys',
   'Reviewer can focus requested current question position',
   'Approval available only after independent confirmation',
+  'Server stores exact revision-bound reviewer correction request',
+  'Server verifies exact unapproved revision 2 after teacher save',
+  'Server confirms an adjacent and sanitized saved revision difference',
   'Independent reviewer approves exact current revision',
   'Server-approved revision distinct from saved draft'
  ])assert.ok(browser.includes(phrase),phrase);
