@@ -5,12 +5,12 @@
  * No exam body, answer key, learner data, token, or approval capability is returned.
  */
 const ROLES=new Set(['reviewer','coordinator','admin']);
-const FILTERS=new Set(['draft','approved','all']);
+const FILTERS=new Set(['draft','recheck','approved','all']);
 const MAX_RESULTS=100;
 
 export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}){
  const enabled=ROLES.has(role);
- if(!enabled)return {enabled:false,filter:'draft',counts:{draft:0,approved:0,all:0},items:[]};
+ if(!enabled)return {enabled:false,filter:'draft',counts:{draft:0,recheck:0,approved:0,all:0},items:[]};
  const selected=FILTERS.has(filter)?filter:'draft';
  const needle=String(query||'').trim().toLocaleLowerCase('tr').slice(0,100);
  const listed=(Array.isArray(exams)?exams:[]).filter(item=>
@@ -23,20 +23,22 @@ export function reviewerInbox(exams,{role,actorId='',filter='draft',query=''}={}
   revision:item.revision,
   status:item.status,
   feedbackCurrent:item.feedbackCurrent===true,
+  feedbackRecheck:item.feedbackRecheck===true&&item.feedbackCurrent!==true&&item.status==='draft',
   updatedAt:Number.isFinite(Number(item.updatedAt))?Number(item.updatedAt):0,
   own:Boolean(actorId&&item.ownerId===actorId)
  }));
  listed.sort((a,b)=>b.updatedAt-a.updatedAt);
  const counts={draft:listed.filter(item=>item.status==='draft').length,
+  recheck:listed.filter(item=>item.feedbackRecheck).length,
   approved:listed.filter(item=>item.status==='approved').length,all:listed.length};
  return {
   enabled,filter:selected,counts,
-  items:listed.filter(item=>(selected==='all'||item.status===selected)&&
+  items:listed.filter(item=>(selected==='all'||(selected==='recheck'?item.feedbackRecheck:item.status===selected))&&
    (!needle||item.title.toLocaleLowerCase('tr').includes(needle))).slice(0,MAX_RESULTS)
    .map(item=>({
     ...item,
-    label:item.feedbackCurrent?'Taslak · düzeltme kaydı var':item.status==='draft'?'Taslak · inceleme gerekli':'Onay kaydı var · geçmişi doğrulayın',
-    hint:item.feedbackCurrent?'Bu sürüm için geri bildirim kayıtlı. Güncel taslağı inceleyin; yeni sürümün düzeltmeleri ayrıca doğrulanır.':item.own
+    label:item.feedbackCurrent?'Taslak · düzeltme kaydı var':item.feedbackRecheck?'Yeni sürüm · yeniden inceleme gerekli':item.status==='draft'?'Taslak · inceleme gerekli':'Onay kaydı var · geçmişi doğrulayın',
+    hint:item.feedbackCurrent?'Bu sürüm için geri bildirim kayıtlı. Güncel taslağı inceleyin; yeni sürümün düzeltmeleri ayrıca doğrulanır.':item.feedbackRecheck?'Önceki sürümde düzeltme isteği vardı. Yeni sürümün değişikliklerini ve kalite denetimini karşılaştırın; düzeltmeler otomatik doğrulanmış değildir.':item.own
      ?'Bu sınav sizin taslağınız. Bağımsız onay gereken pilotta başka bir incelemeci kullanın.'
      :item.status==='draft'
       ?'Onay için hazır olduğu henüz doğrulanmadı. İçeriği ve kalite raporunu inceleyin.'
