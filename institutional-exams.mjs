@@ -334,17 +334,72 @@ function renderRecheckHints(){
   feedback.items?.some(item=>item.revision<current.revision));
  panel.hidden=!hasPast;
  list.replaceChildren();
- if(!hasPast)return;
+ const status=$('exam-recheck-hints-status');
+ if(!hasPast){status.textContent='Önceki sürüme ait düzeltme kaydı yok veya veriler kontrol ediliyor.';return;}
  const hints=reviewerRecheckHints(delta,feedback);
  $('exam-recheck-hints-intro').textContent=hints.intro;
- if(hints.status!=='recheck')return;
+ if(hints.status!=='recheck'){
+  status.textContent='Önceki düzeltme isteği ile bu sürümün doğrudan karşılaştırması doğrulanamadı. Yeni sürümü manuel inceleyin.';
+  return;
+ }
+ const unsaved=state.dirty||autosave.hasChanges()||autosave.isSaving()||autosave.isBlocked();
+ status.textContent=hints.stages.length+' aşama · '+hints.questions.length+
+  ' soru konumu önceki düzeltme isteğinden yeniden incelenmeli. '+
+  (unsaved?'Kaydedilmemiş düzenlemeler bu sunucu karşılaştırmasına dahil değildir. ':'')+
+  'Teknik fark, tamamlanan düzeltme veya onay anlamına gelmez.';
  for(const item of [...hints.stages,...hints.questions]){
-  const row=document.createElement('p');
-  row.className='exam-recheck-hint-row';
-  row.textContent=('number' in item?item.label:item.label+' · '+item.text);
+  const row=document.createElement('div');row.className='exam-recheck-hint-row';
+  row.dataset.changed=item.changed?'changed':'unchanged';
+  const copy=document.createElement('div');
+  const heading=document.createElement('strong');heading.textContent=item.label;
+  const detail=document.createElement('p');detail.textContent='number' in item?item.detail:item.text;
+  copy.append(heading,detail);
+  row.append(copy);
+  if('number' in item&&!item.canJump){
+   const note=document.createElement('span');note.className='portal-help';
+   note.textContent='Bu konumda soru bağlantısı yok';
+   row.append(note);
+  }else{
+   const button=document.createElement('button');button.type='button';
+   button.className='portal-btn secondary';
+   button.dataset.recheckRevision=String(current.revision);
+   if('number' in item){
+    button.dataset.recheckQuestion=String(item.number);
+    button.textContent='Yeni sürümdeki bu konumu aç';
+   }else{
+    button.dataset.recheckStage=item.id;
+    button.textContent='Aşamayı incele';
+   }
+   button.setAttribute('aria-label',item.label+' · '+button.textContent+
+    ' · Sürüm '+current.revision+'; teknik fark onay değildir');
+   row.append(button);
+  }
   list.append(row);
  }
 }
+$('exam-recheck-hints-items').addEventListener('click',event=>{
+ const button=event.target.closest('button[data-recheck-revision]');
+ const list=$('exam-recheck-hints-items');
+ if(!button||!list.contains(button)||!state.current||state.busy)return;
+ const current=state.current;
+ if(!Number.isSafeInteger(current.revision)||
+    Number(button.dataset.recheckRevision)!==current.revision||
+    state.revisionDelta?.examId!==current.id||
+    state.revisionDelta.currentRevision!==current.revision||
+    state.reviewFeedback?.examId!==current.id||
+    state.reviewFeedback.currentRevision!==current.revision)return;
+ const hints=reviewerRecheckHints(state.revisionDelta,state.reviewFeedback);
+ if(hints.status!=='recheck')return;
+ if(button.dataset.recheckStage){
+  const stage=hints.stages.find(item=>item.id===button.dataset.recheckStage);
+  if(stage)visitPreflightTarget(stage.target);
+ }else if(button.dataset.recheckQuestion!==undefined){
+  const number=Number(button.dataset.recheckQuestion);
+  const item=hints.questions.find(item=>item.number===number&&item.canJump);
+  if(item&&Number.isSafeInteger(item.index)&&item.index<(state.exam?.questions?.length||0))
+   visitApprovalQuestion(item.index,'prompt');
+ }
+});
 function renderRevisionDelta(){
  const box=$('exam-revision-compare-content'),status=$('exam-revision-compare-status');
  if(!box||!status)return;
@@ -399,7 +454,7 @@ function renderRevisionDelta(){
 async function loadRevisionDelta(){
  const id=state.current?.id,revision=state.current?.revision,ticket=++revisionDeltaGeneration;
  state.revisionDelta=null;
- renderRevisionDelta();
+ renderRevisionDelta();renderRecheckHints();
  if(!id)return;
  try{
   const {diff}=await api('/exams/'+id+'/revision-diff');
@@ -410,6 +465,7 @@ async function loadRevisionDelta(){
   if(ticket===revisionDeltaGeneration&&state.current?.id===id&&state.current?.revision===revision){
    $('exam-revision-compare-summary').textContent='Kontrol edilemedi';
    $('exam-revision-compare-status').textContent='Sürüm karşılaştırması alınamadı: '+err.message;
+   renderRecheckHints();
   }
  }
 }
@@ -567,7 +623,7 @@ function renderReviewFeedback(){
 async function loadReviewFeedback(){
  const id=state.current?.id,revision=state.current?.revision,ticket=++reviewFeedbackGeneration;
  state.reviewFeedback=null;reviewFeedbackLoadFailure=null;
- renderReviewFeedback();
+ renderReviewFeedback();renderRecheckHints();
  if(!id)return;
  try{
   const {feedback}=await api('/exams/'+id+'/review-feedback');
