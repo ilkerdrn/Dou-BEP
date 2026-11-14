@@ -62,3 +62,22 @@ test('real 100-question browser route keeps approval guarded, navigates actual e
  assert.match(editor,/submitExamApproval\(\{/);
  assert.doesNotMatch(browser,/production\.sqlite|BE P_DB_PATH/);
 });
+
+
+test('100-question fixture accepts ONLY its own native beforeunload during dashboard return',()=>{
+ const browser=read('tools/browser-ui-acceptance.mjs');
+ const editor=read('institutional-exams.mjs');
+ assert.match(editor,/window\.addEventListener\('beforeunload',event=>\{/);
+ assert.match(browser,/async function navigate\(base,path,\{discardSyntheticDraft=false\}=\{\}\)/);
+ assert.match(browser,/if\(discardSyntheticDraft&&path!=='\/kurum'\)/);
+ assert.match(browser,/location\.pathname==="\/kurumsal-sinav"&&document\.querySelectorAll\("#exam-questions>\.exam-question"\)\.length===100/);
+ assert.match(browser,/ws\.addEventListener\('message',dialogListener\)/);
+ assert.match(browser,/packet\.method!=='Page\.javascriptDialogOpening'/);
+ assert.match(browser,/packet\.params\?\.type!=='beforeunload'/);
+ assert.match(browser,/command\('Page\.handleJavaScriptDialog',\{accept:true\}\)/);
+ assert.match(browser,/command\('Page\.handleJavaScriptDialog',\{accept:false\}\)/);
+ assert.match(browser,/await navigate\(base,'\/kurum',\{discardSyntheticDraft:true\}\)/);
+ assert.match(browser,/location\.pathname===/);
+ assert.match(browser,/BROWSER NAVIGATION FAILED:/);
+ assert.doesNotMatch(browser,/window\.onbeforeunload\s*=\s*null|removeEventListener\('beforeunload'/);
+});
