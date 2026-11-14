@@ -86,7 +86,7 @@ test('page exposes compact selectors and updates guidance while typing, without 
  assert.match(js,/questionDraftGuidance\(state\.exam\)/);
  assert.match(js,/function updateQuestionDraftGuidance\(\)/);
  assert.match(js,/renderGoalMatrix\(\);updateQuestionDraftGuidance\(\)/);
- assert.match(js,/updateQuestionDraftGuidance\(\);\s*\$\('exam-adjustments'\)/);
+ assert.match(js,/updateQuestionDraftGuidance\(\);\s*renderPilotDraftPrecheck\(\);\s*\$\('exam-adjustments'\)/);
  assert.match(js,/chosen=count===1\?\$\('exam-quick-question-type'\)\.value:'choice'/);
  assert.match(js,/starterQuestion\(chosen\)/);
  assert.match(js,/state\.exam\.questions\.length\+count>100/);
