@@ -97,3 +97,14 @@ test('page exposes compact selectors and updates guidance while typing, without 
  const helper=readFileSync(resolve(root,'question-draft-guidance.mjs'),'utf8');
  assert.doesNotMatch(helper,/fetch\(|localStorage\.|sessionStorage\.|document\.|window\.|updateExam\(|approveExam\(/);
 });
+
+test('duplicate choices should navigate to options rather than the answer key',()=>{
+ const exam=demo();
+ exam.questions[0].options=['Tekrar','Tekrar'];
+ exam.questions[0].answer='Tekrar';
+ const guidance=questionDraftGuidance(exam);
+ const issue=guidance.items[0].issues.find(item=>/Aynı yanıt seçeneği/.test(item.text));
+ assert.ok(issue,'Canonical duplicate-option validation exists');
+ assert.equal(issue.level,'error');
+ assert.equal(issue.field,'options');
+});
