@@ -89,3 +89,11 @@ npm run reader:nvda:manual
 Komut mevcut veritabanına dokunmadan yeni temp SQLite ile **bağımsız onaylı dört soruluk** (2 çoktan seçmeli, 1 doğru/yanlış, 1 eşleştirme) öğrenci sınavı üretir. Yalnız `127.0.0.1` arayüzünde çalışır, tek kullanımlık sentetik kodu kullanıcıya konsolda gösterir; Ctrl+C ile geçici veri silinir. Gerçek öğrenci sınavı veya başka bir tarayıcı profili kullanılmaz.
 
 Manuel gözlem rehberi: `NVDA-OGRENCI-MANUEL-KABUL.md`. Kapsam: NVDA odak/okunabilirlik, ayrı DOU Reader ses testi, eşleştirme, sessiz kullanım, motor klavye, teslim. **Bu laboratuvarın Windows'ta başlatılması ve NVDA insan kabulü henüz yapılmadı.** Otomatik 245/245 PASS ile karıştırılmamalıdır.
+
+## 246 Edge kabulü ve manuel NVDA başlangıcı
+
+Kullanıcının gerçek Windows/Edge çıktısı: `node --test` **6/6 PASS**, `npm run ui:browser:student` **246/246 PASS**. Önceki 245 denetimin üzerine soru başlığı ve prompt ile ilişkilendirilmiş fieldset erişilebilirlik kontrolü eklendi.
+
+`npm run reader:nvda:manual` sentetik ve yalnız localhost üzerinde çalışan dört soruluk laboratuvarı **başarıyla başlattı**; konsol tek kullanımlık test kodu üretti. Kod ya da geçici port bu rapora kopyalanmadı. **Gerçek NVDA ile okuma, kullanıcı odak deneyimi ve Türkçe sesin anlaşılırlığı henüz TEST EDİLMEDİ.** Bu aşama ürünün üretim veya kurumsal erişilebilirlik onayı değildir.
+
+Sıradaki insan kabul kanıtı `NVDA-OGRENCI-MANUEL-KABUL.md` matrisi üzerinden kimliksiz PASS / FAIL / TEST EDİLMEDİ durumlarıdır. 
