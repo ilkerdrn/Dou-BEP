@@ -609,7 +609,7 @@ function renderReviewerInbox(){
  section.hidden=!data.enabled;
  if(!data.enabled)return;
  const count=$('exam-reviewer-count');
- count.textContent=data.items.length+' kayıt gösteriliyor · '+data.counts.draft+
+ count.textContent='Son 100 görünür sınav içinden '+data.items.length+' kayıt gösteriliyor · '+data.counts.draft+
   ' taslak · '+data.counts.approved+' onay kaydı bulunan sınav. Bir taslak otomatik olarak onaya hazır sayılmaz.';
  const container=$('exam-reviewer-items');
  container.replaceChildren();
@@ -644,6 +644,7 @@ $('exam-reviewer-search').addEventListener('input',renderReviewerInbox);
 $('exam-reviewer-items').addEventListener('click',async event=>{
  const button=event.target.closest('[data-reviewer-action][data-exam-id]');
  if(!button||!$('exam-reviewer-items').contains(button))return;
+ if(!['reviewer','coordinator','admin'].includes(state.actor?.role))return;
  if(state.busy||autosave.isSaving())return notice('Devam eden kayıt veya işlemi tamamlayın.',true);
  if(state.dirty&&!confirm('Açık sınavda kaydedilmemiş değişiklikler var. Yeni sınava geçmek için bu değişiklikleri bırakmak istiyor musunuz?'))return;
  const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
