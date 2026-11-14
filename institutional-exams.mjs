@@ -20,6 +20,7 @@ import {getExamPreflight,preflightCsv} from './exam-preflight.mjs';
 import {questionDraftGuidance,questionIssueQueue} from './question-draft-guidance.mjs';
 import {pilotDraftPrecheck} from './pilot-draft-precheck.mjs';
 import {approvalWorkbenchSummary} from './approval-workbench.mjs';
+import {approvalRevisionStatus} from './approval-revision-status.mjs';
 import {reviewerInbox,reviewerFeedbackText,parseReviewQuestionNumbers} from './reviewer-inbox.mjs';
 import {reviewerRecheckHints} from './reviewer-recheck-hints.mjs';
 import {workflowNextAction} from './workflow-next-action.mjs';
@@ -59,6 +60,22 @@ async function api(path,{method='GET',body}={}){
  let result;try{result=await resp.json();}catch{throw Error('Beklenmeyen sunucu yanıtı.');}
  if(!resp.ok)throw Object.assign(Error(result.message||result.error||'İstek tamamlanamadı'),{status:resp.status,code:result.error});return result;
 }
+function renderRevisionStatus(){
+ const root=$('exam-approval-revision-status');if(!root)return;
+ const status=approvalRevisionStatus({
+  saved:!!state.current,revision:state.current?.revision??null,
+  dirty:state.dirty,pending:autosave.hasChanges(),saving:autosave.isSaving(),
+  blocked:autosave.isBlocked(),failed:autosave.hasFailure(),
+  approved:state.current?.status==='approved'
+ });
+ for(const key of ['server','editor','approval']){
+  const node=root.querySelector('[data-revision-part="'+key+'"]');
+  if(!node)continue;
+  node.dataset.state=status[key].state;
+  node.querySelector('strong').textContent=status[key].title;
+  node.querySelector('p').textContent=status[key].description;
+ }
+}
 function showAutosave(kind,detail){
  const el=$('exam-autosave-state'),recovery=$('exam-autosave-recovery');if(!el)return;
  const labels={new:'Yeni taslak · İlk düzenlemeden sonra otomatik kaydedilecek',idle:'',pending:'Kaydedilmemiş değişiklik var · Otomatik kayıt bekleniyor',saving:'Sunucuya kaydediliyor…',saved:'Tüm değişiklikler sunucuya kaydedildi',conflict:'ÇAKIŞMA: Başka sekmede daha yeni sürüm var. Yerel düzenlemeleriniz korunuyor.',error:'KAYIT BAŞARISIZ: Ağ/oturum kontrolü gerekli. Metin bu sekmede duruyor.'};
@@ -78,6 +95,7 @@ function showAutosave(kind,detail){
   renderPilotDraftPrecheck();
  }
  if(kind==='conflict'||kind==='error'){$('exam-status').textContent=kind==='conflict'?'ÇAKIŞMA':'KAYIT HATASI';$('exam-version').textContent=detail?.message||'Düzenlemeler mevcut sekmede korunuyor.';}
+ renderRevisionStatus();
 }
 const autosave=createAutosaveManager({
  getDraft:()=>({id:state.current?.id||null,revision:state.current?.revision||null,exam:normalizeExam(state.exam)}),
@@ -554,6 +572,7 @@ function renderApprovalWorkbench(preflight){
  approvalWorkbenchSnapshot={id:state.current?.id,revision:state.current?.revision,model};
  $('exam-reviewer-feedback-copy').hidden=!['reviewer','coordinator','admin'].includes(state.actor?.role);
  node.dataset.approvalStatus=model.state;
+ renderRevisionStatus();
  $('exam-approval-workbench-headline').textContent=model.headline;
  $('exam-approval-workbench-detail').textContent=model.detail;
  $('exam-approval-workbench-progress').textContent=model.summary.complete+' / '+model.summary.total+' aşama';
