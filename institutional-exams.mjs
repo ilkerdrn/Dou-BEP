@@ -261,7 +261,7 @@ async function loadReviewFeedback(){
  try{
   const {feedback}=await api('/exams/'+id+'/review-feedback');
   if(ticket!==reviewFeedbackGeneration||state.current?.id!==id||state.current?.revision!==revision)return;
-  state.reviewFeedback=feedback;renderReviewFeedback();draw();
+  state.reviewFeedback=feedback;refreshApprovalFeedbackUi();
  }catch(err){
   if(ticket===reviewFeedbackGeneration&&state.current?.id===id){
    $('exam-review-feedback-status').textContent='İnceleme kayıtları alınamadı: '+err.message;
@@ -303,7 +303,7 @@ $('exam-review-feedback-form').addEventListener('submit',async event=>{
    body:{revision,stageIds:stages,questionNumbers:numbers,confirmed:true}});
   if(state.current?.id===id&&state.current?.revision===revision){
    state.reviewFeedback=result.feedback;
-   renderReviewFeedback();draw();
+   refreshApprovalFeedbackUi();
    await refreshList();
    notice('Düzeltme kaydı bu sınav sürümü için kaydedildi. Öğretmen sınavı açınca görebilir.');
   }else notice('Düzeltme kaydı sunucuya işlendi. Bu sırada ekrandaki sınav değişti.',true);
@@ -675,6 +675,17 @@ function reviewFeedbackCheckPending(){
 function hasCurrentReviewFeedback(){
  return Boolean(state.current?.status==='draft'&&state.reviewFeedback?.examId===state.current.id&&
   state.reviewFeedback.items?.some(item=>item.revision===state.current.revision));
+}
+function refreshApprovalFeedbackUi(){
+ if(!state.exam)return;
+ const report=reviewExam(state.exam);
+ $('exam-approve').disabled=!has('exam.approve')||!state.current||state.dirty||
+  state.current.status==='approved'||state.busy||report.errorCount>0||
+  reviewFeedbackCheckPending()||hasCurrentReviewFeedback()||!$('exam-confirm').checked;
+ updateApprovalGuidance(report);
+ renderApprovalWorkbench(getExamPreflight(state.exam,{
+  saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'
+ }));
 }
 function updateApprovalGuidance(report){
  const role=state.actor?.role;
