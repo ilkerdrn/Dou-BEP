@@ -89,6 +89,46 @@ test('two connections cannot redeem the same code or resurrect the replaced bear
  }finally{f.close();}
 });
 
+test('manual scoring from two teacher connections rejects a stale review version',()=>{
+ const f=fixture();
+ try{
+  const created=f.a.createExam(f.teacherA,{exam:makeExam()});
+  f.b.approveExam(f.reviewer,created.id,{revision:1,confirmed:true});
+  const issued=f.a.pilotIssue(f.teacherA,created.id);
+  const learner=f.b.pilotRedeem(issued.code);
+  assert.equal(f.b.pilotSubmit(learner.token,values()).ok,true);
+  const first=f.a.pilotReviewGet(f.teacherA,issued.id);
+  const second=f.b.pilotReviewGet(f.teacherB,issued.id);
+  assert.equal(first.reviewVersion,0);
+  assert.equal(second.reviewVersion,0);
+  const scored=f.a.pilotReviewSave(f.teacherA,issued.id,{
+   reviewVersion:0,entries:{q1:{score:0,note:'Sentetik ilk değerlendirme'}}
+  });
+  assert.equal(scored.reviewVersion,1);
+  assert.equal(scored.questions[0].score,0);
+  assert.equal(scored.questions[1].score,null);
+  assert.throws(()=>f.b.pilotReviewSave(f.teacherB,issued.id,{
+   reviewVersion:second.reviewVersion,entries:{q1:{score:25,note:'Sentetik geçersiz eski kayıt'}}
+  }),{code:'review_conflict'});
+  const latest=f.b.pilotReviewGet(f.teacherB,issued.id);
+  assert.equal(latest.reviewVersion,1);
+  assert.equal(latest.questions[0].score,0);
+  const entries=Object.fromEntries(latest.questions.map(question=>[
+   question.id,{score:question.id==='q1'?0:question.maxPoints,note:'Sentetik onaylı manuel kayıt'}
+  ]));
+  const complete=f.b.pilotReviewSave(f.teacherB,issued.id,{
+   reviewVersion:latest.reviewVersion,entries
+  });
+  assert.equal(complete.reviewVersion,2);
+  assert.equal(complete.complete,true);
+  assert.equal(complete.reviewedQuestions,4);
+  assert.equal(complete.questions[0].score,0);
+  assert.ok(!JSON.stringify(f.a.pilotView(f.teacherA,issued.id)).includes('Sentetik onaylı manuel kayıt'));
+  assert.ok(f.a.pilotList(f.teacherA).every(item=>!Object.hasOwn(item,'answers')));
+  assert.match(f.a.pilotReviewCsv(f.teacherA,issued.id),/Sentetik onaylı manuel kayıt/);
+ }finally{f.close();}
+});
+
 test('an exam revision changed on instance A invalidates an in-flight learner on instance B',()=>{
  const f=fixture();
  try{
