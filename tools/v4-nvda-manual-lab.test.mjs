@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const read=path=>readFileSync(resolve(root,path),'utf8');
+
+test('manual NVDA lab uses only a new synthetic database and an isolated localhost listener',()=>{
+ const lab=read('tools/v4-nvda-manual-lab.mjs');
+ assert.match(lab,/mkdtempSync\(join\(tmpdir\(\),'dou-bep-nvda-manual-'\)\)/);
+ assert.match(lab,/const dbPath=join\(folder,'manual-fixture\.sqlite'\)/);
+ assert.match(lab,/openStore\(dbPath,\{requireIndependentExamApproval:true\}\)/);
+ assert.match(lab,/createDemo\(\)/);
+ assert.match(lab,/exam\.questions=exam\.questions\.filter\(q=>q\.type!=='short'\)/);
+ assert.match(lab,/reviewExam\(exam\)\.errorCount/);
+ assert.match(lab,/store\.approveExam\(reviewer,/);
+ assert.match(lab,/store\.pilotIssue\(admin,/);
+ assert.match(lab,/process\.env\.BEP_DB_PATH=dbPath/);
+ assert.match(lab,/process\.env\.BEP_NO_LISTEN='1'/);
+ assert.match(lab,/process\.env\.BEP_REQUIRE_INDEPENDENT_EXAM_APPROVAL='1'/);
+ assert.ok(lab.indexOf('process.env.BEP_DB_PATH=dbPath')<
+  lab.indexOf("await import('../server.mjs')"));
+ assert.match(lab,/server\.listen\(port,'127\.0\.0\.1',resolve\)/);
+ assert.match(lab,/server\.close\(\(\)=>resolve\(\)\)/);
+ assert.match(lab,/rmSync\(folder,\{recursive:true,force:true/);
+ assert.doesNotMatch(lab,/localhost:4173|data\/institution\.sqlite|realStudent|screenshot|audioCapture/);
+});
+test('one-command manual NVDA review clearly remains an unapproved human acceptance gate',()=>{
+ const scripts=JSON.parse(read('package.json')).scripts;
+ const guide=read('NVDA-OGRENCI-MANUEL-KABUL.md');
+ assert.equal(scripts['reader:nvda:manual'],'node tools/v4-nvda-manual-lab.mjs');
+ for(const cue of ['PASS / FAIL / TEST EDİLMEDİ','Eşleştirme','Kesin teslim','NVDA','DOU Reader',
+  'Ctrl+C','45 dakika','gerçek','245/245']){
+  assert.ok(guide.includes(cue),cue);
+ }
+ assert.doesNotMatch(guide,/üretime hazırdır|sertifikalandırılmıştır/);
+});
