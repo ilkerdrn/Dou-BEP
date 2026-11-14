@@ -115,3 +115,23 @@ test('split speech keyboard shortcut hints are available to assistive technology
   assert.match(page.body,/Alt\+Shift\+O/);
  }
 });
+
+test('Pocket TTS 24 kHz WAV is demo-only, locally previewed with no exam or remote TTS',async()=>{
+ const demo=await get('/dou-reader-demo');
+ assert.equal(demo.status,200);
+ for(const id of ['reader-neural-title','reader-neural-file','reader-neural-play',
+   'reader-neural-stop','reader-neural-status'])
+  assert.match(demo.body,new RegExp('id="'+id+'"'));
+ assert.match(demo.body,/24 kHz PCM16 mono WAV/);
+ assert.match(demo.body,/dou-reader-neural-sample-ui\.mjs/);
+ assert.match(demo.headers['content-security-policy'],/media-src 'self' blob:/);
+ const pilot=await get('/pilot');
+ assert.doesNotMatch(pilot.body,/reader-neural-file|reader-neural-sample-ui/);
+ for(const uri of ['/dou-reader-neural-sample.mjs','/dou-reader-neural-sample-ui.mjs']){
+  const result=await get(uri);
+  assert.equal(result.status,200);
+  assert.match(result.headers['content-type'],/text\/javascript/);
+  assert.doesNotMatch(result.body,/fetch\(|XMLHttpRequest|sendBeacon|localStorage|sessionStorage/);
+ }
+ assert.equal((await get('/dou-reader-neural-sample.test.mjs')).status,404);
+});
