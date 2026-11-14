@@ -1217,7 +1217,10 @@ function renderReviewerInbox(){
   const hint=document.createElement('p');hint.textContent=item.hint;
   title.append(heading,status,hint);
   const actions=document.createElement('div');actions.className='exam-reviewer-item-actions';
-  for(const [label,kind] of [['İncele','review'],['Sürüm farkları','diff'],['Onay geçmişi','history']]){
+  const actions=[['İncele','review'],
+   ...(item.feedbackRecheck?[['Düzeltmeleri yeniden incele','recheck']]:[]),
+   ['Sürüm farkları','diff'],['Onay geçmişi','history']];
+  for(const [label,kind] of actions){
    const button=document.createElement('button');button.type='button';
    button.className='portal-btn secondary';button.textContent=label;
    button.dataset.reviewerAction=kind;button.dataset.examId=item.id;
@@ -1238,7 +1241,7 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
  const id=button.dataset.examId,expectedRevision=Number(button.dataset.examRevision);
  if(!state.exams.some(item=>item.id===id))return notice('Sınav artık listede görünmüyor. Listeyi yenileyin.',true);
  const action=button.dataset.reviewerAction;
- if(!['review','history','diff'].includes(action))return;
+ if(!['review','history','diff','recheck'].includes(action))return;
  const sameOpened=state.current?.id===id&&state.current?.revision===expectedRevision;
  if(!sameOpened&&!confirmDraftSwitch())return;
  button.disabled=true;
@@ -1250,10 +1253,11 @@ $('exam-reviewer-items').addEventListener('click',async event=>{
    notice('Bu sınavın sürümü inceleme listesi açıldıktan sonra değişmiş. Güncel sürüm açıldı; onay vermeden önce yeniden inceleyin.',true);
    await refreshList();
   }
-  if(action==='diff'){
+  if(action==='diff'||action==='recheck'){
    visitPreflightTarget('exam-output-section');
    $('exam-revision-compare').open=true;
-   const heading=$('exam-revision-compare-title');
+   const specific=action==='recheck'&&!$('exam-recheck-hints').hidden;
+   const heading=$(specific?'exam-recheck-hints-heading':'exam-revision-compare-title');
    heading.setAttribute('tabindex','-1');
    heading.scrollIntoView({behavior:'auto',block:'center'});
    heading.focus({preventScroll:true});
