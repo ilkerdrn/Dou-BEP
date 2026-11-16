@@ -10,6 +10,9 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
  const pocket=attachPocketStudentReader({doc,win,getQuestion,getToken});
  const previews=attachPilotSpeechPreviews({doc,win,getQuestion,onStart:()=>{engine.stop();pocket.stop();}});
  const stop=()=>{engine.stop();pocket.stop();previews.stop();};
+ // Explicit Durdur discards playback. Surdur after that starts the same permitted
+ // question from the beginning; ordinary Duraklat preserves the playback position.
+ let stoppedQuestionId=null;
  function refreshVoices(){
   const list=engine.refresh(),select=$('reader-voice');if(!select)return;
   select.replaceChildren();
@@ -34,6 +37,7 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
   previews.syncQuestion();
  }
  function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
+  stoppedQuestionId=null;
   previews.stop();
   if(question.audioAllowed===false){announce('Bu soruda uygulama seslendirmesi kapalıdır.',true);return;}
   if(pocket.selected){engine.stop();return pocket.read();}
@@ -50,20 +54,36 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
    engine.speak('Bu bir yerel ses denemesidir. 3 + 5 = 8. 9 - 4 = 5. 1/2, yüzde 50 ve 20°C.',{rate:$('reader-rate').value});
   }catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
- function navigate(direction){stop();moveQuestion(direction);}
+ function navigate(direction){stoppedQuestionId=null;stop();moveQuestion(direction);}
  $('reader-read').addEventListener('click',read);
  $('reader-test').addEventListener('click',testVoice);
- $('reader-stop').addEventListener('click',stop);
+ $('reader-stop').addEventListener('click',()=>{
+  const q=getQuestion();
+  stoppedQuestionId=q&&q.audioAllowed!==false?q.id:null;
+  stop();
+  if($('reader-status'))$('reader-status').textContent=stoppedQuestionId?
+   'Seslendirme durduruldu. Sürdür aynı soruyu baştan okur.':'Seslendirme durduruldu.';
+ });
  $('reader-pause').addEventListener('click',()=>{if(pocket.selected)pocket.pause();else engine.pause();});
- $('reader-resume').addEventListener('click',()=>{if(pocket.selected)void pocket.resume();else engine.resume();});
+ $('reader-resume').addEventListener('click',()=>{
+  const q=getQuestion();
+  if(stoppedQuestionId&&q?.id===stoppedQuestionId&&q.audioAllowed!==false){
+   stoppedQuestionId=null;
+   void read();
+   return;
+  }
+  if(pocket.selected)void pocket.resume();else engine.resume();
+ });
  $('reader-prev').addEventListener('click',()=>navigate(-1));
  $('reader-next').addEventListener('click',()=>navigate(1));
  $('reader-voice').addEventListener('change',()=>engine.setVoice($('reader-voice').value));
  $('reader-pocket-voice')?.addEventListener('change',()=>{
+  stoppedQuestionId=null;
   engine.stop();
   if(!$('player')?.hidden&&$('reader-auto')?.checked&&pocket.selected)void read();
  });
  $('reader-engine')?.addEventListener('change',()=>{
+  stoppedQuestionId=null;
   stop();syncQuestion();
   if(!$('player')?.hidden&&$('reader-auto')?.checked)read();
  });
