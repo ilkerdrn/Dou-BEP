@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {pocketVoiceAllowed,pocketVoiceChoices,pocketSpeechGate} from '../server-foundation/pocket-tts-local.mjs';
+import {pocketVoiceAllowed,pocketVoiceChoices,pocketSpeechGate,pocketFailureCode} from '../server-foundation/pocket-tts-local.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=name=>readFileSync(resolve(root,name),'utf8');
@@ -42,4 +42,16 @@ test('student dual voice selector cannot enable unauthorized lab modes',()=>{
  assert.match(client,/body:JSON\.stringify\(\{questionId:q\.id,voice\}\)/);
  assert.match(client,/voicePicker\.disabled=!available\|\|permitted\.length===0/);
  assert.doesNotMatch(client,/localStorage|sessionStorage|indexedDB|getUserMedia/);
+});
+
+test('synthetic speech errors are classified without exposing text or CLI stderr',()=>{
+ assert.equal(pocketFailureCode(Error('Pocket TTS motoru zaten bir soruyu seslendiriyor.')),'speech_busy');
+ assert.equal(pocketFailureCode(Error('Yerel Pocket TTS süresi doldu.')),'speech_timeout');
+ assert.equal(pocketFailureCode(Error('Pocket TTS geçerli WAV üretmedi.')),'speech_audio_format');
+ assert.equal(pocketFailureCode(Error('Seslendirme metni parça sınırını aşıyor.')),'speech_text_limit');
+ assert.equal(pocketFailureCode(Error('arbitrary secret exam text')),'speech_engine_failed');
+ const api=read('server-foundation/institutional-api.mjs');
+ assert.match(api,/pocketFailureCode\(error\)/);
+ assert.match(api,/code==='speech_busy'\?429:503/);
+ assert.doesNotMatch(api,/console\.error\(.*narration/);
 });
