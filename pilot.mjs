@@ -24,7 +24,7 @@ function renderPilotClock(){
   $('pilot-save').disabled=true;
   $('pilot-restore').disabled=true;
   $('send').disabled=true;
-  for(const control of $('student-questions').querySelectorAll('input[type="radio"],select,.pilot-clear-answer'))control.disabled=true;
+  for(const control of $('student-questions').querySelectorAll('input[type="radio"],select,textarea[data-pilot-classic],.pilot-clear-answer'))control.disabled=true;
   if(phaseChanged){
     $('reader-auto').checked=false;douReader?.stop();
     announce('Oturum süresi doldu. Öğretmeninizle görüşün.',true);
@@ -94,6 +94,9 @@ function collectAnswers(){
    for(const left of q.left){const value=form.get(q.id+'_'+left.id);if(value)selected[left.id]=value;}
    if(Object.keys(selected).length)answers[q.id]=selected;
    if(Object.keys(selected).length!==q.left.length)empty.push(i);
+  }else if(q.type==='short'){
+   const value=String(form.get(q.id)||'').trim();
+   if(value)answers[q.id]=value;else empty.push(i);
   }else empty.push(i);
  }
  return {answers,empty};
@@ -142,6 +145,18 @@ function render(){const area=$('student-questions');area.replaceChildren();
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
   const field=el('fieldset');field.setAttribute('aria-labelledby',h.id+' '+prompt.id);const legend=el('legend','Yanıt');field.append(legend);
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
+  if(q.type==='short'){
+   const label=el('label','Klasik yanıtınızı yazın (en fazla 800 karakter).');
+   label.setAttribute('for','pilot-classic-'+(index+1));
+   const textarea=el('textarea');textarea.id='pilot-classic-'+(index+1);
+   textarea.name=q.id;textarea.rows=7;textarea.maxLength=800;
+   textarea.setAttribute('data-pilot-classic','1');
+   textarea.setAttribute('aria-describedby',prompt.id+' pilot-classic-hint-'+(index+1));
+   textarea.autocomplete='off';
+   const hint=el('p','Bu alan yalnız sentetik NLP laboratuvarında aktiftir. Kişisel bilgi yazmayın; otomatik puanlama yoktur.');
+   hint.id='pilot-classic-hint-'+(index+1);hint.className='muted';
+   field.append(label,textarea,hint);
+  }
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);
   const clear=el('button','Bu sorunun yanıtını temizle');
@@ -156,6 +171,8 @@ function render(){const area=$('student-questions');area.replaceChildren();
    for(const select of field.querySelectorAll('select')){
     if(select.value!==''){select.value='';changed=true;}
    }
+   const classic=field.querySelector('textarea[data-pilot-classic]');
+   if(classic&&classic.value){classic.value='';changed=true;}
    if(!changed)return announce('Soru '+q.number+' için temizlenecek bir yanıt bulunmuyor.');
    resetFinalReview();updateAnswerProgress();scheduleAutoSave();
    announce('Soru '+q.number+' yanıtı temizlendi. Yeni seçim yapabilir veya boş bırakabilirsiniz.');
@@ -226,6 +243,11 @@ function resetFinalReview(){
  $('pilot-final-review').hidden=true;
  $('send').textContent='Teslim özetini kontrol et';
 }
+$('answer-form').addEventListener('input',event=>{
+ if(event.target.matches('textarea[data-pilot-classic]')){
+  resetFinalReview();updateAnswerProgress();scheduleAutoSave();
+ }
+});
 $('answer-form').addEventListener('change',event=>{
  if(event.target.matches('input[type="radio"],select')){
   resetFinalReview();updateAnswerProgress();scheduleAutoSave();
@@ -240,6 +262,9 @@ function applySavedAnswers(saved){
   if(q.options&&typeof answer==='string'){
    const radio=[...form.querySelectorAll('input[type="radio"]')].find(x=>x.name===q.id&&x.value===answer);
    if(radio)radio.checked=true;
+  }else if(q.type==='short'&&typeof answer==='string'){
+   const text=[...form.querySelectorAll('textarea[data-pilot-classic]')].find(x=>x.name===q.id);
+   if(text)text.value=answer.slice(0,800);
   }else if(q.type==='matching'&&answer&&typeof answer==='object'){
    for(const left of q.left){
     const field=[...form.querySelectorAll('select')].find(x=>x.name===q.id+'_'+left.id);
