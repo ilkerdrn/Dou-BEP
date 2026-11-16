@@ -16,6 +16,15 @@ import {join,isAbsolute} from 'node:path';
 const POCKET_VOICES=Object.freeze(['female_2','male_1']);
 export function pocketVoiceAllowed(voice){return POCKET_VOICES.includes(voice);}
 export function pocketVoiceChoices(){return [...POCKET_VOICES];}
+/** Safe external failure categories; never expose a question, CLI stderr or file path. */
+export function pocketFailureCode(error){
+ const message=String(error?.message||'');
+ if(message.includes('zaten bir soruyu seslendiriyor'))return 'speech_busy';
+ if(message.includes('süresi doldu'))return 'speech_timeout';
+ if(message.includes('ses biçimleri farklı')||message.includes('WAV')||message.includes('PCM16'))return 'speech_audio_format';
+ if(message.includes('parça sınırı')||message.includes('metni sınır')||message.includes('boşluksuz'))return 'speech_text_limit';
+ return 'speech_engine_failed';
+}
 const MAX_CHARS=1000;
 const MAX_CHUNK=200;
 const MAX_CHUNKS=6;
@@ -108,11 +117,12 @@ async function defaultRunner(chunk,out,{cli,folder,voice}){
     HF_DATASETS_OFFLINE:'1',TOKENIZERS_PARALLELISM:'false',
     PYTHONUTF8:'1',PYTHONIOENCODING:'utf-8'}
   });
-  let finished=false;
-  const limit=setTimeout(()=>{if(!finished)child.kill();},60000);
+  let finished=false,timedOut=false;
+  const limit=setTimeout(()=>{if(!finished){timedOut=true;child.kill();}},60000);
   child.once('error',err=>{finished=true;clearTimeout(limit);reject(err);});
   child.once('close',(code)=>{if(finished)return;finished=true;clearTimeout(limit);
-   if(code!==0)reject(Error('Yerel Pocket TTS sentezi başarısız oldu veya süresi doldu.'));
+   if(timedOut)reject(Error('Yerel Pocket TTS süresi doldu.'));
+   else if(code!==0)reject(Error('Yerel Pocket TTS sentezi başarısız oldu.'));
    else resolve();
   });
  });
