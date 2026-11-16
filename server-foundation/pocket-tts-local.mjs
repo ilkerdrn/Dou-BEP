@@ -105,7 +105,8 @@ async function defaultRunner(chunk,out,{cli,folder,voice}){
   const child=spawn(cli,args,{
    cwd:folder,shell:false,windowsHide:true,stdio:'ignore',
    env:{...process.env,HF_HUB_OFFLINE:'1',TRANSFORMERS_OFFLINE:'1',
-    HF_DATASETS_OFFLINE:'1',TOKENIZERS_PARALLELISM:'false'}
+    HF_DATASETS_OFFLINE:'1',TOKENIZERS_PARALLELISM:'false',
+    PYTHONUTF8:'1',PYTHONIOENCODING:'utf-8'}
   });
   let finished=false;
   const limit=setTimeout(()=>{if(!finished)child.kill();},60000);
