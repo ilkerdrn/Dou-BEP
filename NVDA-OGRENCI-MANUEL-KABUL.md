@@ -41,6 +41,7 @@ Her satıra **PASS / FAIL / TEST EDİLMEDİ** ve kısa, kimliksiz açıklama yaz
 | Büyük yazı / kontrast | Yazı büyütme ve kontrastla içerik taşmaz, odak görünür kalır; 200% yakınlaştırmada kullanılabilir | TEST EDİLMEDİ |
 | Motor erişim | Sadece Tab/Shift+Tab/Enter/Space/ok tuşlarıyla fare olmadan sınav tamamlanabilir | TEST EDİLMEDİ |
 | Matematik sembolleri (DOU Reader) | Sabit "Sistem sesini ve + = - işaretlerini dene" düğmesiyle `3 + 5 = 8`, `9 - 4 = 5`, `1/2` gerçekten artı, eksi, eşittir, bölü olarak duyuluyor mu? "Okuma tamamlandı" sesin duyulduğu anlamına gelmez. | TEST EDİLMEDİ |
+| DOU Speech deneysel seçenekleri | Öğrenci ekranındaki ayrı DOU Speech alanında Temel, Spektral, Kontrast ve Artikülasyon seçenekleri görünür; her biri yalnız “Merhaba dünya” sabit örneğini çalar. Ayrı ayrı gerçekten duyuluyor mu? Seçili sorunun seslendirme izni kapalıysa düğme devre dışı mı? Bu bir doğal ses kabulü değildir. | TEST EDİLMEDİ |
 | Sistem sesi / DOU Speech ayrımı | Microsoft Tolga gibi yerel Windows/Edge sesi listelenir; özgün DOU Speech robotik laboratuvarı sınavın gerçek sesi gibi sunulmaz. | TEST EDİLMEDİ |
 | DOU Reader (ayrı deney) | Kurulu ve yerel olduğu doğrulanan Türkçe ses varsa soru/şıklar anlaşılır; seslendirme izni kapalı soru okunmaz. Ses yoksa yazılı/klavye akışı çalışmaya devam eder | TEST EDİLMEDİ |
 
