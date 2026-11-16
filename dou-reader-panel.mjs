@@ -13,19 +13,33 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if(!has){const o=doc.createElement('option');o.textContent='Yerel Türkçe ses yok';o.value='';select.append(o);}
   select.disabled=!has;select.value=has?engine.selectedVoice:'';
   $('reader-read').disabled=!has;
+  $('reader-test').disabled=!has;
   $('reader-pause').disabled=!has;
   $('reader-resume').disabled=!has;
   if(!has)$('reader-status').textContent='Yerel Türkçe ses bulunamadı. Yazılı sorular ve klavyeyle gezinme kullanılabilir.';
   // Voice-list changes must never re-enable reading on a question marked audioAllowed=false.
   syncQuestion();
  }
- function syncQuestion(){const q=getQuestion();$('reader-read').disabled=!engine.refresh().length||!q||q.audioAllowed===false;}
+ function syncQuestion(){
+  const q=getQuestion(),blocked=!engine.refresh().length||!q||q.audioAllowed===false;
+  $('reader-read').disabled=blocked;
+  $('reader-test').disabled=blocked;
+ }
  function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
   try{engine.speak(readerText(question),{rate:$('reader-rate').value});}
   catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
+ // Never use exam text, answers or user input for this speaker diagnostic.
+ function testVoice(){
+  const q=getQuestion();
+  if(!q||q.audioAllowed===false){announce('Bu soruda uygulama içi seslendirme kapalıdır.',true);return;}
+  try{
+   engine.speak('Bu bir yerel ses denemesidir. 3 + 5 = 8. 9 - 4 = 5. 1/2, yüzde 50 ve 20°C.',{rate:$('reader-rate').value});
+  }catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
+ }
  function navigate(direction){engine.stop();moveQuestion(direction);}
  $('reader-read').addEventListener('click',read);
+ $('reader-test').addEventListener('click',testVoice);
  $('reader-stop').addEventListener('click',()=>engine.stop());
  $('reader-pause').addEventListener('click',()=>engine.pause());
  $('reader-resume').addEventListener('click',()=>engine.resume());
