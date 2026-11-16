@@ -31,6 +31,7 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
  }
  function syncQuestion(){
   const q=getQuestion(),blocked=!q||q.audioAllowed===false;
+  if(blocked||(stoppedQuestionId&&q.id!==stoppedQuestionId))stoppedQuestionId=null;
   pocket.sync();
   $('reader-read').disabled=blocked||(pocket.selected?!pocket.available:!engine.refresh().length);
   $('reader-test').disabled=blocked;
