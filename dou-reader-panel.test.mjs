@@ -15,7 +15,7 @@ function fakeElement(){
  };
 }
 test('Reader voice event revocation cancels speech, and destroy removes event listeners',()=>{
- const nodes=new Map();for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'])nodes.set(id,fakeElement());
+ const nodes=new Map();for(const id of ['reader-read','reader-test','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'])nodes.set(id,fakeElement());
  const docHandlers=new Map();const doc={
   getElementById(id){return nodes.get(id);},createElement(){return fakeElement();},
   addEventListener(name,fn){docHandlers.set(name,fn);},
@@ -40,7 +40,7 @@ test('Reader voice event revocation cancels speech, and destroy removes event li
 });
 
 test('voice refresh cannot restore speech on a teacher-disabled question',()=>{
- const ids=['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
+ const ids=['reader-read','reader-test','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
  const nodes=new Map(ids.map(id=>[id,fakeElement()]));
  const doc={getElementById:id=>nodes.get(id),createElement:()=>fakeElement(),addEventListener(){},removeEventListener(){}};
  const voices=[{name:'Yerel Türkçe',voiceURI:'local-tr',lang:'tr-TR',localService:true}];
@@ -64,5 +64,32 @@ test('voice refresh cannot restore speech on a teacher-disabled question',()=>{
  assert.equal(nodes.get('reader-read').disabled,true);
  reader.read();
  assert.equal(said.length,1);
+ reader.destroy();
+});
+
+
+test('fixed arithmetic speaker test never sends question text or private answers to TTS',()=>{
+ const ids=['reader-read','reader-test','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'];
+ const nodes=new Map(ids.map(id=>[id,fakeElement()]));
+ const doc={getElementById:id=>nodes.get(id),createElement:()=>fakeElement(),addEventListener(){},removeEventListener(){}};
+ const utterances=[],voice={name:'Microsoft Test Turkish',voiceURI:'local-tr',lang:'tr-TR',localService:true};
+ const synth={getVoices:()=>[voice],speak:u=>utterances.push(u),cancel(){},addEventListener(){},removeEventListener(){}};
+ class Utterance{constructor(text){this.text=text;}}
+ let q={number:1,prompt:'SENSITIVE_QUESTION_NEVER_IN_DIAGNOSTIC',audioAllowed:true,answer:'SECRET_ANSWER'};
+ let errors=0;
+ const reader=attachPilotReader({doc,win:{speechSynthesis:synth,SpeechSynthesisUtterance:Utterance},
+  getQuestion:()=>q,moveQuestion(){},announce:()=>{errors++;}});
+ assert.equal(nodes.get('reader-test').disabled,false);
+ nodes.get('reader-test').click();
+ assert.equal(utterances.length,1);
+ assert.match(utterances[0].text,/3 artı 5 eşittir 8/);
+ assert.match(utterances[0].text,/1 bölü 2/);
+ assert.doesNotMatch(utterances[0].text,/SENSITIVE_QUESTION|SECRET_ANSWER/);
+ q={...q,audioAllowed:false};
+ reader.syncQuestion();
+ assert.equal(nodes.get('reader-test').disabled,true);
+ nodes.get('reader-test').click();
+ assert.equal(utterances.length,1);
+ assert.equal(errors,1);
  reader.destroy();
 });
