@@ -124,3 +124,18 @@ test('stage tracker has semantic current step and only progresses after successf
  assert.ok(css.includes('.pilot-stage-track li[data-stage-state="complete"]'));
  assert.ok(css.includes('@media(max-width:650px)'));
 });
+
+test('exam focus view retains access controls while optional explanations collapse',()=>{
+ const html=source('pilot.html'),css=source('pilot-premium.css'),js=source('pilot.mjs');
+ assert.equal(html.split('<details class="pilot-session-help').length,3);
+ assert.ok(html.includes('<summary>Sınav süresi hakkında bilgi</summary>'));
+ assert.ok(html.includes('<summary>Erişilebilirlik ve seslendirme sınırları</summary>'));
+ for(const id of ['pilot-time-text','pilot-time-warning','access-profile','access-profile-note',
+  'size','contrast','stop-voice','reader-auto','reader-status','student-questions','send']){
+  assert.equal(html.split('id="'+id+'"').length,2,id);
+ }
+ assert.ok(js.includes("$('contrast').addEventListener('change'"));
+ assert.ok(css.includes('#player .pilot-access-toolbar'));
+ assert.ok(css.includes('#player .pilot-session-help>summary:focus-visible'));
+ assert.ok(css.includes('@media(max-width:760px)'));
+});
