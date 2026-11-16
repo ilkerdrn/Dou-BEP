@@ -10,6 +10,8 @@ import {previewSourceExam,previewManualSourceExam,examDraftFromSource} from '../
 import {roleCan} from '../roles.mjs';
 import {createExamMp3,audioDependencies} from '../offline-audio.mjs';
 import {fullAudioAllowed} from '../question-access.mjs';
+import {pocketSpeechGate,synthesizePocketQuestion} from './pocket-tts-local.mjs';
+import {existsSync} from 'node:fs';
 const jsonHeaders={"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff", "X-Frame-Options":"DENY", "Referrer-Policy":"no-referrer", "Cross-Origin-Resource-Policy":"same-origin", "Permissions-Policy":"camera=(), microphone=(), geolocation=()"};
 function response(res,code,data,extra={}){res.writeHead(code,{...jsonHeaders,...extra});res.end(JSON.stringify(data));}
 async function readJson(req,maxSize=300000){
@@ -39,6 +41,27 @@ export function createApiHandler(store,{port=4173}={}){
     if(req.method==='GET')response(res,200,store.pilotProgress(match[1]));
     else {const body=await readJson(req,15000);response(res,200,store.pilotSave(match[1],body.answers));}
     return true;
+   }
+   // Pocket TTS female_2: opt-in, localhost, OFFLINE and synthetic lab ONLY.
+   if(path==='/api/pilot/speech-capability'&&req.method==='GET'){
+    const available=pocketSpeechGate()&&existsSync(process.env.BEP_POCKET_TTS_CLI);
+    response(res,200,{available,voice:available?'female_2':null,scope:'synthetic-lab-only',cloud:false});return true;
+   }
+   if(path==='/api/pilot/speech'&&req.method==='POST'){
+    if(!pocketSpeechGate()||!existsSync(process.env.BEP_POCKET_TTS_CLI))
+     throw new StoreError('speech_not_ready','Doğal kadın sesi yalnız açıkça etkinleştirilmiş yerel NLP laboratuvarında kullanılabilir.',503);
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli anonim sınav oturumu gerekli.',401);
+    const body=await readJson(req,450);
+    // Only a question ID is accepted: active bearer validates the exact exam.
+    const narration=store.pilotSpeechQuestion(match[1],body.questionId);
+    let wav;
+    try{wav=await synthesizePocketQuestion(narration);}
+    catch{throw new StoreError('speech_not_ready','Pocket TTS yerel ses oluşturamadı. Sınava yazılı veya sistem sesiyle devam edin.',503);}
+    res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':wav.length,
+     'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
+     'Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'});
+    res.end(wav);return true;
    }
    if(path==='/api/pilot/submit'&&req.method==='POST'){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
