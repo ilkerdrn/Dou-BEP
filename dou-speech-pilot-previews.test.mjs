@@ -115,3 +115,26 @@ test('stopping experimental playback revokes object URLs and removes listeners',
  assert.equal(fixture.nodes.get('reader-lab-play').events.has('click'),false);
  assert.equal(fixture.nodes.get('reader-lab-stop').events.has('click'),false);
 });
+
+
+test('Pocket TTS female_2 plays only user-selected local RIFF WAV and never uploads or sends text',async()=>{
+ const f=setup();
+ const select=f.nodes.get('reader-lab-voice');
+ select.value='pocket-female2';
+ const fileEl=element();
+ const bytes=new Uint8Array(4096);
+ bytes.set([82,73,70,70],0);bytes.set([87,65,86,69],8);
+ const sample=new Blob([bytes],{type:'audio/wav'});
+ fileEl.files=[sample];
+ // The fixture must provide the browser's file picker when this option is used.
+ // Without an explicit user-selected file, playback must fail closed.
+ assert.equal(await f.nodes.get('reader-lab-play').click(),false);
+ f.preview.destroy();
+ const src=readFileSync(new URL('./dou-speech-pilot-previews.mjs',import.meta.url),'utf8');
+ assert.match(src,/const file=pocketFile\?\.files\?\.\[0\]/);
+ assert.match(src,/const head=new Uint8Array\(await file\.slice\(0,12\)\.arrayBuffer\(\)\)/);
+ assert.match(src,/if\(tag\(0\)!=='RIFF'\|\|tag\(8\)!=='WAVE'\)/);
+ assert.match(src,/wavBlob=file/);
+ assert.match(src,/pocketFile\?\.removeEventListener\('change',onLocalFile\)/);
+ assert.doesNotMatch(src,/fetch\(|localStorage|sessionStorage|indexedDB|XMLHttpRequest/);
+});
