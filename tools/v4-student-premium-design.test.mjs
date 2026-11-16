@@ -106,3 +106,21 @@ test('premium student stylesheet keeps stable brace structure and responsive fal
  assert.ok(css.includes(':not(.high):not(.high-contrast) #exam-ready'));
  assert.ok(css.includes(':not(.high):not(.high-contrast) #done.pilot-done'));
 });
+
+test('stage tracker has semantic current step and only progresses after successful transitions',()=>{
+ const html=source('pilot.html'),js=source('pilot.mjs'),css=source('pilot-premium.css');
+ for(const id of ['entry','ready','exam','done']){
+  assert.equal(html.split('data-pilot-stage="'+id+'"').length,2);
+ }
+ assert.equal(html.split('aria-current="step"').length,2);
+ assert.ok(html.includes('<nav class="pilot-stage-track" aria-label="Sınav aşamaları">'));
+ assert.match(js,/function updatePilotStage\(stage\)/);
+ assert.ok(js.includes("updatePilotStage('ready');"));
+ assert.ok(js.includes("updatePilotStage('exam');"));
+ assert.ok(js.includes("updatePilotStage('done');"));
+ assert.ok(js.includes("item.setAttribute('aria-current','step')"));
+ assert.ok(js.includes("item.removeAttribute('aria-current')"));
+ assert.ok(css.includes('.pilot-stage-track li[aria-current="step"]'));
+ assert.ok(css.includes('.pilot-stage-track li[data-stage-state="complete"]'));
+ assert.ok(css.includes('@media(max-width:650px)'));
+});
