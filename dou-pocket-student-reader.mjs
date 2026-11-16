@@ -6,6 +6,8 @@
  */
 export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion=()=>null}={}){
  const picker=doc.getElementById('reader-engine');
+ const voicePicker=doc.getElementById('reader-pocket-voice');
+ const allowedVoices=['female_2','male_1'];
  const status=doc.getElementById('reader-status');
  const fetcher=typeof win.fetch==='function'?win.fetch.bind(win):null;
  let available=false,request=null,player=null,url='',generation=0,destroyed=false;
@@ -24,7 +26,16 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
    if(destroyed)return false;
    const data=response.ok?await response.json():{};
    available=data.available===true;
+   const voices=Array.isArray(data.voices)?data.voices:[];
+   if(voicePicker){
+    const permitted=allowedVoices.filter(v=>voices.includes(v));
+    for(const option of voicePicker.options)option.disabled=!permitted.includes(option.value);
+    if(!permitted.includes(voicePicker.value))voicePicker.value=permitted[0]||'female_2';
+    voicePicker.disabled=!available||permitted.length===0;
+    if(!permitted.length)available=false;
+   }
   }catch{available=false;}
+  if(!available&&voicePicker)voicePicker.disabled=true;
   if(!available&&picker.value==='pocket')picker.value='system';
   const pocketOption=[...picker.options].find(o=>o.value==='pocket');
   if(pocketOption)pocketOption.disabled=!available;
@@ -34,16 +45,18 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
  async function read(){
   if(destroyed||!picker||picker.value!=='pocket'||disabled())return false;
   const token=getToken(),q=getQuestion();
+  const voice=voicePicker?.value||'female_2';
+  if(!allowedVoices.includes(voice))return false;
   if(typeof token!=='string'||!token||!/^q\d{1,2}$/.test(q?.id||''))return false;
   stop();
   const current=generation,controller=new AbortController();
   request=controller;
-  updateStatus('DOU Pocket TTS kadın sesi, yalnız yerel NLP örnek sorusunu hazırlıyor…');
+  updateStatus('DOU Pocket TTS '+voice+', yalnız yerel NLP örnek sorusunu hazırlıyor…');
   try{
    const response=await fetcher('/api/pilot/speech',{
     method:'POST',credentials:'omit',cache:'no-store',signal:controller.signal,
     headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
-    body:JSON.stringify({questionId:q.id})
+    body:JSON.stringify({questionId:q.id,voice})
    });
    if(!response.ok)throw Error('synthesis');
    if(!String(response.headers?.get('Content-Type')||'').startsWith('audio/wav'))
@@ -64,7 +77,7 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
    request=null;
    await playing.play();
    if(current===generation){
-    updateStatus('DOU Pocket TTS female_2, seçili anonim soruyu okuyor. Ağ hizmeti kullanılmadı.');
+    updateStatus('DOU Pocket TTS '+voice+', seçili anonim soruyu okuyor. Ağ hizmeti kullanılmadı.');
     return true;
    }
    return false;
@@ -78,6 +91,7 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
  function sync(){if(disabled())stop();}
  function onChange(){stop();sync();}
  if(picker)picker.addEventListener('change',onChange);
+ if(voicePicker)voicePicker.addEventListener('change',onChange);
  return {read,check,stop,sync,get available(){return available;},get selected(){return picker?.value==='pocket';},
-  destroy(){destroyed=true;stop();picker?.removeEventListener('change',onChange);}};
+  destroy(){destroyed=true;stop();picker?.removeEventListener('change',onChange);voicePicker?.removeEventListener('change',onChange);}};
 }
