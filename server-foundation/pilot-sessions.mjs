@@ -8,6 +8,8 @@ import {createStudentPayload} from '../accessible-player.mjs';
 import {reviewExam} from '../quality.mjs';
 import {summarizeAnonymousCohort,anonymousCohortCsv} from '../cohort-summary.mjs';
 import {pilotReviewOverview} from '../pilot-session-overview.mjs';
+import {readerText} from '../dou-reader-core.mjs';
+import {turkishSpeechText} from '../dou-speech-pronunciation.mjs';
 const now=()=>Date.now();
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
@@ -295,6 +297,19 @@ export function pilotSessions(db,{StoreError,log}){
   const payload=createStudentPayload(JSON.parse(exam.body));
   return {row,payload};
  }
+ // Returns ONLY the student-facing current question in an active, authorized session.
+ // Never sends student answers, a model answer, token text or teacher notes to TTS.
+ function speechQuestion(token,questionId){
+  const {payload}=startedSession(token);
+  if(typeof questionId!=='string'||!/^q(?:[1-9]|[12][0-9]|30)$/.test(questionId))
+   error('bad_question','Geçersiz soru numarası.',422);
+  const q=payload.questions.find(item=>item.id===questionId);
+  if(!q)error('bad_question','Sınavda böyle bir soru yok.',404);
+  if(q.audioAllowed===false)error('audio_forbidden','Bu soruda uygulama seslendirmesi kapalıdır.',403);
+  const text=turkishSpeechText(readerText(q));
+  if(text.length>1000)error('audio_too_long','Bu soru doğal ses laboratuvarı sınırını aşıyor.',422);
+  return text;
+ }
  function progress(token){
   const {row,payload}=startedSession(token);
   return {answers:row.answers?JSON.parse(row.answers):{},questionCount:payload.questions.length,expiresAt:row.expires_at,
@@ -421,6 +436,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotEligibleExams:eligibleExams,pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSave:save,pilotSubmit:submit,
+ return {pilotEligibleExams:eligibleExams,pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSpeechQuestion:speechQuestion,pilotSave:save,pilotSubmit:submit,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
