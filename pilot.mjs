@@ -77,6 +77,10 @@ function updateQuestionNavigation(focus=false){
  $('next-question').disabled=!single||activeQuestionIndex>=cards.length-1;
  douReader?.syncQuestion();
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length}`:`${cards.length} soru birlikte gösteriliyor`;
+ const question=exam.questions[activeQuestionIndex];
+ const types={choice:'Çoktan seçmeli test',short:'Klasik açık uçlu yanıt',truefalse:'Doğru / yanlış',matching:'Eşleştirme'};
+ $('pilot-current-question-type').textContent=types[question?.type]||'Soru';
+ $('pilot-question-guidance').textContent=question?.type==='short'? '800 karaktere kadar yazın; otomatik kayıt açıktır.':question?.type==='matching'? 'Eşleştirme satırlarında açılır listeleri klavyeyle seçin.':'Şıkları Tab ve ok tuşlarıyla seçin; boşlukla işaretleyin.';
  updateQuestionMap();
  if(focus&&single){
  douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();
@@ -141,9 +145,9 @@ function updateAnswerProgress(){
  updateQuestionMap();
 }
 function render(){const area=$('student-questions');area.replaceChildren();
- for(const [index,q] of exam.questions.entries()){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.id='pilot-question-heading-'+(index+1);h.tabIndex=-1;box.setAttribute('aria-labelledby',h.id);box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}const prompt=el('p',q.prompt);prompt.id='pilot-question-prompt-'+(index+1);box.append(prompt);if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
+ for(const [index,q] of exam.questions.entries()){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);box.dataset.questionType=q.type;h.id='pilot-question-heading-'+(index+1);h.tabIndex=-1;box.setAttribute('aria-labelledby',h.id);box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}const prompt=el('p',q.prompt);prompt.id='pilot-question-prompt-'+(index+1);box.append(prompt);if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
-  const field=el('fieldset');field.setAttribute('aria-labelledby',h.id+' '+prompt.id);const legend=el('legend','Yanıt');field.append(legend);
+  const field=el('fieldset');field.setAttribute('aria-labelledby',h.id+' '+prompt.id);const legend=el('legend',q.type==='short'?'Klasik yazılı yanıt':q.type==='matching'?'Eşleştirme yanıtı':'Yanıt seçimi');field.append(legend);
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
   if(q.type==='short'){
    const label=el('label','Klasik yanıtınızı yazın (en fazla 800 karakter).');
@@ -401,4 +405,4 @@ window.addEventListener('pagehide',()=>{clearSaveTimer();stopPilotClock();claim=
 // The reader is deliberately scoped to the current anonymized pilot question only.
 douReader=attachPilotReader({doc:document,win:window,
  getQuestion:()=>exam?.questions?.[activeQuestionIndex]||null,
- moveQuestion:moveReaderQuestion,announce});
+ moveQuestion:moveReaderQuestion,announce,getToken:()=>claim});
