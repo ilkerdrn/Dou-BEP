@@ -15,6 +15,7 @@ try {
             [PSCustomObject]@{
                 Name = $_.VoiceInfo.Name
                 Culture = $_.VoiceInfo.Culture.Name
+                Gender = [string]$_.VoiceInfo.Gender
                 Enabled = [bool]$_.Enabled
             }
         })
@@ -25,11 +26,13 @@ try {
     throw ('Yerel Windows SAPI envanteri okunamadi: ' + $_.Exception.Message)
 }
 $turkish = @($voices | Where-Object { $_.Enabled -and $_.Culture -like 'tr-*' })
+$turkishFemale = @($turkish | Where-Object { $_.Gender -eq 'Female' })
 Write-Host '=== DOU READER - CEVRIMDISI SES DURUMU ===' -ForegroundColor Cyan
 Write-Host ('SAPI ses sayisi: ' + $voices.Count)
 Write-Host ('Kullanilabilir Turkce SAPI ses sayisi: ' + $turkish.Count)
+Write-Host ('Kullanilabilir Turkce kadin SAPI ses sayisi: ' + $turkishFemale.Count)
 if ($voices.Count -gt 0) {
-    $voices | Sort-Object Culture,Name | Format-Table Name,Culture,Enabled -AutoSize
+    $voices | Sort-Object Culture,Name | Format-Table Name,Culture,Gender,Enabled -AutoSize
 }
 if ($turkish.Count -eq 0) {
     Write-Warning 'DOU Reader su anda gercek ekran metnini Turkce seslendiremez.'
@@ -38,6 +41,12 @@ if ($turkish.Count -eq 0) {
     Write-Host 'Yerel ses kurulumu sonrasinda bu komutu yeniden calistirarak SAPI uygunlugunu dogrulayin.'
     Write-Host 'DOU Speech deneysel WAV demosu gercek sinav metni icin alternatif degildir.'
     Write-Host 'Durum: SES HAZIR DEGIL (teknik testler bundan bagimsiz PASS olabilir).' -ForegroundColor Yellow
+} elseif ($turkishFemale.Count -eq 0) {
+    Write-Warning 'Turkce SAPI sesi var ancak yerel Turkce kadin sesi bulunamadi. Kadin sesi secimi hazir degil.'
+    Write-Host 'Sesin cinsiyeti, ses motorunun bildirdigi metadata ile belirlenir; isimden tahmin edilmez.'
+    Write-Host 'Durum: TURKCE KADIN SESI HAZIR DEGIL.' -ForegroundColor Yellow
 } else {
-    Write-Host 'Durum: Yerel Turkce SAPI sesi mevcut; duyulabilirlik ve anlasilabilirlik ayrica test edilmelidir.' -ForegroundColor Green
+    Write-Host 'Yerel Turkce kadin SAPI sesi bulundu. Bu bulgu yalnizca teknik uygunluktur.' -ForegroundColor Green
+    Write-Host 'Dogal ve anlasilir seslendirme icin insan dinleme kabulunden gecmesi gerekir.'
+    Write-Host 'Durum: TURKCE KADIN SESI ADAYI MEVCUT (PRODUKSIYON ONAYI DEGIL).' -ForegroundColor Yellow
 }
