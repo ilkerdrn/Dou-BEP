@@ -131,7 +131,7 @@ test('Pocket TTS natural female_2 WAV only plays after explicit local file selec
  picker.files=[valid];
  assert.equal(await f.nodes.get('reader-lab-play').click(),true);
  assert.equal(f.played,1);
- assert.equal(f.waves[0],valid,'Browser's selected WAV used directly, no remote TTS');
+ assert.equal(f.waves[0],valid,"Browser-selected WAV is used directly; no remote TTS");
  assert.equal(f.stopOsCalls,1);
  f.nodes.get('reader-lab-stop').click();
  assert.equal(f.revoked,1);
