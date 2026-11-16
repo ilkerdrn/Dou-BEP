@@ -90,3 +90,97 @@ body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d
  .bep-student-pilot .pilot-current-question-meta{display:grid;gap:8px}
  .bep-student-pilot .question textarea[data-pilot-classic]{min-height:210px}
 }
+
+
+/* V4 student exam readability pass (2026-11): presentation only.
+   No response, timer, voice, storage or submission semantics are changed. */
+body.bep-student-pilot:not(.high):not(.high-contrast) #player > .card:first-child{
+  border-top:4px solid #d70926;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-title{
+  color:#1d1d1b;letter-spacing:-.025em;line-height:1.2;
+  font-size:clamp(1.45rem,2.5vw,2rem);overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-info{
+  max-width:75ch;line-height:1.65;color:#4c4c49;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-map{
+  padding:clamp(17px,2.4vw,28px)!important;
+  border-radius:16px!important;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-map-heading{
+  padding-bottom:12px;border-bottom:1px solid #e6e5e1;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-map-heading h2{
+  letter-spacing:-.02em;line-height:1.25;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons{
+  grid-template-columns:repeat(auto-fill,minmax(52px,1fr));
+  gap:10px;margin-block:16px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons .pilot-question-jump{
+  min-height:52px!important;min-width:0!important;
+  font-size:1rem!important;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #question-progress{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:44px;padding:8px 12px;border-radius:10px;
+  background:#f5f5f2;color:#292925;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question{
+  padding:clamp(19px,2.5vw,30px)!important;
+  border:1px solid #e6e5e1!important;border-top:3px solid #d70926!important;
+  border-radius:16px!important;background:#fff!important;
+  box-shadow:0 5px 22px rgba(29,29,27,.045)!important;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question h2,
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question h3{
+  line-height:1.35;letter-spacing:-.01em;overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question p{
+  line-height:1.7;overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .option{
+  min-height:56px;padding:13px 15px;line-height:1.55;
+  transition:border-color .12s ease,background-color .12s ease;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .option:focus-within{
+  outline:3px solid #156bb4;outline-offset:2px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions textarea[data-pilot-classic]{
+  min-height:215px;line-height:1.75;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status,
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-answer-progress{
+  padding:12px 15px;border:1px solid #deded9;border-radius:10px;
+  background:#f8f8f6;color:#292925;overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-final-review{
+  scroll-margin-top:18px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done{
+  border-top:4px solid #18744e!important;
+}
+@media(max-width:650px){
+  body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question{
+    padding:16px!important;
+  }
+  body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons{
+    grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:8px;
+  }
+  body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons .pilot-question-jump{
+    min-height:48px!important;
+  }
+  body.bep-student-pilot #question-navigation nav.inline{
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+  }
+  body.bep-student-pilot #question-navigation nav.inline button{
+    flex:1 1 130px;
+  }
+  body.bep-student-pilot #question-progress{
+    flex:1 1 100%;order:-1;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  body.bep-student-pilot #student-questions .option{transition:none!important}
+}
