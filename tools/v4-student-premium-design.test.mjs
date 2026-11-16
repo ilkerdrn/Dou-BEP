@@ -24,7 +24,7 @@ test('new workspace keeps required exam and reader DOM contracts intact',()=>{
   assert.match(html,new RegExp('id="'+id+'"'));
  }
  assert.match(html,/<form id="answer-form">/);
- assert.match(html,/id="reader-status" role="status" aria-live="polite"/);
+ assert.match(html,/id="reader-status"[^>]*role="status" aria-live="polite"/);
  assert.match(html,/id="pilot-question-map"[^>]*aria-label="Soru numaraları"/);
  assert.match(html,/<details class="pilot-lab-disclosure">/);
  assert.equal((html.match(/<details\b/g)||[]).length,(html.match(/<\/details>/g)||[]).length);
@@ -64,4 +64,19 @@ test('answer progress uses a native element and never stores additional answer d
  assert.match(css,/\.pilot-question-jump\[data-status="review"\]/);
  assert.match(css,/\.pilot-question-jump\[aria-current="step"\]/);
  assert.match(css,/#pilot-toggle-review\[aria-pressed="true"\]/);
+});
+
+test('reader status is announced accessibly and visually distinguishes safe client states',()=>{
+ const html=source('pilot.html'),css=source('pilot-premium.css');
+ const pocket=source('dou-pocket-student-reader.mjs');
+ const panel=source('dou-reader-panel.mjs');
+ assert.match(html,/id="reader-status" data-reader-state="idle" role="status" aria-live="polite"/);
+ for(const state of ['preparing','playing','paused','stopped','complete','error']){
+  assert.ok(css.includes('[data-reader-state="'+state+'"]'),state);
+ }
+ assert.match(pocket,/status\.dataset\.readerState=state/);
+ assert.match(panel,/area\.dataset\.readerState=state/);
+ assert.match(panel,/\$\('reader-pause'\)\.disabled=!canRead/);
+ assert.match(panel,/\$\('reader-resume'\)\.disabled=!canRead/);
+ assert.ok(css.includes('@media(forced-colors:active)'));
 });
