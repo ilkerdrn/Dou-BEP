@@ -58,10 +58,23 @@ function decodePcm(wav){
   if(tag==='data')data=wav.subarray(pos+8,end);
   pos=end+(len%2);
  }
- if(!format||!data||!data.length||format.code!==1||format.channels!==1||
-    format.bits!==16||format.rate<16000||format.rate>48000||data.length%2)
-  throw new Error('Pocket TTS yalnız mono PCM16 WAV ile pilot ses verebilir.');
- return {format,data};
+ if(!format||!data||!data.length||format.channels!==1||
+    format.rate<16000||format.rate>48000||
+    !((format.code===1&&format.bits===16)||(format.code===3&&format.bits===32)))
+  throw new Error('Pocket TTS yalnız mono PCM16 veya Float32 WAV ile pilot ses verebilir.');
+ if(format.code===3){
+  if(data.length%4)throw new Error('Float32 WAV veri boyutu bozuk.');
+  // Some generators save float32 WAV; convert in memory to PCM16 for merging.
+  const floatView=new DataView(data.buffer,data.byteOffset,data.byteLength);
+  const converted=Buffer.alloc((data.length/4)*2);
+  for(let i=0;i<data.length/4;i++){
+   const v=floatView.getFloat32(i*4,true);
+   if(!Number.isFinite(v))throw new Error('Float32 WAV geçersiz ses örneği.');
+   converted.writeInt16LE(Math.round(Math.max(-1,Math.min(1,v))*32767),i*2);
+  }
+  data=converted;
+ }else if(data.length%2)throw new Error('PCM16 WAV veri boyutu bozuk.');
+ return {format:{code:1,channels:1,rate:format.rate,bits:16},data};
 }
 function combinePcm(samples){
  const a=samples[0].format;
