@@ -25,7 +25,7 @@ test('reading, written, contrast and motor aids do not require voice or answers'
  const motor=studentAccessProfile('motor');
  assert.equal(motor.largeTargets,true);
  const listen=studentAccessProfile('listen');
- assert.match(listen.description,/Yerel ses bulunursa/);
+ assert.match(listen.description,/yerel Türkçe sistem sesi bulunursa otomatik okunur/);
 });
 test('unrecognized prototype selections fail closed to default presentation only',()=>{
  for(const invalid of [null,undefined,4,{},'__proto__','constructor','unknown']){
