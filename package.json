@@ -54,6 +54,7 @@
     "reader:nvda:lab:check": "node tools/v4-nvda-code-http-acceptance.mjs",
     "ui:browser:handoff": "node tools/browser-review-handoff.mjs",
     "reader:voice:diagnose": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/dou-reader-voice-readiness.ps1",
+    "pilot:closeout": "node tools/v4-pilot-closeout.mjs",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
     "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
     "speech:fixed-phrase:export:test": "node --test tools/dou-speech-fixed-phrase-export.test.mjs",
