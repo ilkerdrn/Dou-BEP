@@ -13,6 +13,9 @@ import {mkdtemp,readFile,rm,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,isAbsolute} from 'node:path';
 
+const POCKET_VOICES=Object.freeze(['female_2','male_1']);
+export function pocketVoiceAllowed(voice){return POCKET_VOICES.includes(voice);}
+export function pocketVoiceChoices(){return [...POCKET_VOICES];}
 const MAX_CHARS=1000;
 const MAX_CHUNK=200;
 const MAX_CHUNKS=6;
@@ -96,8 +99,8 @@ function combinePcm(samples){
  }
  return out;
 }
-async function defaultRunner(chunk,out,{cli,folder}){
- const args=['generate','--text',chunk,'--voice','female_2','--emotion','sakin','-o',out];
+async function defaultRunner(chunk,out,{cli,folder,voice}){
+ const args=['generate','--text',chunk,'--voice',voice,'--emotion','sakin','-o',out];
  await new Promise((resolve,reject)=>{
   const child=spawn(cli,args,{
    cwd:folder,shell:false,windowsHide:true,stdio:'ignore',
@@ -114,7 +117,8 @@ async function defaultRunner(chunk,out,{cli,folder}){
  });
 }
 /** runner injection is for isolated deterministic tests only. */
-export async function synthesizePocketQuestion(text,{cli=process.env.BEP_POCKET_TTS_CLI,runner=defaultRunner}={}){
+export async function synthesizePocketQuestion(text,{cli=process.env.BEP_POCKET_TTS_CLI,runner=defaultRunner,voice='female_2'}={}){
+ if(!pocketVoiceAllowed(voice))throw new Error('Pocket TTS ses seçimi izinli değil.');
  if(busy)throw new Error('Pocket TTS motoru zaten bir soruyu seslendiriyor.');
  if(!cli||!isAbsolute(cli))throw new Error('Yerel Pocket TTS komut yolu tanımlanmadı.');
  const chunks=splitPocketText(text);
@@ -127,7 +131,7 @@ export async function synthesizePocketQuestion(text,{cli=process.env.BEP_POCKET_
   const samples=[];
   for(const [i,chunk] of chunks.entries()){
    const output=join(folder,'speech-'+i+'.wav');
-   await runner(chunk,output,{cli,folder});
+   await runner(chunk,output,{cli,folder,voice});
    const bytes=await readFile(output);
    samples.push(decodePcm(bytes));
   }
