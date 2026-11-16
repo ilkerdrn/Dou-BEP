@@ -143,3 +143,14 @@ Uygulanan düzeltme:
 - DOU Reader çekirdeği, konuşma bağdaştırıcısı, telaffuz ve panel testlerinden **30/30 JavaScript regresyon kontrolü geçti** (kaynak yüklemeli V8 doğrulaması); bunlar sesin duyulduğunu veya Windows Edge testini kanıtlamaz.
 
 Sonraki zorunlu manuel kontrol: Bilgisayarda Edge ses çıkışı, Windows ses karıştırıcısı/çıkış aygıtı ve kullanıcı tarafından **gerçekten duyulan** artı/eksi/eşittir/bölü değerlendirilir. NVDA noktalama/simge okuma ayarı bu web uygulamasının DOU Reader telaffuz dönüşümünden **bağımsızdır**. Doğal Türkçe özgün TTS için izinli eğitim/kayıt ve insan anlaşılabilirlik kabulü beklenir.
+
+
+## 16 Kasım 2026 — kullanıcının DOU ses seçenekleri pilotta görünmüyor geri bildirimi
+
+Kullanıcı, matematiksel işaretlerin okunuşu iyileşse de pilot ekranındaki açılır listede **kendi DOU ses alternatiflerinin bulunmadığını** bildirdi. Neden: mevcut `reader-voice` yalnız tarayıcının kurulu Türkçe `localService` seslerini listeler; **DOU Speech sentez algoritmaları işletim sistemi TTS sesi değildir**, bu listede görünmeleri beklenmez.
+
+Çözüm: Öğrenci `/pilot` ekranında Windows/Edge sistem sesi alanından **ayrı**, açıkça **deneysel** işaretlenmiş dört DOU Speech aday seçimi eklendi: `legacy` (Temel), `spectral` (Spektral), `contrast` (Kontrast), `place` (Artikülasyon). `DOU sesini dinle` yalnız sabit anonim **“Merhaba dünya”** cümlesini istem üzerine yerel WAV olarak üretip çalar. **Gerçek soru, şık, öğrenci yanıtı, kodu, kimlik bilgisi veya kullanıcı metni deneysel senteze verilmez.** Denemede mikrofon/bulut/kayıt yoktur. Öğretmenin `audioAllowed=false` kuralı korunur. Durdurma, soru değişimi ve sayfa kapanmasında oynatıcı durur, bellek içi blob URL silinir.
+
+Güvenlik incelemesi: `server.mjs` üzerindeki mevcut katı CSP korunup yalnız `/pilot` ve `/dou-reader-demo` sayfalarında **`media-src blob:`** açıldı; uzak medya/uzak TTS yetkisi verilmedi. `dou-speech-free-text.mjs` yalnız kullanıcı tarafından başlatılan deneyde dinamik yüklenir.
+
+Kaynak üzerindeki kontrol ve oynatıcı maketi denemeleri **16/16 PASS**; farklı dört modelin örnek oynatmayı başlatması ve belleğin temizlenmesi yapay tarayıcı ortamında doğrulandı. Yeni izole gerçek Windows/Edge test sonucu **BEKLENİYOR**. Önceki son Windows/Edge sonucu **249/249 PASS**; sonraki kaynak kontrolleri nedeniyle yeni koşuda daha çok kontrol beklenir, otomatik kabul sonucu henüz PASS sayılmaz. Her dört WAV'ın kullanıcı tarafından duyulabilirliği ve anlaşılabilirliği **TEST EDİLMEDİ**; DOU doğal ses motoru hâlâ üretim onaylı değildir.
