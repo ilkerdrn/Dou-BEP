@@ -105,3 +105,23 @@ test('student and demo label Windows speech honestly and supply math self-test w
  assert.match(accept,/Reader distinguishes installed OS voice from experimental DOU Speech/);
  assert.doesNotMatch(panel,/fetch\(|localStorage|sessionStorage|indexedDB/);
 });
+
+
+test('four DOU synthetic preview options remain separate from OS speech and normal exam data',()=>{
+ const page=read('pilot.html'),panel=read('dou-reader-panel.mjs');
+ const preview=read('dou-speech-pilot-previews.mjs');
+ const server=read('server.mjs'),browser=read('tools/student-browser-acceptance.mjs');
+ for(const id of ['reader-lab-voice','reader-lab-play','reader-lab-stop','reader-lab-status'])assert.ok(page.includes('id="'+id+'"'),id);
+ for(const model of ['legacy','spectral','contrast','place'])assert.ok(page.includes('value="'+model+'"'),model);
+ assert.match(page,/DOU Speech — deneysel ses seçenekleri/);
+ assert.match(page,/Yalnız “Merhaba dünya”/);
+ assert.match(panel,/attachPilotSpeechPreviews/);
+ assert.match(panel,/previews\.stop\(\)/);
+ assert.match(preview,/const FIXED_SAMPLE='Merhaba dünya'/);
+ assert.match(preview,/synthesizeLocalFreeText\(FIXED_SAMPLE/);
+ assert.match(preview,/getQuestion\(\)\?\.audioAllowed===false/);
+ assert.match(server,/dou-speech-pilot-previews\.mjs/);
+ assert.match(server,/media-src blob:/);
+ assert.match(browser,/Four DOU experimental WAV candidates are listed separately/);
+ assert.doesNotMatch(preview,/fetch\(|localStorage|sessionStorage|indexedDB|getUserMedia|MediaRecorder/);
+});
