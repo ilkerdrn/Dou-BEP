@@ -46,7 +46,7 @@ test('flagged and unanswered questions have separate navigation without storing 
 });
 
 test('expired sessions cannot clear or send answers through the interface',()=>{
- assert.match(client,/querySelectorAll\('input\[type="radio"\],select,\.pilot-clear-answer'\)/);
+ assert.match(client,/querySelectorAll\('input\[type="radio"\],select,textarea\[data-pilot-classic\],\.pilot-clear-answer'\)/);
  assert.match(client,/control\.disabled=true/);
  assert.match(client,/Oturum süresi dolduğu için yanıt değiştirilemez/);
  assert.match(client,/\$\('send'\)\.disabled=true/);
