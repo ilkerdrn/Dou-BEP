@@ -39,7 +39,7 @@ export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
   reading=true;activeVoiceId=requestedVoiceId;
   const next=()=>{
    if(current!==generation)return;
-   if(index>=chunks.length){reading=false;activeVoiceId='';onStatus('Okuma tamamlandı.');return;}
+   if(index>=chunks.length){reading=false;activeVoiceId='';onStatus('Tarayıcı okumanın tamamlandığını bildirdi. Sesin hoparlörden duyulması otomatik doğrulanamaz.');return;}
    // Recheck before *each* chunk: a previously selected local voice may have
    // been removed/replaced between async utterance callbacks.
    refresh();if(current!==generation)return;
