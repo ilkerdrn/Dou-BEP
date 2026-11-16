@@ -129,3 +129,17 @@ Yeni izole kabul komutu: `npm run reader:nvda:lab:check`. Beklenen HTTP sırası
 14 Kasım itibarıyla "GitHub denetimi" ve "Sınav Geliştirmesine Devam" geçmişleri için [ortak durum ve açık işler](docs/DOU-BEP-V4-BIRLESIK-GITHUB-DENETIMI-VE-SINAV-GELISTIRME-20261114.md) hazırlanmıştır. Aynı feature dalı kullanılmaya devam eder; `main`, PR #26 ve bağımsız Reader/Speech güvenlik dalıyla otomatik merge yapılmaz.
 
 En son doğrulanan öğrenci Edge koşusu **249/249 PASS**, öğretmen–incelemeci Edge handoff **25/25 PASS**. Diğer sohbetin sonrasındaki sentetik NVDA HTTP kod testi `fresh=200, reuse=401, new=200, reuse=401` olarak PASS raporlandı; ancak **gerçek NVDA/Türkçe ses ve erişilebilirlik kullanıcı kabulü hâlâ beklemektedir**. Windows'taki geçici GitHub DNS problemi proje testi başarısızlığı sayılmaz; ağ erişimi yeniden doğrulanmadan güncel kod yerelde varmış gibi değerlendirilmez.
+
+
+## 16 Kasım 2026 — gerçek öğrenci ekranından ses/özel karakter geri bildirimi
+
+Görsel insan denemesinde **Microsoft Tolga (tr-TR)** tarayıcı/Windows sistem sesi görünüyordu; **özgün DOU Speech sesi listede yoktu**. Ses panelinde tarayıcının `Okuma tamamlandı` mesajı bulunuyordu; bu, fiziksel olarak sesin duyulduğunun kanıtı değildir. Kullanıcı ayrıca `+` ve bazı özel karakterlerin seslendirilmediğini belirtti. **Gerçek NVDA/TTS işitsel PASS halen yoktur.**
+
+Uygulanan düzeltme:
+- `dou-speech-pronunciation.mjs`: DOU Reader'ın **yalnız seslendirme metninde** `+`, `-`, `=`, `*`, sayısal `/`, `%`, `°`, `<`, `>`, `₺` ve mevcut gelişmiş matematik simgelerinin Türkçe sözcüklerle okunması. URL, e-posta ve tarihlerin korunması; soru metni, seçenekler, yanıt ve kodların değiştirilmemesi.
+- `pilot.html`, `dou-reader-demo.html`, `dou-reader-panel.mjs`: gerçek Windows/Edge sistem sesi ile bağımsız, **üretim için onaysız** DOU Speech deneyini ayıran açık etiket; yalnız sabit anonim `3 + 5 = 8; 9 - 4 = 5; 1/2` içeriği okutan sistem ses denemesi. Ses denemesi de sorunun `audioAllowed=false` yetkisini aşmaz.
+- `dou-speech.mjs`: tarayıcının `onend` bildirimi, **gerçek ses çıktısı doğrulandı** iddiası oluşturmaz.
+- `tools/student-browser-acceptance.mjs`: ses kaynağı ayrımını ve deneme düğmesini doğrulayan ek Edge yapısal kontrol. Bilinen önceki Windows sonucu **249/249 PASS**; yeni sürümün beklenen kontrol sayısı **250**, Windows testi **BEKLENİYOR**.
+- DOU Reader çekirdeği, konuşma bağdaştırıcısı, telaffuz ve panel testlerinden **30/30 JavaScript regresyon kontrolü geçti** (kaynak yüklemeli V8 doğrulaması); bunlar sesin duyulduğunu veya Windows Edge testini kanıtlamaz.
+
+Sonraki zorunlu manuel kontrol: Bilgisayarda Edge ses çıkışı, Windows ses karıştırıcısı/çıkış aygıtı ve kullanıcı tarafından **gerçekten duyulan** artı/eksi/eşittir/bölü değerlendirilir. NVDA noktalama/simge okuma ayarı bu web uygulamasının DOU Reader telaffuz dönüşümünden **bağımsızdır**. Doğal Türkçe özgün TTS için izinli eğitim/kayıt ve insan anlaşılabilirlik kabulü beklenir.
