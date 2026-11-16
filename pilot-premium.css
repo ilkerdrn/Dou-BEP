@@ -312,6 +312,10 @@ body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card:last-ch
 body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card:last-child h2{
  font-size:20px;letter-spacing:-.025em;
 }
+/* Short viewports and large question maps must remain fully scrollable. */
+@media(min-width:1024px) and (max-height:900px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation{position:static;}
+}
 @media(max-width:1023px){
  body.bep-student-pilot:not(.high):not(.high-contrast) #player{
   display:block;
