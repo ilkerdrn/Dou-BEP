@@ -11,7 +11,7 @@ function element(value=''){
   change(value){this.value=value;listeners.get('change')?.();},
  };
 }
-function fixture({defer=false}={}){
+function fixture({defer=false,failure=null}={}){
  const engine=element('pocket'),voice=element('female_2'),rate=element('1'),status=element();
  engine.options=[{value:'system',disabled:false},{value:'pocket',disabled:true}];
  voice.options=[{value:'female_2',disabled:true},{value:'male_1',disabled:true}];
@@ -24,6 +24,7 @@ function fixture({defer=false}={}){
    available:true,voices:['female_2','male_1']
   })};
   if(defer)return await new Promise(resolve=>pending.push({resolve,config}));
+  if(failure)return {ok:false,status:failure==='speech_busy'?429:503,json:async()=>({error:failure})};
   return {ok:true,headers:{get:()=> 'audio/wav'},
    blob:async()=>({size:128})};
  };
@@ -90,5 +91,22 @@ test('question change blocks audio and invalidates an in-flight Pocket response'
  lab.pending[0].resolve({ok:true,headers:{get:()=> 'audio/wav'},blob:async()=>({size:100})});
  assert.equal(await p,false);
  assert.equal(lab.audios.length,0);
+ lab.reader.destroy();
+});
+
+test('busy synthesis surfaces actionable safe message without playing stale audio',async()=>{
+ const lab=fixture({failure:'speech_busy'});
+ await lab.reader.check();
+ assert.equal(await lab.reader.read(),false);
+ assert.match(lab.status.textContent,/Önceki ses üretimi/);
+ assert.equal(lab.audios.length,0);
+ lab.reader.destroy();
+});
+
+test('timeout presents a distinct safe explanation',async()=>{
+ const lab=fixture({failure:'speech_timeout'});
+ await lab.reader.check();
+ assert.equal(await lab.reader.read(),false);
+ assert.match(lab.status.textContent,/zaman sınırını aştı/);
  lab.reader.destroy();
 });
