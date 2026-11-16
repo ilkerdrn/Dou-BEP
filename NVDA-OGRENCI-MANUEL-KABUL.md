@@ -58,3 +58,17 @@ Her satıra **PASS / FAIL / TEST EDİLMEDİ** ve kısa, kimliksiz açıklama yaz
 - **Otomatik 245/245 Edge PASS**, bu matrisin PASS olduğu anlamına gelmez.
 - Her kritik kullanım senaryosu, insan değerlendirmesiyle ve kimliksiz kanıtla **PASS** olmadan görme/işitme/motor erişim açısından kapatılmış sayılmaz.
 - NVDA testini bir geliştiricinin yapması ilk hata taraması olabilir; kurumsal üretim kabulü için uygun erişilebilirlik uzmanı ve ilgili kullanıcılarla ek değerlendirme gerekir.
+
+
+## NLP test + klasik soru ve etkin Pocket kadın sesi (yalnız laboratuvar)
+
+Gönderilen YZP207 vize DOCX dosyası yalnız **20 çoktan seçmeli** soru içerir. Ders konularından *yeniden yazılmış* anonim laboratuvar örnekleri `npm run reader:nvda:nlp` ile açılır: **2 test + 2 yeni klasik + 1 doğru/yanlış + 1 eşleştirme**. Ham sınav belgesi veya cevap anahtarı GitHub'a eklenmemiştir.
+
+**Gerçek pilotta klasik yanıt desteği hâlâ kapalıdır.** Bu demo yeni izole geçici SQLite veritabanında, yalnız `BEP_PILOT_ONLY=1` ve `BEP_PILOT_CLASSIC_SAMPLE=1` iken 800 karakter sınırlı klasik yanıt kaydı yapar. İlgili otomatik HTTP kabul komutu `npm run reader:nvda:nlp:check`; kişisel bilgi kullanmayın.
+
+Doğal kadın sesi **Pocket TTS Turkish female_2** sadece izinli deneysel çalışmada sınavın seçili soru metnini ve öğrencinin görebildiği şıkları okuyabilir. Yerel Windows uygulaması kurulu değilse veya araştırma onayı verilmediyse seçenek devre dışı kalır. Etkinleştirme ve model lisansları: [NLP + Pocket kadın sesi laboratuvar rehberi](docs/DOU-NLP-KLASIK-POCKET-KADIN-SES-LAB.md). Model metni sunucu tarafından anonim yetkili oturumdan türetilir; cevap anahtarı veya öğrencinin yazdığı cevap gönderilmez.
+
+- **Klavye kabulü:** Sınava girişte sesli erişim seçimi → Enter ile `Soruları aç` → ilk soru okuması → Enter ile yeni soru → eski sesin durması ve yenisinin başlaması → klasik yanıta Tab ile geçme → 800 karakter sınırı → otomatik ara kayıt → son kontrol ve tek teslim.
+- **Ses kabulü:** Kadın sesinin `female_2` olarak seçilebilmesi, gerçek WAV'ın hoparlörden duyulması, Türkçe NLP terimlerini ve seçenekleri anlamlı okuması, NVDA ile üst üste konuşmaması, ses izni olmayan soruda susması.
+- **Kabul sonucu:** Bu güncellemenin Windows/Edge, canlı Pocket model ve insan NVDA testi henüz **TEST EDİLMEDİ**. Önceki 252/252 Edge sonucu bu yeni değişiklikleri içermez.
+
