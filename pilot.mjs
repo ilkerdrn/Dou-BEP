@@ -155,11 +155,15 @@ function render(){const area=$('student-questions');area.replaceChildren();
    const textarea=el('textarea');textarea.id='pilot-classic-'+(index+1);
    textarea.name=q.id;textarea.rows=7;textarea.maxLength=800;
    textarea.setAttribute('data-pilot-classic','1');
-   textarea.setAttribute('aria-describedby',prompt.id+' pilot-classic-hint-'+(index+1));
+   textarea.setAttribute('aria-describedby',prompt.id+' pilot-classic-hint-'+(index+1)+' pilot-classic-count-'+(index+1));
    textarea.autocomplete='off';
    const hint=el('p','Bu alan yalnız sentetik NLP laboratuvarında aktiftir. Kişisel bilgi yazmayın; otomatik puanlama yoktur.');
    hint.id='pilot-classic-hint-'+(index+1);hint.className='muted';
-   field.append(label,textarea,hint);
+   const count=el('p','800 karakter kaldı.');
+   count.id='pilot-classic-count-'+(index+1);count.className='muted pilot-classic-count';
+   count.setAttribute('aria-live','off');
+   textarea.addEventListener('input',()=>updateClassicCharacterCount(textarea));
+   field.append(label,textarea,hint,count);
   }
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);
@@ -176,7 +180,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
     if(select.value!==''){select.value='';changed=true;}
    }
    const classic=field.querySelector('textarea[data-pilot-classic]');
-   if(classic&&classic.value){classic.value='';changed=true;}
+   if(classic&&classic.value){classic.value='';updateClassicCharacterCount(classic);changed=true;}
    if(!changed)return announce('Soru '+q.number+' için temizlenecek bir yanıt bulunmuyor.');
    resetFinalReview();updateAnswerProgress();scheduleAutoSave();
    announce('Soru '+q.number+' yanıtı temizlendi. Yeni seçim yapabilir veya boş bırakabilirsiniz.');
@@ -247,6 +251,11 @@ function resetFinalReview(){
  $('pilot-final-review').hidden=true;
  $('send').textContent='Teslim özetini kontrol et';
 }
+function updateClassicCharacterCount(textarea){
+ const remaining=Math.max(0,textarea.maxLength-textarea.value.length);
+ const counter=document.getElementById('pilot-classic-count-'+textarea.id.slice('pilot-classic-'.length));
+ if(counter)counter.textContent=remaining+' karakter kaldı.';
+}
 $('answer-form').addEventListener('input',event=>{
  if(event.target.matches('textarea[data-pilot-classic]')){
   resetFinalReview();updateAnswerProgress();scheduleAutoSave();
@@ -268,7 +277,7 @@ function applySavedAnswers(saved){
    if(radio)radio.checked=true;
   }else if(q.type==='short'&&typeof answer==='string'){
    const text=[...form.querySelectorAll('textarea[data-pilot-classic]')].find(x=>x.name===q.id);
-   if(text)text.value=answer.slice(0,800);
+   if(text){text.value=answer.slice(0,800);updateClassicCharacterCount(text);}
   }else if(q.type==='matching'&&answer&&typeof answer==='object'){
    for(const left of q.left){
     const field=[...form.querySelectorAll('select')].find(x=>x.name===q.id+'_'+left.id);
