@@ -16,7 +16,8 @@ function element(value=''){
 function setup(){
  const nodes=new Map([
   ['reader-lab-voice',element('legacy')],['reader-lab-play',element()],
-  ['reader-lab-stop',element()],['reader-lab-status',element()]
+  ['reader-lab-stop',element()],['reader-lab-status',element()],
+  ['reader-lab-pocket-file',element()]
  ]);
  let q={number:1,prompt:'PRIVATE_EXAM_QUESTION_MUST_NOT_BE_READ',audioAllowed:true};
  let revoked=0,played=0,paused=0,created=0;
@@ -117,17 +118,29 @@ test('stopping experimental playback revokes object URLs and removes listeners',
 });
 
 
-test('Pocket TTS female_2 plays only user-selected local RIFF WAV and never uploads or sends text',async()=>{
+test('Pocket TTS natural female_2 WAV only plays after explicit local file selection',async()=>{
  const f=setup();
  const select=f.nodes.get('reader-lab-voice');
+ const picker=f.nodes.get('reader-lab-pocket-file');
  select.value='pocket-female2';
- const fileEl=element();
+ assert.equal(await f.nodes.get('reader-lab-play').click(),false);
+ assert.equal(f.played,0,'No silent access to files from Windows paths');
  const bytes=new Uint8Array(4096);
  bytes.set([82,73,70,70],0);bytes.set([87,65,86,69],8);
- const sample=new Blob([bytes],{type:'audio/wav'});
- fileEl.files=[sample];
- // The fixture must provide the browser's file picker when this option is used.
- // Without an explicit user-selected file, playback must fail closed.
+ const valid=new Blob([bytes],{type:'audio/wav'});
+ picker.files=[valid];
+ assert.equal(await f.nodes.get('reader-lab-play').click(),true);
+ assert.equal(f.played,1);
+ assert.equal(f.waves[0],valid,'Browser's selected WAV used directly, no remote TTS');
+ assert.equal(f.stopOsCalls,1);
+ f.nodes.get('reader-lab-stop').click();
+ assert.equal(f.revoked,1);
+ picker.files=[new Blob([new Uint8Array(4096)],{type:'audio/wav'})];
+ assert.equal(await f.nodes.get('reader-lab-play').click(),false,'Not just any file renamed .wav');
+ assert.equal(f.played,1);
+ f.setQuestion({number:2,prompt:'BLOCKED',audioAllowed:false});
+ f.preview.syncQuestion();
+ assert.equal(picker.disabled,true);
  assert.equal(await f.nodes.get('reader-lab-play').click(),false);
  f.preview.destroy();
  const src=readFileSync(new URL('./dou-speech-pilot-previews.mjs',import.meta.url),'utf8');
