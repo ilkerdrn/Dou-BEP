@@ -962,3 +962,26 @@ body.bep-student-pilot:not(.high):not(.high-contrast) #player .pilot-session-hel
 @media(forced-colors:active){
  .bep-student-pilot #player .pilot-session-help{border:1px solid CanvasText}
 }
+
+/* V4.6 verified autosave styling: never imply a successful save before
+   server acknowledgment. State text remains the primary accessible cue. */
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status{
+ border:1px solid #dbe3ed;border-left:4px solid #8593a7;
+ border-radius:12px;background:#f6f8fb;color:#3b4d66;
+ padding:13px 16px;line-height:1.65;overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status[data-save-state="pending"]{
+ background:#fffbf2;border-color:#ecdfbd;border-left-color:#bf872a;color:#71501d;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status[data-save-state="saving"]{
+ background:#f2f7fe;border-color:#cedff4;border-left-color:#477bab;color:#345e84;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status[data-save-state="saved"]{
+ background:#f1f9f4;border-color:#cde6d6;border-left-color:#2d8760;color:#236045;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status[data-save-state="error"]{
+ background:#fff4f5;border-color:#efc9cf;border-left-color:#b51d3d;color:#94213a;
+}
+@media(forced-colors:active){
+ .bep-student-pilot #pilot-save-status{border:2px solid CanvasText;}
+}
