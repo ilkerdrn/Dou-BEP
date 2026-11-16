@@ -1,5 +1,5 @@
 /** v1.5 local pilot: anonymous, one-time text choice/matching submissions only.
- * Never store learner names, free text, diagnoses, IP addresses, or audio.
+ * Never store learner names, diagnoses, IP addresses, or audio.\n * Bounded classic text exists only in the explicitly isolated synthetic lab.
  * No grade inference; teacher reviews selections. Codes/tokens are SHA256 hashed at rest.
  */
 import {randomBytes,randomUUID,createHash} from 'node:crypto';
@@ -44,6 +44,7 @@ export function pilotSessions(db,{StoreError,log}){
    locked_until INTEGER NOT NULL DEFAULT 0
  );CREATE INDEX IF NOT EXISTS idx_pilot_redeem_failures ON pilot_redeem_throttle(last_failure_at);`);
  const error=(code,message,status=400)=>{throw new StoreError(code,message,status);};
+ const syntheticClassicEnabled=()=>process.env.BEP_PILOT_ONLY==='1'&&process.env.BEP_PILOT_CLASSIC_SAMPLE==='1';
  // Run the authorization, current-revision check, and subsequent mutation under
  // the same SQLite writer lock. This closes cross-connection TOCTOU windows.
  function withWriterLock(action){
@@ -101,7 +102,8 @@ export function pilotSessions(db,{StoreError,log}){
   const source=JSON.parse(exam.body),check=reviewExam(source);
   if(check.errorCount)error('quality_errors','Sınavda zorunlu kalite hatası var.',422);
   let payload;try{payload=createStudentPayload(source);}catch{error('accessibility_errors','Erişilebilir sınav için görsel betimleme kontrollerini tamamlayın.',422);}
-  if(payload.questions.length<1||payload.questions.length>30||payload.questions.some(q=>!['choice','truefalse','matching'].includes(q.type)))
+  const allowed=syntheticClassicEnabled()?['choice','truefalse','matching','short']:['choice','truefalse','matching'];
+  if(payload.questions.length<1||payload.questions.length>30||payload.questions.some(q=>!allowed.includes(q.type)))
    error('unsupported_questions','Pilot oturumu yalnızca 1–30 adet çoktan seçmeli, doğru-yanlış ve eşleştirme sorusunu kabul eder.',422);
   return payload;
  }
@@ -271,11 +273,17 @@ export function pilotSessions(db,{StoreError,log}){
     if(Object.keys(a).some(k=>!left.has(k)))error('invalid_answers','Geçersiz eşleştirme satırı.');
     for(const [l,r] of Object.entries(a)){if(typeof r!=='string'||!right.has(r))error('invalid_answers','Geçersiz eşleştirme yanıtı.');res[l]=r;}
     result[q.id]=res;
+   }else if(q.type==='short'&&syntheticClassicEnabled()){
+    // This does NOT change the default real-pilot policy; disposable synthetic DB only.
+    if(typeof a!=='string'||[...a].length>800||/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(a))
+     error('invalid_answers','Klasik yanıt en fazla 800 karakter ve düz metin olmalıdır.');
+    const normalized=a.trim();if(normalized)result[q.id]=normalized;
    }else error('unsupported_questions','Bu soru türü pilot için desteklenmiyor.');
   }
   return result;
  }
- // A draft is anonymous choice/matching data only. The bearer capability remains
+ // A draft is anonymous choice/matching data (bounded classic text ONLY in synthetic lab).
+ // The bearer capability remains
  // in memory, is bound to one started session, and cannot write after submission.
  function startedSession(token){
   if(typeof token!=='string'||token.length<25||token.length>200)error('invalid_session','Oturum anahtarı geçersiz.',401);
