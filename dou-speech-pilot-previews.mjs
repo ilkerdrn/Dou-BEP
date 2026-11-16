@@ -59,7 +59,6 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
    return false;
   }
   stop();
-  onStart(); // Stop the OS reader so two unrelated engines cannot overlap.
   const current=generation;
   status.textContent='DOU Speech sabit sentetik ses örneği hazırlanıyor…';
   try{
@@ -90,6 +89,9 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
     wavBlob=new win.Blob([output.wav],{type:'audio/wav'});
    }
    if(destroyed||current!==generation||getQuestion()?.audioAllowed===false)return false;
+   // Stop the system reader only after validating the chosen WAV.
+   // A missing or corrupt Pocket sample must not interrupt active reading.
+   onStart();
    objectUrl=win.URL.createObjectURL(wavBlob);
    audio=new win.Audio(objectUrl);
    const player=audio;
