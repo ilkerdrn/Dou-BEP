@@ -129,6 +129,7 @@ const allowed={
  '/dou-speech-quality.mjs':['dou-speech-quality.mjs','text/javascript; charset=utf-8'],
  '/dou-speech-pronunciation.mjs':['dou-speech-pronunciation.mjs','text/javascript; charset=utf-8'],
  '/dou-reader-panel.mjs':['dou-reader-panel.mjs','text/javascript; charset=utf-8'],
+ '/dou-pocket-student-reader.mjs':['dou-pocket-student-reader.mjs','text/javascript; charset=utf-8'],
  '/dou-speech-pilot-previews.mjs':['dou-speech-pilot-previews.mjs','text/javascript; charset=utf-8'],
  '/dou-reader.css':['dou-reader.css','text/css; charset=utf-8'],
  '/pilot-admin.mjs':['pilot-admin.mjs','text/javascript; charset=utf-8'],
