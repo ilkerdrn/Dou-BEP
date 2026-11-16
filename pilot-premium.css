@@ -1,0 +1,226 @@
+/* DOU BEP V4 — premium student workspace, locally served.
+   Presentation only: no timer, answers, voice, storage or submission logic.
+   All normal-mode rules are scoped to the student pilot; deliberate contrast
+   modes and reduced-motion preferences remain first-class. */
+body.bep-student-pilot:not(.high):not(.high-contrast){
+ --student-red:#c5082b;--student-dark:#171c27;--student-muted:#647083;
+ --student-line:#e6eaf0;--student-paper:#f5f7fb;
+ color:var(--student-dark);background:var(--student-paper);
+ font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-topbar{
+ position:relative;display:flex;align-items:center;justify-content:space-between;
+ min-height:82px;padding:14px max(22px,calc((100vw - 1230px)/2));
+ background:#fff;border-bottom:1px solid #e5e8ef;box-shadow:0 1px 6px #151e3110;
+}
+.bep-student-pilot .pilot-topbar .brand{display:flex;align-items:center;gap:13px;letter-spacing:0}
+.bep-student-pilot .pilot-topbar .mark{width:49px;height:49px;margin:0;border-radius:14px;font-size:14px;letter-spacing:.01em}
+.bep-student-pilot .pilot-brand-copy{display:flex;flex-direction:column;gap:1px}
+.bep-student-pilot .pilot-brand-copy strong{font-size:14px;font-weight:820;letter-spacing:.04em}
+.bep-student-pilot .pilot-brand-copy small{font-size:12px;font-weight:520;letter-spacing:0;color:#657083}
+.bep-student-pilot .pilot-topbar-meta{display:flex;gap:12px;align-items:center}
+.bep-student-pilot .pilot-secure-indicator{font-size:12px;font-weight:740;color:#22654b;
+ background:#edf8f2;border:1px solid #ccebd9;padding:7px 12px;border-radius:100px}
+.bep-student-pilot .pilot-secure-indicator::before{content:"";display:inline-block;background:#26956a;
+ width:7px;height:7px;margin-right:8px;border-radius:50%;vertical-align:2px}
+body.bep-student-pilot:not(.high):not(.high-contrast) main{max-width:1220px;padding:30px 24px 88px}
+body.bep-student-pilot:not(.high):not(.high-contrast) main>.card,
+body.bep-student-pilot:not(.high):not(.high-contrast) #player>.card,
+body.bep-student-pilot:not(.high):not(.high-contrast) #player>.reader-panel,
+body.bep-student-pilot:not(.high):not(.high-contrast) #player>.pilot-question-map,
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card,
+body.bep-student-pilot:not(.high):not(.high-contrast) #done{
+ border-radius:20px;box-shadow:0 8px 28px #26344b0a;border:1px solid var(--student-line);
+ margin-block:16px;padding:clamp(22px,2.5vw,32px);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .eyebrow{
+ color:#a4102e;font-size:11px;letter-spacing:.11em;font-weight:800;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .hero{
+ padding-block:40px;background:linear-gradient(120deg,#fff 0%,#fff 67%,#fff2f3 100%);
+ border-top:1px solid var(--student-line);border-left:5px solid var(--student-red);
+}
+.bep-student-pilot .pilot-section-heading,
+.bep-student-pilot .pilot-reader-heading{
+ display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) :is(#exam-title,#reader-title){
+ margin:7px 0 10px;line-height:1.16;letter-spacing:-.035em;font-weight:820;color:#1c2230;
+}
+.bep-student-pilot .pilot-session-badge,
+.bep-student-pilot .pilot-reader-mode{display:inline-flex;align-items:center;min-height:34px;
+ font-size:12px;font-weight:730;border-radius:100px;padding:6px 12px;
+ border:1px solid #dbe2ec;color:#4b5770;background:#f8fafc}
+.bep-student-pilot .pilot-reader-subtitle{font-size:14px;line-height:1.5;margin:0;color:#69758a}
+body.bep-student-pilot:not(.high):not(.high-contrast) #player>.card:first-child{
+ border-top:1px solid var(--student-line);border-left:4px solid var(--student-red);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-time-strip{
+ display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+ padding:15px 18px;margin-block:17px;background:#f9fafc;border:1px solid #e5e9f0;
+ border-radius:13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-time-text{
+ color:#273349;font-size:clamp(14px,1.5vw,18px);letter-spacing:-.015em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-access-toolbar,
+body.bep-student-pilot:not(.high):not(.high-contrast) .reader-auto-settings{
+ background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .hint{
+ border:1px solid #e3eaf3;border-left:4px solid #8795ae;
+ background:#f8fafc;color:#536175;border-radius:12px;font-size:13px;line-height:1.65;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader.reader-panel{
+ background:#fff;border:1px solid #e5e9f0;
+ border-top:4px solid var(--student-red);padding:clamp(22px,2.5vw,32px);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .reader-limits,
+body.bep-student-pilot:not(.high):not(.high-contrast) #reader-engine-help{
+ color:#687385;font-size:12px;line-height:1.7;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-settings{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;
+ margin-top:16px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-settings label{
+ background:#f8fafc;border:1px solid #e4eaf2;border-radius:13px;
+ padding:12px 14px;margin:0;font-size:13px;font-weight:750;color:#354157;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-settings select{
+ width:100%;margin:9px 0 0;min-height:46px;
+ border-radius:9px;border:1px solid #cbd4e1;background:#fff;color:#243047;
+ font-size:14px;padding:9px 12px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .reader-actions{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:21px 0 13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions button{
+ min-width:0;min-height:49px;width:100%;padding:10px 12px;
+ border-radius:11px;border:1px solid #d7deeb;background:#fff;
+ color:#334159;font-size:13px;font-weight:760;box-shadow:none;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-read{
+ grid-column:span 2;background:var(--student-red);border-color:var(--student-red);color:#fff;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-pause,
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-resume{
+ background:#fff5f6;border-color:#f1cad3;color:#94132e;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-test{
+ grid-column:span 2;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions button:hover:not(:disabled){
+ background:#f3f6fa;border-color:#abb8ce;filter:none;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-read:hover:not(:disabled){
+ background:#ac0826;border-color:#ac0826;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #reader-status{
+ background:#f2f6fd;border:1px solid #dce6f7;border-left:4px solid #527fc6;
+ border-radius:12px;color:#294468;font-size:13px;line-height:1.65;
+ font-weight:650;padding:13px 16px;overflow-wrap:anywhere;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-lab-disclosure{
+ margin-top:19px;border-top:1px solid #e5eaf2;padding-top:12px;
+}
+.bep-student-pilot .pilot-lab-disclosure>summary{
+ cursor:pointer;min-height:46px;display:flex;align-items:center;
+ justify-content:space-between;gap:12px;list-style:none;padding:12px 4px;
+ font-weight:740;font-size:13px;color:#566277;
+}
+.bep-student-pilot .pilot-lab-disclosure>summary::-webkit-details-marker{display:none}
+.bep-student-pilot .pilot-lab-disclosure>summary::before{
+ content:"+";display:inline-grid;place-items:center;width:24px;height:24px;flex:0 0 24px;
+ border-radius:7px;background:#eff2f7;color:#485b76;font-weight:900;font-size:17px;
+}
+.bep-student-pilot .pilot-lab-disclosure[open]>summary::before{content:"−"}
+.bep-student-pilot .pilot-lab-hint{margin-left:auto;color:#68778c;
+ font-weight:620;font-size:11px}
+body.bep-student-pilot:not(.high):not(.high-contrast) .reader-panel .reader-experimental{
+ margin-top:8px;background:#f8f9fc;border-color:#e1e6ef;color:#273249;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation{
+ border-left:0;border-top:4px solid #d1dbe8;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-map-heading{
+ display:flex;align-items:center;justify-content:space-between;gap:18px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-map-heading h2{
+ color:#1c2536;letter-spacing:-.025em;font-size:20px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons{
+ grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:10px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-question-buttons .pilot-question-jump{
+ min-width:0;min-height:52px;border-radius:12px;font-weight:780;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-current-question-meta{
+ background:#f8fafc;border:1px solid #e3e9f3;border-radius:12px;color:#39465a;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-current-question-type{
+ background:#fff;border:1px solid #cbd7e7;color:#9c1530;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question{
+ background:#fff;border:1px solid var(--student-line);border-top:3px solid var(--student-red);
+ border-radius:18px;padding:clamp(22px,3vw,34px);
+ box-shadow:0 10px 30px #1a27420c;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .option{
+ border:1px solid #dce3ed;border-radius:12px;padding:15px 17px;min-height:58px;
+ background:#fff;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .option:has(input:checked){
+ background:#fff3f5;border-color:#cf3450;
+ box-shadow:inset 0 0 0 1px #cf3450;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-answer-progress,
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status{
+ border:1px solid #dfe6f0;border-radius:11px;background:#f8fafc;color:#334357;
+ padding:13px 16px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) :is(#send,#ready-start,#redeem-form button[type="submit"]){
+ min-height:50px;padding-inline:24px;border-radius:11px;font-weight:790;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) :is(input,select,textarea):disabled{
+ background:#f0f2f6;color:#677084;opacity:1;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) button:disabled{opacity:.56}
+body.bep-student-pilot:not(.high):not(.high-contrast) :is(button,select,input,textarea,a,summary):focus-visible{
+ outline:3px solid #156bb4!important;outline-offset:3px!important;
+}
+@media(max-width:880px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions{grid-template-columns:repeat(3,minmax(0,1fr))}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-settings{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:650px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) main{padding:16px 13px 64px}
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-topbar{padding:12px 15px;min-height:70px}
+ .bep-student-pilot .pilot-brand-copy strong{font-size:12px}
+ .bep-student-pilot .pilot-brand-copy small{font-size:11px}
+ .bep-student-pilot .pilot-secure-indicator{display:none}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-settings{grid-template-columns:minmax(0,1fr)}
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-map-heading{align-items:flex-start;flex-direction:column}
+ body.bep-student-pilot:not(.high):not(.high-contrast) main>.card,
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player>.card,
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player>.reader-panel,
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player>.pilot-question-map,
+ body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card{
+  padding:18px;border-radius:16px;
+ }
+}
+@media(max-width:390px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions{grid-template-columns:1fr 1fr}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-actions #reader-test{grid-column:span 2}
+}
+@media(prefers-reduced-motion:reduce){
+ body.bep-student-pilot *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+@media(forced-colors:active){
+ .bep-student-pilot .pilot-secure-indicator,
+ .bep-student-pilot .pilot-session-badge,
+ .bep-student-pilot .pilot-reader-mode,
+ .bep-student-pilot .pilot-lab-disclosure>summary{forced-color-adjust:auto;border:1px solid CanvasText}
+ .bep-student-pilot .pilot-lab-disclosure>summary::before{background:Canvas;color:CanvasText;border:1px solid CanvasText}
+}
