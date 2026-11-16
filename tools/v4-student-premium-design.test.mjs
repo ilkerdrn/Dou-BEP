@@ -181,3 +181,19 @@ test('full-width student workspace is local and preserves every exam interaction
  assert.doesNotMatch(css,/https?:\/\//);
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
 });
+
+test('full-screen exam remains uncluttered in high contrast and mobile reading order',()=>{
+ const html=source('pilot.html'),css=source('pilot-workspace.css');
+ assert.ok(html.indexOf('class="pilot-workspace-sidebar"')<html.indexOf('class="pilot-workspace-main"'));
+ assert.ok(css.includes('main#main:has(#entry[hidden]) .pilot-workspace-sidebar'));
+ assert.ok(css.includes('main#main:has(#entry[hidden]) .hero.card'));
+ assert.ok(css.includes('display:none!important;'));
+ assert.ok(css.includes('body.bep-student-pilot:is(.high,.high-contrast) main#main .pilot-stage-track li'));
+ assert.ok(css.includes('outline:3px solid Highlight'));
+ const mobile=css.slice(css.indexOf('@media(max-width:930px)'));
+ assert.ok(mobile.includes('.pilot-workspace-sidebar'));
+ assert.ok(mobile.includes('display:none;'));
+ assert.ok(!mobile.includes('order:2;'));
+ assert.ok(css.includes('@media(max-width:480px)'));
+ assert.ok(css.includes('#entry #code'));
+});
