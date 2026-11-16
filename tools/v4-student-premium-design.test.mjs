@@ -41,3 +41,14 @@ test('desktop question navigation is beside the question form, mobile stacks nat
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/@media\(forced-colors:active\)/);
 });
+
+test('studio reader documentation remains accessible without crowding primary voice controls',()=>{
+ const html=source('pilot.html'),css=source('pilot-premium.css');
+ for(const id of ['reader-limits','reader-engine-help','reader-read','reader-pause',
+  'reader-resume','reader-stop','reader-status'])assert.match(html,new RegExp('id="'+id+'"'));
+ assert.equal((html.match(/<details\\b/g)||[]).length,(html.match(/<\\/details>/g)||[]).length);
+ assert.match(html,/<details class="pilot-reader-disclosure">/);
+ assert.match(html,/class="pilot-question-workspace-heading"/);
+ assert.match(css,/#player:not\\(\\[hidden\\]\\)/);
+ assert.match(css,/#dou-reader \\.reader-actions/);
+});
