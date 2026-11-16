@@ -122,6 +122,44 @@ test('four DOU synthetic preview options remain separate from OS speech and norm
  assert.match(preview,/getQuestion\(\)\?\.audioAllowed===false/);
  assert.match(server,/dou-speech-pilot-previews\.mjs/);
  assert.match(server,/media-src blob:/);
- assert.match(browser,/Four DOU experimental WAV candidates are listed separately/);
+ assert.match(browser,/Four experimental DOU voices and the separate natural Pocket TTS sample/);
  assert.doesNotMatch(preview,/fetch\(|localStorage|sessionStorage|indexedDB|getUserMedia|MediaRecorder/);
+});
+
+
+test('student can choose opt-in hands-free local voice without requiring a click on each question',()=>{
+ const html=read('pilot.html');
+ const script=read('pilot.mjs');
+ const access=read('student-access-profiles.mjs');
+ const browser=read('tools/student-browser-acceptance.mjs');
+ assert.match(html,/id="reader-auto" type="checkbox" disabled/);
+ assert.match(html,/id="reader-auto-note"/);
+ assert.match(html,/Sesli erişimde soruları otomatik oku/);
+ assert.match(access,/description:'Sesli erişimi seçtiniz/);
+ assert.match(script,/function maybeAutoReadQuestion\(force=false\)/);
+ assert.match(script,/if\(!exam\|\|!claim\|\|\$\('player'\)\.hidden\|\|!\$\('reader-auto'\)\.checked\|\|!douReader\)return/);
+ assert.match(script,/if\(!q\|\|q\.audioAllowed===false\)/);
+ assert.match(script,/if\(focus&&single\)\{[^]*?maybeAutoReadQuestion\(\);/);
+ assert.match(script,/profile\.id==='listen'/);
+ assert.match(script,/maybeAutoReadQuestion\(true\);/);
+ assert.match(script,/\$\('reader-auto'\)\.addEventListener\('change'/);
+ assert.match(script,/Otomatik okuma kapatıldı/);
+ assert.match(browser,/Opt-in listen mode enables automatic question reading/);
+ assert.doesNotMatch(script,/sessionStorage|localStorage|indexedDB/);
+});
+
+test('Pocket TTS natural WAV stays a separate user-selected local sample, not a production exam engine',()=>{
+ const html=read('pilot.html'),preview=read('dou-speech-pilot-previews.mjs');
+ const browser=read('tools/student-browser-acceptance.mjs');
+ assert.match(html,/Pocket TTS Turkish — female_2/);
+ assert.match(html,/id="reader-lab-pocket-file" type="file"/);
+ assert.match(html,/DOU-PocketTTS-TR001-female_2\.wav/);
+ assert.match(preview,/const POCKET_SAMPLE_ID='pocket-female2'/);
+ assert.match(preview,/MAX_LOCAL_WAV_BYTES/);
+ assert.match(preview,/await file\.slice\(0,12\)\.arrayBuffer\(\)/);
+ assert.match(preview,/tag\(0\)!=='RIFF'\|\|tag\(8\)!=='WAVE'/);
+ assert.match(preview,/wavBlob=file/);
+ assert.match(preview,/model===POCKET_SAMPLE_ID/);
+ assert.match(browser,/pocket-female2/);
+ assert.doesNotMatch(preview,/fetch\(|WebSocket|localStorage|sessionStorage|indexedDB/);
 });
