@@ -155,3 +155,29 @@ test('autosave indicator only turns confirmed after server acknowledgment',()=>{
  assert.ok(js.includes("savedRevision=revision;"));
  assert.ok(css.includes(':not(.high):not(.high-contrast) #pilot-save-status[data-save-state="error"]'));
 });
+
+test('full-width student workspace is local and preserves every exam interaction anchor',()=>{
+ const html=source('pilot.html'),server=source('server.mjs'),css=source('pilot-workspace.css');
+ assert.ok(html.includes('<link rel="stylesheet" href="/pilot-workspace.css">'));
+ assert.ok(server.includes("'/pilot-workspace.css':['pilot-workspace.css','text/css; charset=utf-8']"));
+ assert.ok(html.includes('class="pilot-workspace-shell"'));
+ assert.ok(html.includes('class="pilot-workspace-sidebar"'));
+ assert.ok(html.includes('class="pilot-workspace-main"'));
+ assert.ok(html.includes('href="/dou-reader-demo"'));
+ assert.ok(!html.includes('href="/pilot?demo=reader"'));
+ for(const id of ['entry','redeem-form','code','exam-ready','ready-start','player',
+  'reader-engine','reader-pocket-voice','reader-read','reader-pause','reader-resume',
+  'reader-stop','question-navigation','pilot-question-map','student-questions',
+  'pilot-save','pilot-restore','pilot-save-status','pilot-final-review','send','done','receipt']){
+  assert.equal(html.split('id="'+id+'"').length,2,id+' must occur exactly once');
+ }
+ assert.ok(css.includes('grid-template-columns:minmax(260px,320px) minmax(0,1fr)'));
+ assert.ok(css.includes('main#main:has(#entry[hidden]) .pilot-workspace-sidebar'));
+ assert.ok(css.includes('body.bep-student-pilot:not(.high):not(.high-contrast)'));
+ assert.ok(css.includes('@media(max-width:930px)'));
+ assert.ok(css.includes('@media(max-width:650px)'));
+ assert.ok(css.includes('@media(forced-colors:active)'));
+ assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
+ assert.doesNotMatch(css,/https?:\/\//);
+ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+});
