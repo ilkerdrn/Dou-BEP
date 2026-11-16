@@ -225,3 +225,101 @@ body.bep-student-pilot:not(.high):not(.high-contrast) :is(button,select,input,te
  .bep-student-pilot .pilot-lab-disclosure>summary{forced-color-adjust:auto;border:1px solid CanvasText}
  .bep-student-pilot .pilot-lab-disclosure>summary::before{background:Canvas;color:CanvasText;border:1px solid CanvasText}
 }
+
+/* V4 student exam workspace — question map + answer area.
+   CSS Grid changes visual layout only. DOM and keyboard reading order stay
+   unchanged: session info, reader, question map, question and submission. */
+@media(min-width:1024px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player{
+  display:grid;grid-template-columns:minmax(265px,310px) minmax(0,1fr);
+  column-gap:22px;row-gap:6px;align-items:start;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player>.card:first-child,
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player>#dou-reader{
+  grid-column:1/-1;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation{
+  grid-column:1;grid-row:3;position:sticky;top:18px;align-self:start;
+  padding:21px!important;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form{
+  grid-column:2;grid-row:3;min-width:0;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-map-heading{
+  display:flex;flex-direction:column;align-items:stretch;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-map-heading h2{
+  font-size:19px;line-height:1.3;margin-bottom:3px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-map-heading p{
+  font-size:12px;line-height:1.55;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-question-buttons{
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-question-jump{
+  min-height:49px!important;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation nav.inline{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation #question-progress{
+  grid-column:1/-1;grid-row:1;min-width:0;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation nav.inline button{
+  min-width:0;width:100%;padding:10px 8px;font-size:12px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card{
+  padding:clamp(20px,2.2vw,30px);
+ }
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation .pilot-map-legend{
+ display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation #pilot-toggle-review{
+ width:100%;font-size:13px;white-space:normal;min-height:48px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions{
+ min-width:0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question{
+ margin:16px 0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions :is(input,select,textarea){
+ max-width:100%;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question h2{
+ font-size:clamp(19px,2.1vw,25px);line-height:1.5;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question .option{
+ transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question .option:hover{
+ border-color:#b7c4d7;background:#f9fafc;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question .option:has(input:checked):hover{
+ border-color:#cf3450;background:#fff3f5;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions .question :focus-visible{
+ outline:3px solid #156bb4!important;outline-offset:3px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form #student-questions textarea[data-pilot-classic]{
+ min-height:220px;line-height:1.8;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card:last-child{
+ border:1px solid #e1e7f0;border-top:3px solid #52749c;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #answer-form>.card:last-child h2{
+ font-size:20px;letter-spacing:-.025em;
+}
+@media(max-width:1023px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #player{
+  display:block;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #question-navigation{
+  position:static;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.bep-student-pilot #answer-form #student-questions .question .option{transition:none!important}
+}
