@@ -1,5 +1,6 @@
 /** v1.5 local pilot: anonymous, one-time text choice/matching submissions only.
- * Never store learner names, diagnoses, IP addresses, or audio.\n * Bounded classic text exists only in the explicitly isolated synthetic lab.
+ * Never store learner names, diagnoses, IP addresses, or audio.
+ * Bounded classic text exists only in the explicitly isolated synthetic lab.
  * No grade inference; teacher reviews selections. Codes/tokens are SHA256 hashed at rest.
  */
 import {randomBytes,randomUUID,createHash} from 'node:crypto';
