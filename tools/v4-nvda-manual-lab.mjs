@@ -13,6 +13,7 @@ import {createHash} from 'node:crypto';
 import {createInterface} from 'node:readline';
 import {openStore} from '../server-foundation/institutional-store.mjs';
 import {createDemo} from '../core.mjs';
+import {createNlpSyntheticExam} from './v4-nlp-synthetic-fixture.mjs';
 import {reviewExam} from '../quality.mjs';
 
 function localPort(){
@@ -27,6 +28,10 @@ function localPort(){
 }
 const folder=mkdtempSync(join(tmpdir(),'dou-bep-nvda-manual-'));
 const dbPath=join(folder,'manual-fixture.sqlite');
+const nlpMode=process.argv.includes('--nlp');
+// Only the new disposable NLP lab enables bounded classic answers.
+process.env.BEP_PILOT_ONLY=nlpMode?'1':'0';
+process.env.BEP_PILOT_CLASSIC_SAMPLE=nlpMode?'1':'0';
 const LAB_TENANT='nvda-manual-fixture';
 const LAB_ADMIN='admin@nvda-manual.test';
 const LAB_PASSWORD='Temporary-Anonymous-NVDA-Only-2026!';
@@ -83,12 +88,12 @@ async function main(){
   const admin=store.requireActor(store.signIn({tenantId,email,password}).token);
   store.addMember(admin,{email:reviewerEmail,role:'reviewer',password,reauthPassword:password});
   const reviewer=store.requireActor(store.signIn({tenantId,email:reviewerEmail,password}).token);
-  const exam=createDemo();
-  exam.title='NVDA anonim öğrenci erişilebilirlik denemesi';
+  const exam=nlpMode?createNlpSyntheticExam():createDemo();
+  if(!nlpMode)exam.title='NVDA anonim öğrenci erişilebilirlik denemesi';
   exam.profile='';
   exam.adaptations.visualCues=false;
-  exam.questions=exam.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
-  if(exam.questions.length!==4||reviewExam(exam).errorCount)throw Error('Synthetic exam preflight rejected');
+  if(!nlpMode)exam.questions=exam.questions.filter(q=>q.type!=='short').map(q=>({...q,teacherNote:''}));
+  if(exam.questions.length!==(nlpMode?6:4)||reviewExam(exam).errorCount)throw Error('Synthetic exam preflight rejected');
   const draft=store.createExam(admin,{exam});
   const approved=store.approveExam(reviewer,draft.id,{revision:draft.revision,confirmed:true});
   if(approved.status!=='approved')throw Error('Synthetic independent approval rejected');
@@ -126,8 +131,12 @@ async function main(){
  console.log('Ogrenci sinav sayfasi: '+url);
  console.log('TEK KULLANIMLIK SENTETIK KOD: '+code);
  console.log('Bu kod sinav suresi nedeniyle 45 dakika icinde kullanilmalidir.');
- console.log('Sorular: 2 coktan secmeli + 1 dogru/yanlis + 1 eslestirme.');
- console.log('NVDA ile oku -> secenekleri dolas -> eslestir -> tekrar bak -> teslim et.');
+ console.log(nlpMode?
+   'NLP SENTETIK SORULAR: 2 test + 2 klasik + 1 dogru/yanlis + 1 eslestirme.':
+   'Sorular: 2 coktan secmeli + 1 dogru/yanlis + 1 eslestirme.');
+ console.log(nlpMode?
+   'Sorular ders konularindan yeniden yazilmistir; orijinal sinav ve cevap anahtari degildir.':
+   'NVDA ile oku -> secenekleri dolas -> eslestir -> tekrar bak -> teslim et.');
  console.log('DOU Reader seslendirmesi ile NVDA ayni anda konusmasin: ayri ayri deneyin.');
  console.log('Lutfen gercek ogrenci bilgisi veya saglik verisi yazmayin.');
  console.log('Kod daha once kullanildiysa veya suresi dolduysa N + Enter ile YENI kod alin.');
