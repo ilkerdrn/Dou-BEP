@@ -11,6 +11,8 @@ import {summarizeAnonymousCohort,anonymousCohortCsv} from '../cohort-summary.mjs
 import {pilotReviewOverview} from '../pilot-session-overview.mjs';
 import {readerText} from '../dou-reader-core.mjs';
 import {turkishSpeechText} from '../dou-speech-pronunciation.mjs';
+import {basename,dirname,join,resolve} from 'node:path';
+import {tmpdir} from 'node:os';
 const now=()=>Date.now();
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
@@ -47,7 +49,14 @@ export function pilotSessions(db,{StoreError,log}){
    locked_until INTEGER NOT NULL DEFAULT 0
  );CREATE INDEX IF NOT EXISTS idx_pilot_redeem_failures ON pilot_redeem_throttle(last_failure_at);`);
  const error=(code,message,status=400)=>{throw new StoreError(code,message,status);};
- const syntheticClassicEnabled=()=>process.env.BEP_PILOT_ONLY==='1'&&process.env.BEP_PILOT_CLASSIC_SAMPLE==='1';
+ const syntheticClassicEnabled=()=>{
+  if(!(process.env.BEP_PILOT_ONLY==='1'&&process.env.BEP_PILOT_CLASSIC_SAMPLE==='1'))return false;
+  // Environment flags alone are insufficient: a production DB cannot enable
+  // experimental classical response storage or live natural TTS by accident.
+  const path=db.prepare('PRAGMA database_list').all().find(x=>x.name==='main')?.file;
+  return typeof path==='string'&&basename(path)==='manual-fixture.sqlite'&&
+   dirname(resolve(path)).startsWith(join(tmpdir(),'dou-bep-nvda-manual-'));
+ };
  // Run the authorization, current-revision check, and subsequent mutation under
  // the same SQLite writer lock. This closes cross-connection TOCTOU windows.
  function withWriterLock(action){
@@ -301,6 +310,7 @@ export function pilotSessions(db,{StoreError,log}){
  // Returns ONLY the student-facing current question in an active, authorized session.
  // Never sends student answers, a model answer, token text or teacher notes to TTS.
  function speechQuestion(token,questionId){
+  if(!syntheticClassicEnabled())error('speech_not_ready','Doğal ses yalnız geçici NLP laboratuvarında aktiftir.',403);
   const {payload}=startedSession(token);
   if(typeof questionId!=='string'||!/^q(?:[1-9]|[12][0-9]|30)$/.test(questionId))
    error('bad_question','Geçersiz soru numarası.',422);
@@ -437,6 +447,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotEligibleExams:eligibleExams,pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSpeechQuestion:speechQuestion,pilotSave:save,pilotSubmit:submit,
+ return {pilotEligibleExams:eligibleExams,pilotIssue:issue,pilotRecoverIssue:recoverIssue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotProgress:progress,pilotSpeechQuestion:speechQuestion,pilotSpeechLabReady:syntheticClassicEnabled,pilotSave:save,pilotSubmit:submit,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
