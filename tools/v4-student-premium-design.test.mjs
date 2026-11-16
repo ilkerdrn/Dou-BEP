@@ -197,3 +197,16 @@ test('full-screen exam remains uncluttered in high contrast and mobile reading o
  assert.ok(css.includes('@media(max-width:480px)'));
  assert.ok(css.includes('#entry #code'));
 });
+
+test('premium full width entry does not duplicate the top stage tracker in sidebar',()=>{
+ const html=source('pilot.html'),css=source('pilot-workspace.css');
+ assert.ok(html.includes('class="pilot-sidebar-features"'));
+ assert.ok(!html.includes('class="pilot-sidebar-steps"'));
+ assert.ok(html.includes('Erişim senin kontrolünde'));
+ assert.ok(html.includes('Yanıtlarını takip et'));
+ assert.ok(html.includes('Kontrol ederek teslim et'));
+ assert.ok(css.includes('.pilot-sidebar-features li>span'));
+ assert.ok(css.includes('.pilot-workspace-shell'));
+ assert.ok(css.includes('main#main:has(#entry[hidden]) .pilot-workspace-sidebar'));
+ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+});
