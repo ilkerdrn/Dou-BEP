@@ -12,7 +12,7 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
  const status=doc.getElementById('reader-status');
  const fetcher=typeof win.fetch==='function'?win.fetch.bind(win):null;
  let available=false,request=null,player=null,url='',generation=0,destroyed=false;
- const updateStatus=text=>{if(status)status.textContent=text;};
+ const updateStatus=(text,state='idle')=>{if(status){status.textContent=text;status.dataset.readerState=state;}};
  const disabled=()=>!available||!getQuestion()||getQuestion().audioAllowed===false;
  function stop(){
   generation++;
@@ -52,7 +52,7 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
   stop();
   const current=generation,controller=new AbortController();
   request=controller;
-  updateStatus('DOU Pocket TTS '+voice+', yalnız yerel NLP örnek sorusunu hazırlıyor…');
+  updateStatus('DOU Pocket TTS '+voice+', yalnız yerel NLP örnek sorusunu hazırlıyor…','preparing');
   try{
    const response=await fetcher('/api/pilot/speech',{
     method:'POST',credentials:'omit',cache:'no-store',signal:controller.signal,
@@ -80,15 +80,15 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
    player.playbackRate=safeRate(ratePicker?.value);
    const playing=player;
    playing.addEventListener('ended',()=>{if(playing===player){
-    stop();updateStatus('DOU Pocket TTS oynatımı tamamlandı; duyulabilirlik insan tarafından kontrol edilmelidir.');
+    stop();updateStatus('DOU Pocket TTS oynatımı tamamlandı; duyulabilirlik insan tarafından kontrol edilmelidir.','complete');
    }},{once:true});
    playing.addEventListener('error',()=>{if(playing===player){
-    stop();updateStatus('DOU Pocket TTS ses çıkışı başarısız. Windows ses aygıtını kontrol edin.');
+    stop();updateStatus('DOU Pocket TTS ses çıkışı başarısız. Windows ses aygıtını kontrol edin.','error');
    }},{once:true});
    request=null;
    await playing.play();
    if(current===generation){
-    updateStatus('DOU Pocket TTS '+voice+', seçili anonim soruyu okuyor. Ağ hizmeti kullanılmadı.');
+    updateStatus('DOU Pocket TTS '+voice+', seçili anonim soruyu okuyor. Ağ hizmeti kullanılmadı.','playing');
     return true;
    }
    return false;
@@ -100,17 +100,17 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
      speech_audio_format:'Ses üretildi ancak WAV biçimi geçersiz. Windows sistem sesi veya NVDA kullanılabilir.',
      speech_text_limit:'Bu soru deneysel seslendirme sınırını aşıyor. Yazılı soru kullanılabilir.'
     };
-    stop();updateStatus(messages[error?.message]||'Yerel Pocket TTS sesi başlatılamadı. Windows sistem sesi veya NVDA ile devam edebilirsiniz.');
+    stop();updateStatus(messages[error?.message]||'Yerel Pocket TTS sesi başlatılamadı. Windows sistem sesi veya NVDA ile devam edebilirsiniz.','error');
    }
    return false;
   }
  }
  function safeRate(value){const rate=Number(value);return [0.75,1,1.25,1.5].includes(rate)?rate:1;}
- function pause(){if(player&&!player.paused){player.pause();updateStatus('Pocket TTS oynatımı duraklatıldı.');return true;}return false;}
+ function pause(){if(player&&!player.paused){player.pause();updateStatus('Pocket TTS oynatımı duraklatıldı.','paused');return true;}return false;}
  async function resume(){if(!player||!player.paused)return false;
   const playing=player,current=generation;
-  try{await playing.play();if(current===generation&&playing===player){updateStatus('Pocket TTS oynatımı sürdürüldü.');return true;}}
-  catch{if(current===generation&&playing===player){stop();updateStatus('Pocket TTS oynatımı sürdürülemedi.');}}
+  try{await playing.play();if(current===generation&&playing===player){updateStatus('Pocket TTS oynatımı sürdürüldü.','playing');return true;}}
+  catch{if(current===generation&&playing===player){stop();updateStatus('Pocket TTS oynatımı sürdürülemedi.','error');}}
   return false;
  }
  function setRate(){if(player)player.playbackRate=safeRate(ratePicker?.value);}
