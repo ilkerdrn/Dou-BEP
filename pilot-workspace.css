@@ -1,0 +1,289 @@
+/* DOU BEP V4 — Full width institutional student workspace.
+ * Final presentation layer. All exam IDs, JS handlers, time limits, submission
+ * and experimental speech authorization remain owned by existing modules.
+ * No remote fonts, images or scripts. High contrast modes remain untouched. */
+body.bep-student-pilot:not(.high):not(.high-contrast){
+ --ws-ink:#152136;--ws-muted:#657287;--ws-border:#e0e6ee;
+ --ws-red:#b70c32;--ws-paper:#f4f6fa;--ws-white:#fff;
+ background:var(--ws-paper);color:var(--ws-ink);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-topbar{
+ min-height:80px;padding:13px clamp(22px,3vw,56px);
+ border-bottom:1px solid #e1e7f0;background:#fff;
+ box-shadow:0 2px 18px rgba(30,44,70,.04);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main{
+ box-sizing:border-box;width:100%;max-width:none;
+ margin:0;padding:24px clamp(20px,2.8vw,55px) 32px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track{
+ max-width:none;margin:0 0 20px;padding:0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track ol{
+ gap:14px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track li{
+ min-height:61px;border-radius:14px;
+ border:1px solid #e0e5ef;background:#fff;
+ box-shadow:0 4px 14px rgba(23,37,62,.03);
+ padding:12px 16px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track li[aria-current="step"]{
+ background:#fff7f9;border-color:#d998a9;
+ box-shadow:0 7px 22px rgba(183,12,50,.065);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-shell{
+ width:100%;display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);
+ align-items:stretch;gap:22px;min-width:0;
+ min-height:calc(100dvh - 226px);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar{
+ position:relative;display:flex;flex-direction:column;min-width:0;
+ overflow:hidden;isolation:isolate;
+ padding:clamp(23px,2.4vw,33px);
+ color:#f7f8fb;background:linear-gradient(160deg,#1b2436 2%,#252a3e 58%,#4b2335 100%);
+ border:1px solid #273248;border-radius:22px;
+ box-shadow:0 18px 46px rgba(22,33,53,.12);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar::before{
+ content:"";position:absolute;width:300px;height:300px;border:1px solid rgba(255,255,255,.10);
+ border-radius:50%;right:-168px;top:-143px;pointer-events:none;z-index:-1;
+ box-shadow:0 0 0 44px rgba(255,255,255,.025),0 0 0 91px rgba(255,255,255,.017);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-brandline{
+ display:flex;align-items:center;gap:12px;color:#d8dfec;
+ font-size:10px;font-weight:820;letter-spacing:.12em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-monogram{
+ display:grid;place-items:center;flex:0 0 39px;
+ height:39px;border-radius:11px;background:#c30d36;color:#fff;
+ font-size:11px;letter-spacing:0;box-shadow:0 6px 18px #0002;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar h2{
+ margin:34px 0 15px;max-width:260px;color:#fff;
+ font-size:clamp(27px,2.25vw,35px);font-weight:850;
+ line-height:1.14;letter-spacing:-.043em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-intro{
+ margin:0;color:#c2ccda;line-height:1.75;font-size:13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-divider{
+ height:1px;background:rgba(255,255,255,.17);margin:31px 0 23px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-label{
+ color:#c0c8d8;font-size:10px;font-weight:810;letter-spacing:.13em;margin-bottom:13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps{
+ list-style:none;padding:0;margin:0;display:grid;gap:7px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps li{
+ display:flex;align-items:flex-start;gap:12px;padding:10px 4px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps li>span{
+ flex:0 0 32px;display:grid;place-items:center;height:32px;
+ border:1px solid rgba(255,255,255,.24);border-radius:9px;
+ color:#e4e8ef;font-size:11px;font-weight:790;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps li strong{
+ display:block;color:#fff;font-size:13px;font-weight:770;margin-bottom:3px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps li small{
+ display:block;color:#b8c4d3;line-height:1.5;font-size:11px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-bottom{
+ display:flex;gap:12px;align-items:flex-start;margin-top:auto;padding-top:23px;
+ border-top:1px solid rgba(255,255,255,.17);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-bottom-icon{
+ display:grid;place-items:center;flex:0 0 30px;height:30px;
+ background:rgba(107,207,160,.13);border:1px solid rgba(132,211,174,.3);
+ border-radius:9px;color:#8fe3b9;font-weight:850;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-bottom p{
+ margin:0;line-height:1.5;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-bottom strong{
+ display:block;color:#e3f6eb;font-size:12px;margin-bottom:4px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-bottom p span{
+ color:#bdc7d5;font-size:11px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-main{
+ display:flex;flex-direction:column;gap:16px;
+ min-width:0;width:100%;align-items:stretch;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main .hero.card{
+ width:100%;max-width:none;margin:0;min-height:0;
+ padding:clamp(24px,3vw,42px);
+ border:1px solid #eadfe4;border-radius:21px;
+ background:linear-gradient(112deg,#fff 3%,#fff 60%,#fff0f4 100%);
+ box-shadow:0 10px 36px rgba(28,42,64,.05);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main .hero h1{
+ font-size:clamp(28px,3vw,42px);letter-spacing:-.043em;margin:9px 0 13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main .hero p{
+ font-size:14px;line-height:1.7;max-width:76ch;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card{
+ display:flex;align-items:center;gap:14px;min-width:0;
+ background:#fff;border:1px solid var(--ws-border);border-radius:15px;
+ padding:14px 17px;margin:0;box-shadow:0 4px 16px rgba(27,37,57,.035);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card-icon{
+ display:grid;place-items:center;flex:0 0 42px;height:42px;
+ background:#fff0f4;border:1px solid #f0d4de;border-radius:12px;
+ color:#b3153b;font-weight:850;font-size:22px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card>div:nth-child(2){flex:1;min-width:0}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card strong{
+ display:block;font-size:13px;color:#253148;font-weight:790;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card p{
+ margin:3px 0 0;font-size:12px;color:#6a778b;line-height:1.5;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card a{
+ flex:0 0 auto;border:1px solid #d6dfe9;border-radius:10px;
+ padding:10px 12px;color:#a80d2f;background:#fdfdff;
+ text-decoration:none;font-size:12px;font-weight:780;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card a:hover{
+ background:#fff4f7;border-color:#e6b4c4;text-decoration:underline;
+}
+/* Explicitly out-rank the old centered #entry and #exam-ready declarations. */
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #entry,
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #exam-ready,
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #done{
+ box-sizing:border-box;width:100%;max-width:none;margin:0;
+ padding:clamp(23px,2.7vw,38px);
+ border-radius:21px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #entry{
+ flex:1 1 auto;
+ border:1px solid #e0e6ef;box-shadow:0 10px 38px rgba(29,41,65,.045);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;
+ align-items:end;gap:9px 20px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form>label,
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form>input,
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form>p{
+ grid-column:1/-1;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form button{
+ grid-column:1;justify-self:start;
+ width:min(100%,220px);min-height:54px;
+ border-radius:12px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #code{
+ width:100%;min-height:57px;
+ background:#f8fafc;letter-spacing:.055em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form label{
+ margin-bottom:0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #entry .pilot-entry-kicker{
+ margin-bottom:8px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #player{
+ width:100%;max-width:none;min-width:0;margin:0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.notice{
+ margin:14px 0 0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.muted:last-child{
+ text-align:center;margin:14px auto 0;
+ font-size:12px;color:#6e7b8f;
+}
+/* After code redemption, give the exam and review the full working width.
+ * The entry-only sidebar is not allowed to crowd the question map. */
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main:has(#entry[hidden]) .pilot-workspace-shell{
+ grid-template-columns:minmax(0,1fr);min-height:0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main:has(#entry[hidden]) .pilot-workspace-sidebar{
+ display:none;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main:has(#entry[hidden]) .pilot-workspace-main{
+ max-width:none;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) main#main:has(#entry[hidden]) .pilot-demo-card{
+ display:none;
+}
+/* Stage track and overview stay readable in high-contrast preference.
+ * No overrides of the intentional black/white exam color system. */
+@media(max-width:1200px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-shell{
+  grid-template-columns:minmax(238px,280px) minmax(0,1fr);gap:16px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar{
+  padding:23px 20px;
+ }
+}
+@media(max-width:930px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-shell{
+  grid-template-columns:minmax(0,1fr);gap:14px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-main{order:1}
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar{
+  order:2;min-height:0;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar h2{
+  margin-top:18px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-sidebar-steps{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+}
+@media(max-width:650px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main{
+  padding:13px 12px 34px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track ol{
+  gap:6px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main>.pilot-stage-track li{
+  min-height:54px;padding:8px 3px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-workspace-sidebar{
+  border-radius:17px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main .hero.card,
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #entry,
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #exam-ready,
+ body.bep-student-pilot:not(.high):not(.high-contrast) main#main .pilot-workspace-main #done{
+  padding:21px 18px;border-radius:17px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card{
+  align-items:flex-start;flex-wrap:wrap;padding:14px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-demo-card a{
+  width:100%;text-align:center;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form{
+  display:block;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #entry #redeem-form button{
+  width:100%;
+ }
+}
+/* Keep the informational sidebar legible when high contrast is selected. */
+body.bep-student-pilot.high .pilot-workspace-sidebar,
+body.bep-student-pilot.high-contrast .pilot-workspace-sidebar{
+ padding:20px;border:2px solid #fff;border-radius:12px;
+}
+body.bep-student-pilot.high .pilot-workspace-sidebar *,
+body.bep-student-pilot.high-contrast .pilot-workspace-sidebar *{
+ color:inherit;
+}
+@media(forced-colors:active){
+ .bep-student-pilot .pilot-workspace-sidebar{
+  background:Canvas;color:CanvasText;border:2px solid CanvasText;
+ }
+ .bep-student-pilot .pilot-demo-card{border:1px solid CanvasText;}
+}
+@media(prefers-reduced-motion:reduce){
+ .bep-student-pilot .pilot-workspace-shell *{
+  transition:none!important;animation:none!important;
+ }
+}
