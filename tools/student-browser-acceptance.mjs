@@ -44,6 +44,8 @@ export async function runStudentBrowserAcceptance({
   await pressEnter();
   pass(await evaluate("(function(){return !document.getElementById('player').hidden&&document.body.classList.contains('high')&&document.documentElement.style.getPropertyValue('--student-size')==='28px'&&document.querySelectorAll('#student-questions .question').length>=3&&!!document.getElementById('reader-status');})()"),
    'Student sees high-contrast large-text exam and reader status');
+   pass(await evaluate("(function(){const test=document.getElementById('reader-test'),label=document.querySelector('label[for=reader-voice]'),limits=document.getElementById('reader-limits');return !!test&&test.type==='button'&&test.textContent.includes('+ = -')&&!!label&&label.textContent.includes('Windows/Edge')&&!!limits&&limits.textContent.includes('DOU Speech sesi henüz sınava bağlı değildir');})()"),
+    'Reader distinguishes installed OS voice from experimental DOU Speech and offers fixed symbol test');
   pass(await evaluate("(function(){const cards=[...document.querySelectorAll('#student-questions .question')];return cards.length>=3&&cards.every((card,i)=>{const h=card.querySelector('h2'),field=card.querySelector('fieldset'),prompt=card.querySelector('p[id]');const ids=(field?.getAttribute('aria-labelledby')||'').split(' ');return h?.id==='pilot-question-heading-'+(i+1)&&card.getAttribute('aria-labelledby')===h.id&&prompt?.id==='pilot-question-prompt-'+(i+1)&&ids.length===2&&ids[0]===h.id&&ids[1]===prompt.id&&prompt.textContent.trim().length>0;});})()"),
    'Every student answer fieldset exposes its question number and full prompt to screen readers');
   // Hearing access must remain possible without audio playback or any TTS service.
