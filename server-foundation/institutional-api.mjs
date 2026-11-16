@@ -10,7 +10,7 @@ import {previewSourceExam,previewManualSourceExam,examDraftFromSource} from '../
 import {roleCan} from '../roles.mjs';
 import {createExamMp3,audioDependencies} from '../offline-audio.mjs';
 import {fullAudioAllowed} from '../question-access.mjs';
-import {pocketSpeechGate,pocketVoiceAllowed,pocketVoiceChoices,synthesizePocketQuestion} from './pocket-tts-local.mjs';
+import {pocketSpeechGate,pocketVoiceAllowed,pocketVoiceChoices,pocketFailureCode,synthesizePocketQuestion} from './pocket-tts-local.mjs';
 import {existsSync} from 'node:fs';
 const jsonHeaders={"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff", "X-Frame-Options":"DENY", "Referrer-Policy":"no-referrer", "Cross-Origin-Resource-Policy":"same-origin", "Permissions-Policy":"camera=(), microphone=(), geolocation=()"};
 function response(res,code,data,extra={}){res.writeHead(code,{...jsonHeaders,...extra});res.end(JSON.stringify(data));}
@@ -59,7 +59,10 @@ export function createApiHandler(store,{port=4173}={}){
     const narration=store.pilotSpeechQuestion(match[1],body.questionId);
     let wav;
     try{wav=await synthesizePocketQuestion(narration,{voice:body.voice??'female_2'});}
-    catch{throw new StoreError('speech_not_ready','Pocket TTS yerel ses oluşturamadı. Sınava yazılı veya sistem sesiyle devam edin.',503);}
+    catch(error){
+     const code=pocketFailureCode(error);
+     throw new StoreError(code,'Pocket TTS yerel ses oluşturamadı. Sınava yazılı veya sistem sesiyle devam edin.',code==='speech_busy'?429:503);
+    }
     res.writeHead(200,{'Content-Type':'audio/wav','Content-Length':wav.length,
      'Cache-Control':'no-store','X-Content-Type-Options':'nosniff',
      'Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'});
