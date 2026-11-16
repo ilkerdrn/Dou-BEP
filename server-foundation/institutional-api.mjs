@@ -44,11 +44,11 @@ export function createApiHandler(store,{port=4173}={}){
    }
    // Pocket TTS female_2: opt-in, localhost, OFFLINE and synthetic lab ONLY.
    if(path==='/api/pilot/speech-capability'&&req.method==='GET'){
-    const available=pocketSpeechGate()&&existsSync(process.env.BEP_POCKET_TTS_CLI);
+    const available=pocketSpeechGate()&&store.pilotSpeechLabReady()&&existsSync(process.env.BEP_POCKET_TTS_CLI);
     response(res,200,{available,voice:available?'female_2':null,scope:'synthetic-lab-only',cloud:false});return true;
    }
    if(path==='/api/pilot/speech'&&req.method==='POST'){
-    if(!pocketSpeechGate()||!existsSync(process.env.BEP_POCKET_TTS_CLI))
+    if(!pocketSpeechGate()||!store.pilotSpeechLabReady()||!existsSync(process.env.BEP_POCKET_TTS_CLI))
      throw new StoreError('speech_not_ready','Doğal kadın sesi yalnız açıkça etkinleştirilmiş yerel NLP laboratuvarında kullanılabilir.',503);
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
     if(!match)throw new StoreError('invalid_session','Geçerli anonim sınav oturumu gerekli.',401);
