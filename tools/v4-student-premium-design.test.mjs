@@ -27,7 +27,7 @@ test('new workspace keeps required exam and reader DOM contracts intact',()=>{
  assert.match(html,/id="reader-status" role="status" aria-live="polite"/);
  assert.match(html,/id="pilot-question-map"[^>]*aria-label="Soru numaraları"/);
  assert.match(html,/<details class="pilot-lab-disclosure">/);
- assert.equal((html.match(/<details\\b/g)||[]).length,(html.match(/<\/details>/g)||[]).length);
+ assert.equal((html.match(/<details\b/g)||[]).length,(html.match(/<\/details>/g)||[]).length);
 });
 
 test('desktop question navigation is beside the question form, mobile stacks naturally',()=>{
