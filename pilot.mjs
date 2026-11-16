@@ -140,6 +140,9 @@ function updateAnswerProgress(){
  if(!exam)return;
  const {empty}=collectAnswers();
  const answered=exam.questions.length-empty.length;
+ const progress=$('pilot-progress-bar');
+ progress.max=Math.max(1,exam.questions.length);
+ progress.value=answered;
  $('pilot-answer-progress').textContent=answered+' / '+exam.questions.length+' soru yanıtlandı. '+empty.length+' soru boş.';
  $('pilot-first-empty').disabled=empty.length===0;
  updateQuestionMap();
