@@ -163,6 +163,7 @@ const allowed={
  '/styles.css':['styles.css','text/css; charset=utf-8'],
  '/ui-refresh.css':['ui-refresh.css','text/css; charset=utf-8'],
  '/pilot-refresh.css':['pilot-refresh.css','text/css; charset=utf-8'],
+ '/pilot-premium.css':['pilot-premium.css','text/css; charset=utf-8'],
  '/workflow-ui.mjs':['workflow-ui.mjs','text/javascript; charset=utf-8'],
  '/design-interactions.mjs':['design-interactions.mjs','text/javascript; charset=utf-8'],
  '/core.mjs':['core.mjs','text/javascript; charset=utf-8'],
