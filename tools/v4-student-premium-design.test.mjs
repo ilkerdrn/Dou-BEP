@@ -80,3 +80,29 @@ test('reader status is announced accessibly and visually distinguishes safe clie
  assert.match(panel,/\$\('reader-resume'\)\.disabled=!canRead/);
  assert.ok(css.includes('@media(forced-colors:active)'));
 });
+
+test('readiness and submitted screens keep original JS anchors and no fabricated result',()=>{
+ const html=source('pilot.html'),css=source('pilot-premium.css'),js=source('pilot.mjs');
+ for(const id of ['exam-ready','ready-title','ready-exam-details','pilot-ready-time',
+ 'ready-understand','ready-device','ready-access-profile','ready-start',
+ 'done','pilot-done-title','receipt']){
+  assert.equal(html.split('id="'+id+'"').length,2,id+' must occur once');
+ }
+ assert.ok(html.includes('class="pilot-ready-summary"'));
+ assert.ok(html.includes('class="pilot-ready-checks" role="group"'));
+ assert.ok(html.includes('class="pilot-receipt-panel"'));
+ assert.ok(js.includes("$('ready-start').disabled=!$('ready-understand').checked"));
+ assert.ok(js.includes("$('receipt').textContent='Teslim referansı: '+r.receipt"));
+ assert.ok(css.includes('#exam-ready .pilot-ready-checks label:has(input:checked)'));
+ assert.ok(css.includes('#done #receipt'));
+ assert.ok(css.includes('@media(forced-colors:active)'));
+ assert.doesNotMatch(html,/Başarı puanı|notun:|100\/100/);
+});
+
+test('premium student stylesheet keeps stable brace structure and responsive fallbacks',()=>{
+ const css=source('pilot-premium.css');
+ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+ assert.ok(css.includes('@media(max-width:650px)'));
+ assert.ok(css.includes(':not(.high):not(.high-contrast) #exam-ready'));
+ assert.ok(css.includes(':not(.high):not(.high-contrast) #done.pilot-done'));
+});
