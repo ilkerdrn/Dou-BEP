@@ -20,3 +20,39 @@
 #speech-local-audit{overflow-x:auto}
 #audit-status{font-weight:600}
 @media(max-width:560px){.dou-audit-table{font-size:.78rem}.dou-audit-table th,.dou-audit-table td{padding:8px 5px}}
+
+/* DOU Speech candidates: research-only local WAV panel; separate from OS voices. */
+.reader-panel .reader-experimental{
+ margin-top:22px;padding:20px;border:1px solid #dfdce2;border-radius:14px;
+ background:#faf9fb;color:#211d26;
+}
+.reader-panel .reader-experimental-heading{
+ display:flex;gap:12px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;
+}
+.reader-panel .reader-experimental-heading h3{font-size:1.12rem;line-height:1.4;margin:4px 0 8px}
+.reader-panel .reader-experimental .eyebrow{font-size:.72rem;letter-spacing:.06em}
+.reader-panel .reader-experimental-label{
+ font-size:.76rem;border:1px solid #d8cfd8;border-radius:99px;padding:5px 10px;white-space:nowrap;
+}
+.reader-panel .reader-experimental p{font-size:.91rem;line-height:1.6;margin:8px 0 12px}
+.reader-panel .reader-experimental-controls{
+ display:grid;grid-template-columns:minmax(210px,1fr) auto;gap:14px;align-items:end;
+}
+.reader-panel .reader-experimental-controls label{display:block;font-weight:700}
+.reader-panel .reader-experimental-controls select{
+ display:block;width:100%;max-width:100%;min-height:46px;margin-top:7px;
+}
+.reader-panel .reader-experimental-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.reader-panel .reader-experimental-buttons button{min-height:46px}
+.reader-panel #reader-lab-status{
+ border-left:3px solid #861632;background:#f1e9ef;padding:10px 12px;min-height:42px;
+}
+.high .reader-panel .reader-experimental,
+.high .reader-panel #reader-lab-status{background:#111;color:#fff;border-color:#fff}
+.high .reader-panel .reader-experimental-label{border-color:#fff}
+.high .reader-panel .reader-experimental select{background:#000;color:#fff;border:2px solid #fff}
+@media(max-width:720px){
+ .reader-panel .reader-experimental{padding:14px}
+ .reader-panel .reader-experimental-controls{grid-template-columns:1fr}
+ .reader-panel .reader-experimental-buttons button{flex:1}
+}
