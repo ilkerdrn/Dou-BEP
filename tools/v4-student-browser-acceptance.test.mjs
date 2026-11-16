@@ -89,3 +89,19 @@ test('return from hidden final review and completed submission keep NVDA focus v
  assert.match(browser,/Successful one-time delivery focuses accessible receipt heading/);
  assert.doesNotMatch(student,/localStorage|sessionStorage|indexedDB/);
 });
+
+
+test('student and demo label Windows speech honestly and supply math self-test without exam content',()=>{
+ const page=read('pilot.html'),demo=read('dou-reader-demo.html');
+ const panel=read('dou-reader-panel.mjs'),accept=read('tools/student-browser-acceptance.mjs');
+ for(const html of [page,demo]){
+  assert.match(html,/id="reader-test"/);
+  assert.match(html,/Windows\/Edge Türkçe sistem sesi/);
+ }
+ assert.match(page,/özgün DOU Speech sesi henüz sınava bağlı değildir/);
+ assert.match(panel,/function testVoice\(\)/);
+ assert.match(panel,/engine\.speak\('Bu bir yerel ses denemesidir\./);
+ assert.match(panel,/if\(!q\|\|q\.audioAllowed===false\)/);
+ assert.match(accept,/Reader distinguishes installed OS voice from experimental DOU Speech/);
+ assert.doesNotMatch(panel,/fetch\(|localStorage|sessionStorage|indexedDB/);
+});
