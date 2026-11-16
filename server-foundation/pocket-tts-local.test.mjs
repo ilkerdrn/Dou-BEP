@@ -68,3 +68,25 @@ test('Pocket rejects invalid WAV output, safely cleans local files and does not 
    /Pocket TTS geçerli WAV/);
  }finally{await rm(root,{recursive:true,force:true});}
 });
+
+
+test('float32 Pocket WAV output is safely normalized to PCM16 for the browser',async()=>{
+ const root=await mkdtemp(join(tmpdir(),'dou-pocket-float-unit-'));
+ try{
+  const cli=join(root,'fake-float.exe');await writeFile(cli,'mock command');
+  const raw=Buffer.alloc(44+4*80);
+  raw.write('RIFF',0);raw.writeUInt32LE(raw.length-8,4);
+  raw.write('WAVE',8);raw.write('fmt ',12);raw.writeUInt32LE(16,16);
+  raw.writeUInt16LE(3,20);raw.writeUInt16LE(1,22);
+  raw.writeUInt32LE(24000,24);raw.writeUInt32LE(96000,28);
+  raw.writeUInt16LE(4,32);raw.writeUInt16LE(32,34);
+  raw.write('data',36);raw.writeUInt32LE(320,40);
+  for(let i=0;i<80;i++)raw.writeFloatLE(Math.sin(i/20),44+4*i);
+  const converted=await synthesizePocketQuestion('NLP testi',{cli,
+   runner:async(_,out)=>writeFile(out,raw)});
+  assert.equal(converted.readUInt16LE(20),1,'PCM');
+  assert.equal(converted.readUInt16LE(34),16,'16 bit');
+  assert.equal(converted.readUInt32LE(24),24000);
+  assert.equal(converted.readUInt32LE(40),160);
+ }finally{await rm(root,{recursive:true,force:true});}
+});
