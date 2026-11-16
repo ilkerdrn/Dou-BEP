@@ -1,0 +1,66 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {dirname,resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createNlpSyntheticExam} from './v4-nlp-synthetic-fixture.mjs';
+import {reviewExam} from '../quality.mjs';
+import {createStudentPayload} from '../accessible-player.mjs';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+const read=name=>readFileSync(resolve(root,name),'utf8');
+test('NLP sample is newly authored, supports MC and classical without importing actual midterm',()=>{
+ const e=createNlpSyntheticExam();
+ assert.equal(e.subject,'Doğal Dil İşleme');
+ assert.equal(e.questions.length,6);
+ assert.deepEqual(e.questions.map(q=>q.type),['choice','choice','short','short','truefalse','matching']);
+ assert.equal(reviewExam(e).errorCount,0);
+ assert.equal(e.questions.reduce((sum,q)=>sum+q.points,0),100);
+ assert.equal(e.questions.some(q=>q.prompt.includes('5 + 3')),false);
+ assert.equal(e.questions.some(q=>q.prompt.includes('3 elma 12 armut')),false);
+ assert.equal(e.profile,'');
+ const payload=createStudentPayload(e);
+ assert.equal(payload.questions.length,6);
+ assert.equal(JSON.stringify(payload.questions).includes('"answer"'),false);
+ assert.equal(JSON.stringify(payload.questions).includes('teacherNote'),false);
+});
+test('server refuses classic by default and requires TWO synthetic-only env gates',()=>{
+ const server=read('server-foundation/pilot-sessions.mjs');
+ assert.match(server,/BEP_PILOT_ONLY==='1'&&process\.env\.BEP_PILOT_CLASSIC_SAMPLE==='1'/);
+ assert.match(server,/syntheticClassicEnabled\(\)\?\['choice','truefalse','matching','short'\]/);
+ assert.match(server,/\[\.\.\.a\]\.length>800/);
+ assert.match(server,/function speechQuestion\(token,questionId\)/);
+ assert.match(server,/const \{payload\}=startedSession\(token\)/);
+ assert.match(server,/if\(q\.audioAllowed===false\)/);
+ assert.match(server,/pilotSpeechQuestion:speechQuestion/);
+});
+test('student allows bounded accessible classic text in LAB, not general unrestricted upload',()=>{
+ const client=read('pilot.mjs'),html=read('pilot.html');
+ assert.match(client,/textarea\.maxLength=800/);
+ assert.match(client,/textarea\.setAttribute\('data-pilot-classic','1'\)/);
+ assert.match(client,/if\(q\.type==='short'\)/);
+ assert.match(client,/form\.get\(q\.id\)/);
+ assert.match(client,/textarea\[data-pilot-classic\]/);
+ assert.match(client,/scheduleAutoSave\(\)/);
+ assert.match(html,/id="pilot-current-question-type"/);
+ assert.match(html,/id="reader-engine"/);
+ assert.match(read('pilot-refresh.css'),/question\[data-question-type="short"\]/);
+ assert.doesNotMatch(client,/localStorage|sessionStorage|indexedDB/);
+});
+test('NLP lab alone enables open-response and live female_2, without adding model text API',()=>{
+ const lab=read('tools/v4-nvda-manual-lab.mjs');
+ const api=read('server-foundation/institutional-api.mjs');
+ const pocket=read('server-foundation/pocket-tts-local.mjs');
+ assert.match(lab,/const nlpMode=process\.argv\.includes\('--nlp'\)/);
+ assert.match(lab,/process\.env\.BEP_PILOT_ONLY=nlpMode\?'1':'0'/);
+ assert.match(lab,/process\.env\.BEP_PILOT_CLASSIC_SAMPLE=nlpMode\?'1':'0'/);
+ assert.match(lab,/createNlpSyntheticExam/);
+ assert.match(api,/path==='\/api\/pilot\/speech'/);
+ assert.match(api,/store\.pilotSpeechQuestion\(match\[1\],body\.questionId\)/);
+ assert.match(api,/Content-Type':'audio\/wav/);
+ assert.match(pocket,/HF_HUB_OFFLINE:'1'/);
+ assert.match(pocket,/TRANSFORMERS_OFFLINE:'1'/);
+ assert.match(pocket,/shell:false/);
+ assert.doesNotMatch(api,/body\.text|body\.prompt|body\.answers[\s\S]{0,60}synthesizePocket/);
+ assert.equal(JSON.parse(read('package.json')).scripts['reader:nvda:nlp:check'],
+  'node tools/v4-nlp-lab-http-acceptance.mjs');
+});
