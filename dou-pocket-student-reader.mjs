@@ -59,7 +59,16 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
     headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},
     body:JSON.stringify({questionId:q.id,voice})
    });
-   if(!response.ok)throw Error('synthesis');
+   if(!response.ok){
+    let code='speech_engine_failed';
+    try{const error=await response.json();if(typeof error?.error==='string')code=error.error;}catch{}
+    if(code==='speech_busy'||response.status===429)
+     throw Error('speech_busy');
+    if(code==='speech_timeout')throw Error('speech_timeout');
+    if(code==='speech_audio_format')throw Error('speech_audio_format');
+    if(code==='speech_text_limit')throw Error('speech_text_limit');
+    throw Error('speech_engine_failed');
+   }
    if(!String(response.headers?.get('Content-Type')||'').startsWith('audio/wav'))
     throw Error('invalid-media');
    const wav=await response.blob();
@@ -83,9 +92,15 @@ export function attachPocketStudentReader({doc,win,getToken=()=>null,getQuestion
     return true;
    }
    return false;
-  }catch{
+  }catch(error){
    if(current===generation){
-    stop();updateStatus('Yerel Pocket TTS sesi başlatılamadı. Windows sistem sesi veya NVDA ile devam edebilirsiniz.');
+    const messages={
+     speech_busy:'Önceki ses üretimi hâlâ sürüyor. Tamamlandıktan sonra Soruyu oku düğmesini tekrar deneyin.',
+     speech_timeout:'Yerel ses üretimi zaman sınırını aştı. Daha kısa bir soruda tekrar deneyin.',
+     speech_audio_format:'Ses üretildi ancak WAV biçimi geçersiz. Windows sistem sesi veya NVDA kullanılabilir.',
+     speech_text_limit:'Bu soru deneysel seslendirme sınırını aşıyor. Yazılı soru kullanılabilir.'
+    };
+    stop();updateStatus(messages[error?.message]||'Yerel Pocket TTS sesi başlatılamadı. Windows sistem sesi veya NVDA ile devam edebilirsiniz.');
    }
    return false;
   }
