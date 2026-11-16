@@ -709,3 +709,143 @@ body.bep-student-pilot:not(.high):not(.high-contrast) #dou-reader .reader-action
  .bep-student-pilot #dou-reader .pilot-reader-feedback{border:1px solid CanvasText}
  .bep-student-pilot #dou-reader #reader-status:before{border:2px solid CanvasText;background:CanvasText}
 }
+
+/* V4.4 · Preflight and submitted-state composition.
+   Only student normal view. All native checkbox, focus, timeout and
+   announcement behaviour is retained. */
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready{
+ max-width:910px;
+ margin:24px auto 36px;
+ padding:clamp(22px,4vw,44px);
+ border:1px solid #e0e6ef;
+ border-radius:22px;
+ box-shadow:0 18px 56px rgba(24,34,53,.07);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-stage-marker{
+ display:flex;gap:18px;align-items:flex-start;
+ padding-bottom:24px;border-bottom:1px solid #e6eaf1;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-stage-index{
+ display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 51px;width:51px;height:51px;
+ border-radius:14px;background:#b90f30;color:#fff;font-size:17px;font-weight:820;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #ready-title{
+ margin:6px 0 8px;color:#192235;
+ font-size:clamp(24px,3vw,34px);
+ letter-spacing:-.036em;line-height:1.22;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-stage-description{
+ margin:0;color:#647086;line-height:1.65;font-size:14px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-ready-summary{
+ margin:22px 0 15px;padding:20px 22px;
+ border:1px solid #dde5f1;border-radius:15px;
+ background:linear-gradient(115deg,#f7f9fd,#fff);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-ready-summary-label,
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-receipt-label{
+ color:#596982;font-size:11px;font-weight:820;letter-spacing:.11em;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #ready-exam-details{
+ font-size:17px;font-weight:740;line-height:1.6;color:#243146;overflow-wrap:anywhere;
+ margin:10px 0 15px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-ready-timer{
+ display:flex;align-items:center;gap:9px;
+ border-top:1px solid #e1e7f0;padding-top:13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-timer-dot{
+ display:block;width:9px;height:9px;flex:0 0 9px;
+ border-radius:50%;background:#b90f30;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-ready-time{
+ margin:0;font-size:14px;font-weight:760;color:#883047;line-height:1.5;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-warning{
+ padding:14px 17px;border-radius:12px;
+ border:1px solid #efdabc;border-left:4px solid #b77928;
+ background:#fff9f0;color:#704e24;font-size:13px;line-height:1.7;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks{
+ margin:22px 0;padding:20px;
+ border:1px solid #e0e6ef;border-radius:15px;background:#fbfcfe;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-ready-check-heading{
+ font-size:15px;font-weight:820;color:#233047;margin-bottom:14px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks label{
+ display:flex;align-items:flex-start;gap:13px;
+ padding:14px 16px;margin:10px 0;border-radius:12px;
+ border:1px solid #dee5ed;background:#fff;
+ font-weight:650;line-height:1.55;color:#2b3950;cursor:pointer;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks input[type=checkbox]{
+ flex:0 0 22px;width:22px;height:22px;min-height:22px;margin:1px 0 0;
+ accent-color:#b90f30;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks label:has(input:checked){
+ background:#f1f8f4;border-color:#aad6b9;color:#255e41;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-access-setup{
+ margin:19px 0;background:#f8fafc;border-color:#dde5ee;border-radius:13px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-action{
+ display:flex;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:15px;margin-top:24px;padding-top:21px;border-top:1px solid #e7ebf2;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-action p{
+ margin:0;flex:1 1 280px;font-size:12px;line-height:1.6;color:#657389;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready #ready-start{
+ min-width:170px;min-height:54px;margin:0;
+}
+/* Delivery receipt: server-confirmed only; never display a fake score. */
+body.bep-student-pilot:not(.high):not(.high-contrast) #done.pilot-done{
+ max-width:760px;margin:36px auto 55px;text-align:center;
+ padding:clamp(28px,5vw,52px);
+ border:1px solid #dee8e3;border-top:5px solid #2c8861!important;
+ box-shadow:0 18px 54px rgba(27,55,45,.055);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-done-emblem{
+ width:66px;height:66px;margin:0 auto 18px;
+ display:grid;place-items:center;border-radius:20px;
+ background:#e8f6ef;color:#217b51;
+ font-size:35px;font-weight:760;line-height:1;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done #pilot-done-title{
+ font-size:clamp(26px,3vw,36px);line-height:1.2;letter-spacing:-.04em;
+ color:#1a2a25;margin:10px 0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done .pilot-done-lead{
+ font-size:15px;color:#536675;line-height:1.7;max-width:55ch;
+ margin:12px auto 22px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done .pilot-receipt-panel{
+ text-align:left;margin:22px 0;padding:20px 23px;
+ background:#f6f9fb;border:1px solid #dee6ee;border-radius:15px;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done #receipt{
+ font-size:clamp(15px,2vw,20px);font-weight:800;line-height:1.6;
+ color:#22344a;letter-spacing:.025em;overflow-wrap:anywhere;margin:11px 0 0;
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #done .pilot-done-note{
+ margin:15px 0 0;color:#647589;font-size:13px;line-height:1.7;
+}
+@media(max-width:650px){
+ body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready{margin:16px auto;padding:19px;}
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-stage-marker{gap:12px;}
+ body.bep-student-pilot:not(.high):not(.high-contrast) .pilot-stage-index{
+  width:42px;height:42px;flex-basis:42px;border-radius:12px;
+ }
+ body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks{padding:12px;}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready .pilot-ready-checks label{padding:12px;}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #exam-ready #ready-start{width:100%;}
+ body.bep-student-pilot:not(.high):not(.high-contrast) #done.pilot-done{margin:18px auto;padding:25px 18px;}
+}
+@media(forced-colors:active){
+ .bep-student-pilot .pilot-stage-index,
+ .bep-student-pilot .pilot-done-emblem{
+  forced-color-adjust:auto;border:1px solid CanvasText;
+ }
+}
