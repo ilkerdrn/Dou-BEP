@@ -139,3 +139,19 @@ test('exam focus view retains access controls while optional explanations collap
  assert.ok(css.includes('#player .pilot-session-help>summary:focus-visible'));
  assert.ok(css.includes('@media(max-width:760px)'));
 });
+
+test('autosave indicator only turns confirmed after server acknowledgment',()=>{
+ const html=source('pilot.html'),js=source('pilot.mjs'),css=source('pilot-premium.css');
+ assert.ok(html.includes('id="pilot-save-status" data-save-state="idle" role="status"'));
+ assert.ok(js.includes("function setSaveStatus(message,state='idle')"));
+ for(const state of ['pending','saving','saved','error'])
+  assert.ok(css.includes('#pilot-save-status[data-save-state="'+state+'"]'),state);
+ assert.ok(js.includes("setSaveStatus('Değişiklik var · otomatik ara kayıt bekleniyor…','pending')"));
+ assert.ok(js.includes("setSaveStatus('Yanıtlar otomatik kaydediliyor…','saving')"));
+ assert.ok(js.includes("setSaveStatus('Tüm güncel yanıtlar yerel sunucuya kaydedildi. Henüz teslim edilmedi.','saved')"));
+ assert.ok(js.includes("setSaveStatus('Ara kayıt başarısız: '+e.message"));
+ assert.ok(js.includes("setSaveStatus('Geri yükleme başarısız: '+e.message,'error')"));
+ assert.ok(js.includes("await post('/api/pilot/save',{answers},token);"));
+ assert.ok(js.includes("savedRevision=revision;"));
+ assert.ok(css.includes(':not(.high):not(.high-contrast) #pilot-save-status[data-save-state="error"]'));
+});
