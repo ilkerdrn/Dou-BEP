@@ -173,3 +173,15 @@ Windows PowerShell kullanıcısı `node --test dou-speech-pilot-previews.test.mj
 Yalnız test ifadesindeki metin çift tırnağa çevrilerek giderildi: `c2ff543...`. Aynı kontrolde bir kullanım sorunu daha düzeltildi: Pocket WAV dosyası eksik/bozuksa OS sesli okuma artık gereksiz durdurulmaz; `onStart()` valid WAV elde edildikten sonraya taşındı: `aa9b73e...`.
 
 Düzeltmeler sonrası GitHub kaynakları üzerinde **test ve uygulama JavaScript sözdizimi PASS**, yalıtılmış tarayıcı/Blob maketinde **5/5 DOU/Pocket önizleme testi PASS**. Gerçek Windows Node + Edge testinin yenilenmiş çıktısı **BEKLENİYOR**; daha önceki 12/13 sonucu bu yeni durumu doğrulamaz. Öğrenci veritabanı ve gerçek sınav akışı değiştirilmedi.
+
+
+## 16 Kasım 2026 — Windows 252/252 Edge + 17/17 Reader başarı kaydı
+
+Kullanıcının `D:\Projects\DOU-BEP-ACCESSIBILITY-TEST` Windows PowerShell 5.1 çıktısı yeni ses ve otomatik okuma sürümünün yerel testini doğruladı:
+
+- `git fetch` ve `git merge --ff-only FETCH_HEAD` **PASS**; yerel dal `0c6a597` -> `bfa5c48` fast-forward ile güncellendi, çalışma ağacı temizliği denetlendi.
+- `node --check dou-speech-pilot-previews.test.mjs` **PASS**; önceki test dosyası sözdizimi engeli giderildi.
+- `node --test dou-speech-pilot-previews.test.mjs dou-reader-panel.test.mjs tools/v4-student-browser-acceptance.test.mjs` **17/17 PASS**, sıfır fail/skip. Ses WAV önizleme, Pocket TTS doğal WAV'ın açıkça dosyadan seçilmesi, öğretmen `audioAllowed=false` kuralı, NVDA form başlıkları, erişim profili ve otomatik okuma kaynak sözleşmeleri denetlendi.
+- `npm run ui:browser:student` Microsoft Edge'de **252/252 PASS**; 390px sentetik/izole anonim sınav, beş aşamalı editör, kurum yönetimi, klavye, son kontrol/teslim, dört robotik DOU önizlemesi ile Pocket TTS dosya seçimi, otomatik okuma anahtarının etkinleşmesi, mobil görünüm dahil.
+
+**Önemli kabul sınırı:** 252 Edge kontrolü, gerçek hoparlör çıkışını veya `female_2` modelinin her gerçek soru için dinamik doğal ses üretimini kanıtlamaz. Otomatik sesli erişim şu an geçerli yerel Windows/Edge Türkçe TTS üzerinden yapılmaktadır. Pocket TTS yalnız daha önce kaydedilmiş doğal WAV örneğinin kullanıcı tarafından seçilip yerelde çalınmasıdır. İnsan NVDA dinlemesi, anlaşılırlık ve modelin sınava üretim entegrasyonu **BEKLİYOR**. Bu kabul sonucu üretim veya WCAG tam uygunluk ilanı değildir.
