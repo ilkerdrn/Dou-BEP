@@ -985,3 +985,16 @@ body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-save-status[data-sa
 @media(forced-colors:active){
  .bep-student-pilot #pilot-save-status{border:2px solid CanvasText;}
 }
+
+/* Keep programmatically focused question headings visible after navigation. */
+body.bep-student-pilot #student-questions .question h2[tabindex="-1"],
+body.bep-student-pilot #pilot-final-title,
+body.bep-student-pilot #ready-title,
+body.bep-student-pilot #pilot-done-title{
+ scroll-margin-block-start:clamp(24px,6vh,72px);
+}
+body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question h2[tabindex="-1"]:focus-visible,
+body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-final-title:focus-visible{
+ outline:3px solid #156bb4!important;outline-offset:5px!important;
+ border-radius:3px;
+}
