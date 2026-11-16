@@ -25,7 +25,10 @@ function renderPilotClock(){
   $('pilot-restore').disabled=true;
   $('send').disabled=true;
   for(const control of $('student-questions').querySelectorAll('input[type="radio"],select,.pilot-clear-answer'))control.disabled=true;
-  if(phaseChanged)announce('Oturum süresi doldu. Öğretmeninizle görüşün.',true);
+  if(phaseChanged){
+    $('reader-auto').checked=false;douReader?.stop();
+    announce('Oturum süresi doldu. Öğretmeninizle görüşün.',true);
+   }
  }
 }
 function startPilotClock(expiresAt){
@@ -39,6 +42,16 @@ function announce(s,error=false){$('message').textContent=s;$('message').classNa
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
 let douReader=null;
+let lastAutoSpokenQuestion=-1;
+function maybeAutoReadQuestion(force=false){
+ if(!exam||!claim||$('player').hidden||!$('reader-auto').checked||!douReader)return;
+ if(!force&&lastAutoSpokenQuestion===activeQuestionIndex)return;
+ const q=exam.questions[activeQuestionIndex];
+ if(!q||q.audioAllowed===false){lastAutoSpokenQuestion=activeQuestionIndex;return;}
+ // Explicit listen mode + student action; never autoplay on page load.
+ lastAutoSpokenQuestion=activeQuestionIndex;
+ douReader.read();
+}
 function speak(q){
  if(!douReader){announce('Okuyucu henüz yüklenmedi.',true);return;}
  if(exam?.questions?.includes(q)&&exam.questions.indexOf(q)!==activeQuestionIndex){
@@ -65,7 +78,10 @@ function updateQuestionNavigation(focus=false){
  douReader?.syncQuestion();
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length}`:`${cards.length} soru birlikte gösteriliyor`;
  updateQuestionMap();
- if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();}
+ if(focus&&single){
+ douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();
+ maybeAutoReadQuestion();
+}
 }
 function collectAnswers(){
  const form=new FormData($('answer-form')),answers={},empty=[];
@@ -159,9 +175,21 @@ function applyStudentAccessProfile(id){
  document.body.classList.toggle('pilot-motor',profile.largeTargets);
  document.body.classList.toggle('pilot-entry-large',profile.fontSize>=24);
  $('access-profile-note').textContent=profile.description;
+ $('reader-auto').checked=profile.id==='listen';
+ $('reader-auto').disabled=false;
+ lastAutoSpokenQuestion=-1;
  if(exam)updateQuestionNavigation();
+ if(profile.id==='listen')maybeAutoReadQuestion(true);
 }
 $('access-profile').addEventListener('change',()=>applyStudentAccessProfile($('access-profile').value));
+$('reader-auto').addEventListener('change',()=>{
+ douReader?.stop();
+ lastAutoSpokenQuestion=-1;
+ $('reader-auto-note').textContent=$('reader-auto').checked?
+  'Otomatik okuma açık. Yeni soruya geçince yerel Türkçe sistem sesiyle okunur. NVDA da konuşuyorsa kapatın.':
+  'Otomatik okuma kapalı. NVDA ve klavyeyle devam edebilirsiniz.';
+ if($('reader-auto').checked)maybeAutoReadQuestion(true);
+});
 $('entry-access-profile').addEventListener('change',()=>{
  const profile=studentAccessProfile($('entry-access-profile').value);
  $('ready-access-profile').value=profile.id;
@@ -178,8 +206,13 @@ $('ready-start').addEventListener('click',()=>{
  $('exam-ready').hidden=true;$('player').hidden=false;
  announce('Sınav soruları açıldı. Sınav süresi kodu kullandığınızda başlamıştı.');
  douReader?.refreshVoices();
- const heading=$('player').querySelector('h2');
+ lastAutoSpokenQuestion=-1;
+ const heading=$('reader-auto').checked?
+  $('student-questions').querySelector('.question:not([hidden]) h2'):
+  $('player').querySelector('h2');
  heading.setAttribute('tabindex','-1');heading.focus();
+ // Soruları aç: user's explicit activation, including keyboard Enter.
+ maybeAutoReadQuestion(true);
 });
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
  try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;startPilotClock(r.expiresAt);$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;
@@ -334,7 +367,10 @@ $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.ma
 $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(exam.questions.length-1,activeQuestionIndex+1);updateQuestionNavigation(true);});
 $('size').addEventListener('change',()=>document.documentElement.style.setProperty('--student-size',$('size').value+'px'));
 $('contrast').addEventListener('change',()=>document.body.classList.toggle('high',$('contrast').checked));
-$('stop-voice').addEventListener('click',()=>{douReader?.stop();announce('Seslendirme durduruldu.');});
+$('stop-voice').addEventListener('click',()=>{
+ $('reader-auto').checked=false;
+ douReader?.stop();announce('Seslendirme durduruldu. Otomatik okuma kapatıldı.');
+});
 window.addEventListener('pagehide',()=>{clearSaveTimer();stopPilotClock();claim=null;douReader?.stop();});
 
 // The reader is deliberately scoped to the current anonymized pilot question only.
