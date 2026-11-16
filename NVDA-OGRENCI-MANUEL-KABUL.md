@@ -40,11 +40,13 @@ Her satıra **PASS / FAIL / TEST EDİLMEDİ** ve kısa, kimliksiz açıklama yaz
 | Kesin teslim | Açık onaydan sonra anonim teslim referansı okunur, değiştirilebilir yanıt paneli kapanır; ikinci kez teslim yapılamaz | TEST EDİLMEDİ |
 | Büyük yazı / kontrast | Yazı büyütme ve kontrastla içerik taşmaz, odak görünür kalır; 200% yakınlaştırmada kullanılabilir | TEST EDİLMEDİ |
 | Motor erişim | Sadece Tab/Shift+Tab/Enter/Space/ok tuşlarıyla fare olmadan sınav tamamlanabilir | TEST EDİLMEDİ |
+| Matematik sembolleri (DOU Reader) | Sabit "Sistem sesini ve + = - işaretlerini dene" düğmesiyle `3 + 5 = 8`, `9 - 4 = 5`, `1/2` gerçekten artı, eksi, eşittir, bölü olarak duyuluyor mu? "Okuma tamamlandı" sesin duyulduğu anlamına gelmez. | TEST EDİLMEDİ |
+| Sistem sesi / DOU Speech ayrımı | Microsoft Tolga gibi yerel Windows/Edge sesi listelenir; özgün DOU Speech robotik laboratuvarı sınavın gerçek sesi gibi sunulmaz. | TEST EDİLMEDİ |
 | DOU Reader (ayrı deney) | Kurulu ve yerel olduğu doğrulanan Türkçe ses varsa soru/şıklar anlaşılır; seslendirme izni kapalı soru okunmaz. Ses yoksa yazılı/klavye akışı çalışmaya devam eder | TEST EDİLMEDİ |
 
 ## Sesleri nasıl değerlendirmeli?
 
-**NVDA** gerçek ekran okuyucu olarak kendi ses sentezleyicisini kullanabilir. **DOU Reader** ise pilot sayfasında yalnız tarayıcının yerel Türkçe olarak bildirdiği sesleri kullanır. İkisi aynı anda konuşursa içeriği değerlendirmek zorlaşır; ayrı geçişlerde dinleyin. DOU Speech / Pocket TTS bağımsız deneysel laboratuvardır; **şu an sınav okuyucusuna bağlandı veya doğal kabul aldı denilemez**.
+**Not:** DOU Reader'da matematik işaretlerini Türkçe sözcüklere dönüştüren işlem NVDA'nın kendi noktalama/sembol telaffuzu ayarlarını değiştirmez. Bu iki okuyucu ayrı ayrı dinlenmelidir. **NVDA** gerçek ekran okuyucu olarak kendi ses sentezleyicisini kullanabilir. **DOU Reader** ise pilot sayfasında yalnız tarayıcının yerel Türkçe olarak bildirdiği sesleri kullanır. İkisi aynı anda konuşursa içeriği değerlendirmek zorlaşır; ayrı geçişlerde dinleyin. DOU Speech / Pocket TTS bağımsız deneysel laboratuvardır; **şu an sınav okuyucusuna bağlandı veya doğal kabul aldı denilemez**.
 
 Özellikle sayıların, matematiksel işlem işaretlerinin, Türkçe harflerin, seçeneklerin ve eşleştirme ifadelerinin **anlaşılırlığını** denetleyin. Metin içeriğini veya sesi kaydetmeyin; yalnız örneğin `Eşleştirme / seçenek odağı / FAIL / hangi seçeneğin okunduğu anlaşılmıyor` biçiminde kimliksiz gözlem yazın.
 
