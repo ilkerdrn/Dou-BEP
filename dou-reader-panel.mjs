@@ -1,10 +1,12 @@
 import {readerText,readerShortcut} from './dou-reader-core.mjs';
 import {createLocalSpeech} from './dou-speech.mjs';
+import {attachPilotSpeechPreviews} from './dou-speech-pilot-previews.mjs';
 /** Attach to anonymous exam only. No API calls, cookies, storage or microphone. */
 export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
  const $=id=>doc.getElementById(id);
  const engine=createLocalSpeech({synth:win.speechSynthesis,Utterance:win.SpeechSynthesisUtterance,
   onStatus:message=>{if($('reader-status'))$('reader-status').textContent=message;}});
+ const previews=attachPilotSpeechPreviews({doc,win,getQuestion,onStart:()=>engine.stop()});
  function refreshVoices(){
   const list=engine.refresh(),select=$('reader-voice');if(!select)return;
   select.replaceChildren();
@@ -24,23 +26,26 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   const q=getQuestion(),blocked=!engine.refresh().length||!q||q.audioAllowed===false;
   $('reader-read').disabled=blocked;
   $('reader-test').disabled=blocked;
+  previews.syncQuestion();
  }
  function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
+  previews.stop();
   try{engine.speak(readerText(question),{rate:$('reader-rate').value});}
   catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
  // Never use exam text, answers or user input for this speaker diagnostic.
  function testVoice(){
+  previews.stop();
   const q=getQuestion();
   if(!q||q.audioAllowed===false){announce('Bu soruda uygulama içi seslendirme kapalıdır.',true);return;}
   try{
    engine.speak('Bu bir yerel ses denemesidir. 3 + 5 = 8. 9 - 4 = 5. 1/2, yüzde 50 ve 20°C.',{rate:$('reader-rate').value});
   }catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
- function navigate(direction){engine.stop();moveQuestion(direction);}
+ function navigate(direction){engine.stop();previews.stop();moveQuestion(direction);}
  $('reader-read').addEventListener('click',read);
  $('reader-test').addEventListener('click',testVoice);
- $('reader-stop').addEventListener('click',()=>engine.stop());
+ $('reader-stop').addEventListener('click',()=>{engine.stop();previews.stop();});
  $('reader-pause').addEventListener('click',()=>engine.pause());
  $('reader-resume').addEventListener('click',()=>engine.resume());
  $('reader-prev').addEventListener('click',()=>navigate(-1));
@@ -51,12 +56,12 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if($('player').hidden)return;
   const action=readerShortcut(event);if(!action)return;
   event.preventDefault();
-  if(action==='read')read();else if(action==='stop')engine.stop();
+  if(action==='read')read();else if(action==='stop'){engine.stop();previews.stop();}
   else if(action==='next')navigate(1);else if(action==='previous')navigate(-1);
   else if(action==='help')$('reader-help').click();
  };
  doc.addEventListener('keydown',keydown);
  if(win.speechSynthesis?.addEventListener)win.speechSynthesis.addEventListener('voiceschanged',refreshVoices);
  refreshVoices();
- return {syncQuestion,stop:()=>engine.stop(),read,refreshVoices,destroy:()=>{engine.stop();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
+ return {syncQuestion,stop:()=>{engine.stop();previews.stop();},read,refreshVoices,destroy:()=>{engine.stop();previews.destroy();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
 }
