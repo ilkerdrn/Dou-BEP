@@ -5,8 +5,20 @@ import {attachPocketStudentReader} from './dou-pocket-student-reader.mjs';
 /** Attach to anonymous exam only. No API calls, cookies, storage or microphone. */
 export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,getToken=()=>null}){
  const $=id=>doc.getElementById(id);
+ const setStatus=(message,state='idle')=>{
+  const area=$('reader-status');
+  if(area){area.textContent=message;area.dataset.readerState=state;}
+ };
+ const systemState=message=>{
+  if(message.includes('duraklatıldı'))return 'paused';
+  if(message.includes('okunuyor')||message.includes('sürdürüldü'))return 'playing';
+  if(message.includes('tamamlandığını'))return 'complete';
+  if(message.includes('durduruldu'))return 'stopped';
+  if(message.includes('başlatılamadı')||message.includes('bulunamadı')||message.includes('oynatılamadı')||message.includes('yok.'))return 'error';
+  return 'idle';
+ };
  const engine=createLocalSpeech({synth:win.speechSynthesis,Utterance:win.SpeechSynthesisUtterance,
-  onStatus:message=>{if($('reader-status'))$('reader-status').textContent=message;}});
+  onStatus:message=>setStatus(message,systemState(message))});
  const pocket=attachPocketStudentReader({doc,win,getQuestion,getToken});
  const previews=attachPilotSpeechPreviews({doc,win,getQuestion,onStart:()=>{engine.stop();pocket.stop();}});
  const stop=()=>{engine.stop();pocket.stop();previews.stop();};
@@ -33,7 +45,10 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
   const q=getQuestion(),blocked=!q||q.audioAllowed===false;
   if(blocked||(stoppedQuestionId&&q.id!==stoppedQuestionId))stoppedQuestionId=null;
   pocket.sync();
-  $('reader-read').disabled=blocked||(pocket.selected?!pocket.available:!engine.refresh().length);
+  const canRead=!blocked&&(pocket.selected?pocket.available:engine.refresh().length>0);
+  $('reader-read').disabled=!canRead;
+  $('reader-pause').disabled=!canRead;
+  $('reader-resume').disabled=!canRead;
   $('reader-test').disabled=blocked;
   previews.syncQuestion();
  }
@@ -62,8 +77,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
   const q=getQuestion();
   stoppedQuestionId=q&&q.audioAllowed!==false?q.id:null;
   stop();
-  if($('reader-status'))$('reader-status').textContent=stoppedQuestionId?
-   'Seslendirme durduruldu. Sürdür aynı soruyu baştan okur.':'Seslendirme durduruldu.';
+  setStatus(stoppedQuestionId?
+   'Seslendirme durduruldu. Sürdür aynı soruyu baştan okur.':'Seslendirme durduruldu.','stopped');
  });
  $('reader-pause').addEventListener('click',()=>{if(pocket.selected)pocket.pause();else engine.pause();});
  $('reader-resume').addEventListener('click',()=>{
