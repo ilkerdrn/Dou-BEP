@@ -39,6 +39,12 @@ function startPilotClock(expiresAt){
  pilotTimeInterval=setInterval(renderPilotClock,1000);
 }
 function announce(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
+function setSaveStatus(message,state='idle'){
+ const indicator=$('pilot-save-status');
+ indicator.textContent=message;
+ indicator.dataset.saveState=state;
+}
+
 // A visual journey aid only; never determines auth, deadlines or submission state.
 function updatePilotStage(stage){
  const stages=['entry','ready','exam','done'];
@@ -254,7 +260,7 @@ $('ready-start').addEventListener('click',()=>{
  maybeAutoReadQuestion(true);
 });
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;startPilotClock(r.expiresAt);$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);$('pilot-save-status').textContent='Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.';}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;updatePilotStage('ready');
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;startPilotClock(r.expiresAt);$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre kod oluşturulduktan sonra 45 dakikadır`;render();if(r.answers){applySavedAnswers(r.answers);setSaveStatus('Öğretmen kurtarma koduyla önceki anonim ara kayıt geri yüklendi. Sınav süresi uzatılmadı.','saved');}$('entry').hidden=true;$('player').hidden=true;$('exam-ready').hidden=false;updatePilotStage('ready');
  $('ready-understand').checked=false;$('ready-device').checked=false;
   $('ready-access-profile').value=studentAccessProfile($('entry-access-profile').value).id;
  $('ready-exam-details').textContent=exam.title+' · '+exam.subject+' · '+exam.questions.length+' soru · Pilot süre sınırı 45 dakika.';
@@ -315,7 +321,7 @@ function scheduleAutoSave(){
  if(!claim||!exam)return;
  answerRevision++;
  clearSaveTimer();
- $('pilot-save-status').textContent='Değişiklik var · otomatik ara kayıt bekleniyor…';
+ setSaveStatus('Değişiklik var · otomatik ara kayıt bekleniyor…','pending');
  saveTimer=setTimeout(()=>{saveTimer=null;void saveDraft();},1200);
 }
 async function saveDraft(){
@@ -330,13 +336,13 @@ async function saveDraft(){
    do{
     const revision=answerRevision,token=claim;
     const {answers}=collectAnswers();
-    $('pilot-save-status').textContent='Yanıtlar otomatik kaydediliyor…';
+    setSaveStatus('Yanıtlar otomatik kaydediliyor…','saving');
     await post('/api/pilot/save',{answers},token);
     savedRevision=revision;
    }while(claim&&exam&&savedRevision<answerRevision);
-   if(claim&&exam)$('pilot-save-status').textContent='Tüm güncel yanıtlar yerel sunucuya kaydedildi. Henüz teslim edilmedi.';
+   if(claim&&exam)setSaveStatus('Tüm güncel yanıtlar yerel sunucuya kaydedildi. Henüz teslim edilmedi.','saved');
   }catch(e){
-   if(claim&&exam)$('pilot-save-status').textContent='Ara kayıt başarısız: '+e.message+'. Yanıtlar bu açık sekmede duruyor; tekrar kaydetmeyi deneyin.';
+   if(claim&&exam)setSaveStatus('Ara kayıt başarısız: '+e.message+'. Yanıtlar bu açık sekmede duruyor; tekrar kaydetmeyi deneyin.','error');
   }finally{
    draftBusy=false;draftPromise=null;
    $('pilot-save').disabled=pilotTimeState(pilotExpiresAt).phase==='expired';
@@ -355,8 +361,8 @@ $('pilot-restore').addEventListener('click',async()=>{
   const data=await getProgress();
   applySavedAnswers(data.answers);
   answerRevision++;savedRevision=answerRevision;
-  resetFinalReview();updateAnswerProgress();$('pilot-save-status').textContent='Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.';
- }catch(e){$('pilot-save-status').textContent='Geri yükleme başarısız: '+e.message;}
+  resetFinalReview();updateAnswerProgress();setSaveStatus('Son anonim ara kayıt geri yüklendi. Henüz teslim edilmedi.','saved');
+ }catch(e){setSaveStatus('Geri yükleme başarısız: '+e.message,'error');}
  finally{$('pilot-restore').disabled=false;}
 });
 $('pilot-first-empty').addEventListener('click',()=>{
