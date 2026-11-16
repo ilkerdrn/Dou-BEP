@@ -54,11 +54,15 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,get
  $('reader-read').addEventListener('click',read);
  $('reader-test').addEventListener('click',testVoice);
  $('reader-stop').addEventListener('click',stop);
- $('reader-pause').addEventListener('click',()=>engine.pause());
- $('reader-resume').addEventListener('click',()=>engine.resume());
+ $('reader-pause').addEventListener('click',()=>{if(pocket.selected)pocket.pause();else engine.pause();});
+ $('reader-resume').addEventListener('click',()=>{if(pocket.selected)void pocket.resume();else engine.resume();});
  $('reader-prev').addEventListener('click',()=>navigate(-1));
  $('reader-next').addEventListener('click',()=>navigate(1));
  $('reader-voice').addEventListener('change',()=>engine.setVoice($('reader-voice').value));
+ $('reader-pocket-voice')?.addEventListener('change',()=>{
+  engine.stop();
+  if(!$('player')?.hidden&&$('reader-auto')?.checked&&pocket.selected)void read();
+ });
  $('reader-engine')?.addEventListener('change',()=>{
   stop();syncQuestion();
   if(!$('player')?.hidden&&$('reader-auto')?.checked)read();
