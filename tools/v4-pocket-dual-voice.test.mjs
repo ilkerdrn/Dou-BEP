@@ -55,3 +55,15 @@ test('synthetic speech errors are classified without exposing text or CLI stderr
  assert.match(api,/code==='speech_busy'\?429:503/);
  assert.doesNotMatch(api,/console\.error\(.*narration/);
 });
+
+test('reader explicitly distinguishes pause/resume from stop/restart with question safety',()=>{
+ const panel=read('dou-reader-panel.mjs');
+ const html=read('pilot.html');
+ assert.match(panel,/let stoppedQuestionId=null;/);
+ assert.match(panel,/stoppedQuestionId=q&&q\.audioAllowed!==false\?q\.id:null;/);
+ assert.match(panel,/stoppedQuestionId&&q\?\.id===stoppedQuestionId&&q\.audioAllowed!==false/);
+ assert.match(panel,/stoppedQuestionId=null;\s*void read\(\);/);
+ assert.match(panel,/if\(pocket\.selected\)void pocket\.resume\(\);else engine\.resume\(\);/);
+ assert.match(panel,/function navigate\(direction\)\{stoppedQuestionId=null;stop\(\);/);
+ assert.match(html,/id="reader-resume" title="Duraklatılan sesi kaldığı yerden sürdürür; Durdur sonrası aynı soruyu baştan okur"/);
+});
