@@ -162,9 +162,10 @@ body.bep-student-pilot:not(.high):not(.high-contrast) #pilot-current-question-ty
  background:#fff;border:1px solid #cbd7e7;color:#9c1530;
 }
 body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .question{
- background:#fff;border:1px solid var(--student-line);border-top:3px solid var(--student-red);
- border-radius:18px;padding:clamp(22px,3vw,34px);
- box-shadow:0 10px 30px #1a27420c;
+ background:#fff!important;border:1px solid var(--student-line)!important;
+ border-top:3px solid var(--student-red)!important;
+ border-radius:18px!important;padding:clamp(22px,3vw,34px)!important;
+ box-shadow:0 10px 30px #1a27420c!important;
 }
 body.bep-student-pilot:not(.high):not(.high-contrast) #student-questions .option{
  border:1px solid #dce3ed;border-radius:12px;padding:15px 17px;min-height:58px;
