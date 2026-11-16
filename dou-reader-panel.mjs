@@ -1,12 +1,15 @@
 import {readerText,readerShortcut} from './dou-reader-core.mjs';
 import {createLocalSpeech} from './dou-speech.mjs';
 import {attachPilotSpeechPreviews} from './dou-speech-pilot-previews.mjs';
+import {attachPocketStudentReader} from './dou-pocket-student-reader.mjs';
 /** Attach to anonymous exam only. No API calls, cookies, storage or microphone. */
-export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
+export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce,getToken=()=>null}){
  const $=id=>doc.getElementById(id);
  const engine=createLocalSpeech({synth:win.speechSynthesis,Utterance:win.SpeechSynthesisUtterance,
   onStatus:message=>{if($('reader-status'))$('reader-status').textContent=message;}});
- const previews=attachPilotSpeechPreviews({doc,win,getQuestion,onStart:()=>engine.stop()});
+ const pocket=attachPocketStudentReader({doc,win,getQuestion,getToken});
+ const previews=attachPilotSpeechPreviews({doc,win,getQuestion,onStart:()=>{engine.stop();pocket.stop();}});
+ const stop=()=>{engine.stop();pocket.stop();previews.stop();};
  function refreshVoices(){
   const list=engine.refresh(),select=$('reader-voice');if(!select)return;
   select.replaceChildren();
@@ -14,22 +17,27 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   const has=list.length>0;
   if(!has){const o=doc.createElement('option');o.textContent='Yerel Türkçe ses yok';o.value='';select.append(o);}
   select.disabled=!has;select.value=has?engine.selectedVoice:'';
-  $('reader-read').disabled=!has;
+  $('reader-read').disabled=!has&&!pocket.available;
   $('reader-test').disabled=!has;
   $('reader-pause').disabled=!has;
   $('reader-resume').disabled=!has;
   if(!has)$('reader-status').textContent='Yerel Türkçe ses bulunamadı. Yazılı sorular ve klavyeyle gezinme kullanılabilir.';
-  // Voice-list changes must never re-enable reading on a question marked audioAllowed=false.
+  // Voice-list changes must never re-enable reading on a teacher-blocked question.
   syncQuestion();
+  void pocket.check().then(()=>{if($('reader-engine'))syncQuestion();});
  }
  function syncQuestion(){
-  const q=getQuestion(),blocked=!engine.refresh().length||!q||q.audioAllowed===false;
-  $('reader-read').disabled=blocked;
+  const q=getQuestion(),blocked=!q||q.audioAllowed===false;
+  pocket.sync();
+  $('reader-read').disabled=blocked||(pocket.selected?!pocket.available:!engine.refresh().length);
   $('reader-test').disabled=blocked;
   previews.syncQuestion();
  }
  function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
   previews.stop();
+  if(question.audioAllowed===false){announce('Bu soruda uygulama seslendirmesi kapalıdır.',true);return;}
+  if(pocket.selected){engine.stop();return pocket.read();}
+  pocket.stop();
   try{engine.speak(readerText(question),{rate:$('reader-rate').value});}
   catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
@@ -42,26 +50,30 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
    engine.speak('Bu bir yerel ses denemesidir. 3 + 5 = 8. 9 - 4 = 5. 1/2, yüzde 50 ve 20°C.',{rate:$('reader-rate').value});
   }catch(e){engine.stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
- function navigate(direction){engine.stop();previews.stop();moveQuestion(direction);}
+ function navigate(direction){stop();moveQuestion(direction);}
  $('reader-read').addEventListener('click',read);
  $('reader-test').addEventListener('click',testVoice);
- $('reader-stop').addEventListener('click',()=>{engine.stop();previews.stop();});
+ $('reader-stop').addEventListener('click',stop);
  $('reader-pause').addEventListener('click',()=>engine.pause());
  $('reader-resume').addEventListener('click',()=>engine.resume());
  $('reader-prev').addEventListener('click',()=>navigate(-1));
  $('reader-next').addEventListener('click',()=>navigate(1));
  $('reader-voice').addEventListener('change',()=>engine.setVoice($('reader-voice').value));
+ $('reader-engine')?.addEventListener('change',()=>{
+  stop();syncQuestion();
+  if(!$('player')?.hidden&&$('reader-auto')?.checked)read();
+ });
  $('reader-help').addEventListener('click',()=>{const expanded=$('reader-shortcuts').hidden;$('reader-shortcuts').hidden=!expanded;$('reader-help').setAttribute('aria-expanded',String(expanded));});
  const keydown=event=>{
   if($('player').hidden)return;
   const action=readerShortcut(event);if(!action)return;
   event.preventDefault();
-  if(action==='read')read();else if(action==='stop'){engine.stop();previews.stop();}
+  if(action==='read')read();else if(action==='stop')stop();
   else if(action==='next')navigate(1);else if(action==='previous')navigate(-1);
   else if(action==='help')$('reader-help').click();
  };
  doc.addEventListener('keydown',keydown);
  if(win.speechSynthesis?.addEventListener)win.speechSynthesis.addEventListener('voiceschanged',refreshVoices);
  refreshVoices();
- return {syncQuestion,stop:()=>{engine.stop();previews.stop();},read,refreshVoices,destroy:()=>{engine.stop();previews.destroy();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
+ return {syncQuestion,stop,read,refreshVoices,destroy:()=>{stop();pocket.destroy();previews.destroy();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
 }
