@@ -52,3 +52,16 @@ test('studio reader documentation remains accessible without crowding primary vo
  assert.ok(css.includes('#player:not([hidden])'));
  assert.ok(css.includes('#dou-reader .reader-actions'));
 });
+
+test('answer progress uses a native element and never stores additional answer data',()=>{
+ const html=source('pilot.html'),js=source('pilot.mjs'),css=source('pilot-premium.css');
+ assert.match(html,/<progress id="pilot-progress-bar" max="1" value="0" aria-label="Yanıtlanan soru ilerlemesi">/);
+ assert.match(js,/const progress=\$\('pilot-progress-bar'\);/);
+ assert.match(js,/progress\.max=Math\.max\(1,exam\.questions\.length\);/);
+ assert.match(js,/progress\.value=answered;/);
+ assert.match(css,/#pilot-progress-bar::-webkit-progress-value/);
+ assert.match(css,/\.pilot-question-jump\[data-status="answered"\]/);
+ assert.match(css,/\.pilot-question-jump\[data-status="review"\]/);
+ assert.match(css,/\.pilot-question-jump\[aria-current="step"\]/);
+ assert.match(css,/#pilot-toggle-review\[aria-pressed="true"\]/);
+});
