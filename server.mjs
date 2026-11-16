@@ -129,6 +129,7 @@ const allowed={
  '/dou-speech-quality.mjs':['dou-speech-quality.mjs','text/javascript; charset=utf-8'],
  '/dou-speech-pronunciation.mjs':['dou-speech-pronunciation.mjs','text/javascript; charset=utf-8'],
  '/dou-reader-panel.mjs':['dou-reader-panel.mjs','text/javascript; charset=utf-8'],
+ '/dou-speech-pilot-previews.mjs':['dou-speech-pilot-previews.mjs','text/javascript; charset=utf-8'],
  '/dou-reader.css':['dou-reader.css','text/css; charset=utf-8'],
  '/pilot-admin.mjs':['pilot-admin.mjs','text/javascript; charset=utf-8'],
  '/pilot-review-workbench.mjs':['pilot-review-workbench.mjs','text/javascript; charset=utf-8'],
@@ -196,7 +197,16 @@ export function createServer(){return http.createServer(async(req,res)=>{
    res.end();return;
   }
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
-  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders});res.end(req.method==='HEAD'?undefined:content);}
+  try{
+   const content=await readFile(join(folder,item[0]));
+   // Only these two local speech pages may play in-memory WAV blobs.
+   // No remote media URLs or additional script origins are permitted.
+   const headers=path==='/pilot'||path==='/dou-reader-demo'?
+    {...securityHeaders,'Content-Security-Policy':securityHeaders['Content-Security-Policy']+'; media-src blob:'}:
+    securityHeaders;
+   res.writeHead(200,{'Content-Type':item[1],...headers});
+   res.end(req.method==='HEAD'?undefined:content);
+  }
   catch{res.writeHead(500).end('Dosya okunamadı');}
  }).on('close',()=>{
   // Tests use BEP_NO_LISTEN=1 and an ephemeral SQLite database.
