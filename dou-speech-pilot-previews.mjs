@@ -10,6 +10,8 @@ export const DOU_PREVIEW_MODELS=Object.freeze([
  'legacy','spectral','contrast','place'
 ]);
 const FIXED_SAMPLE='Merhaba dünya';
+const POCKET_SAMPLE_ID='pocket-female2';
+const MAX_LOCAL_WAV_BYTES=2*1024*1024;
 
 export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
  const $=id=>doc.getElementById(id);
@@ -17,6 +19,7 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
  const playButton=$('reader-lab-play');
  const stopButton=$('reader-lab-stop');
  const status=$('reader-lab-status');
+ const pocketFile=$('reader-lab-pocket-file');
  if(!select||!playButton||!stopButton||!status){
   return {syncQuestion(){},stop(){},destroy(){}};
  }
@@ -37,6 +40,7 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
   const enabled=!!q&&q.audioAllowed!==false;
   select.disabled=!enabled;
   playButton.disabled=!enabled;
+  if(pocketFile)pocketFile.disabled=!enabled;
   if(!enabled){
    stop();
    status.textContent=q?
@@ -50,7 +54,7 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
    syncQuestion();return false;
   }
   const model=select.value;
-  if(!DOU_PREVIEW_MODELS.includes(model)){
+  if(model!==POCKET_SAMPLE_ID&&!DOU_PREVIEW_MODELS.includes(model)){
    status.textContent='Tanımlanmamış deneysel ses seçeneği.';
    return false;
   }
@@ -61,13 +65,32 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
   try{
    // Lazy import: the acoustic DSP is not loaded for regular exam reading.
    // The import resolves only to local same-origin, allowlisted JS modules.
-   const {synthesizeLocalFreeText}=await import('./dou-speech-free-text.mjs');
+   let wavBlob;
+   if(model===POCKET_SAMPLE_ID){
+    // Browser file selection is local, initiated by the user. No model calls,
+    // arbitrary question text, uploads or access to Windows files by path.
+    const file=pocketFile?.files?.[0];
+    if(!file||file.size<2048||file.size>MAX_LOCAL_WAV_BYTES){
+     status.textContent='Pocket TTS için önce yerel female_2 WAV örneğini seçin (en fazla 2 MB).';
+     return false;
+    }
+    const head=new Uint8Array(await file.slice(0,12).arrayBuffer());
+    const tag=at=>String.fromCharCode(...head.slice(at,at+4));
+    if(tag(0)!=='RIFF'||tag(8)!=='WAVE'){
+     status.textContent='Seçilen dosya geçerli bir WAV örneği değil.';
+     return false;
+    }
+    wavBlob=file;
+   }else{
+    const {synthesizeLocalFreeText}=await import('./dou-speech-free-text.mjs');
+    if(destroyed||current!==generation||getQuestion()?.audioAllowed===false)return false;
+    const output=synthesizeLocalFreeText(FIXED_SAMPLE,{
+     acousticModel:model,numberMode:'cardinal',delivery:'phrased'
+    });
+    wavBlob=new win.Blob([output.wav],{type:'audio/wav'});
+   }
    if(destroyed||current!==generation||getQuestion()?.audioAllowed===false)return false;
-   const output=synthesizeLocalFreeText(FIXED_SAMPLE,{
-    acousticModel:model,numberMode:'cardinal',delivery:'phrased'
-   });
-   if(destroyed||current!==generation||getQuestion()?.audioAllowed===false)return false;
-   objectUrl=win.URL.createObjectURL(new win.Blob([output.wav],{type:'audio/wav'}));
+   objectUrl=win.URL.createObjectURL(wavBlob);
    audio=new win.Audio(objectUrl);
    const player=audio;
    player.addEventListener('ended',()=>{
@@ -82,8 +105,9 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
    },{once:true});
    await player.play();
    if(current===generation){
-    status.textContent='DOU Speech '+model+
-     ' robotik örneği oynatılıyor. Yalnız "Merhaba dünya"; gerçek sorular okunmaz.';
+    status.textContent=model===POCKET_SAMPLE_ID?
+     'Pocket TTS female_2 doğal WAV örneği oynatılıyor; gerçek sorular okunmuyor.':
+     'DOU Speech '+model+' robotik örneği oynatılıyor. Yalnız "Merhaba dünya"; gerçek sorular okunmaz.';
    }
    return current===generation;
   }catch{
@@ -95,10 +119,17 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
   }
  }
  function stopClicked(){stop();status.textContent='DOU Speech deneysel ses durduruldu.';}
- function changed(){stop();status.textContent='Deneysel ses seçildi. Örneği dinlemek için oynatın.';}
+ function changed(){
+  stop();
+  status.textContent=select.value===POCKET_SAMPLE_ID?
+   'Pocket TTS için kendi female_2 örnek WAV dosyanızı seçin; dosya yüklenmez.':
+   'Deneysel ses seçildi. Örneği dinlemek için oynatın.';
+ }
+ function onLocalFile(){stop();status.textContent='WAV dosyası seçildi. Pocket TTS seçeneğiyle dinleyebilirsiniz.';}
  playButton.addEventListener('click',play);
  stopButton.addEventListener('click',stopClicked);
  select.addEventListener('change',changed);
+ pocketFile?.addEventListener('change',onLocalFile);
  syncQuestion();
  return {
   syncQuestion,stop,
@@ -108,6 +139,7 @@ export function attachPilotSpeechPreviews({doc,win,getQuestion,onStart=()=>{}}){
    playButton.removeEventListener('click',play);
    stopButton.removeEventListener('click',stopClicked);
    select.removeEventListener('change',changed);
+   pocketFile?.removeEventListener('change',onLocalFile);
   }
  };
 }
