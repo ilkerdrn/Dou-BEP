@@ -46,9 +46,9 @@ test('studio reader documentation remains accessible without crowding primary vo
  const html=source('pilot.html'),css=source('pilot-premium.css');
  for(const id of ['reader-limits','reader-engine-help','reader-read','reader-pause',
   'reader-resume','reader-stop','reader-status'])assert.match(html,new RegExp('id="'+id+'"'));
- assert.equal((html.match(/<details\\b/g)||[]).length,(html.match(/<\\/details>/g)||[]).length);
- assert.match(html,/<details class="pilot-reader-disclosure">/);
- assert.match(html,/class="pilot-question-workspace-heading"/);
- assert.match(css,/#player:not\\(\\[hidden\\]\\)/);
- assert.match(css,/#dou-reader \\.reader-actions/);
+ assert.equal(html.split('<details ').length,html.split('</details>').length);
+ assert.ok(html.includes('<details class="pilot-reader-disclosure">'));
+ assert.ok(html.includes('class="pilot-question-workspace-heading"'));
+ assert.ok(css.includes('#player:not([hidden])'));
+ assert.ok(css.includes('#dou-reader .reader-actions'));
 });
