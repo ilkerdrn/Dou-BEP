@@ -42,3 +42,35 @@ test('guest screen preserves authentication boundary and existing editor behavio
  assert.ok(css.includes('#exam-login-required[hidden]'));
  assert.ok(!css.includes('display:block!important;position:fixed'));
 });
+
+test('entire authenticated exam workspace shares a responsive institutional design system',()=>{
+ const html=source('institutional-exams.html');
+ const css=source('institutional-exam-workspace.css');
+ const server=source('server.mjs');
+ const js=source('institutional-exams.mjs');
+ assert.ok(html.includes('<link rel="stylesheet" href="/institutional-exam-workspace.css">'));
+ assert.ok(server.includes("'/institutional-exam-workspace.css':['institutional-exam-workspace.css','text/css; charset=utf-8']"));
+ assert.ok(js.includes("document.body.dataset.examAuth='authenticated'"));
+ for(const section of ['#exam-workspace .exam-workbench-heading','#exam-workspace .workflow-steps',
+  '#exam-workspace .exam-grid','#exam-workspace #exam-drafts-panel',
+  '#exam-workspace #exam-editor-card','#exam-workspace .editor-command-main']){
+  assert.ok(css.includes(section),section);
+ }
+ for(const selector of ['.portal-side.dou-nav','.portal-topbar','.dou-nav-link:not([hidden])',
+  '#dou-nav-search','.workflow-step','.exam-list-controls','.exam-autosave-panel',
+  '.editor-ribbon','.portal-btn.primary','.editor-export-panel']){
+  assert.ok(css.includes(selector),selector);
+ }
+ for(const id of ['dou-nav-search','exam-drafts-panel','exam-editor-card','workflow-next',
+  'exam-save','exam-approve','exam-search','exam-status-filter','exam-delivery-profile']){
+  assert.equal(html.split('id="'+id+'"').length,2,id);
+ }
+ assert.ok(css.includes('data-exam-auth="authenticated"'));
+ assert.ok(css.includes('@media(max-width:1380px)'));
+ assert.ok(css.includes('@media(max-width:1060px)'));
+ assert.ok(css.includes('@media(max-width:650px)'));
+ assert.ok(css.includes('@media(forced-colors:active)'));
+ assert.ok(css.includes('@media(prefers-reduced-motion:reduce)'));
+ assert.doesNotMatch(css,/https?:\/\//);
+ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+});
