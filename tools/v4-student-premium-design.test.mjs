@@ -210,3 +210,15 @@ test('premium full width entry does not duplicate the top stage tracker in sideb
  assert.ok(css.includes('main#main:has(#entry[hidden]) .pilot-workspace-sidebar'));
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
 });
+
+test('question navigation stops stale speech and keeps current heading focused',()=>{
+ const js=source('pilot.mjs');
+ assert.ok(js.includes('let lastPresentedQuestionIndex=-1,lastPresentationSingle=null;'));
+ assert.ok(js.includes('const presentationChanged=lastPresentedQuestionIndex!==activeQuestionIndex||lastPresentationSingle!==single;'));
+ assert.ok(js.includes('if(presentationChanged)douReader?.stop();'));
+ assert.ok(js.includes('function updateQuestionNavigation(focus=false,autoRead=true)'));
+ assert.ok(js.includes("cards[activeQuestionIndex]?.querySelector('h2')?.focus();"));
+ assert.ok(js.includes('if(single&&presentationChanged&&autoRead)maybeAutoReadQuestion();'));
+ assert.ok(js.includes("activeQuestionIndex=exam.questions.indexOf(q);$('one-question').checked=true;updateQuestionNavigation(true,false);"));
+ assert.ok(!js.includes('if(focus&&single){'));
+});
