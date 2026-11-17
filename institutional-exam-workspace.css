@@ -73,7 +73,7 @@ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="aut
 body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #dou-nav-search::placeholder{
  color:#b6c4d6!important;opacity:1;
 }
-body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] .dou-nav-link{
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] .dou-nav-link:not([hidden]){
  display:flex!important;align-items:center!important;gap:12px!important;
  min-height:43px!important;margin:3px 0!important;padding:10px 12px!important;
  border-radius:11px!important;color:#d4e0ed!important;
