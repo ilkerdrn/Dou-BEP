@@ -287,6 +287,17 @@ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="aut
  min-height:43px!important;border-radius:10px!important;
  padding:10px 14px!important;
 }
+/* Primary actions belong to the unified workspace theme, not a legacy layer. */
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace .portal-btn.primary{
+ background:#b70c32!important;
+ border:1px solid #b70c32!important;
+ color:#fff!important;
+ box-shadow:0 6px 16px rgba(183,12,50,.12)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace .portal-btn.primary:not(:disabled):hover{
+ background:#950923!important;
+ border-color:#950923!important;
+}
 body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace .portal-btn.secondary{
  background:#fff!important;border:1px solid #d4deea!important;
  color:#30445e!important;
