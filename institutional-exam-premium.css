@@ -1,0 +1,254 @@
+/* DOU BEP V4 · institutional exam workspace design refinements.
+   Pure presentation; login gates, server authorization and MFA remain intact.
+   Offline-first: no external fonts, images, scripts or user persistence. */
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"]{
+ background:#f2f4f8!important;color:#1c2940;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] .portal-shell{
+ display:block!important;width:100%!important;min-height:100dvh!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] .portal-main{
+ width:100%!important;max-width:none!important;min-height:100dvh!important;
+ margin:0!important;padding:0!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] .portal-content{
+ box-sizing:border-box!important;max-width:1600px!important;width:100%!important;
+ margin:0 auto!important;padding:clamp(22px,4vw,64px)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] #exam-login-required.exam-auth-landing:not([hidden]){
+ box-sizing:border-box!important;display:grid!important;
+ grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr)!important;
+ width:100%!important;min-width:0!important;
+ min-height:clamp(560px,calc(100dvh - 188px),760px)!important;
+ overflow:hidden!important;margin:0!important;padding:0!important;
+ border:1px solid #e3e8f0!important;border-radius:28px!important;
+ background:#fff!important;box-shadow:0 24px 78px rgba(25,38,63,.095)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] #exam-login-required[hidden]{
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-landing .exam-auth-intro{
+ box-sizing:border-box!important;display:flex;flex-direction:column;
+ align-items:flex-start;justify-content:center;min-width:0!important;
+ padding:clamp(35px,5vw,83px)!important;background:#fff!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-brand{
+ display:flex;align-items:center;gap:13px;margin-bottom:clamp(38px,5vh,60px);
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-brand-mark{
+ display:grid;place-items:center;width:48px;height:48px;flex:0 0 48px;
+ border-radius:13px;background:#b70c32;color:#fff;
+ font-size:14px;font-weight:850;letter-spacing:-.025em;
+ box-shadow:0 9px 22px rgba(183,12,50,.15);
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-brand strong{
+ display:block;font-size:15px;font-weight:840;color:#18243b;line-height:1.4;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-brand small{
+ display:block;font-size:12px;line-height:1.7;color:#6d788c;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-kicker{
+ display:inline-flex;align-items:center;gap:9px;padding:9px 13px;
+ background:#fff4f6;border:1px solid #f3dbe2;border-radius:100px;
+ color:#a20b2a;font-weight:840;font-size:10px;letter-spacing:.105em;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-kicker-dot{
+ width:7px;height:7px;flex:0 0 7px;background:#b70c32;border-radius:100%;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-auth-heading{
+ max-width:590px;margin:22px 0 17px!important;color:#152037!important;
+ font-size:clamp(34px,3.6vw,57px)!important;letter-spacing:-.048em!important;
+ line-height:1.13!important;font-weight:850!important;
+ overflow-wrap:normal!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] #exam-auth-heading span{
+ display:block;color:#af1036;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-intro>p{
+ margin:0 0 26px!important;max-width:48ch!important;
+ color:#637187!important;font-size:clamp(14px,1.2vw,16px)!important;line-height:1.8!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-actions{
+ display:flex;align-items:center;flex-wrap:wrap;gap:14px 20px;width:100%;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-actions .exam-link{
+ display:inline-flex!important;align-items:center;justify-content:center;gap:24px;
+ width:auto!important;min-width:225px;min-height:54px;
+ padding:13px 22px!important;border:0!important;border-radius:12px!important;
+ background:#b70c32!important;color:#fff!important;
+ box-shadow:0 11px 23px rgba(183,12,50,.19)!important;
+ font-size:14px!important;font-weight:780!important;text-decoration:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-actions .exam-link:hover{
+ background:#940924!important;transform:translateY(-1px);
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-actions .exam-link:focus-visible{
+ outline:3px solid #1874c4!important;outline-offset:4px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-action-note{
+ max-width:190px;color:#7b8799;font-size:11px;line-height:1.6;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-assurance{
+ display:flex;align-items:flex-start;gap:11px;width:100%;margin-top:clamp(35px,5vh,62px);
+ padding-top:19px;border-top:1px solid #e9edf2;
+ color:#68768b;font-size:12px;line-height:1.65;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-assurance-symbol{
+ display:grid;place-items:center;flex:0 0 24px;height:24px;border-radius:7px;
+ background:#eaf5ef;color:#287a4e;font-weight:820;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside{
+ box-sizing:border-box;display:flex;flex-direction:column;
+ min-width:0;overflow:hidden;position:relative;
+ padding:clamp(35px,4vw,65px)!important;
+ color:#fff!important;background:linear-gradient(142deg,#202c40 3%,#1d283b 53%,#492239 100%)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside::before{
+ content:"";position:absolute;right:-165px;top:-190px;width:440px;height:440px;
+ border:1px solid #ffffff2b;border-radius:50%;
+ box-shadow:0 0 0 52px #ffffff06,0 0 0 110px #ffffff05;
+ pointer-events:none;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside-top{
+ position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside-label{
+ color:#c0cede;font-size:10px;letter-spacing:.14em;font-weight:790;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside-mark{
+ display:grid;place-items:center;width:48px;height:48px;
+ border-radius:13px;border:1px solid #ffffff30;
+ background:#ffffff13;color:#fff;font-size:29px;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside h3{
+ position:relative;margin:clamp(40px,6vh,75px) 0 32px!important;
+ color:#fff!important;font-size:clamp(25px,2.5vw,37px)!important;
+ line-height:1.24!important;letter-spacing:-.035em!important;
+ max-width:470px;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside h3 span{
+ display:block;color:#f1a6b8;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps{
+ position:relative;display:grid;gap:21px;list-style:none;padding:0;margin:0;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps li{
+ display:flex;align-items:flex-start;gap:15px;min-width:0;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-step-icon{
+ flex:0 0 42px;display:grid;place-items:center;height:42px;border-radius:12px;
+ color:#f8e8ed;background:#ffffff17;border:1px solid #ffffff3b;
+ font-size:12px;font-weight:800;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps strong{
+ display:block;color:#fff;font-size:14px;font-weight:800;line-height:1.6;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps small{
+ display:block;color:#c1cada;font-size:12px;line-height:1.7;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside-footer{
+ position:relative;margin-top:auto;padding-top:28px;
+ display:flex;align-items:center;gap:10px;color:#c4d0de;
+ font-size:11px;line-height:1.5;
+}
+body.institution-page.campus-layout[data-design-version="4"] .exam-auth-secure-dot{
+ height:8px;width:8px;flex:0 0 8px;border-radius:50%;background:#83ddad;
+ box-shadow:0 0 0 5px #83ddad19;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] .portal-footer{
+ max-width:1600px;margin:15px auto!important;padding:0 clamp(22px,4vw,64px) 20px!important;
+ font-size:11px!important;color:#768298!important;line-height:1.65;
+}
+/* Authenticated exam editor: consistent generous spacing without altering controls. */
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace{
+ min-width:0;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] .exam-workbench-heading{
+ border-radius:18px!important;border:1px solid #e2e8ef!important;
+ background:#fff!important;padding:clamp(20px,2.4vw,34px)!important;
+ box-shadow:0 10px 30px rgba(25,40,67,.04)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace :is(input,textarea,select):focus-visible{
+ outline:3px solid #2479c3!important;outline-offset:2px!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace :is(.portal-card,.exam-editor-panel){
+ max-width:100%;min-width:0;
+}
+@media(max-width:1060px){
+ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] #exam-login-required.exam-auth-landing:not([hidden]){
+  grid-template-columns:minmax(0,1fr)!important;min-height:0!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-intro{
+  padding:clamp(27px,5vw,50px)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside{
+  padding:clamp(27px,5vw,48px)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside h3{
+  margin:30px 0 22px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps li{
+  flex-direction:column;gap:8px;
+ }
+}
+@media(max-width:650px){
+ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] .portal-content{
+  padding:12px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="guest"] #exam-login-required.exam-auth-landing:not([hidden]){
+  border-radius:19px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-landing .exam-auth-intro{
+  padding:28px 21px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-brand{
+  margin-bottom:29px;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] #exam-auth-heading{
+  font-size:clamp(28px,8vw,38px)!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-actions .exam-link{
+  width:100%!important;min-width:0;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-action-note{
+  max-width:none;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-landing .exam-auth-aside{
+  padding:29px 22px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-aside h3{
+  font-size:25px!important;margin:25px 0 23px!important;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps{
+  grid-template-columns:minmax(0,1fr);gap:17px;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-steps li{
+  flex-direction:row;gap:12px;
+ }
+ body.institution-page.campus-layout[data-design-version="4"] .exam-auth-assurance{
+  margin-top:25px;
+ }
+}
+@media(forced-colors:active){
+ body.institution-page.campus-layout #exam-login-required.exam-auth-landing{
+  forced-color-adjust:auto;border:2px solid CanvasText!important;
+ }
+ body.institution-page.campus-layout .exam-auth-landing .exam-auth-intro,
+ body.institution-page.campus-layout .exam-auth-landing .exam-auth-aside{
+  background:Canvas!important;color:CanvasText!important;
+ }
+ body.institution-page.campus-layout .exam-auth-landing .exam-auth-aside :is(h3,span,strong,small){
+  color:CanvasText!important;
+ }
+ body.institution-page.campus-layout .exam-auth-landing .exam-auth-actions a{
+  border:2px solid LinkText!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.institution-page.campus-layout .exam-auth-actions .exam-link{
+  transition:none!important;transform:none!important;
+ }
+}
