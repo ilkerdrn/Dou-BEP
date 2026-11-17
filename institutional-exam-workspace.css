@@ -407,3 +407,14 @@ body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="aut
   transition:none!important;animation:none!important;
  }
 }
+
+/* Respect focus mode: it intentionally removes the draft library from the layout. */
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace.exam-focus-mode .exam-grid{
+ grid-template-columns:minmax(0,1fr)!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace.exam-focus-mode .exam-grid>#exam-drafts-panel{
+ display:none!important;
+}
+body.institution-page.campus-layout[data-design-version="4"][data-exam-auth="authenticated"] #exam-workspace.exam-focus-mode .exam-grid>#exam-editor-card{
+ grid-column:1/-1!important;
+}
