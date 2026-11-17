@@ -5,6 +5,8 @@ import {studentAccessProfile} from './student-access-profiles.mjs';
 const $=id=>document.getElementById(id);let claim=null,exam=null,activeQuestionIndex=0;
 // Review flags are an optional local navigation aid, never part of submitted answers.
 const reviewFlags=new Set();
+// UI-only navigation markers; neither question answers nor student data are persisted here.
+let lastPresentedQuestionIndex=-1,lastPresentationSingle=null;
 let pilotExpiresAt=null,pilotTimeInterval=null,lastTimePhase='unknown';
 function stopPilotClock(){if(pilotTimeInterval!==null){clearInterval(pilotTimeInterval);pilotTimeInterval=null;}}
 function renderPilotClock(){
@@ -88,6 +90,12 @@ function moveReaderQuestion(direction){
 function option(q,o,group){const label=el('label');label.className='option';const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
 function updateQuestionNavigation(focus=false){
  if(!exam)return;const cards=[...$('student-questions').querySelectorAll('.question')],single=$('one-question').checked;
+ const presentationChanged=lastPresentedQuestionIndex!==activeQuestionIndex||lastPresentationSingle!==single;
+ // Always stop stale narration on a real question/layout change, including
+ // switching to all-questions mode; never read a hidden or previous question.
+ if(presentationChanged)douReader?.stop();
+ lastPresentedQuestionIndex=activeQuestionIndex;
+ lastPresentationSingle=single;
  for(let i=0;i<cards.length;i++)cards[i].hidden=single&&i!==activeQuestionIndex;
  $('question-navigation').hidden=cards.length<2;
  $('previous-question').disabled=!single||activeQuestionIndex===0;
@@ -99,10 +107,13 @@ function updateQuestionNavigation(focus=false){
  $('pilot-current-question-type').textContent=types[question?.type]||'Soru';
  $('pilot-question-guidance').textContent=question?.type==='short'? '800 karaktere kadar yazın; otomatik kayıt açıktır.':question?.type==='matching'? 'Eşleştirme satırlarında açılır listeleri klavyeyle seçin.':'Şıkları Tab ve ok tuşlarıyla seçin; boşlukla işaretleyin.';
  updateQuestionMap();
- if(focus&&single){
- douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();
- maybeAutoReadQuestion();
-}
+ if(focus){
+  // A visible question heading is a stable focus destination for keyboard/NVDA.
+  // Reading is started only in single-question mode with the student's opt-in.
+  if(!presentationChanged)douReader?.stop();
+  cards[activeQuestionIndex]?.querySelector('h2')?.focus();
+  if(single&&presentationChanged)maybeAutoReadQuestion();
+ }
 }
 function collectAnswers(){
  const form=new FormData($('answer-form')),answers={},empty=[];
