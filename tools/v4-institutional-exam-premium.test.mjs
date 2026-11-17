@@ -74,3 +74,17 @@ test('entire authenticated exam workspace shares a responsive institutional desi
  assert.doesNotMatch(css,/https?:\/\//);
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
 });
+
+test('whole-page theme preserves focus mode, hidden navigation and guest access gate',()=>{
+ const css=source('institutional-exam-workspace.css');
+ const html=source('institutional-exams.html');
+ assert.ok(css.includes('.dou-nav-link:not([hidden])'));
+ assert.ok(css.includes('#exam-workspace.exam-focus-mode .exam-grid'));
+ assert.ok(css.includes('#exam-workspace.exam-focus-mode .exam-grid>#exam-drafts-panel'));
+ assert.ok(css.includes('display:none!important;'));
+ assert.ok(css.includes('#exam-workspace.exam-focus-mode .exam-grid>#exam-editor-card'));
+ assert.ok(html.includes('id="exam-login-required"'));
+ assert.ok(html.includes('id="exam-workspace" hidden'));
+ assert.ok(css.includes('[data-exam-auth="authenticated"]'));
+ assert.ok(!css.includes('[data-exam-auth="guest"]'));
+});
