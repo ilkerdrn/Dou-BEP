@@ -74,7 +74,7 @@ function maybeAutoReadQuestion(force=false){
 function speak(q){
  if(!douReader){announce('Okuyucu henüz yüklenmedi.',true);return;}
  if(exam?.questions?.includes(q)&&exam.questions.indexOf(q)!==activeQuestionIndex){
-  activeQuestionIndex=exam.questions.indexOf(q);$('one-question').checked=true;updateQuestionNavigation(true);
+  activeQuestionIndex=exam.questions.indexOf(q);$('one-question').checked=true;updateQuestionNavigation(true,false);
  }
  douReader.read();
 }
@@ -88,7 +88,7 @@ function moveReaderQuestion(direction){
 }
 
 function option(q,o,group){const label=el('label');label.className='option';const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
-function updateQuestionNavigation(focus=false){
+function updateQuestionNavigation(focus=false,autoRead=true){
  if(!exam)return;const cards=[...$('student-questions').querySelectorAll('.question')],single=$('one-question').checked;
  const presentationChanged=lastPresentedQuestionIndex!==activeQuestionIndex||lastPresentationSingle!==single;
  // Always stop stale narration on a real question/layout change, including
@@ -112,7 +112,7 @@ function updateQuestionNavigation(focus=false){
   // Reading is started only in single-question mode with the student's opt-in.
   if(!presentationChanged)douReader?.stop();
   cards[activeQuestionIndex]?.querySelector('h2')?.focus();
-  if(single&&presentationChanged)maybeAutoReadQuestion();
+  if(single&&presentationChanged&&autoRead)maybeAutoReadQuestion();
  }
 }
 function collectAnswers(){
