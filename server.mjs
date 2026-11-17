@@ -166,6 +166,7 @@ const allowed={
  '/pilot-premium.css':['pilot-premium.css','text/css; charset=utf-8'],
  '/pilot-workspace.css':['pilot-workspace.css','text/css; charset=utf-8'],
  '/institutional-exam-premium.css':['institutional-exam-premium.css','text/css; charset=utf-8'],
+ '/institutional-exam-workspace.css':['institutional-exam-workspace.css','text/css; charset=utf-8'],
  '/workflow-ui.mjs':['workflow-ui.mjs','text/javascript; charset=utf-8'],
  '/design-interactions.mjs':['design-interactions.mjs','text/javascript; charset=utf-8'],
  '/core.mjs':['core.mjs','text/javascript; charset=utf-8'],
