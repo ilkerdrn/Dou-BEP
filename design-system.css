@@ -1,0 +1,160 @@
+/* DOU BEP · Design System v3 · tek tutarlı görünüm katmanı.
+   Yalnızca görsel; son yüklenir, önceki katmanları (styles, ui-refresh, admin-premium, pilot) birleştirir.
+   Çevrimdışı: dış font/varlık yok. Erişilebilirlik: odak halkası, kontrast, azaltılmış hareket korunur. */
+
+:root{
+  --ds-brand:#b3122d;--ds-brand-strong:#8f0e24;--ds-brand-tint:#fdeff1;--ds-brand-line:#f0c9d0;
+  --ds-ink:#1f1d24;--ds-ink-2:#4a4752;--ds-muted:#6b6874;
+  --ds-canvas:#f5f4f2;--ds-surface:#fff;--ds-line:#e7e4e4;--ds-line-soft:#efedec;
+  --ds-side:#18171c;--ds-side-2:#222127;--ds-side-line:#2f2d35;--ds-side-text:#b9b6c0;
+  --ds-ok:#1f7a4a;--ds-ok-bg:#eaf6ef;--ds-warn:#8a5a10;--ds-warn-bg:#fff6e3;
+  --ds-radius:14px;--ds-radius-sm:10px;
+  --ds-shadow-1:0 1px 2px rgba(24,23,28,.05),0 4px 16px rgba(24,23,28,.04);
+  --ds-shadow-2:0 2px 4px rgba(24,23,28,.06),0 12px 32px rgba(24,23,28,.08);
+  --ds-font:Inter,"Segoe UI Variable","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  /* eski jetonları tek renge bağla */
+  --dou-red:var(--ds-brand);--dou-red-dark:var(--ds-brand-strong);--dou-red-hover:var(--ds-brand-strong);
+  --dou-canvas:var(--ds-canvas);--dou-border:var(--ds-line);--dou-ink:var(--ds-ink);--dou-muted:var(--ds-muted);
+  --adm-accent:var(--ds-brand);--adm-accent-dark:var(--ds-brand-strong);--adm-bg:var(--ds-canvas);--adm-line:var(--ds-line);--adm-ink:var(--ds-ink);--adm-muted:var(--ds-muted);
+}
+
+/* ---------- Temel ---------- */
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--ds-font);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body.institution-page,body.dou-admin-standalone{background:var(--ds-canvas);color:var(--ds-ink);font-feature-settings:"cv11","ss01"}
+:where(a,button,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid var(--ds-brand)!important;outline-offset:2px!important;border-radius:6px}
+::selection{background:var(--ds-brand-tint);color:var(--ds-brand-strong)}
+
+/* ---------- Yan menü: tüm sayfalarda aynı nötr antrasit ---------- */
+.sidebar,
+body.institution-page .portal-side,
+.institution-page .portal-side,
+body.institution-page .dou-nav,
+body.dou-admin-standalone .dou-nav{
+  background:var(--ds-side)!important;background-image:none!important;
+  border-right:1px solid var(--ds-side-line)!important;box-shadow:none!important;color:#f4f2f6;
+}
+.brand,.dou-nav-brand,.institution-page .portal-brand{border-bottom:1px solid var(--ds-side-line)}
+.brand-logo,.dou-brand-mark,.institution-page .portal-mark{
+  background:var(--ds-brand)!important;background-image:none!important;border:0!important;
+  border-radius:12px!important;box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)!important}
+.nav-label,.institution-page .portal-side-label,.dou-nav-group-label{color:#8f8c99!important;letter-spacing:.12em!important;font-weight:700!important}
+.nav-button,.dou-nav-link,.institution-page .portal-menu a,.institution-page .portal-menu button{
+  color:var(--ds-side-text)!important;border-radius:10px!important;border:1px solid transparent!important;
+  background:transparent!important;transition:background .15s,color .15s,border-color .15s}
+.nav-button:hover,.dou-nav-link:hover,.institution-page .portal-menu a:hover,.institution-page .portal-menu button:hover{
+  background:var(--ds-side-2)!important;color:#fff!important}
+.nav-button.active,.dou-nav-link.current,.dou-nav-link[aria-current="page"],
+.institution-page .portal-menu a[aria-current="page"],.institution-page .portal-menu .active{
+  background:var(--ds-side-2)!important;color:#fff!important;border-color:var(--ds-side-line)!important;
+  box-shadow:inset 3px 0 0 var(--ds-brand)!important}
+.nav-button.active .nav-number{background:var(--ds-brand)!important;border-color:var(--ds-brand)!important}
+.dou-nav .dou-create{background:var(--ds-brand)!important;background-image:none!important;border:0!important;
+  border-radius:11px!important;box-shadow:0 6px 18px rgba(179,18,45,.28)!important}
+.dou-nav .dou-create:hover{background:var(--ds-brand-strong)!important;transform:none!important}
+.sidebar-notice,.institution-page .portal-side-footer,.dou-nav-offline{background:var(--ds-side-2)!important;border:1px solid var(--ds-side-line)!important;color:var(--ds-side-text)!important}
+
+/* ---------- Üst çubuk ---------- */
+.topbar,.institution-page .portal-topbar{background:var(--ds-surface);border-bottom:1px solid var(--ds-line);box-shadow:none}
+.topbar:after{background:var(--ds-brand);width:64px}
+.topbar-title strong,.institution-page .portal-topbar strong{color:var(--ds-ink);letter-spacing:-.01em}
+.theme-toggle{border-radius:10px;border-color:var(--ds-line);background:var(--ds-canvas)}
+
+/* ---------- Başlık bantları: gradyan yerine sade antrasit + kırmızı vurgu ---------- */
+.enterprise-banner,.institution-page .portal-hero{
+  background:var(--ds-side)!important;background-image:none!important;color:#fff;
+  border:0!important;border-radius:var(--ds-radius)!important;box-shadow:var(--ds-shadow-1)!important;
+  border-left:5px solid var(--ds-brand)!important}
+.institution-page .portal-hero{min-height:0;padding:34px clamp(22px,4vw,48px)}
+.institution-page .portal-hero h1,.institution-page .portal-hero h2{letter-spacing:-.035em;line-height:1.12}
+.banner-tag,.institution-page .portal-overline{color:#ff9aa7!important;letter-spacing:.16em}
+.banner-circle,.institution-page .portal-hero-symbol{background:rgba(179,18,45,.22)!important;border:1px solid rgba(255,120,138,.3)!important;border-radius:16px!important;color:#ff9aa7}
+
+/* ---------- Sayfa başlıkları ---------- */
+.eyebrow{color:var(--ds-brand)}
+.intro h1,.institution-page h1{color:var(--ds-ink);letter-spacing:-.035em;line-height:1.15;font-weight:780}
+.intro p{color:var(--ds-muted)}
+
+/* ---------- Kartlar ---------- */
+.card,.institution-page .portal-card,.institution-page .portal-login-card,.ops-card,.source-card,.section-card{
+  background:var(--ds-surface);border:1px solid var(--ds-line)!important;border-radius:var(--ds-radius)!important;box-shadow:var(--ds-shadow-1)!important}
+.card-heading,.institution-page .portal-card-head{border-bottom:1px solid var(--ds-line-soft)!important}
+.card-heading h2,.institution-page .portal-card h2,.institution-page .portal-card h3{letter-spacing:-.015em;color:var(--ds-ink)}
+.institution-page .portal-kpis>*,.stat{border-radius:12px!important;border:1px solid var(--ds-line)!important;background:var(--ds-surface)!important;box-shadow:none!important}
+.institution-page .portal-kpis strong,.stat strong{color:var(--ds-ink)!important;font-variant-numeric:tabular-nums}
+.stat-grid .stat:nth-child(n){border-top:3px solid var(--ds-line)!important}
+.stat-grid .stat:first-child{border-top-color:var(--ds-brand)!important}
+.progress{background:#f1e3e5}.progress span{background:var(--ds-brand)}
+
+/* ---------- Form alanları ---------- */
+.field input,.field select,.field textarea,
+.institution-page input:not([type=checkbox]):not([type=radio]):not([type=range]),.institution-page select,.institution-page textarea,
+.dou-admin-standalone input:not([type=checkbox]):not([type=radio]):not([type=range]),.dou-admin-standalone select,.dou-admin-standalone textarea{
+  border:1px solid #d9d6d8;border-radius:var(--ds-radius-sm);background:var(--ds-surface);color:var(--ds-ink);transition:border-color .15s,box-shadow .15s}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#bdb9bd}
+.field input:focus,.field select:focus,.field textarea:focus,
+.institution-page input:focus,.institution-page select:focus,.institution-page textarea:focus{border-color:var(--ds-brand)!important;box-shadow:0 0 0 3px rgba(179,18,45,.14)!important}
+.field label,.field-label{color:var(--ds-ink-2);font-weight:650}
+input[type=checkbox],input[type=radio],.adaptation input,.option-answer input{accent-color:var(--ds-brand)}
+
+/* ---------- Düğmeler ---------- */
+.btn,.institution-page .portal-btn,.dou-admin-standalone button:not(.nav-button):not(.icon-btn):not(.dou-nav-link){border-radius:var(--ds-radius-sm)!important}
+.btn-primary,.institution-page .portal-btn.primary,.dou-admin-standalone .primary{
+  background:var(--ds-brand)!important;border-color:var(--ds-brand)!important;color:#fff!important;box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 4px 12px rgba(179,18,45,.22)!important}
+.btn-primary:hover:not(:disabled),.institution-page .portal-btn.primary:hover:not(:disabled),.dou-admin-standalone .primary:hover:not(:disabled){background:var(--ds-brand-strong)!important;border-color:var(--ds-brand-strong)!important;filter:none}
+.btn-secondary,.institution-page .portal-btn.secondary{background:var(--ds-surface)!important;border:1px solid #d9d6d8!important;color:var(--ds-ink-2)!important}
+.btn-secondary:hover,.institution-page .portal-btn.secondary:hover{border-color:var(--ds-brand)!important;color:var(--ds-brand-strong)!important}
+.btn-soft{background:var(--ds-brand-tint);color:var(--ds-brand-strong)}
+.btn-link{color:var(--ds-brand)}
+.btn-danger{background:#fff1f1;border-color:#f3c9cb;color:#a3262d}
+button:disabled{opacity:.5}
+
+/* ---------- Rozetler, ipuçları ---------- */
+.status-badge,.institution-page .portal-pill{background:var(--ds-ok-bg)!important;border-color:#cfe8da!important;color:var(--ds-ok)!important}
+.status-dot{background:var(--ds-ok)}
+.inline-hint,.panel-note{background:#faf7f7;border:1px solid #efe3e4;color:#6b4a51;border-radius:12px}
+.warning-hint{background:var(--ds-warn-bg);border:1px solid #f1dcae;color:var(--ds-warn);border-radius:12px}
+.adaptation{border-radius:12px;border-color:var(--ds-line)}
+.adaptation:hover{border-color:var(--ds-brand-line)}
+.adaptation:has(input:checked){border-color:var(--ds-brand);background:var(--ds-brand-tint)}
+.question-item{border-radius:12px;border-color:var(--ds-line)}
+.question-type{background:var(--ds-brand-tint);color:var(--ds-brand-strong)}
+
+/* ---------- Pilot / öğrenci sayfaları ---------- */
+.pilot-audit-page main,.pilot-audit-page section{border-radius:var(--ds-radius)}
+.skip,.dou-skip:focus{background:var(--ds-brand);color:#fff}
+
+/* ---------- Tablolar ---------- */
+.institution-page table,.dou-admin-standalone table{border-collapse:separate;border-spacing:0}
+.institution-page th,.dou-admin-standalone th{color:var(--ds-muted);font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;background:#faf9f8}
+.institution-page td,.dou-admin-standalone td{border-bottom:1px solid var(--ds-line-soft)}
+.institution-page tbody tr:hover td{background:#fcfbfb}
+
+/* ---------- Bildirim ---------- */
+.toast{background:var(--ds-side);border:1px solid var(--ds-side-line);border-radius:12px;box-shadow:var(--ds-shadow-2)}
+
+/* ---------- Koyu tema (düzenleyici .theme-dark) ---------- */
+.theme-dark{--ds-canvas:#141418;--ds-surface:#212127;--ds-line:#37373f;--ds-line-soft:#2d2d34;--ds-ink:#f0eff2;--ds-ink-2:#d2d0d8;--ds-muted:#a9a6b2}
+.theme-dark .card,.theme-dark .stat{background:var(--ds-surface)!important;border-color:var(--ds-line)!important}
+.theme-dark .topbar{background:var(--ds-canvas);border-color:var(--ds-line)}
+.theme-dark .field input,.theme-dark .field select,.theme-dark .field textarea{background:#1a1a1f;border-color:var(--ds-line);color:var(--ds-ink)}
+.theme-dark .inline-hint,.theme-dark .panel-note{background:#26262c;border-color:var(--ds-line);color:var(--ds-ink-2)}
+
+/* ---------- Hareket / yazdırma ---------- */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+@media (forced-colors:active){.btn-primary,.portal-btn.primary{border:2px solid ButtonText!important}.nav-button.active,.dou-nav-link.current{outline:2px solid Highlight}}
+@media print{.sidebar,.dou-nav,.portal-side,.topbar,.portal-topbar,.toast{display:none!important}body{background:#fff!important}.card{box-shadow:none!important}}
+
+/* ---------- Mavi/lacivert kalıntılarını tek temaya çek (admin-premium son katmanı) ---------- */
+body.institution-page,body.dou-admin-standalone,body.institution-page .portal-main,body.institution-page .portal-content{background:var(--ds-canvas)!important;color:var(--ds-ink)!important}
+body.institution-page .portal-hero{background:var(--ds-side)!important;background-image:none!important;border-left:5px solid var(--ds-brand)!important;border-radius:var(--ds-radius)!important;box-shadow:var(--ds-shadow-1)!important;min-height:0!important}
+body.institution-page .portal-hero:before{background:repeating-linear-gradient(135deg,transparent 0 36px,rgba(255,255,255,.025) 36px 37px)!important}
+body.institution-page .portal-hero:after{border-color:rgba(255,255,255,.08)!important;box-shadow:none!important}
+.dou-nav-find input{background:var(--ds-side-2)!important;border:1px solid var(--ds-side-line)!important}
+.dou-nav-find input:focus{border-color:var(--ds-brand)!important}
+body.institution-page .portal-topbar strong,body.institution-page .portal-card h3,body.institution-page .portal-user h2,body.institution-page .dashboard-welcome h2,body.institution-page .login-intro h2,body.institution-page .login-form-panel h3,body.institution-page .portal-kpis strong,body.institution-page .login-highlights strong{color:var(--ds-ink)!important}
+body.institution-page .portal-btn.secondary{color:var(--ds-ink-2)!important;border-color:#d9d6d8!important}
+body.institution-page .dashboard-welcome,body.dou-admin-standalone>main :is(.source-card,.ops-card,.card,.section-card){border:1px solid var(--ds-line)!important;border-radius:var(--ds-radius)!important;box-shadow:var(--ds-shadow-1)!important}
+body.institution-page .dashboard-shortcut:hover{border-color:var(--ds-brand-line)!important;box-shadow:var(--ds-shadow-2)!important}
+body.institution-page .login-intro,body.institution-page .portal-login-card .login-intro{background:#faf8f8!important}
+body.institution-page .dou-nav-link.current,body.institution-page .dou-nav-link[aria-current="page"],body.dou-admin-standalone .dou-nav-link.current{background:var(--ds-side-2)!important;box-shadow:inset 3px 0 0 var(--ds-brand)!important;border-color:var(--ds-side-line)!important}

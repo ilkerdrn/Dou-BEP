@@ -139,6 +139,7 @@ const allowed={
  '/institution.mjs':['institution.mjs','text/javascript; charset=utf-8'],
  '/styles.css':['styles.css','text/css; charset=utf-8'],
  '/ui-refresh.css':['ui-refresh.css','text/css; charset=utf-8'],
+ '/design-system.css':['design-system.css','text/css; charset=utf-8'],
  '/pilot-refresh.css':['pilot-refresh.css','text/css; charset=utf-8'],
  '/workflow-ui.mjs':['workflow-ui.mjs','text/javascript; charset=utf-8'],
  '/design-interactions.mjs':['design-interactions.mjs','text/javascript; charset=utf-8'],
