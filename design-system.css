@@ -176,7 +176,7 @@ body.institution-page .dou-nav-link.current,body.institution-page .dou-nav-link[
 
 /* ---------- F2 · Giriş ve "Bugün" ---------- */
 /* Tanıtım bandı ilk ekranı kaplamasın: giriş ve çalışma panelinde gizli (içerik HTML'de durur). */
-body.institution-page .portal-content>.portal-hero{display:none!important}
+body.institution-page .portal-content:has(#login-view)>.portal-hero{display:none!important}
 /* Giriş: tek sütun, ortalanmış, kaydırmadan görünür */
 body.institution-page #login-view.portal-login-card{display:block!important;max-width:460px;margin:clamp(8px,4vh,48px) auto 0!important;padding:0!important}
 body.institution-page #login-view .login-intro{display:none!important}
@@ -240,3 +240,37 @@ body.institution-page .workflow-nav .workflow-caption{display:none!important}
 body.institution-page .workflow-step{padding:4px 8px!important;gap:6px;font-size:12.5px!important}
 body.institution-page .wf-summary{padding-top:6px;font-size:13px}
 body.institution-page .wf-summary .wf-next{min-height:32px!important}
+
+/* ---------- F5 · Ortak sayfa başlığı (yönetici sayfaları) ---------- */
+/* Giriş sayfası dışındaki tüm kurumsal sayfalarda başlık bandı kompakt sayfa başlığıdır. */
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero,
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero:is(div,section){padding:22px 28px!important;margin:0 0 18px!important;min-height:0!important;display:block!important}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero h1{font-size:clamp(22px,2.4vw,28px)!important;margin:4px 0 6px!important;letter-spacing:-.03em;line-height:1.2}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero h1 br{display:none}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero h1 em{font-style:normal;color:#ff9aa7}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero p{font-size:14px!important;line-height:1.55;max-width:760px;color:#d8d5de!important}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero .portal-hero-symbol{display:none!important}
+/* Bağımsız sayfalar (operasyon, pilot, kabul) aynı başlık ölçeğini kullanır */
+body.dou-admin-standalone:not(.institution-page) main h1{font-size:clamp(22px,2.4vw,28px)!important;letter-spacing:-.03em;line-height:1.2;color:var(--ds-ink)!important}
+body.dou-admin-standalone:not(.institution-page) main>:is(.ops-header,.hero,header){margin-bottom:18px}
+
+/* ---------- Onay penceresi ---------- */
+dialog.dou-dialog{border:0;border-radius:var(--ds-radius);padding:0;max-width:min(480px,calc(100vw - 32px));width:100%;box-shadow:var(--ds-shadow-2);color:var(--ds-ink);background:var(--ds-surface)}
+dialog.dou-dialog::backdrop{background:rgba(24,23,28,.55)}
+dialog.dou-dialog .dou-dialog-box{padding:24px 26px 20px;margin:0}
+dialog.dou-dialog h2{font-size:20px;margin:0 0 8px;letter-spacing:-.02em}
+dialog.dou-dialog p{font-size:15px;line-height:1.55;color:var(--ds-ink-2);margin:0 0 22px}
+dialog.dou-dialog .dou-dialog-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+dialog.dou-dialog .portal-btn{min-height:44px;padding:10px 18px}
+dialog.dou-dialog[data-danger="true"] [data-role=ok]{background:#a3262d!important;border-color:#a3262d!important;box-shadow:none!important}
+dialog.dou-dialog[data-danger="true"] [data-role=ok]:hover{background:#7f1d23!important}
+@media(max-width:480px){dialog.dou-dialog .dou-dialog-actions{flex-direction:column-reverse}dialog.dou-dialog .portal-btn{width:100%}}
+/* "Giriş gerekli" kartları (giriş sayfası dışındaki sayfalar) */
+body.institution-page .portal-login-card:not(#login-view){display:block!important;grid-template-columns:none!important;max-width:520px;margin:32px auto!important;padding:28px!important;background:var(--ds-surface)!important}
+body.institution-page .portal-login-card:not(#login-view)[hidden]{display:none!important}
+body.institution-page .portal-login-card:not(#login-view) h2{font-size:22px;margin:0 0 14px}
+a.portal-btn,a.btn{text-decoration:none!important}
+body.institution-page .portal-content:not(:has(#login-view))>.portal-hero h1 em{margin-left:.3em}
+/* Yönetici sayfalarında eski öğrenci-pilot üst şeridi menüyle yinelenir (ve beyaz üstüne beyaz yazı) */
+body.dou-admin-standalone header:has(>.brand .mark){display:none!important}
+body.institution-page .portal-login-card:not(#login-view){min-height:0!important;height:auto!important}

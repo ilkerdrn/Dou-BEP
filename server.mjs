@@ -136,6 +136,7 @@ const allowed={
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
  '/nav-roles.js':['nav-roles.js','text/javascript; charset=utf-8'],
+ '/confirm-dialog.js':['confirm-dialog.js','text/javascript; charset=utf-8'],
  '/exam-page-health.js':['exam-page-health.js','text/javascript; charset=utf-8'],
  '/institution.mjs':['institution.mjs','text/javascript; charset=utf-8'],
  '/styles.css':['styles.css','text/css; charset=utf-8'],
