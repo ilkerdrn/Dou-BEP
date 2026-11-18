@@ -38,7 +38,7 @@ Sınav hiçbir adımda konuşma/mikrofon istemiyor mu? Yazılı/klavye yanıt ye
 
 ## F. Süre ve teslim sınırları
 - 1 dakikalı sınav: uyarı → süre dolunca yanıtlar kilitlenir, teslim hâlâ yapılabilir.
-- Sayfayı yenileme: oturum kaybı beklenen davranıştır mı, öğrenciye önceden söyleniyor mu? (Kod tek kullanımlık; **öğrenci için risk olarak değerlendirin.**)
+- Sayfayı yenileme: oturum kaybı beklenen davranıştır mı, giriş ekranı uyarıyor ve tarayıcı yenileme/kapatmada uyarı veriyor mu? (Kod tek kullanımlık, yanıtlar yalnızca bellekte; oturum kurtarma bilerek yok, gizlilik gereği. Kurum karar vermeli.)
 - Ağ kesintisi anında teslim: hata mesajı anlaşılır mı, yanıtlar kayboluyor mu?
 
 ## G. Raporlama

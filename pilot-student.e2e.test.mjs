@@ -59,3 +59,13 @@ test('öğrenci /pilot: süre dolunca yanıtlar kilitlenir (görsel uyarı)',{sk
   assert.equal(await page.locator('#student-questions input').first().isDisabled(),true);
  }finally{await browser.close();s.close();}
 });
+
+test('öğrenci /pilot: oturum sırasında yenileme/kapatma uyarısı',{skip},async()=>{
+ const {s,port}=await server(0);const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();await enter(page,port);
+  const warned=await page.evaluate(()=>{const e=new Event('beforeunload',{cancelable:true});window.dispatchEvent(e);return e.defaultPrevented;});
+  assert.equal(warned,true);
+  await page.evaluate(()=>{});
+ }finally{await browser.close();s.close();}
+});
