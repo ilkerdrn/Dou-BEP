@@ -158,3 +158,18 @@ body.institution-page .dashboard-welcome,body.dou-admin-standalone>main :is(.sou
 body.institution-page .dashboard-shortcut:hover{border-color:var(--ds-brand-line)!important;box-shadow:var(--ds-shadow-2)!important}
 body.institution-page .login-intro,body.institution-page .portal-login-card .login-intro{background:#faf8f8!important}
 body.institution-page .dou-nav-link.current,body.institution-page .dou-nav-link[aria-current="page"],body.dou-admin-standalone .dou-nav-link.current{background:var(--ds-side-2)!important;box-shadow:inset 3px 0 0 var(--ds-brand)!important;border-color:var(--ds-side-line)!important}
+
+/* ---------- F1 · Menü kullanılabilirliği ---------- */
+/* Alt not menü öğelerinin üstüne binmesin: liste kendi içinde kayar, alt bilgi altta sabit kalır. */
+.dou-nav{display:flex!important;flex-direction:column;height:100vh;height:100dvh;overflow:hidden!important}
+.dou-nav .dou-nav-sections{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#4a4753 transparent}
+.dou-nav .dou-nav-bottom,.dou-nav .dou-nav-actions,.dou-nav .dou-nav-find,.dou-nav .dou-nav-brand{flex:0 0 auto}
+.dou-nav .dou-nav-bottom{background:var(--ds-side);position:relative}
+/* Okunabilir boyutlar */
+.dou-nav-group-title{font-size:11px!important;color:#9a97a5!important;letter-spacing:.1em!important}
+.dou-nav-link{min-height:44px;font-size:14px!important}
+.dou-nav-version{font-size:11px!important;letter-spacing:.04em!important}
+.dou-nav-bottom p,.dou-nav-offline{font-size:12px!important}
+.dou-nav-find label{font-size:12px!important}
+/* Alçak ekranlarda alt notu gizle, menü tam görünsün */
+@media (max-height:900px){.dou-nav .dou-nav-bottom p{display:none}.dou-nav-link{min-height:40px}}
