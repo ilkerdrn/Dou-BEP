@@ -8,8 +8,7 @@
  --dou-font:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
  --adm-accent:var(--dou-red);--adm-accent-dark:var(--dou-red-dark);--adm-bg:var(--dou-bg);--adm-ink:var(--dou-ink);--adm-line:var(--dou-line);--adm-shadow:var(--dou-shadow);
 }
-html body{font-family:var(--dou-font);color:var(--dou-ink);background:var(--dou-bg)}
-html body a{color:var(--dou-red-dark)}
+html body{font-family:var(--dou-font);background:var(--dou-bg)}
 /* Klavye odağı: her sayfada aynı, 4 px mavi halka. */
 html body a:focus-visible,html body button:focus-visible,html body input:focus-visible,html body select:focus-visible,html body textarea:focus-visible,html body summary:focus-visible,html body [tabindex]:focus-visible{outline:4px solid var(--dou-focus)!important;outline-offset:4px!important}
 /* Kartlar */
@@ -38,3 +37,18 @@ html body.dou-student .big-targets button{min-height:76px}
 /* Yüksek kontrast: sistem ayarı da dikkate alınır. */
 @media (forced-colors:active){html body .card,html body .option{border:2px solid CanvasText}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Tüm sayfalarda aynı koyu başlık ve yan menü (erik/gül tonları yerine lacivert). */
+html body:not(.dou-admin-standalone):not(.institution-page)>header{background:var(--dou-night);color:#fff;border-bottom:4px solid var(--dou-red);box-shadow:none}
+html body:not(.dou-admin-standalone):not(.institution-page)>header small,html body:not(.dou-admin-standalone):not(.institution-page)>header .eyebrow{color:#FCA5A5}
+html body:not(.dou-admin-standalone):not(.institution-page)>header h1,html body:not(.dou-admin-standalone):not(.institution-page)>header p,html body:not(.dou-admin-standalone):not(.institution-page)>header div{color:#fff}
+html body:not(.institution-page) .sidebar,html body .portal-side{background:var(--dou-night)!important;border-right:1px solid #1E293B}
+html body .portal-hero{background-color:var(--dou-night)!important}
+/* Menü: altbilgi menü maddelerinin üstüne binmesin; küçük yazı okunur olsun. */
+html body .dou-nav>nav{flex:1 1 0;min-height:0;overflow-y:auto}
+html body .dou-nav-bottom p,html body .dou-nav-bottom .dou-nav-version{font-size:12px;color:#CBD5E1}
+html body .enterprise-banner{background:var(--dou-night)!important;border-left-color:var(--dou-red)!important}
+html body .banner-tag{color:#FCA5A5!important}
+/* Açık renkli yönetim başlığında marka yazısı koyu olmalı (beyaz üstüne beyaz olmasın). */
+html body.dou-admin-standalone>header,html body.dou-admin-standalone>header .brand,html body.dou-admin-standalone>header div{color:var(--dou-ink)}
+html body.dou-admin-standalone>header .brand .mark{color:#fff}
