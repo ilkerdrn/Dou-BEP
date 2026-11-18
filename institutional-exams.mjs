@@ -95,12 +95,35 @@ function renderQuality(x){
  const audioIssues=auditAudioAccess(x);if(audioIssues.length)$('exam-quality').insertAdjacentHTML('beforeend','<p><b>Sesli sınav için ek kontrol:</b></p>'+audioIssues.map(a=>'<p class="exam-issue error">'+esc(a.text)+'</p>').join(''));
  return report;
 }
+
+/** F4: hazırlık masasındaki aşama durumunu sabit adım çubuğuna yansıtır (yalnızca görsel; kurallar exam-preflight.mjs'de). */
+function annotateWorkflow(report){
+ const nav=document.querySelector('.workflow-nav');if(!nav)return;
+ const byTarget={'exam-main-fields':'exam-main-fields','exam-goal-section':'exam-goal-section','exam-question-section':'exam-question-section','exam-quality':'exam-question-section','exam-output-section':'exam-output-section'};
+ const stateFor={};
+ for(const s of report.stages){const t=byTarget[s.target];if(!t)continue;stateFor[t]=stateFor[t]===false?false:s.done;}
+ for(const btn of nav.querySelectorAll('[data-workflow-target]')){
+  const t=btn.dataset.workflowTarget;if(!(t in stateFor))continue;
+  const done=stateFor[t];btn.dataset.state=done?'done':'todo';
+  let badge=btn.querySelector('.wf-badge');if(!badge){badge=document.createElement('span');badge.className='wf-badge';btn.appendChild(badge);}
+  badge.innerHTML=done?'✓<span class="screen-reader-only"> tamamlandı</span>':'!<span class="screen-reader-only"> eksik var</span>';
+ }
+ let sum=document.getElementById('wf-summary');
+ if(!sum){sum=document.createElement('div');sum.id='wf-summary';sum.className='wf-summary';sum.setAttribute('role','status');sum.setAttribute('aria-live','polite');nav.appendChild(sum);}
+ const next=report.stages.find(s=>!s.done);
+ const ready=report.complete===report.total;
+ sum.dataset.ready=ready?'true':'false';
+ sum.innerHTML=ready?`<strong>Onaya hazır</strong><span>${report.total}/${report.total} aşama tamam.</span>`
+  :`<strong>${report.complete}/${report.total} aşama tamam</strong><span>Sıradaki: ${esc(next.title)} — ${esc(next.detail)}</span><button type="button" class="portal-btn secondary wf-next" data-preflight-jump="${next.target}">Sıradakine git</button>`;
+}
 function renderPreflight(){
  const x=state.exam;if(!x)return;
  const report=getExamPreflight(x,{saved:!!state.current,dirty:state.dirty,approved:state.current?.status==='approved'});
+ annotateWorkflow(report);
  const body=$('exam-preflight-body');if(!body)return;
  body.innerHTML=`<div class="preflight-count"><strong>${report.complete}/${report.total} aşama</strong><span>${report.errors} engelleyici kontrol · ${report.warnings} uyarı</span></div><div class="preflight-progress" aria-label="Tamamlanan iş akışı aşamaları: ${report.complete} / ${report.total}"><span style="width:${report.complete/report.total*100}%"></span></div><div class="preflight-grid">${report.stages.map((step,index)=>`<div class="preflight-tile ${step.done?'preflight-done':'preflight-pending'}"><span class="preflight-n">${String(index+1).padStart(2,'0')} · ${step.done?'Aşama tamamlandı':'İnceleme gerekli'}</span><strong>${esc(step.title)}</strong><p>${esc(step.detail)}</p><button type="button" class="portal-btn secondary" data-preflight-jump="${step.target}">Bu adıma git</button></div>`).join('')}</div><p class="portal-help">${esc(report.notice)} Uyarılar öğretmen tarafından ayrıca incelenmelidir.</p>${report.approvalConflict?'<p class="exam-issue warning" role="status"><strong>Onay ile hazırlık durumu farklı:</strong> Kayıt onaylı görünse de en az bir önceki adım eksik. Bu ekran onayı iptal etmez; yetkili kontrolü gerekir.</p>':''}`;
 }
+document.addEventListener('click',event=>{const j=event.target.closest('#wf-summary [data-preflight-jump]');if(!j)return;const t=document.getElementById(j.dataset.preflightJump);if(!t)return;t.scrollIntoView({behavior:'auto',block:'start'});const f=t.querySelector('h2,h3,h4')||t;f.setAttribute('tabindex','-1');f.focus({preventScroll:true});});
 $('exam-preflight-body').addEventListener('click',event=>{
  const btn=event.target.closest('[data-preflight-jump]');if(!btn)return;
  const id=btn.dataset.preflightJump;

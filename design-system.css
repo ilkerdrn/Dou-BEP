@@ -218,3 +218,25 @@ body.institution-page .resume-card[hidden]{display:none!important}
 body.institution-page .portal-content{display:flex;flex-direction:column}
 body.institution-page #mfa-panel,body.institution-page #sessions-panel{order:30}
 .dou-nav-actions [hidden]{display:none!important}
+
+/* ---------- F4 · Editör adım çubuğu ve hazırlık özeti ---------- */
+body.institution-page .workflow-nav{position:sticky!important;top:0;z-index:25;background:var(--ds-surface)!important;border:1px solid var(--ds-line)!important;border-radius:var(--ds-radius)!important;box-shadow:var(--ds-shadow-1)!important}
+body.institution-page .workflow-step{display:inline-flex;align-items:center;gap:8px;min-height:44px!important;font-size:13px!important;border-radius:var(--ds-radius-sm)!important}
+body.institution-page .workflow-step .wf-badge{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:800;line-height:1}
+body.institution-page .workflow-step[data-state="done"] .wf-badge{background:var(--ds-ok-bg);color:var(--ds-ok);border:1px solid #bfe0cd}
+body.institution-page .workflow-step[data-state="todo"] .wf-badge{background:var(--ds-warn-bg);color:var(--ds-warn);border:1px solid #ecd49c}
+body.institution-page .workflow-step.active,body.institution-page .workflow-step[aria-current="step"]{background:var(--ds-brand-tint)!important;color:var(--ds-brand-strong)!important;border-color:var(--ds-brand-line)!important}
+body.institution-page .wf-summary{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding-top:10px;border-top:1px solid var(--ds-line-soft);font-size:14px;color:var(--ds-ink-2)}
+body.institution-page .wf-summary strong{color:var(--ds-ink)}
+body.institution-page .wf-summary[data-ready="true"] strong{color:var(--ds-ok)}
+body.institution-page .wf-summary .wf-next{margin-left:auto;min-height:36px!important}
+body.institution-page .preflight-tile.preflight-done .preflight-n{color:var(--ds-ok)}
+body.institution-page .preflight-tile.preflight-pending .preflight-n{color:var(--ds-warn)}
+@media(max-width:760px){body.institution-page .workflow-nav{position:static!important}body.institution-page .wf-summary .wf-next{margin-left:0;width:100%}}
+body.institution-page .workflow-steps{display:flex!important;flex-wrap:wrap;gap:6px;flex:1 1 auto;min-width:0;overflow:visible!important}
+body.institution-page .workflow-step{padding:6px 10px!important}
+body.institution-page .workflow-nav{padding:10px 14px!important;gap:6px!important}
+body.institution-page .workflow-nav .workflow-caption{display:none!important}
+body.institution-page .workflow-step{padding:4px 8px!important;gap:6px;font-size:12.5px!important}
+body.institution-page .wf-summary{padding-top:6px;font-size:13px}
+body.institution-page .wf-summary .wf-next{min-height:32px!important}
