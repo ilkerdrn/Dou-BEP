@@ -6,11 +6,12 @@ import {join} from 'node:path';
 import {request} from 'node:http';
 const tmp=mkdtempSync(join(tmpdir(),'bep-preview-smoke-'));
 process.env.BEP_NO_LISTEN='1';process.env.BEP_DB_PATH=join(tmp,'test.sqlite');process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(tmp,{recursive:true,force:true});});
-function get(path){return new Promise((resolve,reject)=>{
- const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{const xs=[];res.on('data',x=>xs.push(x));res.on('end',()=>resolve({status:res.statusCode,type:res.headers['content-type'],body:Buffer.concat(xs).toString()}));});
+function get(path,authenticated=true){return new Promise((resolve,reject)=>{
+ const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',...(authenticated?{cookie:globalThis.__panelCookie}:{})}},res=>{const xs=[];res.on('data',x=>xs.push(x));res.on('end',()=>resolve({status:res.statusCode,type:res.headers['content-type'],body:Buffer.concat(xs).toString()}));});
  req.on('error',reject);req.end();
 });}
 test('preview module and CSS served with correct types; documentation and database blocked',async()=>{
@@ -42,5 +43,5 @@ test('v2.12 material gallery, semantic controls, local asset delivery and status
  assert.match(editor.body,/renderTeacherQuestionPreview/);assert.match(editor.body,/drawVisualMaterials/);
  assert.match(editor.body,/has\('exam.edit'\)/);
  const css=await get('/ui-refresh.css');assert.match(css.body,/visual-material-card:focus-visible/);
- const unauthorized=await get('/api/library/questions');assert.equal(unauthorized.status,401);
+ const unauthorized=await get('/api/library/questions',false);assert.equal(unauthorized.status,401);
 });

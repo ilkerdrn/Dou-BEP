@@ -158,6 +158,13 @@ const allowed={
  '/roles.mjs':['roles.mjs','text/javascript; charset=utf-8'],
  '/app.mjs':['app.mjs','text/javascript; charset=utf-8']
 };
+// Single sign-in: management panels (HTML only) require a valid institutional session. Public: /, /kurum, /pilot, reader/speech labs.
+const guardedPages=new Set(['/kurumsal-sinav','/toplu-sinav','/uyarlama-kararlari','/sinav-koordinasyon','/sinav-operasyon','/erisilebilirlik-kabul','/pilot-yonetim','/sinav-dosya-aktar','/bep-import','/erisilebilirlik-kontrol']);
+function hasPanelSession(req){
+ const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));
+ if(!found)return false;
+ try{const actor=store.actorFrom(found.slice('bep_session='.length));return !!actor&&actor.mfaSetupRequired!==true;}catch{return false;}
+}
 const securityHeaders={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
 export function createServer(){return http.createServer(async(req,res)=>{
@@ -169,6 +176,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
   if(![`localhost:${port}`,`127.0.0.1:${port}`,'localhost','127.0.0.1'].includes(req.headers.host)){
    res.writeHead(403).end('Host rejected');return;
   }
+  if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
   try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}

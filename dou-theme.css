@@ -52,3 +52,7 @@ html body .banner-tag{color:#FCA5A5!important}
 /* Açık renkli yönetim başlığında marka yazısı koyu olmalı (beyaz üstüne beyaz olmasın). */
 html body.dou-admin-standalone>header,html body.dou-admin-standalone>header .brand,html body.dou-admin-standalone>header div{color:var(--dou-ink)}
 html body.dou-admin-standalone>header .brand .mark{color:#fff}
+/* Tek giriş: oturum açılmadan yalnızca giriş formu görünür, modül menüsü gizlidir. */
+html body.dou-logged-out .dou-nav,html body.dou-logged-out .portal-side{display:none!important}
+html body.dou-logged-out .portal-shell{grid-template-columns:minmax(0,1fr)!important}
+html body.dou-logged-out .portal-hero{display:none}

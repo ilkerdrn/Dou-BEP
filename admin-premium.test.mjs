@@ -55,11 +55,12 @@ test('quick action consistently targets new exam and source files do not expose 
 });
 const dir=mkdtempSync(join(tmpdir(),'bep-premium-'));
 process.env.BEP_NO_LISTEN='1';process.env.BEP_DB_PATH=join(dir,'test.sqlite');process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(dir,{force:true,recursive:true});});
-function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString()}));});req.on('error',reject).end();});}
+function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',cookie:globalThis.__panelCookie}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString()}));});req.on('error',reject).end();});}
 test('all primary admin pages and all nav destinations load HTTP 200',async()=>{
  for(const [path] of routes){const r=await get(path);assert.equal(r.status,200,path);assert.match(r.mime,/text\/html/);}
  for(const path of expected){const r=await get(path);assert.equal(r.status,200,path);}
