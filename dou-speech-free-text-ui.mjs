@@ -39,14 +39,15 @@ preview.addEventListener('click',()=>{
 });
 play.addEventListener('click',async()=>{
  if(busy)return;
- busy=true;const request=++generation;readyState();
+ busy=true;let request=++generation;readyState();
  describe('Örnek metin yalnız cihazınızda çözümleniyor ve robotik WAV hesaplanıyor.');
  try{
   // Render the status before CPU-bound local synthesis. If the user navigates
   // away or changes input before the frame, do not synthesize stale text.
   await new Promise(resolve=>requestAnimationFrame(resolve));
   if(request!==generation)return;
-  document.dispatchEvent(new Event('dou-speech-lab-stop'));
+  // The lab-stop event round-trips into this module's own stop handler (generation++). That must not cancel this request.
+  document.dispatchEvent(new Event('dou-speech-lab-stop'));request=generation;
   forget();
   const args=parameters();const plan=planLocalFreeText(input.value,args);
   const result=synthesizeLocalFreeText(input.value,args);
