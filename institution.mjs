@@ -7,11 +7,27 @@ async function api(path,{method='GET',body}={}){
  const r=await fetch('/api'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(state.csrf?{'X-CSRF-Token':state.csrf}:{})},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
  const result=await r.json();if(!r.ok)throw Error(result.message||result.error||`Sunucu hatası ${r.status}`);return result;
 }
+
+async function loadResume(){
+ const card=$('resume-card');if(!card)return;
+ try{
+  const r=await api('/exams');const items=(r.items||[]);
+  if(!items.length){card.hidden=true;return;}
+  const last=items[0],drafts=items.filter(x=>x.status!=='approved').length,approved=items.length-drafts;
+  $('resume-title').textContent=last.title||'Adsız sınav';
+  $('resume-meta').textContent=`${last.status==='approved'?'Onaylı':'Taslak'} · Sürüm ${last.revision} · Son güncelleme ${new Date(last.updatedAt).toLocaleDateString('tr-TR')}`;
+  $('resume-stats').innerHTML=`<a href="/kurumsal-sinav"><strong>${drafts}</strong><span>Taslak</span></a><a href="/kurumsal-sinav"><strong>${approved}</strong><span>Onaylı</span></a>`;
+  $('resume-link').textContent=last.status==='approved'?'Aç →':'Devam et →';
+  card.hidden=false;
+ }catch{card.hidden=true;}
+}
 function actorView(){
  const active=!!state.actor,restricted=active&&state.mfaSetupRequired;$('login-view').hidden=active;$('workspace-view').hidden=!active||restricted;
  $('sessions-panel').hidden=!active||restricted;$('mfa-panel').hidden=!active;
  $('mfa-restricted-note').hidden=!restricted;$('mfa-restricted-logout').hidden=!restricted;
  if(active){$('actor-name').textContent=state.actor.email;$('actor-meta').textContent=`${state.actor.tenantId} · ${({admin:'Kurum yöneticisi',coordinator:'Koordinatör',teacher:'Öğretmen',reviewer:'İncelemeci',observer:'Görüntüleyici'})[state.actor.role]||state.actor.role}`;
+  if(!restricted)loadResume();
+  if(window.douNavRoles)window.douNavRoles();
   const canEdit=['admin','coordinator','teacher'].includes(state.actor.role);
   $('upload-form').hidden=!canEdit;$('admin-panel').hidden=state.actor.role!=='admin';$('audit-panel').hidden=!['admin','coordinator','reviewer'].includes(state.actor.role);
  }

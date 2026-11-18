@@ -203,3 +203,18 @@ body.institution-page .portal-help,body.institution-page .portal-kpis small{font
 /* hidden özniteliği her zaman kazanır (giriş sonrası kart kapanmalı) */
 body.institution-page #login-view[hidden],body.institution-page [hidden]{display:none!important}
 body.institution-page #login-view .portal-form label{margin-top:8px}
+
+/* ---------- F3 · Devam et kartı ---------- */
+body.institution-page .resume-card{display:grid!important;grid-template-columns:1fr auto auto;align-items:center;gap:20px;padding:18px 22px!important;margin-bottom:14px;border-left:4px solid var(--ds-brand)!important}
+body.institution-page .resume-card h3{margin:2px 0 4px;font-size:20px;overflow-wrap:anywhere}
+body.institution-page .resume-stats{display:flex;gap:10px}
+body.institution-page .resume-stats a{display:flex;flex-direction:column;align-items:center;min-width:72px;padding:8px 12px;border:1px solid var(--ds-line);border-radius:12px;text-decoration:none;color:var(--ds-ink)}
+body.institution-page .resume-stats a:hover{border-color:var(--ds-brand)}
+body.institution-page .resume-stats strong{font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}
+body.institution-page .resume-stats span{font-size:13px;color:var(--ds-muted)}
+@media(max-width:760px){body.institution-page .resume-card{grid-template-columns:1fr}body.institution-page .resume-stats a{flex:1}}
+body.institution-page .resume-card[hidden]{display:none!important}
+/* Güvenlik/oturum panelleri ikincil: ana iş (Bugün) önce gelsin */
+body.institution-page .portal-content{display:flex;flex-direction:column}
+body.institution-page #mfa-panel,body.institution-page #sessions-panel{order:30}
+.dou-nav-actions [hidden]{display:none!important}
