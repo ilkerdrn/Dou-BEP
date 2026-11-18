@@ -31,3 +31,7 @@ Bu ölçümler **otomatiktir**; ekran okuyucu duyuru kalitesi, kısayol çakış
 2. (v2.86 ile kapandı) Ayrı gözden geçirme özet ekranı eklendi.
 3. (v2.86 ile azaltıldı) Soru artık ilk ekranda; harita sağda sabit, okuyucu paneli sayfa sonunda. Gerçek kullanıcı testinde soruya ulaşma süresi yine ölçülmeli.
 4. Kurum panelleri yoğun; yeni kullanıcı testi yapılmadı.
+
+## v2.88 yönetim sayfaları incelemesi (masaüstü 1280 ve telefon 390 px, 11 sayfa)
+Düzeltilenler: sınav editöründe dar kütüphane sütunu (sözcükler satır sonunda bölünüyordu; sütun 300–340 px, kartlar sarılıyor); `/toplu-sinav` telefonda yatay taşıyordu (uzun `code` ve tablo; artık kaydırılabilir kapta); pilot yönetimi ve kontrol sayfalarında başlık bağlantıları görünmüyordu; kaydırılabilir kapsam tablosu klavyeyle erişilemiyordu (`tabindex`, `role=region`). Sonuç: 11 sayfada ve iki genişlikte yatay taşma yok, axe 0 ihlal.
+Hâlâ yoğun: sınav editörü tek sayfada çok uzun (≈12.000 px, adım gezintisiyle bölümlere atlanır). Bölümleri sekmelere ayırmak ayrı, riskli bir iş.
