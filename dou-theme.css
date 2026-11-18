@@ -1,0 +1,40 @@
+/* DOU BEP v2.83 · ortak tasarım dili. Çevrimdışı: dış yazı tipi/görsel yok. Her sayfada EN SON yüklenir. */
+:root{
+ --dou-red:#C50E1F;--dou-red-dark:#9B0B19;--dou-night:#0F172A;--dou-ink:#101828;--dou-muted:#475467;
+ --dou-bg:#F4F5F9;--dou-card:#FFFFFF;--dou-line:#E4E7EC;--dou-line-strong:#98A2B3;
+ --dou-focus:#1B6ED2;--dou-ok:#0F6B3A;--dou-ok-bg:#E7F5EC;--dou-warn:#5C3B00;--dou-warn-bg:#FFF7DB;--dou-warn-line:#E0A800;
+ --dou-danger:#8A1720;--dou-danger-bg:#FDECEE;
+ --dou-radius:16px;--dou-radius-lg:24px;--dou-shadow:0 12px 32px rgba(16,24,40,.07);
+ --dou-font:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+ --adm-accent:var(--dou-red);--adm-accent-dark:var(--dou-red-dark);--adm-bg:var(--dou-bg);--adm-ink:var(--dou-ink);--adm-line:var(--dou-line);--adm-shadow:var(--dou-shadow);
+}
+html body{font-family:var(--dou-font);color:var(--dou-ink);background:var(--dou-bg)}
+html body a{color:var(--dou-red-dark)}
+/* Klavye odağı: her sayfada aynı, 4 px mavi halka. */
+html body a:focus-visible,html body button:focus-visible,html body input:focus-visible,html body select:focus-visible,html body textarea:focus-visible,html body summary:focus-visible,html body [tabindex]:focus-visible{outline:4px solid var(--dou-focus)!important;outline-offset:4px!important}
+/* Kartlar */
+html body .card{border:1px solid var(--dou-line);border-radius:var(--dou-radius-lg);box-shadow:var(--dou-shadow);background:var(--dou-card)}
+/* Yönetim menüsü: koyu lacivert, kırmızı vurgu. */
+html body .dou-nav{background:var(--dou-night)!important;border-right-color:#1E293B!important}
+html body .dou-brand-mark{background:var(--dou-red)!important}
+/* Durum bildirimleri: renk + yazı birlikte. */
+html body .notice.good{background:var(--dou-ok-bg);color:var(--dou-ok);border:2px solid var(--dou-ok);border-radius:var(--dou-radius);font-weight:700}
+html body .notice.err{background:var(--dou-danger-bg);color:var(--dou-danger);border:2px solid var(--dou-red);border-radius:var(--dou-radius);font-weight:700}
+/* ÖĞRENCİ SAYFALARI: büyük hedefler. */
+html body.dou-student header{background:var(--dou-night);color:#fff;border-bottom:0}
+html body.dou-student header .brand,html body.dou-student header div{color:#fff}
+html body.dou-student header .mark{background:var(--dou-red);color:#fff;border-radius:10px}
+html body.dou-student button,html body.dou-student select,html body.dou-student input:not([type=checkbox]):not([type=radio]){min-height:52px;border-radius:14px}
+html body.dou-student button:not(.ghost):not(.secondary){background:var(--dou-red);border:2px solid var(--dou-red);color:#fff;font-weight:600;box-shadow:0 6px 16px rgba(197,14,31,.25)}
+html body.dou-student button.ghost,html body.dou-student button.secondary{background:#fff;color:var(--dou-ink);border:2px solid var(--dou-line-strong);box-shadow:none}
+html body.dou-student button:disabled{opacity:.55;box-shadow:none}
+html body.dou-student .option{min-height:72px;padding:14px 20px;border:2px solid #D0D5DD;border-radius:20px;background:#fff;font-size:1.1em}
+html body.dou-student .option:has(input:checked){border:3px solid var(--dou-red);background:#FFF1F2;box-shadow:0 8px 20px rgba(197,14,31,.12)}
+html body.dou-student input[type=radio],html body.dou-student input[type=checkbox]{width:28px;height:28px}
+html body.dou-student #timer-box{display:flex;align-items:center;gap:14px;font-size:1.15em}
+html body.dou-student #timer{font-size:1.9em;font-variant-numeric:tabular-nums}
+html body.dou-student #time-alert{background:var(--dou-warn-bg);color:var(--dou-warn);border:2px solid var(--dou-warn-line);border-radius:var(--dou-radius);font-weight:700}
+html body.dou-student .big-targets button{min-height:76px}
+/* Yüksek kontrast: sistem ayarı da dikkate alınır. */
+@media (forced-colors:active){html body .card,html body .option{border:2px solid CanvasText}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

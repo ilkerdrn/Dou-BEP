@@ -133,6 +133,7 @@ const allowed={
  '/draft-recovery.mjs':['draft-recovery.mjs','text/javascript; charset=utf-8'],
  '/accessible-player.mjs':['accessible-player.mjs','text/javascript; charset=utf-8'],
  '/institution.html':['institution.html','text/html; charset=utf-8'],
+ '/dou-theme.css':['dou-theme.css','text/css; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
  '/exam-page-health.js':['exam-page-health.js','text/javascript; charset=utf-8'],
