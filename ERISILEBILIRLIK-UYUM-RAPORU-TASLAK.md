@@ -10,6 +10,7 @@
 | DOU Reader demo | 0 ihlal | BEKLİYOR | BEKLİYOR |
 | Klavyeyle tam sınav (Alt+Shift kısayolları) | Chromium uçtan uca test GEÇTİ | BEKLİYOR | BEKLİYOR |
 | Süre uyarıları (görsel) / otomatik teslim | Chromium uçtan uca test GEÇTİ | BEKLİYOR | BEKLİYOR |
+| Mola ekranı (Alt+Shift+M) | 0 ihlal; Chromium uçtan uca test GEÇTİ | BEKLİYOR | BEKLİYOR |
 | Seslendirme (DOU Speech) | — | — | **Üretime hazır değil** |
 
 ## Yöntem
@@ -19,4 +20,4 @@
 - Otomatik taramalar odak sırası, anlamlı okuma sırası, ekran okuyucu duyuruları, kısayol çakışmaları ve bilişsel erişilebilirliği doğrulayamaz.
 - Kısayollar (Alt+Shift+T/D/1…9) NVDA tarama kipiyle çakışabilir; gerçek testte doğrulanmalıdır.
 - PDF çıktıları PDF/UA değildir.
-- Mola özelliği yoktur.
+- Mola sırasında soru gizleme istemci tarafıdır (sorular tarayıcıya iletilmiştir); güvenli sınav (proctoring) değildir.

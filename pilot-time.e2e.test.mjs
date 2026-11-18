@@ -66,3 +66,62 @@ test('süre dolunca tarayıcı yanıtları otomatik teslim eder',{skip:chromium?
   assert.deepEqual(Object.values(view.item.answers),['B'],'kilitlenmeden önce işaretlenen yanıt gönderildi');
  }finally{await browser?.close();}
 });
+
+test('mola: onaylı hak, sınav saati durur, hak aşılamaz, teslim moladayken de çalışır',async()=>{
+ const {api,sess,id,store,base}=env;
+ for(const bad of [-1,61,1.5,'5'])assert.equal((await api('/api/pilot',{method:'POST',body:{examId:id,breakMinutes:bad},sess})).status,422,String(bad));
+ const post=(path,token,body={})=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify(body)});
+ // Mola hakkı olmayan oturum
+ const plain=(await(await api('/api/pilot',{method:'POST',body:{examId:id},sess})).json()).item;
+ const p=await(await api('/api/pilot/redeem',{method:'POST',body:{code:plain.code}})).json();
+ assert.equal(p.breakSeconds,0);assert.equal((await post('/api/pilot/break/start',p.token)).status,403);
+ // 10 dakikalık hak
+ const item=(await(await api('/api/pilot',{method:'POST',body:{examId:id,breakMinutes:10},sess})).json()).item;
+ const r=await(await api('/api/pilot/redeem',{method:'POST',body:{code:item.code}})).json();
+ assert.equal(r.breakSeconds,600);
+ assert.equal((await post('/api/pilot/break/end',r.token)).status,409,'mola başlamadan bitirilemez');
+ const start=await post('/api/pilot/break/start',r.token);assert.equal(start.status,200);
+ assert.equal((await start.json()).breakRemainingSeconds,600);
+ assert.equal((await post('/api/pilot/break/start',r.token)).status,409,'iki kez başlatılamaz');
+ const before=store.db.prepare('SELECT expires_at FROM pilot_sessions WHERE id=?').get(item.id).expires_at;
+ // 2 dakika mola geçmiş gibi
+ store.db.prepare('UPDATE pilot_sessions SET break_started_at=? WHERE id=?').run(Date.now()-120000,item.id);
+ const end=await(await post('/api/pilot/break/end',r.token)).json();
+ assert.ok(end.breakRemainingSeconds<=480&&end.breakRemainingSeconds>=478,String(end.breakRemainingSeconds));
+ // Mola geçmişe taklit edildi (gerçek saat ilerlemedi): kalan süre = 1200 + 120 sn. Gerçek molada sınav saati sabit kalır.
+ assert.ok(end.remainingSeconds>=1318&&end.remainingSeconds<=1320,'molada süre eklendi, azalmadı: '+end.remainingSeconds);
+ const after=store.db.prepare('SELECT expires_at,break_count FROM pilot_sessions WHERE id=?').get(item.id);
+ assert.ok(after.expires_at-before>=119000&&after.expires_at-before<=121000);assert.equal(after.break_count,1);
+ // Hak aşımı: 20 dk mola yapılmış gibi; yalnızca kalan hak (8 dk) sayılır
+ await post('/api/pilot/break/start',r.token);
+ store.db.prepare('UPDATE pilot_sessions SET break_started_at=? WHERE id=?').run(Date.now()-20*60000,item.id);
+ const end2=await(await post('/api/pilot/break/end',r.token)).json();
+ assert.equal(end2.breakRemainingSeconds,0);assert.ok(end2.remainingSeconds>=1798&&end2.remainingSeconds<=1800,'yalnızca kalan 8 dk hak sayıldı: '+end2.remainingSeconds);
+ assert.equal((await post('/api/pilot/break/start',r.token)).status,409,'hak bitti');
+ // Yetkisiz belirteç
+ assert.equal((await post('/api/pilot/break/start','x'.repeat(40))).status,401);
+ // Moladayken teslim: mola önce biter, teslim kabul edilir
+ const item2=(await(await api('/api/pilot',{method:'POST',body:{examId:id,breakMinutes:5},sess})).json()).item;
+ const r2=await(await api('/api/pilot/redeem',{method:'POST',body:{code:item2.code}})).json();
+ await post('/api/pilot/break/start',r2.token);
+ const sub=await post('/api/pilot/submit',r2.token,{answers:{[r2.exam.questions[0].id]:'B'}});assert.equal(sub.status,200);
+ assert.equal(store.db.prepare('SELECT break_started_at FROM pilot_sessions WHERE id=?').get(item2.id).break_started_at,null);
+});
+test('mola: tarayıcıda sorular gizlenir ve mola bitince geri gelir',{skip:chromium?false:'playwright yok'},async()=>{
+ const {base,api,sess,id}=env;let browser;
+ try{
+  const item=(await(await api('/api/pilot',{method:'POST',body:{examId:id,breakMinutes:1},sess})).json()).item;
+  browser=await chromium.launch();const page=await browser.newPage();page.on('dialog',d=>d.accept());
+  await page.goto(base+'/pilot');await page.fill('#code',item.code);await page.keyboard.press('Enter');await page.waitForSelector('#player:not([hidden])');
+  assert.equal(await page.locator('#break-start').isVisible(),true);
+  assert.match(await page.textContent('#break-start'),/kalan mola hakkı: 1 dk/);
+  await page.focus('#student-questions h2');await page.keyboard.press('Alt+Shift+M');
+  await page.waitForSelector('#break-view:not([hidden])');
+  assert.equal(await page.locator('#player').isHidden(),true,'mola sırasında sorular gizli');
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'break-title');
+  assert.match(await page.textContent('#break-timer'),/^(1:00|0:5\d)$/);
+  await page.click('#break-end');await page.waitForSelector('#player:not([hidden])');
+  assert.equal(await page.locator('#break-view').isHidden(),true);
+  assert.ok((await page.textContent('#timer')).startsWith('19:')||(await page.textContent('#timer')).startsWith('20:'));
+ }finally{await browser?.close();}
+});

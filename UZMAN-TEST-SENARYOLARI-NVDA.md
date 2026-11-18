@@ -41,6 +41,15 @@ Sınav hiçbir adımda konuşma/mikrofon istemiyor mu? Yazılı/klavye yanıt ye
 - Sayfayı yenileme: oturum kaybı beklenen davranıştır mı, giriş ekranı uyarıyor ve tarayıcı yenileme/kapatmada uyarı veriyor mu? (Kod tek kullanımlık, yanıtlar yalnızca bellekte; oturum kurtarma bilerek yok, gizlilik gereği. Kurum karar vermeli.)
 - Ağ kesintisi anında teslim: hata mesajı anlaşılır mı, yanıtlar kayboluyor mu?
 
+## F2. Mola (mola hakkı olan oturum)
+| # | Adım | Beklenen | Sonuç |
+|---|---|---|---|
+| F2.1 | Alt+Shift+M | Onay penceresi okunur; "İptal" varsayılan güvenli | |
+| F2.2 | Onaylayınca | "Mola başladı" duyurulur, odak "Moladasınız" başlığında | |
+| F2.3 | Molada sorular erişilebilir değil (gizli) | Ekran okuyucu soru metnini okumaz | |
+| F2.4 | Mola hakkının bitmesine 1 dk | Görsel ve sözlü uyarı | |
+| F2.5 | Molayı bitir | Soruya dönülür, kalan sınav süresi duyurulur | |
+
 ## G. Raporlama
 Her kalan için: ekran görüntüsü/ekran okuyucu konuşma kaydı, tarayıcı+NVDA sürümü, engelli katılımcının serbest yorumu. Bulgular `accessibility-evidence` modülüne ve kabul panelinde (`/erisilebilirlik-kabul`) kaydedilir. Başarı ölçütü: **A11 ve E'nin bağımsız tamamlanması.**
 

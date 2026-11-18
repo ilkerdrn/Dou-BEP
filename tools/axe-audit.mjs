@@ -28,7 +28,7 @@ try{
  const d=createDemo();d.adaptations.visualCues=false;d.profile='';d.questions=[{...d.questions.find(q=>q.type==='choice'),prompt:'5 + 3 işleminin sonucu kaçtır?',options:['6','8','9'],answer:'8',teacherNote:''}];
  const ex=(await(await fetch(base+'/api/exams',{method:'POST',headers:h,body:JSON.stringify({exam:d})})).json()).item;
  await fetch(base+`/api/exams/${ex.id}/approve`,{method:'POST',headers:h,body:JSON.stringify({revision:1,confirmed:true})});
- const code=(await(await fetch(base+'/api/pilot',{method:'POST',headers:h,body:JSON.stringify({examId:ex.id,extraMinutes:5})})).json()).item.code;
+ const code=(await(await fetch(base+'/api/pilot',{method:'POST',headers:h,body:JSON.stringify({examId:ex.id,extraMinutes:5,breakMinutes:5})})).json()).item.code;
  browser=await chromium.launch();
  const scan=async(page,name)=>{await page.waitForTimeout(600);await page.addScriptTag({content:axeSource});
   const r=await page.evaluate(()=>axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}}));
@@ -44,6 +44,7 @@ try{
  const stu=await (await browser.newContext({viewport:{width:1280,height:900},bypassCSP:true})).newPage();stu.on('dialog',x=>x.accept());
  await stu.goto(base+'/pilot');await stu.fill('#code',code);await stu.keyboard.press('Enter');await stu.waitForSelector('#player:not([hidden])');await scan(stu,'Öğrenci sınav ekranı');
  await stu.setViewportSize({width:320,height:700});await scan(stu,'Öğrenci sınav ekranı (320 px)');
+ await stu.setViewportSize({width:1280,height:900});await stu.click('#break-start');await stu.waitForSelector('#break-view:not([hidden])');await scan(stu,'Öğrenci mola ekranı');
 }finally{await browser?.close();if(server?.listening)await new Promise(r=>server.close(r));if(store?.db?.open)store.db.close();rmSync(temp,{recursive:true,force:true});}
 console.log(failures?`\n${failures} ihlal grubu bulundu.`:'\nİhlal yok (otomatik kurallar). Bu, WCAG uyumluluk sertifikası veya engelli kullanıcı testi değildir.');
 process.exit(failures?1:0);

@@ -32,6 +32,9 @@ export function pilotSessions(db,{StoreError,log}){
  );CREATE INDEX IF NOT EXISTS idx_pilot_tenant ON pilot_sessions(tenant_id,owner_id,created_at);`);
  // v2.84: per-session approved extra time (Moodle/Canvas-style user override). Idempotent migration.
  if(!db.prepare("PRAGMA table_info(pilot_sessions)").all().some(c=>c.name==='extra_minutes'))db.exec('ALTER TABLE pilot_sessions ADD COLUMN extra_minutes INTEGER NOT NULL DEFAULT 0');
+ // v2.85: teacher-approved rest-break allowance. The exam clock is paused while on break (break time is not exam time).
+ for(const [col,ddl] of [['break_minutes','INTEGER NOT NULL DEFAULT 0'],['break_used_ms','INTEGER NOT NULL DEFAULT 0'],['break_started_at','INTEGER'],['break_count','INTEGER NOT NULL DEFAULT 0']])
+  if(!db.prepare('PRAGMA table_info(pilot_sessions)').all().some(c=>c.name===col))db.exec(`ALTER TABLE pilot_sessions ADD COLUMN ${col} ${ddl}`);
  db.exec(`CREATE TABLE IF NOT EXISTS pilot_reviews(
   session_id TEXT PRIMARY KEY REFERENCES pilot_sessions(id) ON DELETE CASCADE,
   tenant_id TEXT NOT NULL REFERENCES tenants(id),
@@ -85,7 +88,8 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function state(row){if(row.status==='revoked')return 'revoked';if(row.expires_at<=now()&&row.status!=='submitted')return 'expired';return row.status;}
  function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.answers?JSON.parse(row.answers):null}:{})};}
- function issue(actor,examId,{extraMinutes=0}={}){permit(actor);cleanup();
+ function issue(actor,examId,{extraMinutes=0,breakMinutes=0}={}){permit(actor);cleanup();
+  if(!Number.isInteger(breakMinutes)||breakMinutes<0||breakMinutes>60)error('bad_break_time','Mola hakkı 0–60 dakika arasında tam sayı olmalıdır.',422);
   if(!Number.isInteger(extraMinutes)||extraMinutes<0||extraMinutes>120)error('bad_extra_time','Ek süre 0–120 dakika arasında tam sayı olmalıdır.',422);if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
   if(!exam)error('not_found','Sınav bulunamadı.',404);
@@ -102,7 +106,7 @@ export function pilotSessions(db,{StoreError,log}){
   const stamp=now(),id=randomUUID();
   db.prepare(`INSERT INTO pilot_sessions(id,tenant_id,exam_id,owner_id,revision,code_hash,status,created_at,expires_at)
   VALUES(?,?,?,?,?,?,'issued',?,?)`).run(id,actor.tenantId,examId,actor.id,exam.revision,sha(raw),stamp,stamp+WAIT_MS);
-  db.prepare('UPDATE pilot_sessions SET extra_minutes=? WHERE id=?').run(extraMinutes,id);
+  db.prepare('UPDATE pilot_sessions SET extra_minutes=?,break_minutes=? WHERE id=?').run(extraMinutes,breakMinutes,id);
   log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code};
  }
  function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
@@ -131,7 +135,7 @@ export function pilotSessions(db,{StoreError,log}){
    const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=?,expires_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),startedAt,deadline,row.id,now());
    if(!changed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
-   return {token,expiresAt:deadline,remainingSeconds:Math.floor(totalMs/1000),exam:payload};
+   return {token,expiresAt:deadline,remainingSeconds:Math.floor(totalMs/1000),breakSeconds:(row.break_minutes||0)*60,exam:payload};
   }catch(err){
    if(err?.code==='invalid_code'){
     recordFailure(key,time,REDEEM_CODE_LIMIT,15*60*1000,REDEEM_LOCK_MS);
@@ -156,8 +160,35 @@ export function pilotSessions(db,{StoreError,log}){
   }
   return result;
  }
- function submit(token,answers){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
+ function claimed(token){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
   const row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
+  if(!row||row.status!=='started')error('invalid_session','Oturum süresi dolmuş veya teslim edilmiş.',401);return row;}
+ const remainingFor=r=>Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-now())/1000));
+ // Ends a running break: counts at most the remaining allowance and moves the exam deadline by exactly that amount.
+ function settleBreak(row){
+  if(!row.break_started_at)return row;
+  const allow=row.break_minutes*60000,time=now(),used=Math.min(allow-row.break_used_ms,Math.max(0,time-row.break_started_at));
+  db.prepare('UPDATE pilot_sessions SET break_used_ms=break_used_ms+?,expires_at=expires_at+?,break_started_at=NULL WHERE id=? AND break_started_at IS NOT NULL').run(used,used,row.id);
+  return db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(row.id);
+ }
+ function breakStart(token){const row=claimed(token);
+  if(row.expires_at<=now())error('invalid_session','Sınav süresi dolmuş.',401);
+  const allow=row.break_minutes*60000;
+  if(!allow)error('no_break','Bu oturum için kurum onaylı mola hakkı yok.',403);
+  if(row.break_started_at)error('on_break','Zaten moladasınız.',409);
+  if(row.break_used_ms>=allow)error('break_exhausted','Mola hakkınız bitti.',409);
+  const r=db.prepare('UPDATE pilot_sessions SET break_started_at=?,break_count=break_count+1 WHERE id=? AND break_started_at IS NULL').run(now(),row.id);
+  if(!r.changes)error('on_break','Zaten moladasınız.',409);
+  return {ok:true,breakRemainingSeconds:Math.floor((allow-row.break_used_ms)/1000),examRemainingSeconds:remainingFor(row)};
+ }
+ function breakEnd(token){const row=claimed(token);
+  if(!row.break_started_at)error('not_on_break','Mola başlatılmamış.',409);
+  const after=settleBreak(row),allow=after.break_minutes*60000;
+  return {ok:true,remainingSeconds:remainingFor(after),breakRemainingSeconds:Math.floor((allow-after.break_used_ms)/1000)};
+ }
+ function submit(token,answers){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
+  let row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
+  if(row&&row.status==='started')row=settleBreak(row);// submitting during a break ends it first
   if(!row||row.status!=='started'||row.expires_at<=now())error('invalid_session','Oturum süresi dolmuş veya teslim edilmiş.',401);
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti; yanıt gönderilemedi.',409);
@@ -263,6 +294,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }

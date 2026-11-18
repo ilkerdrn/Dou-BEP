@@ -10,13 +10,36 @@ const summary=()=>{const n=exam.questions.filter(answered).length;return n+' sor
 const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
 function showAlert(m){$('time-alert').hidden=false;$('time-alert').textContent=m;announce(m);}
-function lockAll(){locked=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
+function lockAll(){locked=true;$('break-start').disabled=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
 function tick(){const left=remaining();$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
  for(const m of [600,300,60])if(left<=m&&lastLeft>m)showAlert('Uyarı: '+Math.round(m/60)+' dakika kaldı.');
  lastLeft=left;
  if(left<=0){clearInterval(timerId);timerId=null;showAlert('Süre doldu. Yanıtlarınız otomatik teslim ediliyor.');submitAnswers();}}
+let breakLeft=0,breakTimer=null,onBreak=false;
+const fmtMin=sec=>Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+function refreshBreakButton(){const b=$('break-start');b.hidden=!(breakLeft>0)&&!onBreak;b.disabled=onBreak||breakLeft<=0;b.textContent='Mola başlat (kalan mola hakkı: '+Math.ceil(breakLeft/60)+' dk)';}
+async function startBreak(){
+ if(!claim||locked||onBreak||breakLeft<=0)return;
+ if(!confirm('Mola başlatılırsa sorular gizlenir ve sınav süreniz durur. Kalan mola hakkınız '+Math.ceil(breakLeft/60)+' dakika. Mola hakkınız bitince sınava otomatik dönersiniz. Molayı başlatmak istiyor musunuz?'))return;
+ try{const r=await post('/api/pilot/break/start',{},claim);
+  onBreak=true;breakLeft=r.breakRemainingSeconds;clearInterval(timerId);timerId=null;lastLeft=r.examRemainingSeconds+1;
+  $('player').hidden=true;$('break-view').hidden=false;$('break-timer').textContent=fmtMin(breakLeft);$('break-alert').hidden=true;
+  breakTimer=setInterval(breakTick,1000);$('break-title').focus();announce('Mola başladı. Sorular gizlendi, sınav süreniz duruyor. Kalan mola hakkı '+fmtMin(breakLeft)+'.');
+ }catch(e){announce(e.message,true);}
+}
+function breakTick(){breakLeft=Math.max(0,breakLeft-1);$('break-timer').textContent=fmtMin(breakLeft);
+ if(breakLeft===60){$('break-alert').hidden=false;$('break-alert').textContent='Uyarı: mola hakkınızın bitmesine 1 dakika kaldı.';announce('Mola hakkınızın bitmesine 1 dakika kaldı.');}
+ if(breakLeft<=0)endBreak(true);}
+async function endBreak(auto=false){
+ if(!onBreak)return;clearInterval(breakTimer);breakTimer=null;
+ try{const r=await post('/api/pilot/break/end',{},claim);
+  onBreak=false;breakLeft=r.breakRemainingSeconds;$('break-view').hidden=true;$('player').hidden=false;refreshBreakButton();
+  startTimer(r.remainingSeconds);updateQuestionNavigation(true);
+  announce((auto?'Mola hakkınız bitti. ':'Mola bitti. ')+'Sınav devam ediyor. Kalan süre '+fmt(r.remainingSeconds)+'.');
+ }catch(e){announce(e.message,true);if(onBreak)breakTimer=setInterval(breakTick,1000);}
+}
 function startTimer(serverSeconds){const total=Number.isFinite(serverSeconds)?serverSeconds:((exam.durationMinutes||0)+(exam.extraMinutes||0))*60;if(!total){$('timer-box').hidden=true;return;}
- deadline=Date.now()+total*1000;lastLeft=total+1;$('timer-box').hidden=false;timerId=setInterval(tick,1000);tick();}
+ deadline=Date.now()+total*1000;lastLeft=total;$('timer-box').hidden=false;timerId=setInterval(tick,1000);tick();}
 function speak(q){
  if(!douReader){announce('Okuyucu henüz yüklenmedi.',true);return;}
  if(exam?.questions?.includes(q)&&exam.questions.indexOf(q)!==activeQuestionIndex){
@@ -57,7 +80,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  activeQuestionIndex=0;updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
@@ -67,6 +90,8 @@ async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
 let pendingAnswers=null;
 function submitAnswers(){if(!claim||!exam)return;pendingAnswers=collectAnswers();lockAll();sendAnswers(pendingAnswers);}
 $('answer-form').addEventListener('submit',async event=>{event.preventDefault();if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());});
+$('break-start').addEventListener('click',startBreak);
+$('break-end').addEventListener('click',()=>endBreak(false));
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
 $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.max(0,activeQuestionIndex-1);updateQuestionNavigation(true);});
 $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(exam.questions.length-1,activeQuestionIndex+1);updateQuestionNavigation(true);});
@@ -87,6 +112,7 @@ $('big-targets').addEventListener('change',()=>document.body.classList.toggle('b
 window.addEventListener('keydown',e=>{if(!exam||!e.altKey||!e.shiftKey||e.ctrlKey||e.metaKey)return;if(['TEXTAREA','SELECT'].includes(e.target?.tagName))return;
  const k=e.key.toLowerCase();
  if(k==='t'){e.preventDefault();announce('Kalan süre: '+fmt(remaining())+'.');}
+ else if(k==='m'){e.preventDefault();if(onBreak)endBreak(false);else startBreak();}
  else if(k==='d'){e.preventDefault();announce('Soru '+(activeQuestionIndex+1)+': '+(answered(exam.questions[activeQuestionIndex])?'cevaplandı':'cevaplanmadı')+'. '+summary());}
  else if(/^[1-9]$/.test(e.key)&&!locked){const q=exam.questions[activeQuestionIndex];const o=q.options?.[Number(e.key)-1];if(o){e.preventDefault();const r=$('student-questions').querySelectorAll('.question')[activeQuestionIndex].querySelector('input[value="'+o.id+'"]');if(r){r.checked=true;updateQuestionNavigation();announce('Seçenek '+o.id+' seçildi.');}}}
 });
