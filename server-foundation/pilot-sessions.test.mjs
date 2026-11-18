@@ -33,8 +33,8 @@ test('reject malformed, invented, free-text and extraneous answers',()=>{const f
  assert.equal(f.s.pilotSubmit(ticket.token,{q1:'A'}).ok,true);
 }finally{f.close();}});
 
-test('reject unapproved exam, unsupported short answers, stale revisions',()=>{const f=fixture();try{
- const raw=createDemo();raw.profile='';raw.questions=raw.questions.map(q=>({...q,teacherNote:''}));const x=f.s.createExam(f.a,{exam:raw});f.s.approveExam(f.a,x.id,{revision:1,confirmed:true});assert.throws(()=>f.s.pilotIssue(f.a,x.id),{code:'unsupported_questions'});
+test('reject unapproved exam, oversized exams, stale revisions',()=>{const f=fixture();try{
+ const raw=createDemo();raw.profile='';raw.questions=raw.questions.map(q=>({...q,teacherNote:''}));raw.questions=Array.from({length:61},(_,i)=>({...raw.questions.find(q=>q.type==='choice'),id:'q-'+i,prompt:'Soru '+i+'?',options:['a','b','c'],answer:'a'}));const x=f.s.createExam(f.a,{exam:raw});f.s.approveExam(f.a,x.id,{revision:1,confirmed:true});assert.throws(()=>f.s.pilotIssue(f.a,x.id),{code:'unsupported_questions'});
  const created=f.s.pilotIssue(f.a,f.rec.id);const a=exam();a.title='Başka sürüm';f.s.updateExam(f.a,f.rec.id,{revision:1,exam:a});assert.throws(()=>f.s.pilotRedeem(created.code),{code:'exam_changed'});
  assert.throws(()=>f.s.pilotIssue(f.a,f.rec.id),{code:'not_approved'});
  f.s.approveExam(f.a,f.rec.id,{revision:2,confirmed:true});const other=f.s.pilotIssue(f.a,f.rec.id);const ticket=f.s.pilotRedeem(other.code);

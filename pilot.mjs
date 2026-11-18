@@ -5,7 +5,8 @@ function announce(s,error=false){$('message').textContent=s;$('message').classNa
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
 let douReader=null,deadline=0,timerId=null,lastLeft=Infinity,locked=false;
-const answered=q=>{const f=new FormData($('answer-form'));if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
+const TEXT_MAX=4000,TEXT_TOTAL_MAX=60000;
+const answered=q=>{const f=new FormData($('answer-form'));if(q.type==='short')return String(f.get(q.id)||'').trim().length>0;if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
 const summary=()=>{const n=exam.questions.filter(answered).length;return n+' soru cevaplandı, '+(exam.questions.length-n)+' soru boş'+(flagged.size?', '+flagged.size+' soru işaretli':'')+'.';};
 const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
@@ -89,6 +90,17 @@ function render(){const area=$('student-questions');area.replaceChildren();
  for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
   const field=el('fieldset');const legend=el('legend','Yanıt');field.append(legend);
+  if(q.type==='short'){
+   const id='text-'+q.id;const label=el('label','Yazılı yanıtınız');label.htmlFor=id;
+   const ta=el('textarea');ta.id=id;ta.name=q.id;ta.rows=9;ta.maxLength=TEXT_MAX;ta.autocomplete='off';ta.spellcheck=false;ta.style.width='100%';
+   const info=el('p','0 / '+TEXT_MAX+' karakter');info.className='muted';info.id=id+'-count';ta.setAttribute('aria-describedby',id+'-count '+id+'-note');
+   const note=el('p','Yanıtta ad, okul numarası, tanı veya sağlık bilgisi yazmayın. Yanıtınız yalnızca teslim edildiğinde sunucuya gönderilir; sayfayı yenilerseniz kaybolur.');note.className='muted';note.id=id+'-note';
+   ta.addEventListener('input',()=>{
+    const others=[...document.querySelectorAll('#student-questions textarea')].filter(x=>x!==ta).reduce((n,x)=>n+x.value.length,0);
+    if(others+ta.value.length>TEXT_TOTAL_MAX){ta.value=ta.value.slice(0,Math.max(0,TEXT_TOTAL_MAX-others));announce('Toplam yazılı yanıt sınırına ulaşıldı.',true);}
+    info.textContent=ta.value.length+' / '+TEXT_MAX+' karakter';updateQuestionNavigation();});
+   field.append(label,ta,info,note);
+  }
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);area.append(box);
@@ -107,7 +119,7 @@ function openReview(){if(!exam||locked||onBreak)return;
  $('review-summary').textContent=summary();$('player').hidden=true;$('review-view').hidden=false;$('review-title').focus();announce('Gözden geçirme ekranı. '+summary());}
 function closeReview(){$('review-view').hidden=true;$('player').hidden=false;}
 function confirmAndSend(){if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
-function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
+function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.type==='short'){const v=String(form.get(q.id)||'').trim();if(v)answers[q.id]=v;}else if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
  try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
  catch(e){announce(e.message,true);btn.disabled=false;}}

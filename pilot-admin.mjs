@@ -29,6 +29,10 @@ function renderReview(review){
   const card=el('fieldset');card.className='review-question';const title=el('legend','Soru '+q.number+' · '+q.maxPoints+' puan');card.append(title);
   card.append(el('p',q.prompt));
   const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?q.response:Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
+  answer.style.whiteSpace='pre-wrap';
+  for(const flag of q.flags||[]){const w=el('p','⚠ '+flag+'. Yanıtı paylaşmadan önce kontrol edin.');w.className='notice err';card.append(w);}
+  if(q.suggestedScore!==null&&q.suggestedScore!==undefined){const sg=el('p','Cevap anahtarına göre önerilen puan: '+q.suggestedScore+' / '+q.maxPoints+' (yalnızca öneri; kesin puanı siz girersiniz).');sg.className='muted';card.append(sg);}
+  if(q.type==='short'){const sg=el('p','Yazılı yanıt otomatik puanlanmaz; kendiniz değerlendirin.');sg.className='muted';card.append(sg);}
   if(q.objective){const objective=el('p','Hedef: '+q.objective);objective.className='muted';card.append(objective);}
   const grid=el('div');grid.className='review-row';
   const scoreLabel=el('label','Öğretmen puanı (0–'+q.maxPoints+')');const score=el('input');score.type='number';score.min='0';score.max=String(q.maxPoints);score.step='0.01';score.placeholder='Değerlendirilmedi';score.value=q.score===null?'':String(q.score);score.dataset.scoreId=q.id;scoreLabel.append(score);

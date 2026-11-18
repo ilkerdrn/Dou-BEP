@@ -14,7 +14,7 @@ check('Node.js >=22.13',Number(process.versions.node.split('.')[0])>=22);
 check('HTTP server only binds to localhost',/server\.listen\(port,'127\.0\.0\.1'/.test(server));
 check('Explicit host validation in API',api.includes('host_rejected')&&api.includes('origin_rejected'));
 check('Teacher modifications require CSRF',api.includes('store.requireCsrf(actor'));
-check('Anonymous response kinds limited',student.includes("['choice','truefalse','matching']"));
+check('Anonymous response kinds limited (objective + bounded written text, PII flagged for teachers)',student.includes("['choice','truefalse','matching','short']")&&student.includes('TEXT_ANSWER_MAX_CHARS')&&student.includes('detectSensitive')&&!/MediaRecorder|getUserMedia/.test(student));
 check('Manual reviews use tenant scoped ownership',student.includes('rowFor(actor,id)')&&student.includes("roleCan(actor.role,'assessment.record')"));
 check('Student code uses one-time claim hash',student.includes('claim_hash')&&student.includes("status='started'"));
 check('v2.35 student pilot code throttle is persistent and cannot be reset with HTTP restart',student.includes('CREATE TABLE IF NOT EXISTS pilot_redeem_throttle')&&student.includes('REDEEM_GLOBAL_LIMIT=12')&&student.includes('limiterBlocked(GLOBAL_KEY,time)')&&!api.includes('const pilotFailures=new Map()'));

@@ -1,5 +1,6 @@
 /** v1.5 local pilot: anonymous, one-time text choice/matching submissions only.
- * Never store learner names, free text, diagnoses, IP addresses, or audio.
+ * Stores only objective choices and bounded written answers (<=4000 chars each, control characters rejected; learners are told not
+ * to write names/diagnoses and teachers see a warning flag on suspected personal data). Never stores IP addresses or audio.
  * No grade inference; teacher reviews selections. Codes/tokens are SHA256 hashed at rest.
  */
 import {randomBytes,randomUUID,createHash} from 'node:crypto';
@@ -7,12 +8,19 @@ import {roleCan} from '../roles.mjs';
 import {createStudentPayload} from '../accessible-player.mjs';
 import {reviewExam} from '../quality.mjs';
 import {summarizeAnonymousCohort,anonymousCohortCsv} from '../cohort-summary.mjs';
+import {detectSensitive} from '../bep-plan-import.mjs';
 const now=()=>Date.now();
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
 const CODE=/^[0-9A-F]{20}$/;
 const WAIT_MS=45*60*1000;
 const SUBMIT_GRACE_MS=120*1000;
+// Operational limits are configurable per installation (defaults suit a single local machine; not load-certified).
+const envInt=(name,def,min,max)=>{const v=Number(process.env[name]);return Number.isInteger(v)&&v>=min&&v<=max?v:def;};
+const MAX_QUESTIONS=envInt('BEP_PILOT_MAX_QUESTIONS',60,1,100);
+const MAX_OPEN_SESSIONS=envInt('BEP_PILOT_MAX_OPEN_SESSIONS',100,1,2000);
+export const TEXT_ANSWER_MAX_CHARS=4000;
+const TEXT_ANSWERS_TOTAL_MAX=60000;
 const KEEP_MS=24*60*60*1000;
 // Privacy-preserving, persistent limiter: global failure budget protects against
 // changing the candidate code on each guess; code-specific budget limits repeats.
@@ -99,9 +107,9 @@ export function pilotSessions(db,{StoreError,log}){
   const source=JSON.parse(exam.body),check=reviewExam(source);
   if(check.errorCount)error('quality_errors','Sınavda zorunlu kalite hatası var.',422);
   let payload;try{payload=createStudentPayload(source);}catch{error('accessibility_errors','Erişilebilir sınav için görsel betimleme kontrollerini tamamlayın.',422);}
-  if(payload.questions.length>30||payload.questions.some(q=>!['choice','truefalse','matching'].includes(q.type)))
-   error('unsupported_questions','Pilot oturumu yalnızca en fazla 30 adet çoktan seçmeli, doğru-yanlış ve eşleştirme sorusunu kabul eder.',422);
-  if(db.prepare("SELECT COUNT(*) AS n FROM pilot_sessions WHERE tenant_id=? AND status IN ('issued','started') AND expires_at>?").get(actor.tenantId,now()).n>=30)error('quota','Kurum için aynı anda en fazla 30 açık pilot kodu olabilir.',409);
+  if(payload.questions.length>MAX_QUESTIONS||payload.questions.some(q=>!['choice','truefalse','matching','short'].includes(q.type)))
+   error('unsupported_questions',`Pilot oturumu en fazla ${MAX_QUESTIONS} adet çoktan seçmeli, doğru-yanlış, eşleştirme ve yazılı (kısa/açık uçlu) yanıt sorusunu kabul eder.`,422);
+  if(db.prepare("SELECT COUNT(*) AS n FROM pilot_sessions WHERE tenant_id=? AND status IN ('issued','started') AND expires_at>?").get(actor.tenantId,now()).n>=MAX_OPEN_SESSIONS)error('quota',`Kurum için aynı anda en fazla ${MAX_OPEN_SESSIONS} açık pilot kodu olabilir.`,409);
   const raw=randomBytes(10).toString('hex').toUpperCase(),code=raw.match(/.{1,5}/g).join('-');
   const stamp=now(),id=randomUUID();
   db.prepare(`INSERT INTO pilot_sessions(id,tenant_id,exam_id,owner_id,revision,code_hash,status,created_at,expires_at)
@@ -150,6 +158,13 @@ export function pilotSessions(db,{StoreError,log}){
   if(Object.keys(answers).some(k=>!ids.has(k)))error('invalid_answers','Bilinmeyen soru.');
   for(const q of payload.questions){const a=answers[q.id];if(a===undefined||a===null||a==='')continue;
    if(q.options){if(typeof a!=='string'||!q.options.some(o=>o.id===a))error('invalid_answers','Geçersiz seçenek.');result[q.id]=a;}
+   else if(q.type==='short'){
+    if(typeof a!=='string')error('invalid_answers','Yazılı yanıt metin olmalıdır.');
+    const text=a.replace(/\r\n/g,'\n').trim();
+    if(/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(text))error('invalid_answers','Yazılı yanıtta geçersiz denetim karakteri var.');
+    if([...text].length>TEXT_ANSWER_MAX_CHARS)error('too_large',`Yazılı yanıt en fazla ${TEXT_ANSWER_MAX_CHARS} karakter olabilir.`,413);
+    if(text)result[q.id]=text;
+   }
    else if(q.type==='matching'){
     if(!a||typeof a!=='object'||Array.isArray(a))error('invalid_answers','Geçersiz eşleştirme.');
     const left=new Set(q.left.map(x=>x.id)),right=new Set(q.right.map(x=>x.id)),res={};
@@ -194,7 +209,7 @@ export function pilotSessions(db,{StoreError,log}){
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti; yanıt gönderilemedi.',409);
   approvedExam(exam);
   const payload=createStudentPayload(JSON.parse(exam.body));const checked=validate(payload,answers);
-  if(JSON.stringify(checked).length>10000)error('too_large','Yanıt çok büyük.',413);
+  if(JSON.stringify(checked).length>TEXT_ANSWERS_TOTAL_MAX)error('too_large','Yanıt çok büyük.',413);
   const result=db.prepare("UPDATE pilot_sessions SET status='submitted',answers=?,submitted_at=?,claim_hash=NULL WHERE id=? AND status='started' AND claim_hash=? AND expires_at>?").run(JSON.stringify(checked),now(),row.id,sha(token),now());
   if(!result.changes)error('invalid_session','Oturum daha önce teslim edilmiş.',409);
   return {ok:true,receipt:row.id.slice(0,8).toUpperCase(),message:'Anonim yanıtlar bir kez kaydedildi. Otomatik puanlama yapılmadı.'};
@@ -211,14 +226,33 @@ export function pilotSessions(db,{StoreError,log}){
   const points=new Map(payload.questions.map((q,i)=>[q.id,source.questions[i].points]));
   const objectives=new Map(payload.questions.map((q,i)=>[q.id,source.questions[i].objective||source.objective||'']));
   const entry=db.prepare('SELECT * FROM pilot_reviews WHERE session_id=? AND tenant_id=?').get(id,actor.tenantId);
-  return {row,payload,points,objectives,entry};
+  return {row,payload,source,points,objectives,entry};
+ }
+ const norm=v=>String(v??'').trim().toLocaleLowerCase('tr-TR');
+ /** Teacher-only SUGGESTION from the answer key for objective items (never shown to learners, never stored, never final). */
+ function suggestScore(pq,sq,response,max){
+  if(!sq||!max)return null;
+  if(pq.type==='choice'||pq.type==='truefalse'){
+   if(!norm(sq.answer))return null;
+   const chosen=response?pq.options?.find(o=>o.id===response)?.label:null;
+   return norm(chosen)===norm(sq.answer)?max:0;
+  }
+  if(pq.type==='matching'){
+   const pairs=sq.pairs||[];if(!pairs.length||pairs.some(x=>!norm(x.right)))return null;
+   const given=response&&typeof response==='object'?response:{};let good=0;
+   pq.left.forEach((l,i)=>{const label=pq.right.find(r=>r.id===given[l.id])?.label;if(label!==undefined&&norm(label)===norm(pairs[i].right))good++;});
+   return Math.round(max*good/pairs.length*100)/100;
+  }
+  return null;
  }
  function reviewState(ctx){
-  const values=ctx.entry?JSON.parse(ctx.entry.entries):{};
+  const values=ctx.entry?JSON.parse(ctx.entry.entries):{},responses=ctx.row.answers?JSON.parse(ctx.row.answers):{};
   const questions=ctx.payload.questions.map(q=>({
    id:q.id,number:q.number,prompt:q.prompt,type:q.type,objective:ctx.objectives.get(q.id)||'',
-   maxPoints:ctx.points.get(q.id)??0,response:ctx.row.answers?JSON.parse(ctx.row.answers)[q.id]??null:null,
-   score:values[q.id]?.score??null,note:values[q.id]?.note||''
+   maxPoints:ctx.points.get(q.id)??0,response:responses[q.id]??null,
+   score:values[q.id]?.score??null,note:values[q.id]?.note||'',
+   suggestedScore:suggestScore(q,ctx.source.questions[ctx.payload.questions.indexOf(q)],responses[q.id]??null,ctx.points.get(q.id)??0),
+   flags:q.type==='short'&&typeof responses[q.id]==='string'&&detectSensitive(responses[q.id]).length?['Olası kişisel veri: '+detectSensitive(responses[q.id]).join(', ')]:[]
   }));
   const done=questions.filter(q=>q.score!==null);
   return {sessionId:ctx.row.id,reviewVersion:ctx.entry?.version||0,status:ctx.row.status,

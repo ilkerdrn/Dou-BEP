@@ -145,6 +145,7 @@ const allowed={
  '/okur/ort/1.30.0/ort-wasm-simd-threaded.mjs':['okur/ort/1.30.0/ort-wasm-simd-threaded.mjs','text/javascript; charset=utf-8'],
  '/okur/ort/1.30.0/ort-wasm-simd-threaded.wasm':['okur/ort/1.30.0/ort-wasm-simd-threaded.wasm','application/wasm'],
  '/dou-speech-neural.mjs':['dou-speech-neural.mjs','text/javascript; charset=utf-8'],
+ '/terminology.mjs':['terminology.mjs','text/javascript; charset=utf-8'],
  '/dou-theme.css':['dou-theme.css','text/css; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
@@ -192,6 +193,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
    res.writeHead(403).end('Host rejected');return;
   }
   if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
+  if(path==='/terminology.json'){const profile=process.env.BEP_TERMINOLOGY==='university'?'university':'school';res.writeHead(200,{'Content-Type':'application/json; charset=utf-8',...securityHeaders});res.end(req.method==='HEAD'?undefined:JSON.stringify({profile}));return;}
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
   try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders,...(path.startsWith('/okur/models/')||path.startsWith('/okur/ort/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{}),...(wasmPaths.has(path)?{'Content-Security-Policy':wasmCsp(securityHeaders['Content-Security-Policy'])}:{})});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}

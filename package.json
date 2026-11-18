@@ -44,7 +44,8 @@
     "speech:cadence-audit": "node tools/dou-speech-cadence-audit.mjs",
     "speech:continuity-audit": "node tools/dou-speech-continuity-audit.mjs",
     "exam:closure": "node tools/exam-closure-smoke.mjs",
-    "a11y:axe": "node tools/axe-audit.mjs"
+    "a11y:axe": "node tools/axe-audit.mjs",
+    "pilot:load": "node tools/pilot-load-test.mjs"
   },
   "engines": {
     "node": ">=22.13"
