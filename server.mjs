@@ -163,6 +163,7 @@ const allowed={
  '/styles.css':['styles.css','text/css; charset=utf-8'],
  '/ui-refresh.css':['ui-refresh.css','text/css; charset=utf-8'],
  '/pilot-refresh.css':['pilot-refresh.css','text/css; charset=utf-8'],
+ '/pilot-admin-workspace.css':['pilot-admin-workspace.css','text/css; charset=utf-8'],
  '/pilot-premium.css':['pilot-premium.css','text/css; charset=utf-8'],
  '/pilot-workspace.css':['pilot-workspace.css','text/css; charset=utf-8'],
  '/institutional-exam-premium.css':['institutional-exam-premium.css','text/css; charset=utf-8'],
