@@ -32,7 +32,9 @@ test('voice permission is not part of stored exam and export control is separate
  assert.match(ui,/id="exam-voice-export"/);
  assert.match(logic,/allowVoiceResponse:true/);
  assert.match(logic,/getApproved\(\)/);
- assert.match(logic,/confirm\('Sesli yanıt etkinleştirilsin mi/);
+ // Sesli yanıt dışa aktarımı açık teyit olmadan başlamamalı (yerel confirm veya erişilebilir onay penceresi).
+ assert.match(logic,/(confirm\('Sesli yanıt etkinleştirilsin mi|await douConfirm\([^\n]*title:'Sesli yanıt etkinleştirilsin mi)/);
+ assert.ok(logic.indexOf('Sesli yanıt etkinleştirilsin mi')<logic.indexOf('allowVoiceResponse:true'),'teyit, dışa aktarımdan önce gelmeli');
 });
 test('teacher review page runs locally, blocks network and uses safe user-file rendering',()=>{
  const html=readFileSync(new URL('./review-audio.html',import.meta.url),'utf8');
