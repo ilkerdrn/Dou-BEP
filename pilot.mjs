@@ -11,7 +11,7 @@ const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
 function showAlert(m){$('time-alert').hidden=false;$('time-alert').textContent=m;announce(m);}
 function lockAll(){locked=true;$('break-start').disabled=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
-function tick(){const left=remaining();$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+function tick(){const left=remaining();updateRing(left);$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
  for(const m of [600,300,60])if(left<=m&&lastLeft>m)showAlert('Uyarı: '+Math.round(m/60)+' dakika kaldı.');
  lastLeft=left;
  if(left<=0){clearInterval(timerId);timerId=null;showAlert('Süre doldu. Yanıtlarınız otomatik teslim ediliyor.');submitAnswers();}}
@@ -39,7 +39,7 @@ async function endBreak(auto=false){
  }catch(e){announce(e.message,true);if(onBreak)breakTimer=setInterval(breakTick,1000);}
 }
 function startTimer(serverSeconds){const total=Number.isFinite(serverSeconds)?serverSeconds:((exam.durationMinutes||0)+(exam.extraMinutes||0))*60;if(!total){$('timer-box').hidden=true;return;}
- deadline=Date.now()+total*1000;lastLeft=total;$('timer-box').hidden=false;timerId=setInterval(tick,1000);tick();}
+ deadline=Date.now()+total*1000;lastLeft=total;totalSeconds=Math.max(totalSeconds,total);$('timer-box').hidden=false;timerId=setInterval(tick,1000);tick();}
 function speak(q){
  if(!douReader){announce('Okuyucu henüz yüklenmedi.',true);return;}
  if(exam?.questions?.includes(q)&&exam.questions.indexOf(q)!==activeQuestionIndex){
@@ -57,6 +57,20 @@ function moveReaderQuestion(direction){
 }
 
 function option(q,o,group){const label=el('label');label.className='option';const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
+let totalSeconds=0;
+function buildMap(){const box=$('question-map');box.replaceChildren();
+ exam.questions.forEach((q,i)=>{const b=el('button');b.type='button';b.className='chip ghost';b.dataset.index=String(i);
+  b.addEventListener('click',()=>{activeQuestionIndex=i;$('one-question').checked=true;updateQuestionNavigation(true);});box.append(b);});
+ $('question-map-card').hidden=exam.questions.length<2;}
+function updateMap(){if(!exam)return;const chips=[...$('question-map').children];let done=0;
+ chips.forEach((b,i)=>{const q=exam.questions[i],a=answered(q),cur=i===activeQuestionIndex;if(a)done++;
+  b.textContent=(i+1)+(a?' ✓':'');b.classList.toggle('chip-done',a);b.classList.toggle('chip-current',cur);
+  if(cur)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current');
+  b.setAttribute('aria-label','Soru '+(i+1)+', '+(a?'cevaplandı':'boş')+(cur?', şu an açık':''));});
+ $('answer-progress').max=exam.questions.length;$('answer-progress').value=done;
+ $('answer-progress').setAttribute('aria-valuetext',done+' / '+exam.questions.length+' soru cevaplandı');
+ $('map-summary').textContent=done+' soru cevaplandı, '+(exam.questions.length-done)+' soru boş.';}
+function updateRing(left){const fg=$('ring-fg');if(!fg||!totalSeconds)return;const len=2*Math.PI*27;fg.style.strokeDasharray=String(len);fg.style.strokeDashoffset=String(len*(1-Math.max(0,Math.min(1,left/totalSeconds))));}
 function refreshProgress(){}
 function updateQuestionNavigation(focus=false){
  if(!exam)return;const cards=[...$('student-questions').querySelectorAll('.question')],single=$('one-question').checked;
@@ -65,7 +79,7 @@ function updateQuestionNavigation(focus=false){
  $('previous-question').disabled=!single||activeQuestionIndex===0;
  $('next-question').disabled=!single||activeQuestionIndex>=cards.length-1;
  douReader?.syncQuestion();
- refreshProgress();
+ refreshProgress();updateMap();
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length} · ${answered(exam.questions[activeQuestionIndex])?'Cevaplandı':'Henüz cevaplanmadı'}`:`${cards.length} soru birlikte gösteriliyor`;
  if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();}
 }
@@ -77,10 +91,10 @@ function render(){const area=$('student-questions');area.replaceChildren();
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);area.append(box);
  }
- activeQuestionIndex=0;updateQuestionNavigation();
+ activeQuestionIndex=0;buildMap();updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;

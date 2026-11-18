@@ -69,3 +69,23 @@ test('öğrenci /pilot: oturum sırasında yenileme/kapatma uyarısı',{skip},as
   await page.evaluate(()=>{});
  }finally{await browser.close();s.close();}
 });
+
+test('öğrenci /pilot: soru haritası, ilerleme çubuğu ve zaman halkası',{skip},async()=>{
+ const {s,port}=await server(0);const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();await enter(page,port);
+  assert.equal(await page.locator('#question-map-card').isVisible(),true);
+  assert.equal(await page.locator('#question-map button').count(),2);
+  assert.equal(await page.getAttribute('#question-map button:nth-child(1)','aria-label'),'Soru 1, boş, şu an açık');
+  assert.equal(await page.getAttribute('#question-map button:nth-child(1)','aria-current'),'true');
+  await page.focus('#student-questions h2');await page.keyboard.press('Alt+Shift+2');
+  assert.equal(await page.getAttribute('#question-map button:nth-child(1)','aria-label'),'Soru 1, cevaplandı, şu an açık');
+  assert.equal(await page.inputValue('#answer-progress').catch(()=>null),null);
+  assert.equal(await page.evaluate(()=>document.getElementById('answer-progress').value),1);
+  assert.match(await page.textContent('#map-summary'),/1 soru cevaplandı, 1 soru boş/);
+  await page.click('#question-map button:nth-child(2)');
+  assert.match(await page.textContent('#question-progress'),/Soru 2 \/ 2/);
+  assert.equal(await page.evaluate(()=>document.activeElement.tagName),'H2','odak soru başlığına taşınır');
+  assert.notEqual(await page.evaluate(()=>document.getElementById('ring-fg').style.strokeDashoffset),'');
+ }finally{await browser.close();s.close();}
+});

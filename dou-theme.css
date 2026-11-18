@@ -92,3 +92,13 @@ html:root:root body .issue b{color:var(--dou-muted)!important}
 html:root:root body .portal-footer{background:transparent!important}
 /* WCAG 2.2 hedef boyutu: onay kutuları ve seçim düğmeleri en az 24 px. */
 html body input[type=checkbox],html body input[type=radio]{min-width:24px;min-height:24px;width:24px;height:24px}
+
+/* Öğrenci: soru haritası, ilerleme çubuğu, zaman halkası */
+html body.dou-student .qmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px}
+html body.dou-student .chip{min-height:56px;font-weight:700;background:#fff;color:var(--dou-ink);border:2px solid #D0D5DD;border-radius:14px;box-shadow:none}
+html body.dou-student .chip.chip-done{background:var(--dou-ok-bg);border-color:var(--dou-ok);color:var(--dou-ok)}
+html body.dou-student .chip.chip-current{border:3px solid var(--dou-red)}
+html body.dou-student progress{width:100%;height:14px;accent-color:var(--dou-red)}
+html body.dou-student .ring{flex:0 0 56px}
+html body.dou-student .ring-bg{fill:none;stroke:#D0D5DD;stroke-width:7}
+html body.dou-student .ring-fg{fill:none;stroke:var(--dou-red);stroke-width:7;stroke-linecap:round}
