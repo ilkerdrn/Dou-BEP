@@ -29,6 +29,7 @@ function updateQuestionNavigation(focus=false){
  $('previous-question').disabled=!single||activeQuestionIndex===0;
  $('next-question').disabled=!single||activeQuestionIndex>=cards.length-1;
  douReader?.syncQuestion();
+ {const bar=$('progress-bar');if(bar)bar.style.width=(single&&cards.length?(activeQuestionIndex+1)/cards.length*100:100)+'%';}
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length}`:`${cards.length} soru birlikte gösteriliyor`;
  if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();}
 }

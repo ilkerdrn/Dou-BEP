@@ -37,7 +37,7 @@ $('coord-form').addEventListener('submit',async e=>{e.preventDefault();const for
 });
 $('coord-rows').addEventListener('click',async e=>{const btn=e.target.closest('button');if(!btn)return;
  const id=btn.dataset.edit||btn.dataset.delete,item=state.items.find(x=>x.id===id);if(!item)return;
- if(btn.dataset.delete){if(!confirm(`${item.courseCode}/${item.examLabel} oturumu silinsin mi?`))return;
+ if(btn.dataset.delete){if(!await douConfirm(`${item.courseCode}/${item.examLabel} oturumu silinecek.`,{title:'Oturum silinsin mi?',confirmLabel:'Oturumu sil',danger:true}))return;
   try{await api('/coordination/sessions/'+id,'DELETE',{version:item.version});if(state.edit?.id===id)reset();await refresh();notice('Oturum silindi.');}catch(err){notice(err.message,true);}return;}
  state.edit=item;const form=$('coord-form');for(const key of ['term','department','program','courseCode','courseName','examLabel','startsAt','durationMinutes','instructorCode','roomCode'])form.elements[key].value=item[key];
  form.elements.examId.value=state.approved.some(x=>x.id===item.examId)?item.examId:'';

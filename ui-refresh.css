@@ -7,16 +7,16 @@ body{overflow-x:hidden}
 .institution-page{font-family:Inter,"Segoe UI",Arial,sans-serif;background:var(--dou-canvas);color:var(--dou-ink);font-size:14px;line-height:1.52}
 .institution-page .portal-shell{grid-template-columns:268px minmax(0,1fr)}
 .institution-page .portal-side{background:linear-gradient(160deg,#221920 0%,#2a1c27 52%,#1c181e 100%);padding:25px 16px;box-shadow:10px 0 38px rgba(29,13,25,.08);z-index:2;border-right:1px solid #42313e}
-.institution-page .portal-brand{padding:10px 9px 30px;gap:12px}
-.institution-page .portal-brand strong{font-size:19px;font-weight:790;line-height:1.14;letter-spacing:-.04em}
-.institution-page .portal-brand small{color:#e4b5c0;letter-spacing:.14em;font-size:9px}
-.institution-page .portal-mark{background:linear-gradient(140deg,#d72644,#930e2a);width:52px;height:52px;border-radius:16px;box-shadow:0 10px 25px rgba(189,16,49,.3);letter-spacing:-.07em}
-.institution-page .portal-side-label{color:#b2a0ae;letter-spacing:.17em;padding:7px 13px 12px}
+
+
+
+
+
 .institution-page .portal-menu{position:relative;display:flex;align-items:center;min-height:48px;padding:12px 14px;border:1px solid transparent;border-radius:12px;color:#d9d2d9;font-size:12.5px;transition:background-color .16s,border-color .16s,transform .16s}
 .institution-page .portal-menu:hover{background:rgba(255,255,255,.08);color:#fff;transform:translateX(2px)}
 .institution-page .portal-menu.current{color:#fff;border:1px solid rgba(241,130,151,.26);background:linear-gradient(94deg,rgba(189,26,57,.3),rgba(161,28,57,.13));box-shadow:inset 3px 0 #ed647d}
-.institution-page .portal-side-footer{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07);padding:16px;border-radius:14px;color:#cabdc6}
-.institution-page .portal-side-footer b{color:#ffb4c0;letter-spacing:.08em}
+
+
 .institution-page .portal-topbar{min-height:82px;padding:18px clamp(20px,3.1vw,42px);border-color:var(--dou-border);background:rgba(255,255,255,.95)}
 .institution-page .portal-topbar span{color:#a49aa5;letter-spacing:.145em;font-size:9px}
 .institution-page .portal-topbar strong{font-size:17px;color:#261b23;letter-spacing:-.035em;font-weight:780}
@@ -137,9 +137,9 @@ body:not(.institution-page) .institution-link{background:linear-gradient(125deg,
 @media(max-width:1020px){
  .institution-page .portal-shell{grid-template-columns:1fr}
  .institution-page .portal-side{position:relative;height:auto;display:flex;flex-direction:row;gap:5px;flex-wrap:wrap;align-items:center;padding:12px 20px;box-shadow:none}
- .institution-page .portal-brand{padding:2px 16px 2px 0}
- .institution-page .portal-brand strong{font-size:15px}
- .institution-page .portal-side-label,.institution-page .portal-side-footer{display:none}
+ 
+ 
+ 
  .institution-page .portal-menu{min-height:39px;padding:9px 12px}
  .institution-page .portal-content{padding:24px 20px 55px}
 }
@@ -165,7 +165,7 @@ body:not(.institution-page) .institution-link{background:linear-gradient(125deg,
 @media(max-width:520px){
  .institution-page .portal-content{padding:17px 12px 40px}
  .institution-page .portal-side{padding:12px;gap:5px}
- .institution-page .portal-brand{flex-basis:100%;padding:0 0 9px}
+ 
  .institution-page .portal-menu{font-size:11px;min-height:37px;padding:8px 9px}
  .institution-page .portal-hero{padding:24px 19px;border-radius:16px}
  .institution-page .portal-hero h1{font-size:26px}

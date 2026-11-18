@@ -32,7 +32,7 @@
 .check-item input{min-height:23px;height:23px;width:23px;flex-shrink:0;accent-color:#b71930;margin:2px 0}
 .check-item p{margin-left:35px;font-size:14px}
 #pilot-check-count{font-weight:750}
-@media print{header,.controls,#export-checklist{display:none!important}.card{box-shadow:none;border-color:#aaa}}
+@media print{header,.controls{display:none!important}.card{box-shadow:none;border-color:#aaa}}
 
 /* v2.1 accessibility pilot evidence */
 .check-item{padding:14px;border:1px solid #dee4ea;border-radius:12px;margin:10px 0;}
