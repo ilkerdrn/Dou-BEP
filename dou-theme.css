@@ -56,3 +56,39 @@ html body.dou-admin-standalone>header .brand .mark{color:#fff}
 html body.dou-logged-out .dou-nav,html body.dou-logged-out .portal-side{display:none!important}
 html body.dou-logged-out .portal-shell{grid-template-columns:minmax(0,1fr)!important}
 html body.dou-logged-out .portal-hero{display:none}
+/* Erişilebilirlik denetimi (axe-core, WCAG 2.2 AA): açık gri yardımcı metinler 4,5:1 altındaydı. Özgüllük bilerek yüksek tutuldu (eski !important kuralları). */
+html:root:root body .portal-main small,
+html:root:root body main small,
+html:root:root body .dashboard-shortcut small,
+html:root:root body .portal-kpis small,
+html:root:root body .portal-member-row small,
+html:root:root body .portal-template-body small,
+html:root:root body .dashboard-welcome p,
+html:root:root body #actor-meta,
+html:root:root body #exam-tenant,
+html:root:root body .portal-footer,
+html:root:root body header>div>span:not(.mark),
+html:root:root body #workflow-context,
+html:root:root body button[data-workflow-target]:not([aria-current])>span,
+html:root:root body .editor-export-panel>summary>span,
+html:root:root body button[data-library-status],
+html:root:root body .portal-help,
+html:root:root body .portal-help strong,
+html:root:root body [id^=pilot-note-limit],
+html:root:root body #pilot-resume-note,
+html:root:root body .pilot-toolbar-left p,
+html:root:root body #exam-material-status,
+html:root:root body #exam-preview-summary,
+html:root:root body .login-security-notice span,
+html:root:root body .topbar-title>span,
+html:root:root body .intro p,
+html:root:root body .counter,
+html:root:root body .template-empty,
+html:root:root body .library-search>span,
+html:root:root body .mini-disclaimer,
+html:root:root body .stat>span,
+html:root:root body .issue,
+html:root:root body .issue b{color:var(--dou-muted)!important}
+html:root:root body .portal-footer{background:transparent!important}
+/* WCAG 2.2 hedef boyutu: onay kutuları ve seçim düğmeleri en az 24 px. */
+html body input[type=checkbox],html body input[type=radio]{min-width:24px;min-height:24px;width:24px;height:24px}

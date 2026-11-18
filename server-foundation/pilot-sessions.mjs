@@ -12,6 +12,7 @@ const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
 const CODE=/^[0-9A-F]{20}$/;
 const WAIT_MS=45*60*1000;
+const SUBMIT_GRACE_MS=120*1000;
 const KEEP_MS=24*60*60*1000;
 // Privacy-preserving, persistent limiter: global failure budget protects against
 // changing the candidate code on each guess; code-specific budget limits repeats.
@@ -29,6 +30,8 @@ export function pilotSessions(db,{StoreError,log}){
   status TEXT NOT NULL CHECK(status IN ('issued','started','submitted','revoked')),
   answers TEXT,created_at INTEGER NOT NULL,expires_at INTEGER NOT NULL,started_at INTEGER,submitted_at INTEGER
  );CREATE INDEX IF NOT EXISTS idx_pilot_tenant ON pilot_sessions(tenant_id,owner_id,created_at);`);
+ // v2.84: per-session approved extra time (Moodle/Canvas-style user override). Idempotent migration.
+ if(!db.prepare("PRAGMA table_info(pilot_sessions)").all().some(c=>c.name==='extra_minutes'))db.exec('ALTER TABLE pilot_sessions ADD COLUMN extra_minutes INTEGER NOT NULL DEFAULT 0');
  db.exec(`CREATE TABLE IF NOT EXISTS pilot_reviews(
   session_id TEXT PRIMARY KEY REFERENCES pilot_sessions(id) ON DELETE CASCADE,
   tenant_id TEXT NOT NULL REFERENCES tenants(id),
@@ -82,7 +85,8 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function state(row){if(row.status==='revoked')return 'revoked';if(row.expires_at<=now()&&row.status!=='submitted')return 'expired';return row.status;}
  function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.answers?JSON.parse(row.answers):null}:{})};}
- function issue(actor,examId){permit(actor);cleanup();if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
+ function issue(actor,examId,{extraMinutes=0}={}){permit(actor);cleanup();
+  if(!Number.isInteger(extraMinutes)||extraMinutes<0||extraMinutes>120)error('bad_extra_time','Ek süre 0–120 dakika arasında tam sayı olmalıdır.',422);if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
   if(!exam)error('not_found','Sınav bulunamadı.',404);
   if(!elevated(actor)&&exam.owner_id!==actor.id)error('forbidden','Sınav sahibi olmanız gerekiyor.',403);
@@ -98,6 +102,7 @@ export function pilotSessions(db,{StoreError,log}){
   const stamp=now(),id=randomUUID();
   db.prepare(`INSERT INTO pilot_sessions(id,tenant_id,exam_id,owner_id,revision,code_hash,status,created_at,expires_at)
   VALUES(?,?,?,?,?,?,'issued',?,?)`).run(id,actor.tenantId,examId,actor.id,exam.revision,sha(raw),stamp,stamp+WAIT_MS);
+  db.prepare('UPDATE pilot_sessions SET extra_minutes=? WHERE id=?').run(extraMinutes,id);
   log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code};
  }
  function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
@@ -119,12 +124,14 @@ export function pilotSessions(db,{StoreError,log}){
    const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
    if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti. Öğretmenden yeni kod alın.',409);
    approvedExam(exam);
-   let payload;try{payload=createStudentPayload(JSON.parse(exam.body));}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
+   let payload;try{payload=createStudentPayload(JSON.parse(exam.body),{extraMinutes:row.extra_minutes||0});}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
    const token=randomBytes(32).toString('base64url');
-   const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),now(),row.id,now());
+   // The exam clock starts at redemption; the server, not the browser, owns the deadline (+ small network grace).
+   const startedAt=now(),totalMs=(payload.durationMinutes+payload.extraMinutes)*60000,deadline=startedAt+totalMs+SUBMIT_GRACE_MS;
+   const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=?,expires_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),startedAt,deadline,row.id,now());
    if(!changed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
-   return {token,expiresAt:row.expires_at,exam:payload};
+   return {token,expiresAt:deadline,remainingSeconds:Math.floor(totalMs/1000),exam:payload};
   }catch(err){
    if(err?.code==='invalid_code'){
     recordFailure(key,time,REDEEM_CODE_LIMIT,15*60*1000,REDEEM_LOCK_MS);

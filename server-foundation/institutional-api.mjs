@@ -89,7 +89,7 @@ export function createApiHandler(store,{port=4173}={}){
    }
    if(path==='/api/pilot'&&req.method==='GET'){response(res,200,{items:store.pilotList(actor)});return true;}
    if(path==='/api/pilot'&&req.method==='POST'){
-    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId)});return true;
+    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId,{extraMinutes:body.extraMinutes===undefined?0:body.extraMinutes})});return true;
    }
    const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv))?$/);
    if(pilotId){
