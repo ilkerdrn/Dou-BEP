@@ -46,3 +46,6 @@ Her kalan için: ekran görüntüsü/ekran okuyucu konuşma kaydı, tarayıcı+N
 
 ## H. DOU Speech (ayrı, insan dinlemesi gerekir)
 Kısa Türkçe cümle, sayı, tarih, matematik ifadesi ("5 + 3 = 8", "3/4") ve soru metinleriyle en az 5 dinleyici anlaşılırlık puanı verir; kadın/erkek ses seçeneği şu an yok, kayıt altına alın.
+
+## Sonuç kaydı
+Bulguları `TEST-SONUC-FORMU.csv` biçiminde tutun (test eden için yalnızca anonim kod; ad, tanı yazmayın).
