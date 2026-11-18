@@ -9,14 +9,16 @@ export const NEURAL_SAMPLE_RATE=48000;
 export const NEURAL_MAX_CHARACTERS=1200;
 
 /** Math wording the model's own frontend does not cover (it already reads digits, "+", "=", "%"). Conservative: only between numbers. */
+import {turkishSpeechText} from './dou-speech-pronunciation.mjs';
 export function neuralSpeechText(text){
- return String(text??'')
+ let base=String(text??'');try{base=turkishSpeechText(base);}catch{/* too long: leave as is; the engine rejects it anyway */}
+ return base
   .replace(/(\d)\s*[×]\s*(\d)/g,'$1 çarpı $2')
   .replace(/(\d)\s+[xX]\s+(\d)/g,'$1 çarpı $2')
   .replace(/(\d)\s+[-−–]\s+(\d)/g,'$1 eksi $2')
   .replace(/(\d)\s*÷\s*(\d)/g,'$1 bölü $2')
   .replace(/(?<![\d/])(\d+)\s*\/\s*(\d+)(?![\d/])/g,'$1 bölü $2')
-  .replace(/²/g,' kare').replace(/³/g,' küp');
+  .replace(/\s{2,}/g,' ').trim();
 }
 export function neuralSupported(win){
  return !!win&&typeof win.Worker==='function'&&typeof win.WebAssembly==='object'&&!!(win.AudioContext||win.webkitAudioContext);

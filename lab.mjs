@@ -125,5 +125,6 @@ if(typeof document!=='undefined'&&$('plan-issue')){
  $('plan-csv-download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([csvText()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='salon-giris-kodlari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);});
  $('live-refresh').addEventListener('click',()=>refreshLive().then(()=>msg('Güncellendi.')).catch(e=>msg(e.message,true)));
  $('live-auto').addEventListener('change',setAuto);
+ $('results-download').addEventListener('click',async()=>{try{const r=await fetch('/api/pilot/results.csv',{credentials:'same-origin'});if(!r.ok)throw Error('Sonuç tablosu alınamadı.');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='salon-sonuclari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);msg('Sonuç tablosu indirildi. Nesnel puanlar cevap anahtarından ÖNERİdir; yazılı yanıtları siz puanlayın.');}catch(e){msg(e.message,true);}});
  init();
 }

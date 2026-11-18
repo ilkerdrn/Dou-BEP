@@ -139,6 +139,14 @@ test('mola ve süre: aday başına farklı hak; teslim sonrası taslak silinir v
  for(const {it} of S)assert.equal((await api('/api/pilot/redeem',{method:'POST',body:{code:it.code}})).status,401,'teslim sonrası kod ölü');// 50 yanlış giriş: salon sınırı (200/dk) herkesi kilitlemez
  const left=store.db.prepare("SELECT COUNT(*) n FROM pilot_sessions WHERE draft_answers IS NOT NULL").get().n;assert.equal(left,0,'teslim sonrası taslak kalmaz');
  const live=(await(await api('/api/pilot/live',{sess})).json()).items;assert.equal(live.filter(x=>x.status==='submitted').length,50);
+ // Salon sonuç tablosu (CSV): 50 satır, aday kodu/koltuk/sınav, nesnel puan ÖNERİSİ, yazılı yanıt sayısı
+ const cr=await api('/api/pilot/results.csv',{sess});assert.equal(cr.status,200);assert.match(cr.headers.get('content-type'),/text\/csv/);assert.match(cr.headers.get('content-disposition'),/salon-sonuclari\.csv/);
+ const lines=(await cr.text()).replace(/^\ufeff/,'').trim().split('\r\n');const cells=l=>[...l.matchAll(/"((?:[^"]|"")*)"/g)].map(m=>m[1].replaceAll('""','"'));
+ assert.equal(lines.length-1,50);const head=cells(lines[0]);assert.deepEqual([head[0],head[1],head[3],head[4]],['Koltuk','Aday kodu','Sınav','Durum']);
+ const byCand=Object.fromEntries(lines.slice(1).map(l=>{const c=cells(l);return [c[1],c];}));
+ const k1=byCand['KOD-001'];assert.equal(k1[0],'PC-01');assert.equal(k1[4],'submitted');assert.equal(k1[10],'2');assert.equal(k1[11],'20','iki nesnel soru doğru: öneri 20');assert.equal(k1[12],'20');assert.equal(k1[13],'0');
+ const k3=byCand['KOD-003'];assert.match(k3[3],/ISL205/);assert.equal(k3[13],'1','yazılı yanıt sayısı');assert.equal(k3[14],'0','öğretmen henüz puanlamadı');assert.equal(k3[16],'hayır');
+ assert.ok(lines.every(l=>!/^=|"[=+@]/.test(l)),'formül enjeksiyonu yok');
  // Öğretmen incelemesi: her sınav kendi soruları ve kendi puan önerileriyle
  const first=live.find(x=>x.examTitle===COURSES[2].title);const rv=(await(await api(`/api/pilot/${first.id}/review`,{sess})).json()).review;
  assert.equal(rv.totalQuestions,3);assert.equal(rv.questions[0].suggestedScore,10);assert.equal(rv.questions[2].suggestedScore,null);

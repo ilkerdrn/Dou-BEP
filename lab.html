@@ -35,6 +35,7 @@
 <section id="login" class="card" hidden><h2>Giriş gerekli</h2><p><a href="/kurum">Kurum giriş sayfasına gidin</a>.</p></section>
 <section id="workspace" hidden>
 <p id="lan-note" class="notice" role="status"></p>
+<p class="muted">Sınavdan önce her öğrenci bilgisayarında tarayıcıda öğrenci adresinin sonuna <code>/hazirlik</code> ekleyip <strong>hazırlık kontrolünü</strong> çalıştırtın (sunucu bağlantısı, Türkçe ses, çevrimdışı ses modeli, ses denemesi, kısayol tuşları, ekran). Görme engelli adayların bilgisayarlarında bu adım özellikle önemlidir.</p>
 <section class="card" id="plan-card" aria-labelledby="plan-title"><div class="eyebrow">1 · PLAN</div><h2 id="plan-title">Toplu kod üret</h2>
 <p class="muted">Yalnızca onaylı sınavlar kullanılabilir. Sınav numarası aşağıdaki listeden alınır. Uyarlama kodları: <code id="code-help"></code></p>
 <ol id="plan-exams" aria-label="Onaylı sınavlar"></ol>
@@ -47,7 +48,7 @@
 <div class="lab-table-wrap"><table class="lab-table"><caption class="sr-only">Üretilen giriş kodları</caption><thead><tr><th scope="col">Koltuk</th><th scope="col">Aday kodu</th><th scope="col">Sınav</th><th scope="col">Süre</th><th scope="col">Giriş kodu</th><th scope="col">Görevli gerektiren</th></tr></thead><tbody id="plan-rows"></tbody></table></div></div></section>
 <section class="card" id="live-card" aria-labelledby="live-title"><div class="eyebrow">2 · CANLI İZLEME</div><h2 id="live-title">Salon durumu</h2>
 <p id="live-summary" role="status" aria-live="off"></p>
-<div class="inline"><button id="live-refresh" type="button" class="ghost">Şimdi yenile</button><label><input id="live-auto" type="checkbox" checked> Her 10 saniyede otomatik yenile</label></div>
+<div class="inline"><button id="live-refresh" type="button" class="ghost">Şimdi yenile</button><label><input id="live-auto" type="checkbox" checked> Her 10 saniyede otomatik yenile</label><button id="results-download" type="button" class="ghost">Sonuç tablosunu indir (CSV)</button></div>
 <div class="lab-table-wrap"><table class="lab-table"><caption class="sr-only">Aday durumları</caption><thead><tr><th scope="col">Koltuk</th><th scope="col">Aday</th><th scope="col">Sınav</th><th scope="col">Durum</th><th scope="col">Kalan süre</th><th scope="col">Notlar</th></tr></thead><tbody id="live-rows"></tbody></table></div></section>
 </section>
 <div class="notice" id="message" role="status" aria-live="polite"></div>

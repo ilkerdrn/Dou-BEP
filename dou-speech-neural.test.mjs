@@ -62,3 +62,7 @@ test('bundled model files match the published SHA-256 list and carry license/att
  const notice=readFileSync(new URL('LICENSE-NOTICE.txt',base),'utf8');
  assert.match(notice,/CC BY 4\.0/);assert.match(notice,/Apache/);assert.match(notice,/taklit/);
 });
+test('v2.95: sinir ağı metni, işletim sistemi sesiyle aynı matematik okumasını paylaşır',()=>{
+ assert.equal(neuralSpeechText('√16 = 4, ½ + ¼, 30°C, x^4, 5 > 3, 3/4, 10 - 4'),'karekök 16 = 4, bir bölü iki + bir bölü dört, 30 santigrat derece, x üssü 4, 5 büyüktür 3, 3 bölü 4, 10 eksi 4');
+ assert.equal(neuralSpeechText('<b>x</b> ve 29/10/2026 ve Ali-Veli'),'<b>x</b> ve 29/10/2026 ve Ali-Veli');
+});

@@ -26,6 +26,7 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
   if(!validHost.has(req.headers.host)){response(res,403,{error:'host_rejected'});return true;}
   if(req.headers.origin&&!validOrigins.has(req.headers.origin)){response(res,403,{error:'origin_rejected'});return true;}
   try{
+   if(path==='/api/ping'&&req.method==='GET'){response(res,200,{ok:true,at:Date.now()});return true;}
    if(path==='/api/lan-info'&&req.method==='GET'){response(res,200,{enabled:lan.enabled,urls:learnerUrls(port,lan)});return true;}
    if(path==='/api/health'&&req.method==='GET'){response(res,200,{ok:true,scope:'local-only',version:VERSION});return true;}
    // Student endpoints never use teacher cookies; the redeemed capability is memory-only.
@@ -100,6 +101,7 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   if(path==='/api/pilot/results.csv'&&req.method==='GET'){const csv=store.pilotResultsCsv(actor);res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="salon-sonuclari.csv"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(csv);return true;}
    if(path==='/api/pilot/live'&&req.method==='GET'){response(res,200,store.pilotLive(actor));return true;}
    if(path==='/api/pilot/batch'&&req.method==='POST'){
     const body=await readJson(req,300000);response(res,201,store.pilotIssueBatch(actor,body.rows));return true;

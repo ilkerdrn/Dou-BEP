@@ -22,10 +22,11 @@ test('ağdan yalnızca öğrenci yüzeyi: yönetim sayfaları, giriş ve diğer 
  const lan={enabled:true,hosts:['x'],ips:['10.0.0.2'],bind:'0.0.0.0'},learner=learnerAssets(root);
  const remote={socket:{remoteAddress:'::ffff:10.0.0.7'},method:'GET'},local={socket:{remoteAddress:'::ffff:127.0.0.1'},method:'GET'};
  const blocked=(req,path)=>lanBlocked({req,path,lan,learner});
- for(const ok of ['/pilot','/pilot.mjs','/pilot.css','/dou-reader-panel.mjs','/dou-reader-core.mjs','/dou-speech.mjs','/dou-speech-neural.mjs','/dou-theme.css','/okur/models.json','/okur/models/text.6a21984ac693.onnx'])assert.equal(blocked(remote,ok),false,ok);
+ for(const ok of ['/hazirlik','/hazirlik.mjs','/pilot','/pilot.mjs','/pilot.css','/dou-reader-panel.mjs','/dou-reader-core.mjs','/dou-speech.mjs','/dou-speech-neural.mjs','/dou-theme.css','/okur/models.json','/okur/models/text.6a21984ac693.onnx'])assert.equal(blocked(remote,ok),false,ok);
  for(const bad of ['/kurum','/kurumsal-sinav','/salon-oturumu','/pilot-yonetim','/lab.mjs','/institution.mjs','/server.mjs','/data/institution.sqlite','/api/login','/api/session','/api/pilot','/api/pilot/live','/api/pilot/batch','/api/lan-info','/api/exams','/terminology.json'])assert.equal(blocked(remote,bad),true,bad);
  for(const api of LEARNER_API)assert.equal(blocked({...remote,method:'POST'},api),false,api);
  assert.equal(blocked({...remote,method:'GET'},'/api/pilot/submit'),true,'öğrenci API\'leri yalnız POST');
+ assert.equal(blocked({...remote,method:'GET'},'/api/ping'),false,'bağlantı denemesi GET');assert.equal(blocked({...remote,method:'POST'},'/api/ping'),true);
  assert.equal(blocked({...remote,method:'POST'},'/api/login'),true);
  for(const p of ['/kurum','/api/login','/api/pilot/live','/salon-oturumu'])assert.equal(blocked({...local,method:'POST'},p),false,'loopback: '+p);
  assert.equal(isLoopback('::1'),true);assert.equal(isLoopback('::ffff:127.0.0.1'),true);assert.equal(isLoopback('192.168.1.5'),false);assert.equal(isLoopback('::ffff:192.168.1.5'),false);

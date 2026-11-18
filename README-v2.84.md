@@ -58,3 +58,9 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 
 ## v2.94: Görme engelli aday akışı
 `AUTO_READ` uyarlama kodu: sınav açılınca kısa yönerge + ilk soru, her soru geçişinde o sorunun metni kendiliğinden okunur (yerel Türkçe ses, yoksa çevrimdışı sinir ağı sesi; model oturum açılırken önceden yüklenir). Okunan metin düzeltildi ("..", yazılı yanıt ve eşleştirme yönergeleri). Salon sayfasında "Kodu sesli oku" (yalnız yerel Türkçe ses). Giriş alanı otomatik odaklı. Testler: `pilot-auto-read.e2e.test.mjs`, `salon-50.e2e.test.mjs` (844).
+
+## v2.95: Hazırlık kontrolü, matematik okuması, sonuç tablosu
+- **`/hazirlik`** (öğrenci yüzeyinde, oturumsuz): sunucu bağlantısı/gecikme (`GET /api/ping`), tarayıcı özellikleri, yerel Türkçe ses, çevrimdışı model önbelleğe alma, ses denemesi, Alt+Shift+T kısayol algılama, ekran boyutu; genel "hazır/eksik" özeti.
+- **Matematik okuması:** kesirler (½ ¾), derece (°, °C), orta nokta, alt/üst simge, `x^n`, `<` `>` ve sayılar arası eksi, hem işletim sistemi sesi hem sinir ağı sesi için ortak ve temkinli kurallarla okunur; belirsiz örüntüler (tarih, `Ali-Veli`, `<b>`) değişmez.
+- **Salon sonuç tablosu:** `GET /api/pilot/results.csv` (öğretmen) ve salon sayfasında indirme düğmesi: aday başına durum, süre, devam/mola, nesnel puan önerisi, yazılı yanıt sayısı, öğretmen puanı.
+- Testler: `hazirlik.e2e.test.mjs`, genişletilmiş `salon-50.e2e.test.mjs`, ses metni testleri (848).

@@ -36,7 +36,7 @@ try{
   for(const v of r.violations){failures++;console.log(`   - ${v.impact} ${v.id} ×${v.nodes.length}: ${v.help} | ${v.nodes[0].target.join(' ')}`);}};
  // Public screens (axe injected with CSP bypass only inside this audit context).
  const anon=await (await browser.newContext({viewport:{width:1280,height:900},bypassCSP:true})).newPage();
- for(const [n,u] of [['Kurum girişi','/kurum'],['Öğrenci giriş','/pilot'],['DOU Reader demo','/dou-reader-demo'],['Atölye','/']]){await anon.goto(base+u);await scan(anon,n);}
+ for(const [n,u] of [['Kurum girişi','/kurum'],['Öğrenci giriş','/pilot'],['Hazırlık kontrolü','/hazirlik'],['DOU Reader demo','/dou-reader-demo'],['Atölye','/']]){await anon.goto(base+u);await scan(anon,n);}
  const ctx=await browser.newContext({viewport:{width:1280,height:900},bypassCSP:true});
  await ctx.addCookies([{name:'bep_session',value:/bep_session=([^;]+)/.exec(h.Cookie)[1],url:base}]);
  const panel=await ctx.newPage();

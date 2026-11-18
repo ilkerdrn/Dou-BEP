@@ -18,11 +18,12 @@ export function lanConfig(env=process.env){
 }
 export const hostSet=(port,lan)=>{const s=new Set([`127.0.0.1:${port}`,`localhost:${port}`,'127.0.0.1','localhost']);if(lan?.enabled)for(const h of lan.hosts){s.add(`${h}:${port}`);s.add(h);}return s;};
 export const originSet=(port,lan)=>new Set([...hostSet(port,lan)].filter(h=>h.includes(':')).map(h=>`http://${h}`));
+export const LEARNER_GET_API=new Set(['/api/ping']);
 export const LEARNER_API=new Set(['/api/pilot/redeem','/api/pilot/draft','/api/pilot/submit','/api/pilot/break/start','/api/pilot/break/end']);
 /** Static files the learner page needs: /pilot plus the transitive static imports of pilot.mjs, parsed from source. */
 export function learnerAssets(root){
- const set=new Set(['/pilot','/pilot.mjs','/pilot.css','/pilot-refresh.css','/dou-reader.css','/dou-theme.css']);
- const queue=['pilot.mjs'],seen=new Set();
+ const set=new Set(['/hazirlik','/hazirlik.mjs','/pilot','/pilot.mjs','/pilot.css','/pilot-refresh.css','/dou-reader.css','/dou-theme.css']);
+ const queue=['pilot.mjs','hazirlik.mjs'],seen=new Set();
  while(queue.length){const f=queue.pop();if(seen.has(f))continue;seen.add(f);const p=join(root,f);if(!existsSync(p))continue;
   const src=readFileSync(p,'utf8');
   for(const m of src.matchAll(/(?:import|export)\s+(?:[^'"\n;]*?\s+from\s+)?['"]\.\/([^'"]+\.mjs)['"]/g)){set.add('/'+m[1]);queue.push(m[1]);}}
@@ -30,7 +31,7 @@ export function learnerAssets(root){
 }
 export function lanBlocked({req,path,lan,learner}){
  if(!lan.enabled||isLoopback(req.socket?.remoteAddress))return false;
- if(path.startsWith('/api/'))return !(req.method==='POST'&&LEARNER_API.has(path));
+ if(path.startsWith('/api/'))return !((req.method==='POST'&&LEARNER_API.has(path))||(req.method==='GET'&&LEARNER_GET_API.has(path)));
  return !(learner.has(path)||path.startsWith('/okur/'));
 }
 export const learnerUrls=(port,lan)=>lan.enabled?(lan.ips.length?lan.ips:lan.hosts).map(h=>`http://${h}:${port}/pilot`):[];

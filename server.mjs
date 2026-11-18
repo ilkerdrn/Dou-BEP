@@ -70,6 +70,8 @@ const allowed={
  '/dou-reader-demo.mjs':['dou-reader-demo.mjs','text/javascript; charset=utf-8'],
  '/pilot-yonetim':['pilot-admin.html','text/html; charset=utf-8'],
  '/salon-oturumu':['lab.html','text/html; charset=utf-8'],
+ '/hazirlik':['hazirlik.html','text/html; charset=utf-8'],
+ '/hazirlik.mjs':['hazirlik.mjs','text/javascript; charset=utf-8'],
  '/lab.mjs':['lab.mjs','text/javascript; charset=utf-8'],
  '/sinav-dosya-aktar':['exam-source-import.html','text/html; charset=utf-8'],
  '/exam-source-import.mjs':['exam-source-import.mjs','text/javascript; charset=utf-8'],
@@ -183,7 +185,7 @@ function hasPanelSession(req){
  try{const actor=store.actorFrom(found.slice('bep_session='.length));return !!actor&&actor.mfaSetupRequired!==true;}catch{return false;}
 }
 // WebAssembly compile (no JS eval) is allowed ONLY for pages and the worker that run the offline neural voice.
-const wasmPaths=new Set(['/pilot','/dou-reader-demo','/okur/okur-worker.js']);
+const wasmPaths=new Set(['/pilot','/hazirlik','/dou-reader-demo','/okur/okur-worker.js']);
 const wasmCsp=csp=>csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'");
 const securityHeaders={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};

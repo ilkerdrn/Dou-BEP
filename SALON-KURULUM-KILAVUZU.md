@@ -16,6 +16,9 @@ Amaç: Bir bilgisayar salonunda, engel durumları ve dersleri farklı birden ço
 1. Soruları Word/PDF/TXT veya **Excel şablonu** (`ORNEK-SORU-SABLONU.xlsx`) ile `/sinav-dosya-aktar` sayfasından yükleyin; her soruyu kaynakla karşılaştırıp onaylayın, eksik görsel betimlemeleri girin.
 2. Kurum onayını verin. Her ders ayrı sınavdır (kendi süresi ve soruları).
 
+## 2b. Bilgisayar hazırlığı (sınavdan önce, her öğrenci bilgisayarında)
+Tarayıcıda `http://<sunucu-ip>:4173/hazirlik` adresini açıp **"Hepsini sırayla dene"** deyin. Sayfa: sunucu bağlantısı ve gecikme, tarayıcı özellikleri, yerel Türkçe ses (yoksa çevrimdışı ses modelini önbelleğe indirir), ses denemesi ("duydum/duymadım"), Alt+Shift+T kısayolunun yakalanıp yakalanmadığı (ekran okuyucu çakışması) ve ekran boyutunu denetler; sonunda "Bu bilgisayar sınava hazır" ya da eksikleri yazar. Ad, kod veya yanıt istemez. Görme engelli adayların bilgisayarlarında mutlaka yapın.
+
 ## 3. Salon planı (görevli, sınavdan önce)
 `/salon-oturumu` sayfasında tek tablo yazın (noktalı virgülle):
 ```
@@ -33,7 +36,8 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 2. Yanıtlar her 10 saniyede sunucuya otomatik kaydedilir. Tarayıcı çökerse veya sayfa yenilenirse aynı kodla **en çok 5 kez** devam edilir; süre durmaz, mola açıksa biter. Devam sayısı canlı tabloda görünür.
 3. Süre bitince yanıtlar otomatik teslim edilir. Yazılı yanıt 4000 karakter/soru.
 4. Görevli `/salon-oturumu` canlı tablosunda herkesin durumunu (girmedi/sınavda/teslim, kalan süre, molada, devam sayısı, son kayıt, görevli notları) görür; tablo her 10 saniyede yenilenir.
-5. Teslimden sonra öğretim elemanı `/pilot-yonetim` sayfasında yanıtları inceler (nesnel sorular için puan **önerisi** vardır; yazılı yanıtlar elle puanlanır).
+5. Salon sayfasındaki **"Sonuç tablosunu indir (CSV)"** her aday için durum, teslim zamanı, harcanan süre, devam/mola sayısı, nesnel sorular için **cevap anahtarından puan önerisi** ve yazılı yanıt sayısını verir (anonim kodlarla; öneri kesin puan değildir).
+6. Teslimden sonra öğretim elemanı `/pilot-yonetim` sayfasında yanıtları inceler (nesnel sorular için puan **önerisi** vardır; yazılı yanıtlar elle puanlanır).
 
 ## 5. Ölçümler (otomatik, bu geliştirme ortamında)
 - `salon-50.e2e.test.mjs`: 50 aday, 4 farklı ders, süre 20/30/45/60 dk, 5 farklı uyarlama profili, eşzamanlı giriş, 40 taslak kaydı, 10 çökme sonrası devam, devam sınırı, mola, teslim ve canlı izleme; gerçek tarayıcıda üç farklı profil ve çökme sonrası yazılı yanıtın geri gelmesi.

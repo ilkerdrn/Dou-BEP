@@ -55,3 +55,17 @@ test('DOU Reader: Windows Türkçe sesi yokken sinir ağı sesi seçilir ve okur
   await page.click('#reader-stop');assert.match(await page.textContent('#reader-status'),/durduruldu/);
  }finally{await browser.close();}
 });
+test('gerçek metin ön işleyicisi: dönüştürülmüş matematik Türkçe sözcüklere çevrilir (harf/sembol okunmaz)',{skip:chromium?false:'playwright yok',timeout:90000},async()=>{
+ const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();await page.goto(base+'/dou-reader-demo');
+  const out=await page.evaluate(async list=>{const {neuralSpeechText}=await import('/dou-speech-neural.mjs');const w=new Worker('/okur/okur-worker.js',{type:'module'});
+   const ask=t=>new Promise(res=>{const id=Math.random();const h=e=>{if(e.data.type==='letters'&&e.data.id===id){w.removeEventListener('message',h);res(e.data.letters);}};w.addEventListener('message',h);w.postMessage({type:'letters',id,text:neuralSpeechText(t)});});
+   const o={};for(const t of list)o[t]=await ask(t);w.terminate();return o;},['x^2 + 3x = 10','√16 = 4','½ + ¼','3 ≤ x ≤ 7','30° açı','10 - 4 = 6','5 > 3','3 + 4 · 2','x ≠ 0','a² + b² = c²','3/4']);
+  assert.equal(out['x^2 + 3x = 10'],'x kare artı üç x eşittir on');assert.equal(out['√16 = 4'],'karekök on altı eşittir dört');
+  assert.equal(out['½ + ¼'],'bir bölü iki artı bir bölü dört');assert.match(out['3 ≤ x ≤ 7'],/^üç küçük veya eşit x küçük veya eşit yedi$/);
+  assert.equal(out['30° açı'],'otuz derece açı');assert.equal(out['10 - 4 = 6'],'on eksi dört eşittir altı');assert.equal(out['5 > 3'],'beş büyüktür üç');
+  assert.equal(out['3 + 4 · 2'],'üç artı dört çarpı iki');assert.equal(out['x ≠ 0'],'x eşit değil sıfır');assert.equal(out['a² + b² = c²'],'a kare artı b kare eşittir c kare');assert.equal(out['3/4'],'üç bölü dört');
+  for(const v of Object.values(out))assert.doesNotMatch(v,/işareti|unikod|şapka/,'sembol adı okunmaz: '+v);
+ }finally{await browser.close();}
+});

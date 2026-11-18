@@ -366,6 +366,20 @@ export function pilotSessions(db,{StoreError,log}){
   const rows=info.questions.map(q=>[id.slice(0,8),q.number,q.objective,q.score??'',q.maxPoints,q.note]);
   return '\ufeff'+[header,...rows].map(row=>row.map(csv).join(';')).join('\r\n')+'\r\n';
  }
+ /** Lab-wide result table (anonymous codes only). Objective points are SUGGESTIONS from the answer key; teacher scores are separate. */
+ function resultsCsv(actor){permit(actor);cleanup();
+  const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 500`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
+  const csv=v=>{let text=String(v??'');if(/^[=+@\-\t\r]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';};
+  const stamp=t=>t?new Date(t).toISOString().replace('T',' ').slice(0,19):'';
+  const header=['Koltuk','Aday kodu','Oturum referansı','Sınav','Durum','Başlangıç (UTC)','Teslim (UTC)','Harcanan süre (dk)','Devam sayısı','Mola sayısı','Nesnel soru sayısı','Nesnel puan önerisi','Nesnel azami puan','Yazılı yanıt sayısı','Öğretmen puanı (değerlendirilen)','Değerlendirilen azami puan','Değerlendirme tamam'];
+  const out=rows.map(r=>{
+   let obj=null,written=null,review=null;
+   if(r.status==='submitted'){try{review=reviewState(reviewContext(actor,r.id));
+     const o=review.questions.filter(q=>q.type!=='short');obj={n:o.length,sug:o.reduce((a,q)=>a+(q.suggestedScore??0),0),max:o.reduce((a,q)=>a+q.maxPoints,0)};written=review.questions.filter(q=>q.type==='short'&&q.response).length;}catch{review=null;}}
+   const used=r.submitted_at&&r.started_at?Math.max(0,Math.round((r.submitted_at-r.started_at-(r.break_used_ms||0))/60000)):'';
+   return [r.seat||'',r.candidate_code||'',r.id.slice(0,8).toUpperCase(),r.exam_title||'',state(r),stamp(r.started_at),stamp(r.submitted_at),used,r.resume_count||0,r.break_count||0,obj?obj.n:'',obj?obj.sug:'',obj?obj.max:'',written??'',review?review.assessedPoints:'',review?review.assessedMaximum:'',review?(review.complete?'evet':'hayır'):''];});
+  return '\ufeff'+[header,...out].map(row=>row.map(csv).join(';')).join('\r\n')+'\r\n';
+ }
  function pilotObjectiveCohort(actor,examId){
   permit(actor);
   if(!roleCan(actor?.role,'assessment.record'))error('forbidden','Değerlendirme izni gerekli.',403);
@@ -388,6 +402,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotIssueBatch:issueBatch,pilotLive:live,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotIssueBatch:issueBatch,pilotLive:live,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
