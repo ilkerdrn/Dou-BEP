@@ -58,6 +58,7 @@
     "speech:pocket:dual:test": "node --test tools/v4-pocket-dual-voice.test.mjs tools/v4-pocket-playback.test.mjs",
     "student:design:test": "node --test tools/v4-student-premium-design.test.mjs",
     "exam:design:test": "node --test tools/v4-institutional-exam-premium.test.mjs",
+    "pilot:admin:design:test": "node --test tools/v4-pilot-admin-workspace-design.test.mjs",
     "reader:nvda:nlp:pocket": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File tools/v4-pocket-nlp-lab.ps1",
     "speech:fixed-phrase:report": "node tools/dou-speech-fixed-phrase-report.mjs",
     "speech:fixed-phrase:test": "node --test tools/dou-speech-fixed-phrase-bench.test.mjs",
