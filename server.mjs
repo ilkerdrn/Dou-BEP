@@ -7,6 +7,7 @@ import {enforceProtectedStorage} from './tools/protected-storage.mjs';
 import {enforcePrivateSqliteFiles} from './tools/storage-migration-preflight.mjs';
 import {verifyAuditEvidence,verifyRotatedAuditEvidence} from './tools/audit-evidence.mjs';
 import {createApiHandler} from './server-foundation/institutional-api.mjs';
+import {lanConfig,hostSet,lanBlocked,learnerAssets,learnerUrls} from './server-foundation/network-policy.mjs';
 const folder=dirname(fileURLToPath(import.meta.url));
 const port=Number(process.env.PORT)||4173;
 const dbPath=process.env.BEP_DB_PATH||join(folder,'data','institution.sqlite');
@@ -25,7 +26,8 @@ if(process.env.BEP_REQUIRE_AUDIT_ROTATION==='1'){
   newKeyFile:process.env.BEP_AUDIT_NEW_KEY_FILE,newEvidenceFile:process.env.BEP_AUDIT_NEW_EVIDENCE_FILE});
 }
 const store=openStore(dbPath);
-const api=createApiHandler(store,{port});
+const lan=lanConfig();const learner=lan.enabled?learnerAssets(folder):new Set();const validHosts=hostSet(port,lan);
+const api=createApiHandler(store,{port,lan});
 const allowed={
  '/catalog-workflow.mjs':['catalog-workflow.mjs','text/javascript; charset=utf-8'],
  '/exam-download-verify.mjs':['exam-download-verify.mjs','text/javascript; charset=utf-8'],
@@ -189,9 +191,10 @@ export function createServer(){return http.createServer(async(req,res)=>{
   res.setHeader('X-DOU-BEP-Local','1');
   let path;
   try{path=new URL(req.url,'http://localhost').pathname;}catch{res.writeHead(400).end('Bad request');return;}
+  if(lanBlocked({req,path,lan,learner})){res.writeHead(403,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}).end('Salon ağından yalnızca öğrenci sınav ekranına erişilebilir. Yönetim sayfaları yalnızca sunucu bilgisayarından açılır.');return;}
   if(await api(req,res,path))return;
   if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405).end();return;}
-  if(![`localhost:${port}`,`127.0.0.1:${port}`,'localhost','127.0.0.1'].includes(req.headers.host)){
+  if(!validHosts.has(req.headers.host)){
    res.writeHead(403).end('Host rejected');return;
   }
   if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
@@ -207,4 +210,4 @@ export function createServer(){return http.createServer(async(req,res)=>{
  });}
 const server=createServer();
 server.on('error',err=>{if(err.code==='EADDRINUSE'){console.error(`[HATA] 127.0.0.1:${port} portu zaten kullaniliyor. Acik DOU uygulamasini kontrol edin.`);process.exitCode=2;}else{console.error('[HATA] Yerel sunucu baslatilamadi:',err.message);process.exitCode=1;}store.db.close();});
-if(process.env.BEP_NO_LISTEN!=='1')server.listen(port,'127.0.0.1',()=>{console.log(`BEP Sınav Atölyesi: http://localhost:${port}`);console.log(`Kurumsal pilot paneli: http://localhost:${port}/kurum`);console.log('Yalnızca bu bilgisayarda erişilir. Ctrl+C ile kapatın.');});
+if(process.env.BEP_NO_LISTEN!=='1')server.listen(port,lan.enabled?lan.bind:'127.0.0.1',()=>{if(lan.enabled){console.log('=== SALON (LAN) MODU AÇIK ===');for(const u of learnerUrls(port,lan))console.log('Öğrenci adresi: '+u);console.log('UYARI: Trafik şifresizdir (HTTP). Yalnızca izole salon ağında kullanın. Yönetim sayfaları yalnızca bu bilgisayardan (http://localhost:'+port+') açılır.');}console.log(`BEP Sınav Atölyesi: http://localhost:${port}`);console.log(`Kurumsal pilot paneli: http://localhost:${port}/kurum`);console.log('Yalnızca bu bilgisayarda erişilir. Ctrl+C ile kapatın.');});

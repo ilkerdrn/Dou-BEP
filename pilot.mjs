@@ -192,7 +192,7 @@ window.addEventListener('keydown',e=>{if(!exam||!e.altKey||!e.shiftKey||e.ctrlKe
  else if(k==='f'){e.preventDefault();toggleFlag();}
  else if(k==='m'){e.preventDefault();if(onBreak)endBreak(false);else startBreak();}
  else if(k==='d'){e.preventDefault();announce('Soru '+(activeQuestionIndex+1)+': '+(answered(exam.questions[activeQuestionIndex])?'cevaplandı':'cevaplanmadı')+'. '+summary());}
- else if(/^[1-9]$/.test(e.key)&&!locked){const q=exam.questions[activeQuestionIndex];const o=q.options?.[Number(e.key)-1];if(o){e.preventDefault();const r=$('student-questions').querySelectorAll('.question')[activeQuestionIndex].querySelector('input[value="'+o.id+'"]');if(r){r.checked=true;updateQuestionNavigation();announce('Seçenek '+o.id+' seçildi.');}}}
+ else if(/^[1-9]$/.test(e.key)&&!locked){const q=exam.questions[activeQuestionIndex];const o=q.options?.[Number(e.key)-1];if(o){e.preventDefault();const r=$('student-questions').querySelectorAll('.question')[activeQuestionIndex].querySelector('input[value="'+o.id+'"]');if(r){r.checked=true;updateQuestionNavigation();scheduleSave();announce('Seçenek '+o.id+' seçildi.');}}}
 });
 
 // Token and answers live only in memory by design; warn before an accidental refresh/close loses them.

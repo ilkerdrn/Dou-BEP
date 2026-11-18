@@ -6,6 +6,7 @@ import {VERSION} from '../core.mjs';
 import {previewBep} from '../bep-plan-import.mjs';
 import {previewSourceExam,previewManualSourceExam,examDraftFromSource} from '../exam-document-import.mjs';
 import {previewQuestionSheet,isQuestionSheetName} from '../question-sheet-import.mjs';
+import {hostSet,originSet,learnerUrls} from './network-policy.mjs';
 const previewAnySource=async data=>isQuestionSheetName(data?.filename)?previewQuestionSheet(data):previewSourceExam(data);
 import {roleCan} from '../roles.mjs';
 import {createExamMp3,audioDependencies} from '../offline-audio.mjs';
@@ -18,14 +19,14 @@ async function readJson(req,maxSize=300000){
  try{const raw=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('type');return raw;}catch{throw new StoreError('bad_json','Geçerli bir JSON nesnesi gerekli.');}
 }
 function getCookie(req){const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));return found?found.slice('bep_session='.length):'';}
-export function createApiHandler(store,{port=4173}={}){
+export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ips:[]}}={}){
+ const validHost=hostSet(port,lan),validOrigins=originSet(port,lan);
  return async function api(req,res,path){
   if(!path.startsWith('/api/'))return false;
-  const validHost=new Set([`127.0.0.1:${port}`,`localhost:${port}`,'127.0.0.1','localhost']);
   if(!validHost.has(req.headers.host)){response(res,403,{error:'host_rejected'});return true;}
-  const validOrigins=new Set([`http://127.0.0.1:${port}`,`http://localhost:${port}`]);
   if(req.headers.origin&&!validOrigins.has(req.headers.origin)){response(res,403,{error:'origin_rejected'});return true;}
   try{
+   if(path==='/api/lan-info'&&req.method==='GET'){response(res,200,{enabled:lan.enabled,urls:learnerUrls(port,lan)});return true;}
    if(path==='/api/health'&&req.method==='GET'){response(res,200,{ok:true,scope:'local-only',version:VERSION});return true;}
    // Student endpoints never use teacher cookies; the redeemed capability is memory-only.
    if(path==='/api/pilot/redeem'&&req.method==='POST'){

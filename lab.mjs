@@ -2,7 +2,7 @@
  * Kimlik yok: yalnızca yapay aday kodu ve koltuk etiketi. DOM metinle (textContent) kurulur. Tarayıcı depolaması kullanılmaz. */
 import {ADJUSTMENTS} from './batch-accommodations.mjs';
 const $=id=>document.getElementById(id);
-let csrf='',exams=[],issued=[],liveTimer=null;
+let csrf='',exams=[],issued=[],liveTimer=null,learnerUrl='';
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 function msg(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 async function api(path,method='GET',body){
@@ -64,7 +64,7 @@ function buildSlips(){
   s.append(line('Aday kodu',it.candidateCode||'—'),line('Koltuk',it.seat||'—'),line('Sınav',it.examTitle),
    line('Süre',`${it.durationMinutes} dk${it.extraMinutes?' + '+it.extraMinutes+' dk onaylı ek süre':''}${it.breakMinutes?' · '+it.breakMinutes+' dk onaylı mola hakkı':''}`));
   const codeP=el('p');codeP.append(el('strong','Giriş kodu: '));const cs=el('span',it.code);cs.className='code-big';codeP.append(cs);s.append(codeP);
-  s.append(line('Adres',location.origin+'/pilot'));
+  s.append(line('Adres',learnerUrl||location.origin+'/pilot'));
   const staff=(it.adjustments||[]).filter(x=>ADJUSTMENTS[x]?.kind==='staff');
   if(staff.length){const p=el('p','Salon görevlisi tarafından sağlanacak (sistem uygulamaz): ');const ul=el('ul');for(const x of staff)ul.append(el('li','☐ '+ADJUSTMENTS[x].label));s.append(p,ul);}
   s.append(el('p','Bilgisayarda tarayıcıyı açıp yukarıdaki adrese gidin, giriş kodunu yazın. Süre kodu girdiğiniz anda başlar. Kodu kimseyle paylaşmayın. Bu kâğıtta adınız yazmaz.'));
@@ -94,6 +94,9 @@ function setAuto(){clearInterval(liveTimer);if($('live-auto').checked)liveTimer=
 async function init(){
  try{const s=await api('/session');if(!s.authenticated){$('login').hidden=false;return;}csrf=s.csrf||'';
   $('workspace').hidden=false;
+  try{const lan=await api('/lan-info');learnerUrl=lan.enabled&&lan.urls[0]?lan.urls[0]:location.origin+'/pilot';
+   $('lan-note').textContent=lan.enabled?'Salon (LAN) modu açık. Öğrenci adresi: '+lan.urls.join(' veya ')+' (şifresiz HTTP: yalnızca izole salon ağında).':'Salon (LAN) modu kapalı: öğrenciler yalnızca bu bilgisayardan girebilir. Diğer bilgisayarlar için sunucuyu BEP_LAN_MODE=1 ile başlatın (SALON-KURULUM-KILAVUZU.md).';
+   $('lan-note').className='notice'+(lan.enabled?' good':' err');}catch{learnerUrl=location.origin+'/pilot';}
   const list=await api('/exams');exams=list.items.filter(x=>x.status==='approved').map(x=>({id:x.id,title:x.title,subject:x.subject}));renderExams();
   await refreshLive();setAuto();
  }catch(e){msg(e.message,true);}

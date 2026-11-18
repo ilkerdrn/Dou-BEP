@@ -52,3 +52,6 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 - **Otomatik kayıt ve devam:** yanıtlar 10 sn'de sunucuya kaydedilir; aynı kodla en çok 5 kez devam edilebilir (eski belirteç geçersiz olur; süre durmaz; devam sayısı görevliye görünür). Teslimde taslak silinir.
 - Yeni ortam değişkenleri: `BEP_PILOT_REDEEM_GLOBAL_LIMIT`, `BEP_PILOT_REDEEM_LOCK_MINUTES`, `BEP_PILOT_CODE_VALID_MINUTES`. Yeni uyarlama kodları: `LARGE_TARGETS`, `SIMPLE_SCREEN`.
 - Kılavuz: `SALON-KURULUM-KILAVUZU.md`. Testler: `salon-50.e2e.test.mjs` (832/832).
+
+## v2.93: Salon (LAN) modu
+`BEP_LAN_MODE=1` (veya `BASLAT-SALON.bat`) ile sunucu salon ağında dinler; **diğer bilgisayarlardan yalnızca öğrenci sınav ekranı ve beş öğrenci API'si** erişilebilir, yönetim/giriş/diğer API'ler yalnızca sunucu bilgisayarından (loopback). Ana bilgisayar adı/`Origin` listesi (sunucunun IP'leri + `BEP_LAN_HOSTS`) dışındakiler reddedilir (DNS rebinding koruması). Salon planı sayfası öğrenci adresini giriş kâğıtlarına yazar. Varsayılan (kapalı) davranış değişmez. Testler: `server-foundation/network-policy.test.mjs`, `lan-mode.e2e.test.mjs` (gerçek ağ adresi üzerinden tarayıcı dahil).

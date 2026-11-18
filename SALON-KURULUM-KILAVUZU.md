@@ -4,15 +4,13 @@ Amaç: Bir bilgisayar salonunda, engel durumları ve dersleri farklı birden ço
 **Kapsam sınırı:** Bu bir yerel pilottur; gözetimli/güvenli sınav (sekme kilidi, kamera) değildir. Gerçek NVDA/JAWS ve engelli öğrenci testi yapılmadan "erişilebilir" denmemelidir. Aşağıdaki ölçümler otomatik testlerdir.
 
 ## 1. Sunucu bilgisayarı (bir kez)
-- Windows, Node.js 22.13+. Salondaki bilgisayarlara **yalnızca tarayıcı** yeterlidir; kurulum gerekmez.
-- Salon ağında erişilebilir olması için sunucu `127.0.0.1` yerine salon ağı adresinde çalışmalıdır. **Mevcut sürüm yalnızca `127.0.0.1` ve `localhost` ana bilgisayar adlarını kabul eder** (bilinçli güvenlik kısıtı). Bu yüzden iki güvenli seçenek vardır:
-  1. Sınavı sunucu bilgisayarın kendisinde ve ek tarayıcı pencereleriyle yürütmek (küçük gruplar).
-  2. Salon için kurumun BT birimiyle HTTPS destekli bir ters vekil (reverse proxy) kurmak; istek `Host` başlığını `127.0.0.1:<port>` olarak ilettirmek. **Bu adım kurumun BT/güvenlik kararıdır ve bu yazılımda yapılmamıştır.**
-- Önerilen ortam değişkenleri (salon için):
-  - `BEP_PILOT_MAX_OPEN_SESSIONS=100` (en çok 2000)
-  - `BEP_PILOT_REDEEM_GLOBAL_LIMIT=200` (varsayılan 12; yanlış yazılan kodlar tüm salonu kilitlemesin)
-  - `BEP_PILOT_CODE_VALID_MINUTES=120` (kodların kullanılabileceği süre; varsayılan 45, en çok 480)
-  - `BEP_TERMINOLOGY=university` (üniversite terimleri)
+- Windows, Node.js 22.13+. Salondaki öğrenci bilgisayarlarına **yalnızca tarayıcı** yeterlidir; kurulum gerekmez.
+- Sunucu bilgisayarında `BASLAT-SALON.bat` çalıştırın (**salon/LAN modu**). Pencerede "Öğrenci adresi: http://192.168.x.x:4173/pilot" yazar; bu adresi öğrencilere verin (giriş kâğıtlarında da çıkar).
+- İlk kurulumda Windows güvenlik duvarında 4173 portuna **özel ağ** için izin verin (yönetici PowerShell, bir kez):
+  `netsh advfirewall firewall add rule name="DOU BEP Salon" dir=in action=allow protocol=TCP localport=4173 profile=private`
+- **Güvenlik modeli:** LAN modunda diğer bilgisayarlar yalnızca öğrenci sınav ekranına (`/pilot`, ses dosyaları) ve beş öğrenci API çağrısına ulaşır. **Yönetim sayfaları, giriş ve diğer tüm API'ler yalnızca sunucu bilgisayarından (`http://localhost:4173`) açılır**; şifreler ağdan geçmez. Bilinmeyen `Host`/`Origin` başlıkları reddedilir.
+- **Trafik şifresizdir (HTTP).** Yalnızca izole bir salon ağında kullanın veya kurumun BT birimiyle HTTPS destekli bir ters vekil kurdurun (kurum kararı; yapılmadı).
+- Ayarlar (`BASLAT-SALON.bat` içinde, değiştirilebilir): `BEP_PILOT_MAX_OPEN_SESSIONS=100`, `BEP_PILOT_REDEEM_GLOBAL_LIMIT=200` (yanlış yazılan kodlar tüm salonu kilitlemesin; varsayılan 12), `BEP_PILOT_CODE_VALID_MINUTES=120`, `BEP_TERMINOLOGY=university`. İsteğe bağlı: `BEP_LAN_HOSTS=sunucu-adi,192.168.1.20` (ek ana bilgisayar adı), `BEP_LAN_BIND=192.168.1.20` (tek ağ kartı).
 
 ## 2. Sınavları hazırlayın (öğretim elemanı)
 1. Soruları Word/PDF/TXT veya **Excel şablonu** (`ORNEK-SORU-SABLONU.xlsx`) ile `/sinav-dosya-aktar` sayfasından yükleyin; her soruyu kaynakla karşılaştırıp onaylayın, eksik görsel betimlemeleri girin.
@@ -31,7 +29,7 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 - "Planı doğrula ve kodları üret": hatalı satır varsa **hiç kod üretilmez**, hata satır numarasıyla gösterilir. Başarılıysa her aday için ayrı kod çıkar. Kodlar **yalnızca bu ekranda** görünür: "Giriş kâğıtlarını yazdır" ve CSV indirme ile alın.
 
 ## 4. Sınav günü
-1. Her öğrenci kendi koltuğundaki bilgisayarda tarayıcıyı açıp sunucu adresindeki `/pilot` sayfasına gider, **kendi kodunu** yazar. Süre bu anda başlar. Sayfa kendi ders, süre ve erişilebilirlik ayarlarıyla açılır.
+1. Her öğrenci kendi koltuğundaki bilgisayarda tarayıcıyı açıp giriş kâğıtlarındaki adrese (`http://<sunucu-ip>:4173/pilot`) gider, **kendi kodunu** yazar. Süre bu anda başlar. Sayfa kendi ders, süre ve erişilebilirlik ayarlarıyla açılır.
 2. Yanıtlar her 10 saniyede sunucuya otomatik kaydedilir. Tarayıcı çökerse veya sayfa yenilenirse aynı kodla **en çok 5 kez** devam edilir; süre durmaz, mola açıksa biter. Devam sayısı canlı tabloda görünür.
 3. Süre bitince yanıtlar otomatik teslim edilir. Yazılı yanıt 4000 karakter/soru.
 4. Görevli `/salon-oturumu` canlı tablosunda herkesin durumunu (girmedi/sınavda/teslim, kalan süre, molada, devam sayısı, son kayıt, görevli notları) görür; tablo her 10 saniyede yenilenir.
@@ -44,7 +42,7 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 
 ## 6. Yapılmayanlar / dikkat
 - Gözetim, kopya önleme, ekran kilidi, kamera: yok (kurum kararı).
-- HTTPS, ağ erişimi ve çok sunuculu ölçek: kurum BT işi (Bölüm 1).
+- HTTPS ve çok sunuculu ölçek: kurum BT işi (Bölüm 1). Salon ağı erişimi (LAN modu) test edildi: ağ adresi üzerinden öğrenci sayfası, kod girişi, otomatik kayıt ve teslim çalışır.
 - Sistem dışı kimlik eşleştirmesi (aday kodu ↔ kişi) görevlinin sorumluluğundadır.
 - Görevli gerektiren düzenlemeler (okuyucu, yazıcı, işaret dili) insan tarafından sağlanır.
 - Gerçek NVDA/JAWS ve engelli öğrenci kullanım testi **yapılmadı**; salonda canlı sınavdan önce `UZMAN-TEST-SENARYOLARI-NVDA.md` ile deneme yapılmalıdır.
