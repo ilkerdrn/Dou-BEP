@@ -67,3 +67,9 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 
 ## v2.96: Veri saklama süresi
 Teslim edilen yanıtlar ve öğretmen puanları sınav bitiminden **24 saat sonra** otomatik siliniyordu (sabit). Artık `BEP_PILOT_RETENTION_HOURS` (1–2160, varsayılan 24; `BASLAT-SALON.bat` 168) ile ayarlanır ve salon sayfasında görünür. Süre dolunca veri geri getirilemez; sonuç tablosunu önceden indirin. Saklama süresi KVKK/kurum kararıdır.
+
+## v2.97: Tüm uygulama taraması ve iki gerçek tarayıcı hatası
+21 sayfa ve 13 menü bağlantısı gerçek tarayıcıda açıldı (konsol/sayfa hatası, 4xx/5xx yok); yönetim sayfalarında 204 düğme tıklaması yapıldı. Bulunan ve düzeltilen hatalar (ikisi de birim testlerinin göremediği, yalnız tarayıcıda çıkan hatalar):
+1. **Sınav editörü otomatik kaydı hiç çalışmıyordu:** `autosave-manager.mjs` varsayılan saati `{set:setTimeout}` olarak tutuyordu; nesne üzerinden çağrılınca tarayıcıda "Illegal invocation" oluyordu. Düzeltildi; `editor-autosave.e2e.test.mjs` taslağın sunucuda oluştuğunu doğrular.
+2. **Sunucu CSP'si `blob:` ses dosyalarını engelliyordu** (DOU Reader laboratuvarı, fonem deneyleri, ses inceleme): `media-src 'self' blob:` eklendi, dış medya yine engelli. `csp-media.e2e.test.mjs` dört sayfada doğrular.
+Testler: 852/852.
