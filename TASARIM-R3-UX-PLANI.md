@@ -119,3 +119,21 @@ Soru başına bir ekran, 20 px+ metin, ≥56 px dokunma hedefi, ilerleme "3 / 10
 ## 10. Kapsam dışı
 
 Yeni özellik, veri şeması, kimlik doğrulama, konuşma/NVDA motoru, gerçek kullanıcı verisi.
+
+## 11. Uygulama durumu
+
+| Aşama | Durum | Not |
+|---|---|---|
+| F1 Kabuk ve gezinme | Tamam | Görev gruplu menü, taşma düzeltmesi. Üst çubukta sabit "Yeni sınav" yapılmadı (menüdeki düğme duruyor). |
+| F2 Giriş + Bugün | Tamam | Tek sütun giriş, sade Bugün paneli. |
+| F3 Devam et + rol menüsü | Tamam | Sunucu yetkileri değişmedi; menü gizleme yalnızca kolaylıktır. Ayrı "Sınavlarım" sayfası yok (`/kurumsal-sinav` listesi kullanılıyor). |
+| F4 Editör adım çubuğu | Tamam | Rozetler mevcut ön kontrol raporundan gelir. Soru sırası düğmeleri yapılmadı. |
+| F5 Ortak sayfa başlığı + onay penceresi | Kısmen | Kurum paneli, koordinasyon, uyarlama kararları, kazanım/soru yayımlama ve sesli yanıt onayları yeni pencerede. |
+| F6 Öğrenci ekranı | Tamam | Sahte sınavla denendi; ekran okuyucuyla denenmedi. |
+| F7 Temizlik | Kısmen | Aşağıya bakın. |
+
+### F7'de bilerek yapılmayanlar
+
+- **Editördeki taslak kaybı onayları** (kaydedilmemiş değişiklik, kurtarma, kopya, dosyadan açma, hedef değiştirme, görsel uygulama; ~10 yer) tarayıcının yerel `confirm()` kutusunda bırakıldı. Bu kutu senkron çalıştığı için kayıt zamanlayıcısı ve `dirty`/`busy` durumu onay sırasında değişemez; asenkron pencereye geçmek bu garantiyi bozar ve tarayıcı içi testi yoktur.
+- **Öğrenci ekranı, ana editör (`app.mjs`), ses/kayıt araçları** (~20 yer) aynı gerekçeyle ve kapsam dışı olduğu için dokunulmadı.
+- **Eski CSS katmanlarının silinmesi** yapılmadı. `design-system.css` bilerek en son yüklenir ve eski katmanları `!important` ile geçersiz kılar; kuralları silmek için önce tüm sayfaların giriş yapılmış durumlarını kapsayan bir görsel regresyon düzeneği gerekir. Aksi hâlde dinamik durumlarda kullanılan kurallar yanlışlıkla silinebilir.

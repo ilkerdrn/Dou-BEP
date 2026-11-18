@@ -486,9 +486,9 @@ $('exam-library-list').addEventListener('click',async e=>{const btn=e.target.clo
    const fresh={...item.question,id:starterQuestion(item.question.type).id,goalId:g?.id||'',objective:g?.text||item.question.objective,teacherNote:'',provenance:null,equivalenceReview:{checks:{objective:false,answer:false,demand:false,access:false},fingerprint:''}};
    state.exam.questions.push(fresh);touch();draw();drawLibrary();notice('Yayımlanmış soru kopyalandı. BEP hedefini ve yanıtı kontrol edip sınavı yeniden kaydedin; eski onay geçersizdir.');return;
   }
-  if(btn.dataset.libraryPublishGoal){if(!confirm('Kazanımı kaynak belgeyle karşılaştırdınız mı? Bu işlem yayımlama sorumluluğunu size verir.'))return;
+  if(btn.dataset.libraryPublishGoal){if(!await douConfirm('Kazanımı kaynak belgeyle karşılaştırdınız mı? Bu işlem yayımlama sorumluluğunu size verir.',{title:'Kazanım yayımlansın mı?',confirmLabel:'Yayımla'}))return;
    await api('/library/goals/'+btn.dataset.libraryPublishGoal+'/publish',{method:'POST',body:{revision:Number(btn.dataset.rev)}});notice('Kazanım yayımlandı.');await refreshLibrary();return;}
-  if(btn.dataset.libraryPublishQuestion){if(!confirm('Soru kazanımını, doğru cevabını, puanlamayı ve erişilebilirlik etkilerini öğretmen olarak kontrol ettiniz mi?'))return;
+  if(btn.dataset.libraryPublishQuestion){if(!await douConfirm('Soru kazanımını, doğru cevabını, puanlamayı ve erişilebilirlik etkilerini öğretmen olarak kontrol ettiniz mi?',{title:'Soru yayımlansın mı?',confirmLabel:'Yayımla'}))return;
    await api('/library/questions/'+btn.dataset.libraryPublishQuestion+'/publish',{method:'POST',body:{revision:Number(btn.dataset.rev)}});notice('Soru yayımlandı.');await refreshLibrary();return;}
  }catch(err){notice(err.message,true);}finally{btn.disabled=false;}
 });
@@ -676,7 +676,7 @@ $('exam-audio-export').addEventListener('click',async()=>{try{const exam=await g
 $('exam-voice-export').addEventListener('click',async()=>{
  try{
   if(!$('exam-voice-allow').checked)throw Error('Öğretmen mikrofonla yanıt iznini işaretlemelidir.');
-  if(!confirm('Sesli yanıt etkinleştirilsin mi? Bu pilot gerçek çocuk sesi için uygun değildir; dosyalar yalnızca öğrencinin cihazına kaydedilebilir.'))return;
+  if(!await douConfirm('Bu pilot gerçek çocuk sesi için uygun değildir; dosyalar yalnızca öğrencinin cihazına kaydedilebilir.',{title:'Sesli yanıt etkinleştirilsin mi?',confirmLabel:'Etkinleştir'}))return;
   const exam=await getApproved();const html=generateAccessibleExamHtml(exam,{allowVoiceResponse:true});
   saveHtml(html,slugify(exam.title)+'-sesli-yanitli.html');notice('Mikrofon izni öğretmen tarafından seçilmiş, cevap anahtarı içermeyen HTML dosyası indirildi.');
  }catch(err){notice(err.message,true);}
