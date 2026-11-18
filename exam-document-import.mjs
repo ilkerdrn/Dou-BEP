@@ -147,7 +147,7 @@ export function examDraftFromSource(preview,{title,subject,duration=30,selectedN
  const questions=preview.questions.filter(q=>selected.has(q.number));
  if(questions.length!==selectedNumbers.length)throw Error('Geçersiz veya tekrarlanan soru numarası.');
  const exam={version:VERSION,title:title.trim(),subject:subject.trim(),grade:'Önlisans / Lisans',duration:Number(duration),profile:'',objective:'',instruction:'Soruları dikkatle okuyunuz.',reviewPolicy:'guided',adaptations:{...DEFAULT_ADAPTATIONS,institutionalHeader:true},bepGoals:[],goalAttestations:[],supportPlan:{version:1,domain:'general',selected:[]},questions:questions.map(q=>({
-  ...starterQuestion(q.type),prompt:q.prompt,options:q.type==='choice'?q.options:[],answer:'',points:10,teacherNote:'',provenance:{kind:'source-import',source:'anonim '+preview.format.toUpperCase()+' dosyası',sourceSha256:preview.sourceSha256,transcriptionSha256:preview.transcriptionSha256||'',reviewed:false}
+  ...starterQuestion(q.type),prompt:q.prompt,options:q.type==='choice'?q.options:[],answer:String(q.answer??'').slice(0,2000),points:Number.isInteger(q.points)&&q.points>=0&&q.points<=1000?q.points:10,visualAltText:String(q.visualAltText??'').slice(0,200),objective:String(q.objective??'').slice(0,500),teacherNote:'',provenance:{kind:'source-import',source:'anonim '+preview.format.toUpperCase()+' dosyası',sourceSha256:preview.sourceSha256,transcriptionSha256:preview.transcriptionSha256||'',reviewed:false}
  }))};
  return exam;
 }

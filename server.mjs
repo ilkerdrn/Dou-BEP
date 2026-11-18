@@ -49,6 +49,7 @@ const allowed={
  '/batch-exams.mjs':['batch-exams.mjs','text/javascript; charset=utf-8'],
  '/batch-accommodations.mjs':['batch-accommodations.mjs','text/javascript; charset=utf-8'],
  '/xlsx-import.mjs':['xlsx-import.mjs','text/javascript; charset=utf-8'],
+ '/ORNEK-SORU-SABLONU.xlsx':['ORNEK-SORU-SABLONU.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
  '/ORNEK-ANONIM-DONEMLI-SINAV-LISTESI.xlsx':['ORNEK-ANONIM-DONEMLI-SINAV-LISTESI.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
  '/batch-exams.css':['batch-exams.css','text/css; charset=utf-8'],
  '/ses-inceleme':['review-audio.html','text/html; charset=utf-8'],

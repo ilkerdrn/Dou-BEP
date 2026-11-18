@@ -55,19 +55,20 @@ async function unzipXlsx(input){
 const noEntities=xml=>{if(/<!DOCTYPE|<!ENTITY|<\?xml-stylesheet/i.test(xml))invalid('Harici XML varlıkları kabul edilmiyor.');return xml;};
 function textNodes(xml){return [...xml.matchAll(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g)].map(m=>xmlText(m[1])).join('');}
 function parseShared(xml){const arr=[];for(const x of xml.matchAll(/<(?:\w+:)?si\b[^>]*>([\s\S]*?)<\/(?:\w+:)?si>/g)){arr.push(textNodes(x[1]));if(arr.length>20000)invalid('Çok fazla Excel metin dizisi.');}return arr;}
-function worksheetTable(xml,shared){
+function worksheetTable(xml,shared,o={}){
+ const {cols=8,chars=200,maxRow=102,maxRecords=101,multiline=false}=o;
  if(/<(?:\w+:)?f(?:\s|>)/i.test(xml))invalid('Formüllü hücre kabul edilmiyor; yalnız sabit değer kullanın.');
  if(/<(?:\w+:)?mergeCells\b/i.test(xml))invalid('Birleştirilmiş hücrelerle liste yüklenemez.');
  const out=[];let seen=0;
  for(const row of xml.matchAll(/<(?:\w+:)?row\b([^>]*?)>([\s\S]*?)<\/(?:\w+:)?row>/g)){
-  const ri=Number(attr(row[1],'r'));if(!Number.isInteger(ri)||ri<1||ri>102)invalid('Excel yalnız ilk 101 veri satırını kabul ediyor.');
+  const ri=Number(attr(row[1],'r'));if(!Number.isInteger(ri)||ri<1||ri>maxRow)invalid('Excel yalnız ilk 101 veri satırını kabul ediyor.');
   if(out[ri-1])invalid('Aynı satır iki kez var.');
-  const values=Array(8).fill('');
+  const values=Array(cols).fill('');
   for(const cell of row[2].matchAll(/<(?:\w+:)?c\b([^>]*?)(?:\/\s*>|>([\s\S]*?)<\/(?:\w+:)?c>)/g)){
    const ref=attr(cell[1],'r'),col=ref.match(/^([A-Z]+)[0-9]+$/)?.[1];
    if(!col)invalid('Hücre adresi geçersiz.');
    let index=0;for(const letter of col)index=index*26+letter.charCodeAt(0)-64;index--;
-   if(index>7||index<0)invalid('Listeye ek sütunlar eklemeyin (en çok A–H).');
+   if(index>=cols||index<0)invalid('Şablondaki sütunlardan fazlasını eklemeyin.');
    const type=attr(cell[1],'t'),inner=cell[2]||'';
    let value='';
    if(type==='inlineStr')value=textNodes(inner);
@@ -75,18 +76,18 @@ function worksheetTable(xml,shared){
     if(v!=null){value=xmlText(v);if(type==='s'){const ix=Number(value);if(!Number.isInteger(ix)||ix<0||ix>=shared.length)invalid('Paylaşılan metin indeksi geçersiz.');value=shared[ix];}}
    }
    if(type==='e'||type==='b')invalid('Hata/boole türündeki hücreler desteklenmiyor.');
-   if(/[\r\n\u0000-\u001f]/.test(value)||value.length>200)invalid('Hücrelerde satır sonu veya aşırı uzun metin olmamalı.');
+   if((multiline?/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/:/[\r\n\u0000-\u001f]/).test(value)||value.length>chars)invalid('Hücrelerde izin verilmeyen satır sonu/denetim karakteri veya aşırı uzun metin olmamalı.');
    values[index]=value.trim();
   }
   out[ri-1]=values;seen++;
-  if(seen>101)invalid('En çok 100 anonim kayıt yüklenebilir.');
+  if(seen>maxRecords)invalid('En çok 100 anonim kayıt yüklenebilir.');
  }
  if(!out[0]||!out.slice(1).some(x=>x?.some(v=>v)))invalid('Excel ilk satırında başlık ve en az bir kayıt olmalı.');
  // Do not silently shift/accept empty rows; they can conceal accidental incomplete exports.
  if(out.some((x,i)=>i>0&&(!x||x.every(y=>!y))))invalid('Excel listesinde boş satır bulunuyor.');
  return out;
 }
-export async function readAnonymousXlsx(buffer){
+export async function readAnonymousXlsx(buffer,options={}){
  const z=await unzipXlsx(buffer);let wb=noEntities(toText(await z.read('xl/workbook.xml')));
  const sheets=[...wb.matchAll(/<(?:\w+:)?sheet\b([^>]*?)\/?\s*>/g)];if(!sheets.length)invalid('Sayfa bilgisi bulunamadı.');
  if(sheets.length!==1)invalid('Yalnızca tek sayfalı anonim Excel dosyaları kabul ediliyor.');
@@ -100,7 +101,7 @@ export async function readAnonymousXlsx(buffer){
  const file=target.startsWith('/')?target.slice(1):target.startsWith('xl/')?target:'xl/'+target;
  if(!/^xl\/worksheets\/[^/]+\.xml$/.test(file))invalid('Sayfa dosya yolu desteklenmiyor.');
  const shared=z.entries.has('xl/sharedStrings.xml')?parseShared(noEntities(toText(await z.read('xl/sharedStrings.xml')))):[];
- return worksheetTable(noEntities(toText(await z.read(file))),shared);
+ return worksheetTable(noEntities(toText(await z.read(file))),shared,options);
 }
 export function worksheetToTermCsv(table){
  if(!Array.isArray(table)||table.length<2||table.length>101)invalid('Excel satır sayısı geçersiz.');

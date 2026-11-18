@@ -24,3 +24,9 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 - CSP: `'wasm-unsafe-eval'` yalnızca `/pilot`, `/dou-reader-demo` ve çalıştırıcı dosyasında; başka sayfalarda yok.
 - Testler: `dou-speech-neural.test.mjs`, `dou-speech-neural.e2e.test.mjs` (gerçek model ve gerçek Chromium). 799/799.
 - Sınırlar: tek ses; model kartına göre stüdyo kayıtlı modellerden daha az doğal; yabancı sözcükler/kısaltmalar Türkçe harf sesleriyle okunur. **Sesin doğal ve anlaşılır olduğu insan dinlemesiyle doğrulanmadı.** Tek iş parçacığı çalışır (cross-origin isolation kapalı).
+
+## v2.89: Excel ile soru yükleme
+- `/sinav-dosya-aktar` artık `.xlsx` kabul eder. Şablon: `ORNEK-SORU-SABLONU.xlsx` (sütunlar: `soru_no, soru, secenek_a…e, dogru_cevap, puan, gorsel_betimleme, kazanim`). Doğru cevap harfle verilir (A–E) ve seçenek metnine çevrilir; puan, görsel betimlemesi ve kazanım taslağa taşınır.
+- Güvenlik/kalite kuralları aynıdır: tek sayfa, formül/makro/dış bağlantı yok, en çok 60 soru ve 512 KB, kişisel veri taraması, yalnız şablon başlıkları (ad/numara/tanı sütunu eklenemez). Taslak **onaysız** oluşur; öğretmen her soruyu kaynakla karşılaştırıp onaylamadan kurumsal onaya geçemez (kalite kapısı, 422).
+- Modül: `question-sheet-import.mjs`; `xlsx-import.mjs` sütun/uzunluk sınırları parametrik yapıldı (mevcut dönemli liste içe aktarması aynı kalır). Testler: `question-sheet-import.test.mjs`, `question-sheet-import.http.test.mjs` (808/808).
+- Sınır: Word içindeki tablo/denklem/görsel hâlâ otomatik çevrilmez; Excel'de görsel için yalnız metin betimlemesi girilir.

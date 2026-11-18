@@ -5,6 +5,8 @@ import {institutionalOperationsReadiness} from './operation-readiness.mjs';
 import {VERSION} from '../core.mjs';
 import {previewBep} from '../bep-plan-import.mjs';
 import {previewSourceExam,previewManualSourceExam,examDraftFromSource} from '../exam-document-import.mjs';
+import {previewQuestionSheet,isQuestionSheetName} from '../question-sheet-import.mjs';
+const previewAnySource=async data=>isQuestionSheetName(data?.filename)?previewQuestionSheet(data):previewSourceExam(data);
 import {roleCan} from '../roles.mjs';
 import {createExamMp3,audioDependencies} from '../offline-audio.mjs';
 import {fullAudioAllowed} from '../question-access.mjs';
@@ -123,7 +125,7 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/exam-source/preview'&&req.method==='POST'){
     if(!roleCan(actor.role,'exam.edit'))throw new StoreError('forbidden','Sınav düzenleme yetkisi gerekli.',403);
     const data=await readJson(req,1500000);
-    try{response(res,200,previewSourceExam(data));}
+    try{response(res,200,await previewAnySource(data));}
     catch(error){throw new StoreError('exam_source_preview',error.message||'Belge okunamadı.',422);}
     return true;
    }
@@ -154,7 +156,7 @@ export function createApiHandler(store,{port=4173}={}){
     if(data.confirmed!==true)throw new StoreError('confirmation_required','Öğretmenin belgeyi karşılaştırıp taslak onayı vermesi gereklidir.',422);
     let preview,exam;
     try{
-     preview=previewSourceExam(data);
+     preview=await previewAnySource(data);
      if(preview.sourceSha256!==data.sourceSha256)throw Error('Belge önizlemeden sonra değişmiş.');
      exam=examDraftFromSource(preview,data);
     }catch(error){throw new StoreError('exam_source_invalid',error.message||'Taslak aktarılamadı.',422);}
