@@ -390,3 +390,17 @@ body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"]>main#dou-content
   transition:none!important;animation:none!important;
  }
 }
+
+/* Anchor tabs reflect the selected destination without introducing JS state. */
+body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"]:has(#pilot-session-list:target) .pilot-admin-tabs a:first-child,
+body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"]:has(#cohort-heading:target) .pilot-admin-tabs a:first-child{
+ background:transparent!important;color:#40516a!important;box-shadow:none!important;
+}
+body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"]:has(#pilot-session-list:target) .pilot-admin-tabs a[href="#pilot-session-list"],
+body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"]:has(#cohort-heading:target) .pilot-admin-tabs a[href="#cohort-heading"]{
+ background:var(--pilot-red)!important;color:#fff!important;
+ box-shadow:0 5px 14px #b20f371b!important;
+}
+body.bep-pilot-ux.dou-admin-standalone[data-design-version="4"] :is(#pilot-session-create,#pilot-session-list,#cohort-heading){
+ scroll-margin-top:24px;
+}
