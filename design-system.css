@@ -274,3 +274,79 @@ body.institution-page .portal-content:not(:has(#login-view))>.portal-hero h1 em{
 /* Yönetici sayfalarında eski öğrenci-pilot üst şeridi menüyle yinelenir (ve beyaz üstüne beyaz yazı) */
 body.dou-admin-standalone header:has(>.brand .mark){display:none!important}
 body.institution-page .portal-login-card:not(#login-view){min-height:0!important;height:auto!important}
+
+/* ---------- F6 · Öğrenci ekranı ---------- */
+/* Sınav başlayınca giriş başlığı ve demo bağlantısı kaybolur; soru ilk görünen şey olur. */
+body.student-page:has(#player:not([hidden])) #student-intro,
+body.student-page:has(#player:not([hidden])) #student-demo-link,
+body.student-page:has(#done:not([hidden])) #student-intro,
+body.student-page:has(#done:not([hidden])) #student-demo-link{display:none}
+body.student-page main{padding-top:20px}
+body.student-page #player{display:flex;flex-direction:column}
+body.student-page #player>.card:first-child{order:0;padding:14px 18px;margin:0 0 12px}
+body.student-page #player>.card:first-child h2{font-size:20px;margin:0}
+body.student-page #player>.card:first-child .eyebrow,body.student-page #exam-info{display:none}
+body.student-page #player>.card:first-child .inline{margin-top:10px}
+body.student-page #question-navigation{order:1;position:sticky;top:0;z-index:20;margin:0 0 12px;padding:10px 14px;box-shadow:0 6px 18px rgba(24,23,28,.1)}
+body.student-page #answer-form{order:2}
+body.student-page #dou-reader{order:3}
+/* İlerleme çubuğu */
+body.student-page .student-progress{height:8px;border-radius:99px;background:#ece8e9;overflow:hidden;margin-bottom:10px}
+body.student-page .student-progress span{display:block;height:100%;width:0;background:#b3122d;border-radius:99px;transition:width .2s}
+body.student-page.high .student-progress{background:#444}body.student-page.high .student-progress span{background:#fff}
+body.student-page #question-navigation nav{display:flex;align-items:center;justify-content:space-between;gap:10px}
+body.student-page #question-progress{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center;flex:1}
+body.student-page #question-navigation .inline:first-of-type{margin-bottom:6px;font-size:14px}
+/* Büyük dokunma hedefleri (≥56 px) */
+body.student-page button,body.student-page select,body.student-page input:not([type=checkbox]):not([type=radio]){min-height:56px}
+body.student-page label.option{min-height:64px;padding:16px 18px;font-size:var(--student-size,20px);border-radius:14px}
+body.student-page input[type=radio],body.student-page input[type=checkbox]{width:28px;height:28px;flex:0 0 28px}
+body.student-page .question h2{font-size:calc(var(--student-size,20px) + 6px)}
+body.student-page .question{font-size:var(--student-size,20px)}
+body.student-page #send{width:100%;font-size:18px}
+body.student-page #previous-question,body.student-page #next-question{min-width:150px}
+/* Okuyucu: komutlar görünür, uzun açıklama açılır bölümde */
+body.student-page .reader-panel{padding:16px 18px}
+body.student-page .reader-panel .eyebrow{display:none}
+body.student-page .reader-panel h2{font-size:18px}
+body.student-page .reader-actions{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+body.student-page details.reader-more,body.student-page details.student-help{margin:8px 0}
+body.student-page details summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center;color:#8f0e24}
+body.student-page.high details summary{color:#fff}
+body.student-page details.student-help{background:#fbf7f7;border:1px solid #efe3e4;border-radius:12px;padding:0 16px}
+body.student-page.high details.student-help{background:#111;border-color:#fff}
+body.student-page details.student-help ol{margin:4px 0 8px 20px;padding:0;font-size:17px;line-height:1.6}
+@media(max-width:560px){
+ body.student-page main{padding:12px 12px 90px}
+ body.student-page #previous-question,body.student-page #next-question{min-width:0;flex:1}
+ body.student-page #question-progress{display:none}
+ body.student-page #question-navigation::after{content:none}
+ body.student-page #question-navigation .student-progress{margin-bottom:8px}
+}
+/* F6 sıkılaştırma: soru ilk ekranda görünsün */
+body.student-page #player>.card:first-child{padding:10px 14px}
+body.student-page #player>.card:first-child h2{font-size:17px}
+body.student-page #player>.card:first-child .inline{margin-top:6px;gap:8px 14px}
+body.student-page #player>.card:first-child .inline label{margin:0;display:flex;align-items:center;gap:8px}
+body.student-page #player>.card:first-child .inline select{width:auto;min-height:48px;padding:6px 10px}
+body.student-page #player>.card:first-child .inline input[type=checkbox]{margin:0}
+body.student-page #question-navigation{padding:8px 12px}
+body.student-page #question-navigation .inline:first-of-type{margin:0 0 6px}
+body.student-page #question-navigation .inline label{margin:0;display:flex;align-items:center;gap:8px}
+body.student-page .student-progress{margin-bottom:6px}
+body.student-page details.student-help{margin:6px 0 0}
+body.student-page details summary{min-height:44px}
+@media(max-width:560px){
+ body.student-page #stop-voice{display:none}
+ body.student-page header{padding:10px 14px}
+ body.student-page header .mark{width:40px;height:40px;margin-right:8px}
+ body.student-page header>div:last-child{display:none}
+ body.student-page #player>.card:first-child h2{font-size:15px}
+ body.student-page .pill{display:none}
+}
+/* Yüksek kontrast: tüm sayfa koyu, vurgu renkleri siyah üstünde okunur */
+html:has(body.student-page.high){background:#000}
+body.student-page.high .eyebrow{color:#ffb3bf}
+body.student-page.high .notice.good{color:#8dffb8;background:#000;border-color:#8dffb8}
+body.student-page.high .notice.err{color:#ffb3b3;background:#000;border-color:#ffb3b3}
+body.student-page.high a{color:#9ec9ff}
