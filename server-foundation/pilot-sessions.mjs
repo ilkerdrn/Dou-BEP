@@ -31,7 +31,9 @@ const MAX_QUESTIONS=envInt('BEP_PILOT_MAX_QUESTIONS',60,1,100);
 const MAX_OPEN_SESSIONS=envInt('BEP_PILOT_MAX_OPEN_SESSIONS',100,1,2000);
 export const TEXT_ANSWER_MAX_CHARS=4000;
 const TEXT_ANSWERS_TOTAL_MAX=60000;
-const KEEP_MS=24*60*60*1000;
+// Retention is an institutional/KVKK decision: submitted answers and teacher scores are deleted this long AFTER the session deadline.
+export const RETENTION_HOURS=(()=>{const v=Number(process.env.BEP_PILOT_RETENTION_HOURS);return Number.isInteger(v)&&v>=1&&v<=2160?v:24;})();
+const KEEP_MS=RETENTION_HOURS*60*60*1000;
 // Privacy-preserving, persistent limiter: global failure budget protects against
 // changing the candidate code on each guess; code-specific budget limits repeats.
 // No IP address, submitted code, learner identifier or free text is retained.
@@ -150,7 +152,7 @@ export function pilotSessions(db,{StoreError,log}){
  function live(actor){permit(actor);cleanup();
   const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 300`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
   const t=now();
-  return {at:t,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
+  return {at:t,retentionHours:RETENTION_HOURS,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
    remainingSeconds:r.status==='started'?Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-t)/1000)):null,onBreak:!!r.break_started_at,breakCount:r.break_count||0,resumeCount:r.resume_count||0,lastSaveAt:r.draft_at||null,
    startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
  }

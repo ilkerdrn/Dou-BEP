@@ -64,3 +64,6 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 - **Matematik okuması:** kesirler (½ ¾), derece (°, °C), orta nokta, alt/üst simge, `x^n`, `<` `>` ve sayılar arası eksi, hem işletim sistemi sesi hem sinir ağı sesi için ortak ve temkinli kurallarla okunur; belirsiz örüntüler (tarih, `Ali-Veli`, `<b>`) değişmez.
 - **Salon sonuç tablosu:** `GET /api/pilot/results.csv` (öğretmen) ve salon sayfasında indirme düğmesi: aday başına durum, süre, devam/mola, nesnel puan önerisi, yazılı yanıt sayısı, öğretmen puanı.
 - Testler: `hazirlik.e2e.test.mjs`, genişletilmiş `salon-50.e2e.test.mjs`, ses metni testleri (848).
+
+## v2.96: Veri saklama süresi
+Teslim edilen yanıtlar ve öğretmen puanları sınav bitiminden **24 saat sonra** otomatik siliniyordu (sabit). Artık `BEP_PILOT_RETENTION_HOURS` (1–2160, varsayılan 24; `BASLAT-SALON.bat` 168) ile ayarlanır ve salon sayfasında görünür. Süre dolunca veri geri getirilemez; sonuç tablosunu önceden indirin. Saklama süresi KVKK/kurum kararıdır.

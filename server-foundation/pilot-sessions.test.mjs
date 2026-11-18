@@ -133,3 +133,9 @@ test('v2.35: tampered approved exam cannot be issued, redeemed, submitted or rev
   assert.throws(()=>f.s.pilotReviewGet(f.a,first.id),{code:'approval_integrity'});
  }finally{f.close();}
 });
+test('v2.96: veri saklama süresi ayarlanabilir (varsayılan 24 saat), geçersiz değerler yok sayılır',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const run=env=>execFileSync(process.execPath,['--input-type=module','-e',"import('./server-foundation/pilot-sessions.mjs').then(m=>console.log(m.RETENTION_HOURS))"],{env:{...process.env,...env},cwd:new URL('..',import.meta.url).pathname,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();
+ assert.equal(run({BEP_PILOT_RETENTION_HOURS:''}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'168'}),'168');
+ assert.equal(run({BEP_PILOT_RETENTION_HOURS:'0'}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'99999'}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'abc'}),'24');
+});

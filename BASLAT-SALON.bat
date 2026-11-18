@@ -7,6 +7,8 @@ set BEP_LAN_MODE=1
 set BEP_PILOT_REDEEM_GLOBAL_LIMIT=200
 set BEP_PILOT_MAX_OPEN_SESSIONS=100
 set BEP_PILOT_CODE_VALID_MINUTES=120
+rem Veri saklama suresi (saat): sinav bitiminden sonra yanit ve puanlar silinir. Kurum/KVKK karari; varsayilan 24, en cok 2160.
+if not defined BEP_PILOT_RETENTION_HOURS set BEP_PILOT_RETENTION_HOURS=168
 if not defined BEP_TERMINOLOGY set BEP_TERMINOLOGY=university
 echo.
 echo Gerekirse (yonetici PowerShell, bir kez) Windows guvenlik duvari kurali:

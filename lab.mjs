@@ -96,6 +96,7 @@ async function refreshLive(){
   const warn=r.status==='started'&&r.remainingSeconds!==null&&r.remainingSeconds<300?' ⚠':'';
   tr.append(el('td',r.seat||'—'),el('td',r.candidateCode||r.ref),el('td',r.examTitle),st,el('td',r.status==='started'?mins(r.remainingSeconds)+warn:'—'),el('td',notes.join(' · ')||'—'));body.append(tr);
  }
+ $('retention-note').textContent=`Veri saklama: teslim edilen yanıtlar ve puanlar sınav bitiminden ${live.retentionHours} saat sonra otomatik silinir. Sonuç tablosunu ve değerlendirmeleri bu süre dolmadan alın.`;
  $('live-summary').textContent=`${live.items.length} oturum · ${count.issued} henüz girmedi · ${count.started} sınavda · ${count.submitted} teslim${count.other?' · '+count.other+' iptal/süresi dolmuş':''} (güncelleme ${new Date(live.at).toLocaleTimeString('tr-TR')})`;
 }
 function setAuto(){clearInterval(liveTimer);if($('live-auto').checked)liveTimer=setInterval(()=>refreshLive().catch(()=>{}),10000);}
