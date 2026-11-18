@@ -28,6 +28,6 @@ Bu ölçümler **otomatiktir**; ekran okuyucu duyuru kalitesi, kısayol çakış
 
 ## Kalan tasarım boşlukları (öncelik sırasıyla)
 1. Gerçek NVDA/JAWS ve engelli öğrenci testi (en önemlisi).
-2. Ayrı "gözden geçirme" özet ekranı (Moodle'daki gibi, soru–durum tablosu).
-3. Sayfa uzunluğu: ayar, okuyucu ve harita kartları sınav sorusunun üstünde yer kaplıyor; dar ekranda soru aşağıda kalıyor. Kullanıcı testinde "soruya ulaşma süresi" ölçülmeli.
+2. (v2.86 ile kapandı) Ayrı gözden geçirme özet ekranı eklendi.
+3. (v2.86 ile azaltıldı) Soru artık ilk ekranda; harita sağda sabit, okuyucu paneli sayfa sonunda. Gerçek kullanıcı testinde soruya ulaşma süresi yine ölçülmeli.
 4. Kurum panelleri yoğun; yeni kullanıcı testi yapılmadı.

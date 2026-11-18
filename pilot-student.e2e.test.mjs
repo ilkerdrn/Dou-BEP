@@ -102,3 +102,23 @@ test('öğrenci /pilot: soruyu işaretle ve sonra dön',{skip},async()=>{
   await page.click('#send');assert.match(dialogs[0],/1 soru işaretli/);
  }finally{await browser.close();s.close();}
 });
+
+test('öğrenci /pilot: gözden geçirme ekranı, soruya git, teslim',{skip},async()=>{
+ const {s,port}=await server(0);const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();const dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());d.accept();});await enter(page,port);
+  await page.focus('#student-questions h2');await page.keyboard.press('Alt+Shift+2');await page.keyboard.press('Alt+Shift+F');
+  await page.click('#review-open');
+  assert.equal(await page.locator('#review-view').isVisible(),true);assert.equal(await page.locator('#player').isHidden(),true);
+  assert.equal(await page.evaluate(()=>document.activeElement.id),'review-title');
+  assert.match(await page.textContent('#review-rows tr:nth-child(1)'),/Cevaplandı.*İşaretli/s);
+  assert.match(await page.textContent('#review-rows tr:nth-child(2)'),/BOŞ/);
+  assert.match(await page.textContent('#review-summary'),/1 soru cevaplandı, 1 soru boş, 1 soru işaretli/);
+  assert.match(await page.textContent('#review-timer'),/^\d+:\d\d$/);
+  await page.click('#review-rows tr:nth-child(2) button');
+  assert.equal(await page.locator('#player').isVisible(),true);assert.match(await page.textContent('#question-progress'),/Soru 2 \/ 2/);
+  await page.click('#review-open');await page.click('#review-send');
+  await page.waitForSelector('#done:not([hidden])');assert.match(dialogs.at(-1),/1 soru cevaplandı/);
+  assert.equal(await page.locator('#review-view').isHidden(),true);
+ }finally{await browser.close();s.close();}
+});

@@ -11,7 +11,7 @@ const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
 function showAlert(m){$('time-alert').hidden=false;$('time-alert').textContent=m;announce(m);}
 function lockAll(){locked=true;$('break-start').disabled=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
-function tick(){const left=remaining();updateRing(left);$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+function tick(){const left=remaining();updateRing(left);$('review-timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
  for(const m of [600,300,60])if(left<=m&&lastLeft>m)showAlert('Uyarı: '+Math.round(m/60)+' dakika kaldı.');
  lastLeft=left;
  if(left<=0){clearInterval(timerId);timerId=null;showAlert('Süre doldu. Yanıtlarınız otomatik teslim ediliyor.');submitAnswers();}}
@@ -98,14 +98,26 @@ function render(){const area=$('student-questions');area.replaceChildren();
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
  try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
+function openReview(){if(!exam||locked||onBreak)return;
+ const body=$('review-rows');body.replaceChildren();
+ exam.questions.forEach((q,i)=>{const tr=el('tr');const a=answered(q),f=flagged.has(q.id);
+  tr.append(el('th','Soru '+q.number));tr.lastChild.scope='row';tr.append(el('td',a?'Cevaplandı':'BOŞ'),el('td',f?'⚑ İşaretli':'—'));
+  const td=el('td'),go=el('button','Soruya git');go.type='button';go.className='ghost';go.setAttribute('aria-label','Soru '+q.number+'e git, '+(a?'cevaplandı':'boş')+(f?', işaretli':''));
+  go.addEventListener('click',()=>{activeQuestionIndex=i;$('one-question').checked=true;closeReview();updateQuestionNavigation(true);});td.append(go);tr.append(td);body.append(tr);});
+ $('review-summary').textContent=summary();$('player').hidden=true;$('review-view').hidden=false;$('review-title').focus();announce('Gözden geçirme ekranı. '+summary());}
+function closeReview(){$('review-view').hidden=true;$('player').hidden=false;}
+function confirmAndSend(){if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
 function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
- try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
  catch(e){announce(e.message,true);btn.disabled=false;}}
 // Time is up: answers are collected BEFORE inputs are locked (disabled controls are not part of FormData) and sent once.
 let pendingAnswers=null;
 function submitAnswers(){if(!claim||!exam)return;pendingAnswers=collectAnswers();lockAll();sendAnswers(pendingAnswers);}
-$('answer-form').addEventListener('submit',async event=>{event.preventDefault();if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());});
+$('answer-form').addEventListener('submit',event=>{event.preventDefault();confirmAndSend();});
+$('review-open').addEventListener('click',openReview);
+$('review-back').addEventListener('click',()=>{closeReview();updateQuestionNavigation(true);});
+$('review-send').addEventListener('click',confirmAndSend);
 $('flag-btn').addEventListener('click',toggleFlag);
 $('break-start').addEventListener('click',startBreak);
 $('break-end').addEventListener('click',()=>endBreak(false));
