@@ -40,7 +40,7 @@ try{
  const ctx=await browser.newContext({viewport:{width:1280,height:900},bypassCSP:true});
  await ctx.addCookies([{name:'bep_session',value:/bep_session=([^;]+)/.exec(h.Cookie)[1],url:base}]);
  const panel=await ctx.newPage();
- for(const [n,u] of [['Kurum paneli','/kurum'],['Sınav editörü','/kurumsal-sinav'],['Toplu sınav','/toplu-sinav'],['Koordinasyon','/sinav-koordinasyon'],['Uyarlama kararları','/uyarlama-kararlari'],['Operasyon','/sinav-operasyon'],['Kabul','/erisilebilirlik-kabul'],['Pilot yönetimi','/pilot-yonetim'],['BEP aktarımı','/bep-import'],['Kaynak sınav aktarımı','/sinav-dosya-aktar'],['Erişilebilirlik kontrolü','/erisilebilirlik-kontrol']]){await panel.goto(base+u);await scan(panel,n);}
+ for(const [n,u] of [['Kurum paneli','/kurum'],['Sınav editörü','/kurumsal-sinav'],['Toplu sınav','/toplu-sinav'],['Koordinasyon','/sinav-koordinasyon'],['Uyarlama kararları','/uyarlama-kararlari'],['Operasyon','/sinav-operasyon'],['Kabul','/erisilebilirlik-kabul'],['Pilot yönetimi','/pilot-yonetim'],['Salon oturumu','/salon-oturumu'],['BEP aktarımı','/bep-import'],['Kaynak sınav aktarımı','/sinav-dosya-aktar'],['Erişilebilirlik kontrolü','/erisilebilirlik-kontrol']]){await panel.goto(base+u);await scan(panel,n);}
  const stu=await (await browser.newContext({viewport:{width:1280,height:900},bypassCSP:true})).newPage();stu.on('dialog',x=>x.accept());
  await stu.goto(base+'/pilot');await stu.fill('#code',code);await stu.keyboard.press('Enter');await stu.waitForSelector('#player:not([hidden])');await scan(stu,'Öğrenci sınav ekranı');
  await stu.setViewportSize({width:320,height:700});await scan(stu,'Öğrenci sınav ekranı (320 px)');

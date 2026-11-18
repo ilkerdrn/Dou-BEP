@@ -38,6 +38,11 @@ export function createApiHandler(store,{port=4173}={}){
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
     const body=await readJson(req,900000);response(res,200,store.pilotSubmit(match[1],body.answers));return true;
    }
+   if(path==='/api/pilot/draft'&&req.method==='POST'){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    const body=await readJson(req,900000);response(res,200,store.pilotSaveDraft(match[1],body.answers));return true;
+   }
    if((path==='/api/pilot/break/start'||path==='/api/pilot/break/end')&&req.method==='POST'){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
@@ -94,9 +99,13 @@ export function createApiHandler(store,{port=4173}={}){
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   if(path==='/api/pilot/live'&&req.method==='GET'){response(res,200,store.pilotLive(actor));return true;}
+   if(path==='/api/pilot/batch'&&req.method==='POST'){
+    const body=await readJson(req,300000);response(res,201,store.pilotIssueBatch(actor,body.rows));return true;
+   }
    if(path==='/api/pilot'&&req.method==='GET'){response(res,200,{items:store.pilotList(actor)});return true;}
    if(path==='/api/pilot'&&req.method==='POST'){
-    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId,{extraMinutes:body.extraMinutes===undefined?0:body.extraMinutes,breakMinutes:body.breakMinutes===undefined?0:body.breakMinutes})});return true;
+    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId,{extraMinutes:body.extraMinutes===undefined?0:body.extraMinutes,breakMinutes:body.breakMinutes===undefined?0:body.breakMinutes,candidateCode:body.candidateCode,seat:body.seat,adjustments:body.adjustments===undefined?[]:body.adjustments})});return true;
    }
    const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv))?$/);
    if(pilotId){

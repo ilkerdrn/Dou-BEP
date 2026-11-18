@@ -9,11 +9,21 @@ import {createStudentPayload} from '../accessible-player.mjs';
 import {reviewExam} from '../quality.mjs';
 import {summarizeAnonymousCohort,anonymousCohortCsv} from '../cohort-summary.mjs';
 import {detectSensitive} from '../bep-plan-import.mjs';
+import {ADJUSTMENTS} from '../batch-accommodations.mjs';
 const now=()=>Date.now();
 const sha=s=>createHash('sha256').update(s).digest('hex');
 const IDENTIFIER=/^[a-f0-9-]{36}$/;
 const CODE=/^[0-9A-F]{20}$/;
-const WAIT_MS=45*60*1000;
+const WAIT_MS=Math.min(480,Math.max(5,Number(process.env.BEP_PILOT_CODE_VALID_MINUTES)||45))*60*1000;
+const MAX_RESUMES=5;
+const CANDIDATE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9-]{1,20}$/;
+const SEAT=/^[A-Za-z0-9-]{1,12}$/;
+// Learner-screen presets derived from approved adjustment codes. Staff-kind codes are only shown to the invigilator.
+export function uiProfile(adjustments=[]){
+ const a=new Set(adjustments);
+ return {fontSize:a.has('LARGE_PRINT')?28:0,lineSpacing:a.has('LARGE_PRINT')?2:0,highContrast:a.has('HIGH_CONTRAST'),simpleScreen:a.has('SIMPLE_SCREEN')||a.has('ACCESSIBLE_HTML'),
+  largeTargets:a.has('LARGE_TARGETS')||a.has('WIDE_RESPONSE'),onePerPage:a.has('ONE_PER_PAGE'),wideResponse:a.has('WIDE_RESPONSE')};
+}
 const SUBMIT_GRACE_MS=120*1000;
 // Operational limits are configurable per installation (defaults suit a single local machine; not load-certified).
 const envInt=(name,def,min,max)=>{const v=Number(process.env[name]);return Number.isInteger(v)&&v>=min&&v<=max?v:def;};
@@ -26,9 +36,10 @@ const KEEP_MS=24*60*60*1000;
 // changing the candidate code on each guess; code-specific budget limits repeats.
 // No IP address, submitted code, learner identifier or free text is retained.
 const REDEEM_WINDOW_MS=60*1000;
-const REDEEM_GLOBAL_LIMIT=12;
+// A lab of many learners sharing one machine/IP can produce typos in bursts: the global guess budget is configurable (guess space is 80 bits).
+const REDEEM_GLOBAL_LIMIT=Number.isInteger(Number(process.env.BEP_PILOT_REDEEM_GLOBAL_LIMIT))&&Number(process.env.BEP_PILOT_REDEEM_GLOBAL_LIMIT)>=12&&Number(process.env.BEP_PILOT_REDEEM_GLOBAL_LIMIT)<=2000?Number(process.env.BEP_PILOT_REDEEM_GLOBAL_LIMIT):12;
 const REDEEM_CODE_LIMIT=5;
-const REDEEM_LOCK_MS=15*60*1000;
+const REDEEM_LOCK_MS=(Number.isInteger(Number(process.env.BEP_PILOT_REDEEM_LOCK_MINUTES))&&Number(process.env.BEP_PILOT_REDEEM_LOCK_MINUTES)>=1&&Number(process.env.BEP_PILOT_REDEEM_LOCK_MINUTES)<=60?Number(process.env.BEP_PILOT_REDEEM_LOCK_MINUTES):15)*60*1000;
 const REDEEM_MAX_KEYS=2048;
 const GLOBAL_KEY=sha('bep-anonymous-redeem-global-v2.35');
 export function pilotSessions(db,{StoreError,log}){
@@ -41,7 +52,7 @@ export function pilotSessions(db,{StoreError,log}){
  // v2.84: per-session approved extra time (Moodle/Canvas-style user override). Idempotent migration.
  if(!db.prepare("PRAGMA table_info(pilot_sessions)").all().some(c=>c.name==='extra_minutes'))db.exec('ALTER TABLE pilot_sessions ADD COLUMN extra_minutes INTEGER NOT NULL DEFAULT 0');
  // v2.85: teacher-approved rest-break allowance. The exam clock is paused while on break (break time is not exam time).
- for(const [col,ddl] of [['break_minutes','INTEGER NOT NULL DEFAULT 0'],['break_used_ms','INTEGER NOT NULL DEFAULT 0'],['break_started_at','INTEGER'],['break_count','INTEGER NOT NULL DEFAULT 0']])
+ for(const [col,ddl] of [['break_minutes','INTEGER NOT NULL DEFAULT 0'],['break_used_ms','INTEGER NOT NULL DEFAULT 0'],['break_started_at','INTEGER'],['break_count','INTEGER NOT NULL DEFAULT 0'],['candidate_code','TEXT'],['seat','TEXT'],['profile','TEXT'],['draft_answers','TEXT'],['draft_at','INTEGER'],['resume_count','INTEGER NOT NULL DEFAULT 0']])
   if(!db.prepare('PRAGMA table_info(pilot_sessions)').all().some(c=>c.name===col))db.exec(`ALTER TABLE pilot_sessions ADD COLUMN ${col} ${ddl}`);
  db.exec(`CREATE TABLE IF NOT EXISTS pilot_reviews(
   session_id TEXT PRIMARY KEY REFERENCES pilot_sessions(id) ON DELETE CASCADE,
@@ -96,7 +107,11 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function state(row){if(row.status==='revoked')return 'revoked';if(row.expires_at<=now()&&row.status!=='submitted')return 'expired';return row.status;}
  function meta(row,details=false){return {id:row.id,examId:row.exam_id,revision:row.revision,status:state(row),createdAt:row.created_at,expiresAt:row.expires_at,startedAt:row.started_at,submittedAt:row.submitted_at,...(details?{answers:row.answers?JSON.parse(row.answers):null}:{})};}
- function issue(actor,examId,{extraMinutes=0,breakMinutes=0}={}){permit(actor);cleanup();
+ function issue(actor,examId,{extraMinutes=0,breakMinutes=0,candidateCode='',seat='',adjustments=[]}={}){permit(actor);cleanup();
+  const cand=String(candidateCode||'').trim().toUpperCase(),seatLabel=String(seat||'').trim();
+  if(cand&&!CANDIDATE.test(cand))error('bad_candidate','Aday kodu KOD-, ORNEK-, TEST-, DEMO- veya ANON- ile başlayan yapay bir kod olmalıdır (gerçek ad veya numara yazmayın).',422);
+  if(seatLabel&&!SEAT.test(seatLabel))error('bad_seat','Koltuk etiketi en çok 12 harf, rakam veya tire olabilir.',422);
+  if(!Array.isArray(adjustments)||adjustments.length>12||new Set(adjustments).size!==adjustments.length||adjustments.some(x=>typeof x!=='string'||!Object.hasOwn(ADJUSTMENTS,x)))error('bad_adjustments','Geçersiz veya yinelenen düzenleme kodu.',422);
   if(!Number.isInteger(breakMinutes)||breakMinutes<0||breakMinutes>60)error('bad_break_time','Mola hakkı 0–60 dakika arasında tam sayı olmalıdır.',422);
   if(!Number.isInteger(extraMinutes)||extraMinutes<0||extraMinutes>120)error('bad_extra_time','Ek süre 0–120 dakika arasında tam sayı olmalıdır.',422);if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(examId,actor.tenantId);
@@ -114,8 +129,30 @@ export function pilotSessions(db,{StoreError,log}){
   const stamp=now(),id=randomUUID();
   db.prepare(`INSERT INTO pilot_sessions(id,tenant_id,exam_id,owner_id,revision,code_hash,status,created_at,expires_at)
   VALUES(?,?,?,?,?,?,'issued',?,?)`).run(id,actor.tenantId,examId,actor.id,exam.revision,sha(raw),stamp,stamp+WAIT_MS);
-  db.prepare('UPDATE pilot_sessions SET extra_minutes=?,break_minutes=? WHERE id=?').run(extraMinutes,breakMinutes,id);
-  log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code};
+  db.prepare('UPDATE pilot_sessions SET extra_minutes=?,break_minutes=?,candidate_code=?,seat=?,profile=? WHERE id=?').run(extraMinutes,breakMinutes,cand||null,seatLabel||null,JSON.stringify(adjustments),id);
+  log(actor,'pilot.issued',id);return {...meta(db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(id)),code,candidateCode:cand,seat:seatLabel,examTitle:payload.title,durationMinutes:payload.durationMinutes,extraMinutes,breakMinutes,adjustments,codeValidMinutes:Math.round(WAIT_MS/60000)};
+ }
+ /** Atomic: either every row gets a code or none (a lab plan must not be half-issued). */
+ function issueBatch(actor,rows){permit(actor);
+  if(!Array.isArray(rows)||!rows.length||rows.length>100)error('bad_batch','Plan 1–100 satır içermelidir.',422);
+  const seen=new Set();
+  db.exec('BEGIN IMMEDIATE');
+  try{const out=[];
+   for(const [i,r] of rows.entries()){
+    if(!r||typeof r!=='object')error('bad_batch',`${i+1}. satır geçersiz.`,422);
+    const key=String(r.candidateCode||'').trim().toUpperCase()+'|'+r.examId;if(r.candidateCode&&seen.has(key))error('bad_batch',`${i+1}. satır: aynı aday için aynı sınav iki kez var.`,422);seen.add(key);
+    try{out.push(issue(actor,r.examId,{extraMinutes:r.extraMinutes??0,breakMinutes:r.breakMinutes??0,candidateCode:r.candidateCode,seat:r.seat,adjustments:r.adjustments??[]}));}
+    catch(e){if(e&&e.status)e.message=`${i+1}. satır: ${e.message}`;throw e;}
+   }
+   db.exec('COMMIT');return {items:out};
+  }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
+ }
+ function live(actor){permit(actor);cleanup();
+  const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 300`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
+  const t=now();
+  return {at:t,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
+   remainingSeconds:r.status==='started'?Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-t)/1000)):null,onBreak:!!r.break_started_at,breakCount:r.break_count||0,resumeCount:r.resume_count||0,lastSaveAt:r.draft_at||null,
+   startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
  }
  function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
  function view(actor,id){return meta(rowFor(actor,id),true);}
@@ -131,19 +168,32 @@ export function pilotSessions(db,{StoreError,log}){
   limiterBlocked(key,time);
   try{
    if(!CODE.test(raw))error('invalid_code','Kod geçersiz veya kullanılmış.',401);
-   const row=db.prepare('SELECT * FROM pilot_sessions WHERE code_hash=?').get(sha(raw));
-   if(!row||row.status!=='issued'||row.expires_at<=time)error('invalid_code','Kod geçersiz veya kullanılmış.',401);
+   let row=db.prepare('SELECT * FROM pilot_sessions WHERE code_hash=?').get(sha(raw));
+   // A started, unsubmitted, unexpired session may be RESUMED with its own code (browser crash / reload). Limited and visible to the invigilator.
+   const resumable=!!row&&row.status==='started'&&(row.resume_count||0)<MAX_RESUMES;
+   if(!row||(row.status!=='issued'&&!resumable)||row.expires_at<=time)error('invalid_code','Kod geçersiz veya kullanılmış.',401);
    const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
    if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti. Öğretmenden yeni kod alın.',409);
    approvedExam(exam);
    let payload;try{payload=createStudentPayload(JSON.parse(exam.body),{extraMinutes:row.extra_minutes||0});}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
    const token=randomBytes(32).toString('base64url');
+   const adjustments=JSON.parse(row.profile||'[]');
+   const extras={candidateCode:row.candidate_code||'',seat:row.seat||'',profile:uiProfile(adjustments),staffNotes:adjustments.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};
+   if(row.status==='started'){
+    row=settleBreak(row);// resuming ends a running break
+    const claimed=db.prepare("UPDATE pilot_sessions SET claim_hash=?,resume_count=resume_count+1 WHERE id=? AND status='started' AND expires_at>?").run(sha(token),row.id,now());
+    if(!claimed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
+    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
+    const fresh=db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(row.id);
+    log({tenantId:row.tenant_id,id:row.owner_id},'pilot.resumed',row.id);
+    return {token,resumed:true,expiresAt:fresh.expires_at,remainingSeconds:Math.max(0,Math.floor((fresh.expires_at-SUBMIT_GRACE_MS-now())/1000)),breakSeconds:Math.max(0,Math.floor(((fresh.break_minutes||0)*60000-(fresh.break_used_ms||0))/1000)),draft:fresh.draft_answers?JSON.parse(fresh.draft_answers):{},draftAt:fresh.draft_at||null,exam:payload,...extras};
+   }
    // The exam clock starts at redemption; the server, not the browser, owns the deadline (+ small network grace).
    const startedAt=now(),totalMs=(payload.durationMinutes+payload.extraMinutes)*60000,deadline=startedAt+totalMs+SUBMIT_GRACE_MS;
    const changed=db.prepare("UPDATE pilot_sessions SET status='started',claim_hash=?,started_at=?,expires_at=? WHERE id=? AND status='issued' AND expires_at>?").run(sha(token),startedAt,deadline,row.id,now());
    if(!changed.changes)error('invalid_code','Kod artık kullanılamıyor.',409);
    db.prepare('DELETE FROM pilot_redeem_throttle WHERE identity_hash=?').run(key);
-   return {token,expiresAt:deadline,remainingSeconds:Math.floor(totalMs/1000),breakSeconds:(row.break_minutes||0)*60,exam:payload};
+   return {token,resumed:false,expiresAt:deadline,remainingSeconds:Math.floor(totalMs/1000),breakSeconds:(row.break_minutes||0)*60,draft:{},exam:payload,...extras};
   }catch(err){
    if(err?.code==='invalid_code'){
     recordFailure(key,time,REDEEM_CODE_LIMIT,15*60*1000,REDEEM_LOCK_MS);
@@ -201,6 +251,16 @@ export function pilotSessions(db,{StoreError,log}){
   const after=settleBreak(row),allow=after.break_minutes*60000;
   return {ok:true,remainingSeconds:remainingFor(after),breakRemainingSeconds:Math.floor((allow-after.break_used_ms)/1000)};
  }
+ /** Server-side autosave of in-progress answers so a browser crash/reload loses at most a few seconds. Visible only to the owner session; deleted on submit. */
+ function saveDraft(token,answers){const row=claimed(token);
+  if(row.expires_at<=now())error('invalid_session','Sınav süresi dolmuş.',401);
+  const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
+  if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti.',409);
+  const payload=createStudentPayload(JSON.parse(exam.body));const checked=validate(payload,answers);
+  const json=JSON.stringify(checked);if(json.length>TEXT_ANSWERS_TOTAL_MAX)error('too_large','Yanıt çok büyük.',413);
+  const at=now();db.prepare('UPDATE pilot_sessions SET draft_answers=?,draft_at=? WHERE id=? AND status=\'started\' AND claim_hash=?').run(json,at,row.id,sha(token));
+  return {ok:true,savedAt:at};
+ }
  function submit(token,answers){if(typeof token!=='string'||token.length>200||token.length<25)error('invalid_session','Oturum anahtarı geçersiz.',401);
   let row=db.prepare('SELECT * FROM pilot_sessions WHERE claim_hash=?').get(sha(token));
   if(row&&row.status==='started')row=settleBreak(row);// submitting during a break ends it first
@@ -210,7 +270,7 @@ export function pilotSessions(db,{StoreError,log}){
   approvedExam(exam);
   const payload=createStudentPayload(JSON.parse(exam.body));const checked=validate(payload,answers);
   if(JSON.stringify(checked).length>TEXT_ANSWERS_TOTAL_MAX)error('too_large','Yanıt çok büyük.',413);
-  const result=db.prepare("UPDATE pilot_sessions SET status='submitted',answers=?,submitted_at=?,claim_hash=NULL WHERE id=? AND status='started' AND claim_hash=? AND expires_at>?").run(JSON.stringify(checked),now(),row.id,sha(token),now());
+  const result=db.prepare("UPDATE pilot_sessions SET status='submitted',answers=?,submitted_at=?,claim_hash=NULL,draft_answers=NULL WHERE id=? AND status='started' AND claim_hash=? AND expires_at>?").run(JSON.stringify(checked),now(),row.id,sha(token),now());
   if(!result.changes)error('invalid_session','Oturum daha önce teslim edilmiş.',409);
   return {ok:true,receipt:row.id.slice(0,8).toUpperCase(),message:'Anonim yanıtlar bir kez kaydedildi. Otomatik puanlama yapılmadı.'};
  }
@@ -328,6 +388,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotIssueBatch:issueBatch,pilotLive:live,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }

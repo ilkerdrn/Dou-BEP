@@ -17,7 +17,7 @@ check('Teacher modifications require CSRF',api.includes('store.requireCsrf(actor
 check('Anonymous response kinds limited (objective + bounded written text, PII flagged for teachers)',student.includes("['choice','truefalse','matching','short']")&&student.includes('TEXT_ANSWER_MAX_CHARS')&&student.includes('detectSensitive')&&!/MediaRecorder|getUserMedia/.test(student));
 check('Manual reviews use tenant scoped ownership',student.includes('rowFor(actor,id)')&&student.includes("roleCan(actor.role,'assessment.record')"));
 check('Student code uses one-time claim hash',student.includes('claim_hash')&&student.includes("status='started'"));
-check('v2.35 student pilot code throttle is persistent and cannot be reset with HTTP restart',student.includes('CREATE TABLE IF NOT EXISTS pilot_redeem_throttle')&&student.includes('REDEEM_GLOBAL_LIMIT=12')&&student.includes('limiterBlocked(GLOBAL_KEY,time)')&&!api.includes('const pilotFailures=new Map()'));
+check('v2.35 student pilot code throttle is persistent and cannot be reset with HTTP restart',student.includes('CREATE TABLE IF NOT EXISTS pilot_redeem_throttle')&&student.includes('const REDEEM_GLOBAL_LIMIT=')&&student.includes('BEP_PILOT_REDEEM_GLOBAL_LIMIT)>=12')&&student.includes('):12;')&&student.includes('limiterBlocked(GLOBAL_KEY,time)')&&!api.includes('const pilotFailures=new Map()'));
 check('v2.35 retry counters store digest keys, not student codes or IP',student.includes('identity_hash TEXT PRIMARY KEY')&&student.includes("sha('pilot-code:'+raw.slice(0,80))")&&!student.includes('remoteAddress'));
 check('v2.35 pilot issue, redeem, submit and review all validate approval ledger',student.includes('function approvedExam(row)')&&student.includes('body_sha256')&&student.includes('approvedExam(exam)')&&student.includes('approval_integrity'));
 check('v2.35 student redemption request body is size-limited',api.includes("const body=await readJson(req,3000)")&&api.includes('store.pilotRedeem(body.code)'));
@@ -429,7 +429,7 @@ const navigationJs=readFileSync(join(root,'admin-navigation.js'),'utf8');
 const examGuardJs=readFileSync(join(root,'exam-page-health.js'),'utf8');
 const navLinks=html=>[...html.matchAll(/class="dou-nav-link portal-menu[^"]*" href="([^"]+)"/g)].map(x=>x[1]);
 const goldenNav=navLinks(readFileSync(join(root,'institution.html'),'utf8'));
-check('v2.67 12 static navigation links persist across admin and reader screens',goldenNav.length===12&&adminPages.every(name=>JSON.stringify(navLinks(readFileSync(join(root,name),'utf8')))===JSON.stringify(goldenNav)));
+check('v2.67 13 static navigation links persist across admin and reader screens',goldenNav.length===13&&adminPages.every(name=>JSON.stringify(navLinks(readFileSync(join(root,name),'utf8')))===JSON.stringify(goldenNav)));
 check('v2.67 exam screen has visible loading/retry and app ready markers',readFileSync(join(root,'institutional-exams.html'),'utf8').includes('id="exam-recovery"')&&readFileSync(join(root,'institutional-exams.html'),'utf8').includes('id="exam-loading"')&&readFileSync(join(root,'institutional-exams.mjs'),'utf8').includes("dataset.examAppReady='ready'"));
 check('v2.67 new exam action is always available',adminPages.every(name=>readFileSync(join(root,name),'utf8').includes('href="/kurumsal-sinav?new=1"')));
 check('v2.67 all admin pages share premium stylesheet',adminPages.every(name=>readFileSync(join(root,name),'utf8').includes('href="/admin-premium.css"')));

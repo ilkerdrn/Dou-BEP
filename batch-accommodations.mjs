@@ -8,6 +8,8 @@ export const ADJUSTMENTS=Object.freeze({
  HIGH_CONTRAST:{label:'Yüksek kontrast',kind:'layout'},
  ONE_PER_PAGE:{label:'Her sayfada tek soru',kind:'layout'},
  WIDE_RESPONSE:{label:'Geniş cevap alanı',kind:'layout'},
+ LARGE_TARGETS:{label:'Büyük tıklama alanları (dijital sınav)',kind:'layout'},
+ SIMPLE_SCREEN:{label:'Basit ekran (dijital sınav)',kind:'layout'},
  ACCESSIBLE_HTML:{label:'Ekran okuyucu / çevrimdışı sesli HTML',kind:'digital'},
  READER:{label:'Okuyucu görevli',kind:'staff'},
  SCRIBE:{label:'Yazıcı/işaretleyici görevli',kind:'staff'},

@@ -12,14 +12,14 @@ const routes=[
  ['/toplu-sinav','batch-exams.html'],['/bep-import','bep-import.html'],
  ['/sinav-operasyon','operations.html'],['/erisilebilirlik-kabul','acceptance.html'],
  ['/erisilebilirlik-kontrol','accessibility-check.html'],['/pilot-yonetim','pilot-admin.html'],
- ['/sinav-dosya-aktar','exam-source-import.html'],
+ ['/sinav-dosya-aktar','exam-source-import.html'],['/salon-oturumu','lab.html'],
  ['/dou-reader-demo','dou-reader-demo.html'],['/dou-speech-listening','dou-speech-listening.html'],['/dou-speech-phoneme','dou-speech-phoneme.html'],['/dou-speech-pool','dou-speech-pool.html']
 ];
 function read(name){return readFileSync(join(root,name),'utf8');}
 function menu(html){return [...html.matchAll(/class="dou-nav-link portal-menu[^\"]*" href="([^"]+)"/g)].map(x=>x[1]);}
 const expected=menu(read('institution.html'));
-test('premium navigation uses same exact 12 modules on every admin and reader page',()=>{
- assert.equal(expected.length,12);
+test('premium navigation uses same exact 13 modules on every admin and reader page',()=>{
+ assert.equal(expected.length,13);
  for(const file of [...routes.map(r=>r[1]),'preview-v17.html']){
   const html=read(file);
   assert.deepEqual(menu(html),expected,file);

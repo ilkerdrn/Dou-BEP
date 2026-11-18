@@ -15,10 +15,13 @@ test('single-use code, no answer keys, one-time submission, teacher view and del
  const item=f.s.pilotIssue(f.a,f.rec.id);assert.match(item.code,/^[0-9A-F]{5}(?:-[0-9A-F]{5}){3}$/);assert.equal(f.s.pilotList(f.a)[0].code,undefined);
  const raw=f.s.db.prepare('SELECT code_hash,claim_hash FROM pilot_sessions WHERE id=?').get(item.id);assert.notEqual(raw.code_hash,item.code);assert.equal(raw.claim_hash,null);
  const claimed=f.s.pilotRedeem(item.code);assert.equal(claimed.exam.questions.length,4);assert.equal(JSON.stringify(claimed.exam).includes('teacherNote'),false);assert.equal(JSON.stringify(claimed.exam).includes('answer'),false);
- assert.throws(()=>f.s.pilotRedeem(item.code),{code:'invalid_code'});
+ // v2.92: a started, unsubmitted session may be resumed with its own code; the previous token then stops working.
+ const resumed=f.s.pilotRedeem(item.code);assert.equal(resumed.resumed,true);assert.notEqual(resumed.token,claimed.token);
+ assert.throws(()=>f.s.pilotSubmit(claimed.token,{q1:'A'}),{code:'invalid_session'});
  const answer={q1:'B',q2:'A',q3:'A',q4:{'1':'A'}};
- const receipt=f.s.pilotSubmit(claimed.token,answer);assert.equal(receipt.ok,true);assert.equal(receipt.receipt.length,8);
- assert.throws(()=>f.s.pilotSubmit(claimed.token,answer),{code:'invalid_session'});
+ const receipt=f.s.pilotSubmit(resumed.token,answer);assert.equal(receipt.ok,true);assert.equal(receipt.receipt.length,8);
+ assert.throws(()=>f.s.pilotSubmit(resumed.token,answer),{code:'invalid_session'});
+ assert.throws(()=>f.s.pilotRedeem(item.code),{code:'invalid_code'});// submitted: the code is dead
  const view=f.s.pilotView(f.a,item.id);assert.equal(view.status,'submitted');assert.deepEqual(view.answers,answer);
  assert.equal(f.s.pilotList(f.a)[0].answers,undefined);
  assert.ok(f.s.audit(f.a).some(x=>x.event==='pilot.issued'));
@@ -71,10 +74,12 @@ test('HTTP: authenticated teacher-only routes and public one-use capability; no 
   const foreign=await request('/pilot/'+id,'GET',null,{Cookie:'bep_session='+f.lb.token});assert.equal(foreign.status,404);
   assert.equal((await request('/pilot/redeem','POST',{code},{Origin:'https://bad.invalid'})).status,403);
   const begin=await request('/pilot/redeem','POST',{code});assert.equal(begin.status,200);
-  assert.equal((await request('/pilot/redeem','POST',{code})).status,401);
+  const again=await request('/pilot/redeem','POST',{code});assert.equal(again.status,200);assert.equal(again.data.resumed,true);// resume rotates the token
   assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}})).status,401);
-  const receipt=await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token});assert.equal(receipt.status,200);
-  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token})).status,401);
+  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token})).status,401,'old token is dead after resume');
+  const receipt=await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+again.data.token});assert.equal(receipt.status,200);
+  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+again.data.token})).status,401);
+  assert.equal((await request('/pilot/redeem','POST',{code})).status,401,'submitted code cannot be reused');
   const view=await request('/pilot/'+id,'GET',null,{Cookie:'bep_session='+f.la.token});assert.equal(view.status,200);assert.equal(view.data.item.answers.q1,'A');
  }finally{await new Promise(resolve=>server.close(resolve));f.close();}
 });

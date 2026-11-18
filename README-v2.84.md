@@ -45,3 +45,10 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 - **Terim profili:** `BEP_TERMINOLOGY=university` ile yönetim sayfalarında "BEP kazanımı → ders öğrenme çıktısı", "2. Sınıf → Lisans / Önlisans", "Öğretmen onayı → Öğretim elemanı onayı" gibi elle yazılmış kalıplar gösterilir (varsayılan `school` değişmez). Yalnız görünüm: veri ve API aynı kalır. Belirsiz ek almış biçimler ("kazanımını" gibi) tahmin edilmez.
 - Testler: `pilot-written-answers.e2e.test.mjs`, `terminology.test.mjs` (826/826).
 - **Yapılmayanlar (kod işi değil ya da güvenlik kararı):** gözetimli/güvenli sınav (sekme kilidi, kamera), HTTPS/SSO ve çok sunuculu ölçek, sayfa yenilenince oturum kurtarma, gerçek NVDA/JAWS testi.
+
+## v2.92: Salon sınavı (aday başına farklı sınav, süre ve engel durumuna göre uyarlama)
+- **Salon planı** (`/salon-oturumu`): tek tablo ile en çok 100 aday; her satır aday kodu, koltuk, sınav, uyarlama kodları, ek süre ve mola. Toplu üretim **atomiktir** (hatalı satırda hiç kod üretilmez). Yazdırılabilir giriş kâğıtları (ad yok) ve CSV. Canlı izleme tablosu (durum, kalan süre, mola, devam sayısı, son kayıt, görevli notları).
+- **Aday başına profil:** giriş kodu o adayın sınavını, süresini ve uyarlamasını getirir; ekran otomatik ayarlanır (çok büyük yazı, yüksek kontrast, basit ekran, büyük tıklama alanları, tek soru). Görevli gerektiren düzenlemeler yalnızca hatırlatılır.
+- **Otomatik kayıt ve devam:** yanıtlar 10 sn'de sunucuya kaydedilir; aynı kodla en çok 5 kez devam edilebilir (eski belirteç geçersiz olur; süre durmaz; devam sayısı görevliye görünür). Teslimde taslak silinir.
+- Yeni ortam değişkenleri: `BEP_PILOT_REDEEM_GLOBAL_LIMIT`, `BEP_PILOT_REDEEM_LOCK_MINUTES`, `BEP_PILOT_CODE_VALID_MINUTES`. Yeni uyarlama kodları: `LARGE_TARGETS`, `SIMPLE_SCREEN`.
+- Kılavuz: `SALON-KURULUM-KILAVUZU.md`. Testler: `salon-50.e2e.test.mjs` (832/832).

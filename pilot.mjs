@@ -108,7 +108,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  activeQuestionIndex=0;buildMap();updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function openReview(){if(!exam||locked||onBreak)return;
  const body=$('review-rows');body.replaceChildren();
@@ -119,9 +119,44 @@ function openReview(){if(!exam||locked||onBreak)return;
  $('review-summary').textContent=summary();$('player').hidden=true;$('review-view').hidden=false;$('review-title').focus();announce('Gözden geçirme ekranı. '+summary());}
 function closeReview(){$('review-view').hidden=true;$('player').hidden=false;}
 function confirmAndSend(){if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
+// --- v2.92: per-session accommodation profile, server autosave and resume -------------------------------------------
+const PROFILE_LABELS={fontSize:'Çok büyük yazı',highContrast:'Yüksek kontrast',simpleScreen:'Basit ekran',largeTargets:'Büyük tıklama alanları',onePerPage:'Her sayfada tek soru'};
+function fire(id){$(id).dispatchEvent(new Event('change',{bubbles:true}));}
+function applyProfile(r){
+ const p=r.profile||{};const applied=[];
+ if(p.fontSize){$('size').value=String(p.fontSize);fire('size');applied.push(PROFILE_LABELS.fontSize);}
+ if(p.highContrast){$('contrast').checked=true;fire('contrast');applied.push(PROFILE_LABELS.highContrast);}
+ if(p.simpleScreen){$('simple-mode').checked=true;fire('simple-mode');applied.push(PROFILE_LABELS.simpleScreen);}
+ if(p.largeTargets){$('big-targets').checked=true;fire('big-targets');applied.push(PROFILE_LABELS.largeTargets);}
+ if(p.onePerPage){$('one-question').checked=true;$('one-question').disabled=true;applied.push(PROFILE_LABELS.onePerPage);}
+ const note=$('profile-note');
+ if(applied.length){note.hidden=false;note.textContent='Bu oturum için kurum onaylı düzenlemeler uygulandı: '+applied.join(', ')+'.';}
+ else note.hidden=true;
+ const who=[r.candidateCode?'Aday kodu: '+r.candidateCode:'',r.seat?'Koltuk: '+r.seat:''].filter(Boolean).join(' · ');
+ if(who)$('exam-info').textContent+=' · '+who;
+}
+function restoreDraft(draft){
+ if(!draft||typeof draft!=='object')return 0;let n=0;
+ for(const q of exam.questions){const v=draft[q.id];if(v===undefined)continue;
+  if(q.type==='short'&&typeof v==='string'){const ta=document.getElementById('text-'+q.id);if(ta){ta.value=v;ta.dispatchEvent(new Event('input',{bubbles:true}));n++;}}
+  else if(q.options&&typeof v==='string'){const radio=document.querySelector('input[name="'+q.id+'"][value="'+v+'"]');if(radio){radio.checked=true;n++;}}
+  else if(q.type==='matching'&&v&&typeof v==='object'){for(const [l,rv] of Object.entries(v)){const sel=document.querySelector('select[name="'+q.id+'_'+l+'"]');if(sel){sel.value=rv;n++;}}}
+ }
+ updateQuestionNavigation();return n;
+}
+let lastSavedJson='',saveTimer=null,autosaveTimer=null;
+function showSaved(at){const t=new Date(at).toLocaleTimeString('tr-TR');$('save-status').textContent='Yanıtlarınız otomatik kaydedildi: '+t;}
+async function autosave(){
+ if(!claim||!exam||locked||onBreak)return;
+ const answers=collectAnswers(),json=JSON.stringify(answers);if(json===lastSavedJson)return;
+ try{const r=await post('/api/pilot/draft',{answers},claim);lastSavedJson=json;showSaved(r.savedAt);}
+ catch(e){$('save-status').textContent='Otomatik kayıt yapılamadı; yeniden denenecek. Yanıtlarınız bu sayfada duruyor.';}
+}
+function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(autosave,2000);}
+function startAutosave(){clearInterval(autosaveTimer);autosaveTimer=setInterval(autosave,10000);}
 function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.type==='short'){const v=String(form.get(q.id)||'').trim();if(v)answers[q.id]=v;}else if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
- try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(autosaveTimer);clearTimeout(saveTimer);clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
  catch(e){announce(e.message,true);btn.disabled=false;}}
 // Time is up: answers are collected BEFORE inputs are locked (disabled controls are not part of FormData) and sent once.
 let pendingAnswers=null;
@@ -146,7 +181,8 @@ douReader=attachPilotReader({doc:document,win:window,
  getQuestion:()=>exam?.questions?.[activeQuestionIndex]||null,
  moveQuestion:moveReaderQuestion,announce});
 
-$('student-questions').addEventListener('change',()=>{if(exam)updateQuestionNavigation();});
+$('student-questions').addEventListener('change',()=>{if(exam){updateQuestionNavigation();scheduleSave();}});
+$('student-questions').addEventListener('input',()=>{if(exam)scheduleSave();});
 $('simple-mode').addEventListener('change',()=>document.body.classList.toggle('simple-mode',$('simple-mode').checked));
 $('big-targets').addEventListener('change',()=>document.body.classList.toggle('big-targets',$('big-targets').checked));
 // Exam-status shortcuts; reader keeps Alt+Shift+R/S/N/P/H. Never active inside text-like controls.
