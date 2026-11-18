@@ -133,6 +133,16 @@ const allowed={
  '/draft-recovery.mjs':['draft-recovery.mjs','text/javascript; charset=utf-8'],
  '/accessible-player.mjs':['accessible-player.mjs','text/javascript; charset=utf-8'],
  '/institution.html':['institution.html','text/html; charset=utf-8'],
+ '/okur/okur-worker.js':['okur/okur-worker.js','text/javascript; charset=utf-8'],
+ '/okur/models.json':['okur/models.json','application/json; charset=utf-8'],
+ '/okur/LICENSE-NOTICE.txt':['okur/LICENSE-NOTICE.txt','text/plain; charset=utf-8'],
+ '/okur/models/text.6a21984ac693.onnx':['okur/models/text.6a21984ac693.onnx','application/octet-stream'],
+ '/okur/models/sample.3c2a91ee5faa.onnx':['okur/models/sample.3c2a91ee5faa.onnx','application/octet-stream'],
+ '/okur/models/decoder.8f42fa31155e.onnx':['okur/models/decoder.8f42fa31155e.onnx','application/octet-stream'],
+ '/okur/models/frontend.1f03663afe58.wasm':['okur/models/frontend.1f03663afe58.wasm','application/wasm'],
+ '/okur/ort/1.30.0/ort-wasm-simd-threaded.mjs':['okur/ort/1.30.0/ort-wasm-simd-threaded.mjs','text/javascript; charset=utf-8'],
+ '/okur/ort/1.30.0/ort-wasm-simd-threaded.wasm':['okur/ort/1.30.0/ort-wasm-simd-threaded.wasm','application/wasm'],
+ '/dou-speech-neural.mjs':['dou-speech-neural.mjs','text/javascript; charset=utf-8'],
  '/dou-theme.css':['dou-theme.css','text/css; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
@@ -165,6 +175,9 @@ function hasPanelSession(req){
  if(!found)return false;
  try{const actor=store.actorFrom(found.slice('bep_session='.length));return !!actor&&actor.mfaSetupRequired!==true;}catch{return false;}
 }
+// WebAssembly compile (no JS eval) is allowed ONLY for pages and the worker that run the offline neural voice.
+const wasmPaths=new Set(['/pilot','/dou-reader-demo','/okur/okur-worker.js']);
+const wasmCsp=csp=>csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'");
 const securityHeaders={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
  'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
 export function createServer(){return http.createServer(async(req,res)=>{
@@ -178,7 +191,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
   }
   if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
-  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders});res.end(req.method==='HEAD'?undefined:content);}
+  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders,...(path.startsWith('/okur/models/')||path.startsWith('/okur/ort/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{}),...(wasmPaths.has(path)?{'Content-Security-Policy':wasmCsp(securityHeaders['Content-Security-Policy'])}:{})});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}
  }).on('close',()=>{
   // Tests use BEP_NO_LISTEN=1 and an ephemeral SQLite database.

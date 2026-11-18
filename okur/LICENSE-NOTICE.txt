@@ -1,0 +1,19 @@
+DOU Speech (sinir ağı) — üçüncü taraf bileşenler ve lisanslar
+==============================================================
+Bu klasördeki Türkçe sinir ağı ses modeli ve çalıştırıcı, "Okur v1.0" projesinden alınmıştır.
+
+Okur v1.0 — Telif hakkı 2026 Ahmet Hakan Beşel
+  Kaynak: https://huggingface.co/ahakan/okur-tts  ve  https://huggingface.co/spaces/ahakan/okur-tts
+  Kod: Apache License 2.0.
+  Model ağırlıkları (models/*.onnx): Creative Commons Attribution 4.0 (CC BY 4.0). ATIF GEREKLİDİR.
+  Eğitim verisi: Mozilla Common Voice 27.0 Turkish (CC0), ISSAI Turkish Speech Corpus (MIT),
+    MediaSpeech Turkish (CC BY 4.0), Google FLEURS Turkish (CC BY 4.0).
+  Ses: Common Voice'a CC0 ile kayıt bırakmış anonim bir gönüllüdür. Bu ses, gerçek bir kişiyi
+    taklit etmek veya yapay sesi insan kaydı gibi sunmak için KULLANILMAMALIDIR.
+  Çalışma zamanı: normalizer-tr (Apache-2.0, Erdem Tuna), ONNX Runtime Web 1.30.0 (MIT, Microsoft).
+  `okur-worker.js`, Okur Space'inin derlenmiş çalıştırıcısıdır; yalnızca dosya yolları
+  (/okur/models/, /okur/models.json, /okur/ort/1.30.0/) bu depoya uyarlanmıştır (Apache-2.0 değişiklik bildirimi).
+
+Sınırlamalar (model kartından): tek ses; stüdyo kaydıyla eğitilmiş modellerden daha az doğal; yabancı sözcükler ve
+kısaltmalar Türkçe harf sesleriyle okunur. Doğal veya sınav için "doğrulanmış" bir ses olarak sunulmamalıdır.
+Bütünlük: SHA256SUMS dosyasındaki özetlerle doğrulanabilir.
