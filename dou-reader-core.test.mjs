@@ -37,3 +37,10 @@ test('reading rate limited to safe configurable range',()=>{
 test('oversized narration refuses truncation instead of hiding content',()=>{
  assert.throws(()=>readerText({...q,prompt:'ö'.repeat(17000)}),/sınırını aşıyor/);
 });
+test('v2.94: okunan metin çift noktalama üretmez; yazılı ve eşleştirme sorularında nasıl yanıt verileceği söylenir',()=>{
+ const t=readerText({number:1,type:'choice',prompt:'Sonuç kaçtır?.',options:[{id:'A',label:'6.'},{id:'B',label:'8'}]});
+ assert.ok(!t.includes('..'),t);assert.match(t,/Soru 1\. Sonuç kaçtır\?\. Seçenek A: 6\. Seçenek B: 8$/);
+ assert.match(readerText({number:2,type:'short',prompt:'Ağ nedir?'}),/Bu bir yazılı yanıt sorusudur\. Yanıtınızı yazı alanına yazın$/);
+ assert.match(readerText({number:3,type:'matching',prompt:'Eşleştirin.',left:[{id:'1',label:'Kedi'}],right:[{id:'A',label:'Miyav'}]}),/Her satır için ikinci listeden bir seçenek seçin$/);
+ assert.ok(!readerText({number:4,type:'choice',prompt:'Soru?',options:[{id:'A',label:'x'},{id:'B',label:'y'}]}).includes('yazılı yanıt'),'seçmeli soruda yazılı yanıt notu yok');
+});

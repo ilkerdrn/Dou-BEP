@@ -55,3 +55,6 @@ Gerçek NVDA/JAWS ve engelli öğrenci testi, DOU Speech dinleme değerlendirmes
 
 ## v2.93: Salon (LAN) modu
 `BEP_LAN_MODE=1` (veya `BASLAT-SALON.bat`) ile sunucu salon ağında dinler; **diğer bilgisayarlardan yalnızca öğrenci sınav ekranı ve beş öğrenci API'si** erişilebilir, yönetim/giriş/diğer API'ler yalnızca sunucu bilgisayarından (loopback). Ana bilgisayar adı/`Origin` listesi (sunucunun IP'leri + `BEP_LAN_HOSTS`) dışındakiler reddedilir (DNS rebinding koruması). Salon planı sayfası öğrenci adresini giriş kâğıtlarına yazar. Varsayılan (kapalı) davranış değişmez. Testler: `server-foundation/network-policy.test.mjs`, `lan-mode.e2e.test.mjs` (gerçek ağ adresi üzerinden tarayıcı dahil).
+
+## v2.94: Görme engelli aday akışı
+`AUTO_READ` uyarlama kodu: sınav açılınca kısa yönerge + ilk soru, her soru geçişinde o sorunun metni kendiliğinden okunur (yerel Türkçe ses, yoksa çevrimdışı sinir ağı sesi; model oturum açılırken önceden yüklenir). Okunan metin düzeltildi ("..", yazılı yanıt ve eşleştirme yönergeleri). Salon sayfasında "Kodu sesli oku" (yalnız yerel Türkçe ses). Giriş alanı otomatik odaklı. Testler: `pilot-auto-read.e2e.test.mjs`, `salon-50.e2e.test.mjs` (844).

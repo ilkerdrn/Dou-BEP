@@ -27,8 +27,9 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if(!has)$('reader-status').textContent='Yerel Türkçe ses bulunamadı. Yazılı sorular ve klavyeyle gezinme kullanılabilir.';
  }
  function syncQuestion(){const q=getQuestion();$('reader-read').disabled=(!engine.refresh().length&&!neuralOk)||!q||q.audioAllowed===false;}
- function read(){const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
-  try{active().speak(readerText(question),{rate:$('reader-rate').value});}
+ function read(prefix){prefix=typeof prefix==='string'?prefix:'';// click handlers pass an Event: never treat it as text
+  const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
+  try{active().speak((prefix?prefix.replace(/[.]+$/,'')+'. ':'')+readerText(question),{rate:$('reader-rate').value});}
   catch(e){active().stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
  function navigate(direction){engine.stop();neural?.stop();moveQuestion(direction);}
@@ -51,5 +52,5 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
  doc.addEventListener('keydown',keydown);
  if(win.speechSynthesis?.addEventListener)win.speechSynthesis.addEventListener('voiceschanged',refreshVoices);
  refreshVoices();
- return {syncQuestion,stop:()=>{engine.stop();neural?.stop();},read,refreshVoices,destroy:()=>{engine.stop();neural?.destroy();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
+ return {syncQuestion,preload:()=>{try{if(useNeural)neural?.preload?.().catch(()=>{});}catch{}},isReady:()=>useNeural?!!neural:engine.refresh().length>0,stop:()=>{engine.stop();neural?.stop();},read,refreshVoices,destroy:()=>{engine.stop();neural?.destroy();doc.removeEventListener('keydown',keydown);if(win.speechSynthesis?.removeEventListener)win.speechSynthesis.removeEventListener('voiceschanged',refreshVoices);}};
 }

@@ -52,9 +52,17 @@ function renderIssued(items){
  for(const it of items){const tr=el('tr');
   const staff=(it.adjustments||[]).filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label).join(', ')||'—';
   const code=el('td');const c=el('span',it.code);c.className='code-big';code.append(c);
+  const say=el('button','Kodu sesli oku');say.type='button';say.className='ghost';say.setAttribute('aria-label',(it.candidateCode||'Aday')+' için giriş kodunu sesli oku');say.addEventListener('click',()=>speakCode(it.code));code.append(el('br'),say);
   tr.append(el('td',it.seat||'—'),el('td',it.candidateCode||'—'),el('td',it.examTitle),el('td',`${it.durationMinutes}${it.extraMinutes?' + '+it.extraMinutes:''} dk${it.breakMinutes?' · mola '+it.breakMinutes+' dk':''}`),code,el('td',staff));
   body.append(tr);}
  $('plan-result').hidden=false;
+}
+/** Görme engelli aday kâğıdı okuyamaz: görevli kodu yerel Türkçe sesle dinleyebilir (uzak/bulut ses kullanılmaz). */
+export function codeSpeech(code){return String(code||'').toUpperCase().split('').map(ch=>ch==='-'?'tire':ch).join(', ');}
+function speakCode(code){
+ const synth=window.speechSynthesis;const voice=synth?.getVoices?.().find(v=>v.localService===true&&/^tr(?:[-_]|$)/i.test(String(v.lang||'')));
+ if(!synth||!voice||typeof window.SpeechSynthesisUtterance!=='function'){msg('Bu bilgisayarda yerel Türkçe ses yok. Kodu aday için görevli yüksek sesle okuyup girmelidir.',true);return;}
+ synth.cancel();const u=new window.SpeechSynthesisUtterance(codeSpeech(code));u.lang='tr-TR';u.voice=voice;u.rate=.8;synth.speak(u);msg('Kod okunuyor. Tekrar dinlemek için düğmeye yeniden basın.');
 }
 function buildSlips(){
  const box=$('slips');box.replaceChildren();

@@ -195,3 +195,25 @@ test('tarayıcı: üç farklı aday üç farklı profille açılır; çökme son
   assert.match(await T.textContent('#plan-status'),/sınav numarası/);
  }finally{await browser.close();}
 });
+test('görme engelli aday için kod sesli okunur (yalnız yerel Türkçe ses); ses yoksa görevli uyarılır',{skip:chromium?false:'playwright yok',timeout:60000},async()=>{
+ const {codeSpeech}=await import('./lab.mjs');
+ assert.equal(codeSpeech('A1B2C-3D4E5'),'A, 1, B, 2, C, tire, 3, D, 4, E, 5');
+ const rows=[{candidateCode:'KOD-777',seat:'PC-77',examId:examIds[0],adjustments:['AUTO_READ'],extraMinutes:0,breakMinutes:0}];
+ const browser=await chromium.launch();
+ try{
+  for(const withVoice of [true,false]){
+   const ctx=await browser.newContext({viewport:{width:1200,height:900}});
+   if(withVoice)await ctx.addInitScript(`(()=>{window.__said=[];const v={name:'T',lang:'tr-TR',localService:true,voiceURI:'t'};Object.defineProperty(window,'SpeechSynthesisUtterance',{value:function(t){this.text=t;},configurable:true,writable:true});Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{getVoices:()=>[v],speak:u=>window.__said.push(u.text),cancel(){}}});})();`);
+   else await ctx.addInitScript(`Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{getVoices:()=>[{name:'Bulut',lang:'tr-TR',localService:false,voiceURI:'r'}],speak(){window.__leak=true;},cancel(){}}});Object.defineProperty(window,'SpeechSynthesisUtterance',{value:function(t){this.text=t;},configurable:true,writable:true});`);
+   const T=await ctx.newPage();await T.goto(base+'/kurum');
+   await T.fill('input[name=tenantId]','anonim-s');await T.fill('input[name=email]','t@anonim-s.invalid');await T.fill('input[name=password]',pass);await T.keyboard.press('Enter');await T.waitForSelector('.dou-nav',{state:'visible'});
+   await T.goto(base+'/salon-oturumu');await T.waitForSelector('#workspace:not([hidden])');
+   await T.fill('#plan-csv','aday_kodu;koltuk;sinav_no;uyarlamalar;ek_sure_dakika;mola_dakika\nKOD-'+(700+(withVoice?1:2))+';PC-77;1;AUTO_READ;0;0');
+   await T.click('#plan-issue');await T.waitForSelector('#plan-result:not([hidden])');
+   await T.click('#plan-rows button:has-text("Kodu sesli oku")');
+   if(withVoice){const said=await T.evaluate(()=>window.__said);assert.equal(said.length,1);assert.match(said[0],/^[0-9A-F](, [0-9A-F]|, tire)+$/);}
+   else{assert.equal(await T.evaluate(()=>window.__leak===true),false,'uzak (bulut) ses kullanılmaz');assert.match(await T.textContent('#message'),/yerel Türkçe ses yok.*görevli yüksek sesle okuyup/);}
+   await ctx.close();
+  }
+ }finally{await browser.close();}
+});

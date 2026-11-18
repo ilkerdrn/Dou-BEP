@@ -84,7 +84,7 @@ function updateQuestionNavigation(focus=false){
  douReader?.syncQuestion();
  refreshProgress();updateMap();
  $('question-progress').textContent=single?`Soru ${activeQuestionIndex+1} / ${cards.length} · ${answered(exam.questions[activeQuestionIndex])?'Cevaplandı':'Henüz cevaplanmadı'}`:`${cards.length} soru birlikte gösteriliyor`;
- if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();}
+ if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();scheduleAutoRead();}
 }
 function render(){const area=$('student-questions');area.replaceChildren();
  for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
@@ -108,7 +108,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  activeQuestionIndex=0;buildMap();updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(autoRead){douReader?.preload();scheduleAutoRead(r.resumed?'Oturum kaldığınız yerden devam ediyor':INTRO);}if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function openReview(){if(!exam||locked||onBreak)return;
  const body=$('review-rows');body.replaceChildren();
@@ -120,7 +120,10 @@ function openReview(){if(!exam||locked||onBreak)return;
 function closeReview(){$('review-view').hidden=true;$('player').hidden=false;}
 function confirmAndSend(){if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
 // --- v2.92: per-session accommodation profile, server autosave and resume -------------------------------------------
-const PROFILE_LABELS={fontSize:'Çok büyük yazı',highContrast:'Yüksek kontrast',simpleScreen:'Basit ekran',largeTargets:'Büyük tıklama alanları',onePerPage:'Her sayfada tek soru'};
+let autoRead=false,readTimer=null;
+const INTRO='Sınav başladı. Sorular otomatik okunur. Yeniden okumak için Alt Shift R, durdurmak için Alt Shift S, sonraki soru için Alt Shift N, kalan süreyi duymak için Alt Shift T.';
+function scheduleAutoRead(prefix=''){if(!autoRead||locked||onBreak||!douReader)return;clearTimeout(readTimer);readTimer=setTimeout(()=>{if(autoRead&&!locked&&!onBreak)douReader.read(prefix);},250);}
+const PROFILE_LABELS={autoRead:'Otomatik sesli okuma',fontSize:'Çok büyük yazı',highContrast:'Yüksek kontrast',simpleScreen:'Basit ekran',largeTargets:'Büyük tıklama alanları',onePerPage:'Her sayfada tek soru'};
 function fire(id){$(id).dispatchEvent(new Event('change',{bubbles:true}));}
 function applyProfile(r){
  const p=r.profile||{};const applied=[];
@@ -129,6 +132,7 @@ function applyProfile(r){
  if(p.simpleScreen){$('simple-mode').checked=true;fire('simple-mode');applied.push(PROFILE_LABELS.simpleScreen);}
  if(p.largeTargets){$('big-targets').checked=true;fire('big-targets');applied.push(PROFILE_LABELS.largeTargets);}
  if(p.onePerPage){$('one-question').checked=true;$('one-question').disabled=true;applied.push(PROFILE_LABELS.onePerPage);}
+ if(p.autoRead){$('auto-read').checked=true;autoRead=true;applied.push(PROFILE_LABELS.autoRead);}
  const note=$('profile-note');
  if(applied.length){note.hidden=false;note.textContent='Bu oturum için kurum onaylı düzenlemeler uygulandı: '+applied.join(', ')+'.';}
  else note.hidden=true;
@@ -165,6 +169,7 @@ $('answer-form').addEventListener('submit',event=>{event.preventDefault();confir
 $('review-open').addEventListener('click',openReview);
 $('review-back').addEventListener('click',()=>{closeReview();updateQuestionNavigation(true);});
 $('review-send').addEventListener('click',confirmAndSend);
+$('auto-read').addEventListener('change',()=>{autoRead=$('auto-read').checked;if(!autoRead){clearTimeout(readTimer);douReader?.stop();announce('Otomatik okuma kapatıldı. Alt Shift R ile istediğinizde okutabilirsiniz.');}else{announce('Otomatik okuma açıldı.');scheduleAutoRead();}});
 $('flag-btn').addEventListener('click',toggleFlag);
 $('break-start').addEventListener('click',startBreak);
 $('break-end').addEventListener('click',()=>endBreak(false));

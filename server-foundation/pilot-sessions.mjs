@@ -22,7 +22,7 @@ const SEAT=/^[A-Za-z0-9-]{1,12}$/;
 export function uiProfile(adjustments=[]){
  const a=new Set(adjustments);
  return {fontSize:a.has('LARGE_PRINT')?28:0,lineSpacing:a.has('LARGE_PRINT')?2:0,highContrast:a.has('HIGH_CONTRAST'),simpleScreen:a.has('SIMPLE_SCREEN')||a.has('ACCESSIBLE_HTML'),
-  largeTargets:a.has('LARGE_TARGETS')||a.has('WIDE_RESPONSE'),onePerPage:a.has('ONE_PER_PAGE'),wideResponse:a.has('WIDE_RESPONSE')};
+  largeTargets:a.has('LARGE_TARGETS')||a.has('WIDE_RESPONSE'),onePerPage:a.has('ONE_PER_PAGE'),wideResponse:a.has('WIDE_RESPONSE'),autoRead:a.has('AUTO_READ')};
 }
 const SUBMIT_GRACE_MS=120*1000;
 // Operational limits are configurable per installation (defaults suit a single local machine; not load-certified).

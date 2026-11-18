@@ -46,3 +46,14 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 - Sistem dışı kimlik eşleştirmesi (aday kodu ↔ kişi) görevlinin sorumluluğundadır.
 - Görevli gerektiren düzenlemeler (okuyucu, yazıcı, işaret dili) insan tarafından sağlanır.
 - Gerçek NVDA/JAWS ve engelli öğrenci kullanım testi **yapılmadı**; salonda canlı sınavdan önce `UZMAN-TEST-SENARYOLARI-NVDA.md` ile deneme yapılmalıdır.
+
+## 7. Görme engelli aday için sınav akışı
+**Sorular nasıl seslendirilir?** Ses önceden kaydedilmez. Soru metni sınav anında, öğrencinin bilgisayarında okunur: önce Windows'taki yerel Türkçe ses, yoksa uygulamadaki çevrimdışı sinir ağı sesi (ilk kullanımda ~38 MB yüklenir). Soru değiştiğinde (yeni sınav, yeni soru) okunan metin de değişir; ek bir hazırlık gerekmez.
+**Planda:** görme engelli aday satırına `AUTO_READ` (otomatik okuma) ve gerekirse `ACCESSIBLE_HTML` (basit ekran), `ONE_PER_PAGE`, `LARGE_PRINT`/`HIGH_CONTRAST` (az gören), ek süre ve `READER` (görevli okuyucu isteniyorsa) yazılır.
+**Aday tarafında:**
+1. Kod kâğıdını okuyamaz: görevli salon sayfasında **"Kodu sesli oku"** düğmesiyle kodu dinletir veya kodu kendisi girer (yerel Türkçe ses yoksa düğme bunu söyler). Giriş alanı sayfa açılınca odaktadır.
+2. Kod girilince sınav başlar; sistem kısa bir yönerge okur ("Alt Shift R yeniden okur, S durdurur, N sonraki soru, T kalan süre") ve ilk soruyu **kendiliğinden** okur. Her soruya geçişte o sorunun metni okunur: soru, ek yönerge, görsel için öğretmenin doğruladığı betimleme, seçenekler (veya eşleştirme listeleri) ve yazılı yanıt sorusunda "Bu bir yazılı yanıt sorusudur".
+3. Cevap vermek: Alt+Shift+1…9 ile seçenek, eşleştirmede satır satır liste, yazılı yanıtta yazı alanı. Alt+Shift+F soruyu işaretler, Alt+Shift+D durumu, Alt+Shift+T süreyi, Alt+Shift+M molayı söyler/başlatır. Okuma hızı ayarlanabilir (0,65–1,5). "Soruları otomatik oku" kutusu kapatılabilir (kendi NVDA/JAWS'ını kullanan aday için çift okumayı önler).
+4. Bütün sınav yalnızca klavyeyle yapılabilir; yanıtlar her 10 saniyede kaydedilir.
+**Sınırlar (bilinen):** Grafik, şekil ve tablo seslendirilemez; öğretmenin yazdığı betimleme ve metin karşılığı okunur (yoksa sınav erişilebilir sürüm olarak yayımlanamaz). Matematik okuması temel işlemler, kesir ve yüzde için denenmiştir; karmaşık ifadeler öğretmen tarafından sözcüklerle yazılmalıdır. Sinir ağı sesi robotik/yapay olabilir, insan okuyucunun yerini tutmaz. **Bütün bunlar otomatik testlerle doğrulandı; gerçek bir görme engelli öğrenci ve NVDA/JAWS ile deneme yapılmadı.**
+**Salon hazırlığı:** Yerel Türkçe sesi olmayan bilgisayarlarda sinir ağı sesi gerekir. Sınavdan önce o bilgisayarlarda `/dou-reader-demo` sayfasında bir kez "Soruyu oku" deyin: model tarayıcı önbelleğine iner, sınav anında beklenmez.
