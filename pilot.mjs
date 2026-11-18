@@ -6,7 +6,7 @@ const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
 let douReader=null,deadline=0,timerId=null,lastLeft=Infinity,locked=false;
 const answered=q=>{const f=new FormData($('answer-form'));if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
-const summary=()=>{const n=exam.questions.filter(answered).length;return n+' soru cevaplandı, '+(exam.questions.length-n)+' soru boş.';};
+const summary=()=>{const n=exam.questions.filter(answered).length;return n+' soru cevaplandı, '+(exam.questions.length-n)+' soru boş'+(flagged.size?', '+flagged.size+' soru işaretli':'')+'.';};
 const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
 function showAlert(m){$('time-alert').hidden=false;$('time-alert').textContent=m;announce(m);}
@@ -57,19 +57,21 @@ function moveReaderQuestion(direction){
 }
 
 function option(q,o,group){const label=el('label');label.className='option';const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
-let totalSeconds=0;
+let totalSeconds=0;const flagged=new Set();
+function toggleFlag(){if(!exam||locked)return;const q=exam.questions[activeQuestionIndex];if(flagged.has(q.id))flagged.delete(q.id);else flagged.add(q.id);updateQuestionNavigation();announce(flagged.has(q.id)?'Soru '+q.number+' işaretlendi. Sonra dönebilirsiniz.':'Soru '+q.number+' işareti kaldırıldı.');}
 function buildMap(){const box=$('question-map');box.replaceChildren();
  exam.questions.forEach((q,i)=>{const b=el('button');b.type='button';b.className='chip ghost';b.dataset.index=String(i);
   b.addEventListener('click',()=>{activeQuestionIndex=i;$('one-question').checked=true;updateQuestionNavigation(true);});box.append(b);});
  $('question-map-card').hidden=exam.questions.length<2;}
 function updateMap(){if(!exam)return;const chips=[...$('question-map').children];let done=0;
  chips.forEach((b,i)=>{const q=exam.questions[i],a=answered(q),cur=i===activeQuestionIndex;if(a)done++;
-  b.textContent=(i+1)+(a?' ✓':'');b.classList.toggle('chip-done',a);b.classList.toggle('chip-current',cur);
+  const f=flagged.has(q.id);b.textContent=(i+1)+(a?' ✓':'')+(f?' ⚑':'');b.classList.toggle('chip-done',a);b.classList.toggle('chip-current',cur);
   if(cur)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current');
-  b.setAttribute('aria-label','Soru '+(i+1)+', '+(a?'cevaplandı':'boş')+(cur?', şu an açık':''));});
+  b.setAttribute('aria-label','Soru '+(i+1)+', '+(a?'cevaplandı':'boş')+(f?', işaretli':'')+(cur?', şu an açık':''));});
  $('answer-progress').max=exam.questions.length;$('answer-progress').value=done;
  $('answer-progress').setAttribute('aria-valuetext',done+' / '+exam.questions.length+' soru cevaplandı');
- $('map-summary').textContent=done+' soru cevaplandı, '+(exam.questions.length-done)+' soru boş.';}
+ $('map-summary').textContent=done+' soru cevaplandı, '+(exam.questions.length-done)+' soru boş'+(flagged.size?', '+flagged.size+' soru işaretli':'')+'.';
+ const fb=$('flag-btn');if(fb){const cf=flagged.has(exam.questions[activeQuestionIndex].id);fb.setAttribute('aria-pressed',String(cf));fb.textContent=cf?'⚑ İşareti kaldır':'⚑ Soruyu işaretle';}}
 function updateRing(left){const fg=$('ring-fg');if(!fg||!totalSeconds)return;const len=2*Math.PI*27;fg.style.strokeDasharray=String(len);fg.style.strokeDashoffset=String(len*(1-Math.max(0,Math.min(1,left/totalSeconds))));}
 function refreshProgress(){}
 function updateQuestionNavigation(focus=false){
@@ -104,6 +106,7 @@ async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
 let pendingAnswers=null;
 function submitAnswers(){if(!claim||!exam)return;pendingAnswers=collectAnswers();lockAll();sendAnswers(pendingAnswers);}
 $('answer-form').addEventListener('submit',async event=>{event.preventDefault();if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());});
+$('flag-btn').addEventListener('click',toggleFlag);
 $('break-start').addEventListener('click',startBreak);
 $('break-end').addEventListener('click',()=>endBreak(false));
 $('one-question').addEventListener('change',()=>updateQuestionNavigation(true));
@@ -126,6 +129,7 @@ $('big-targets').addEventListener('change',()=>document.body.classList.toggle('b
 window.addEventListener('keydown',e=>{if(!exam||!e.altKey||!e.shiftKey||e.ctrlKey||e.metaKey)return;if(['TEXTAREA','SELECT'].includes(e.target?.tagName))return;
  const k=e.key.toLowerCase();
  if(k==='t'){e.preventDefault();announce('Kalan süre: '+fmt(remaining())+'.');}
+ else if(k==='f'){e.preventDefault();toggleFlag();}
  else if(k==='m'){e.preventDefault();if(onBreak)endBreak(false);else startBreak();}
  else if(k==='d'){e.preventDefault();announce('Soru '+(activeQuestionIndex+1)+': '+(answered(exam.questions[activeQuestionIndex])?'cevaplandı':'cevaplanmadı')+'. '+summary());}
  else if(/^[1-9]$/.test(e.key)&&!locked){const q=exam.questions[activeQuestionIndex];const o=q.options?.[Number(e.key)-1];if(o){e.preventDefault();const r=$('student-questions').querySelectorAll('.question')[activeQuestionIndex].querySelector('input[value="'+o.id+'"]');if(r){r.checked=true;updateQuestionNavigation();announce('Seçenek '+o.id+' seçildi.');}}}

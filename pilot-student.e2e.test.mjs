@@ -89,3 +89,16 @@ test('öğrenci /pilot: soru haritası, ilerleme çubuğu ve zaman halkası',{sk
   assert.notEqual(await page.evaluate(()=>document.getElementById('ring-fg').style.strokeDashoffset),'');
  }finally{await browser.close();s.close();}
 });
+
+test('öğrenci /pilot: soruyu işaretle ve sonra dön',{skip},async()=>{
+ const {s,port}=await server(0);const browser=await chromium.launch();
+ try{
+  const page=await browser.newPage();const dialogs=[];page.on('dialog',d=>{dialogs.push(d.message());d.accept();});await enter(page,port);
+  await page.focus('#student-questions h2');await page.keyboard.press('Alt+Shift+F');
+  assert.match(await page.textContent('#message'),/Soru 1 işaretlendi/);
+  assert.equal(await page.getAttribute('#flag-btn','aria-pressed'),'true');
+  assert.equal(await page.getAttribute('#question-map button:nth-child(1)','aria-label'),'Soru 1, boş, işaretli, şu an açık');
+  assert.match(await page.textContent('#map-summary'),/1 soru işaretli/);
+  await page.click('#send');assert.match(dialogs[0],/1 soru işaretli/);
+ }finally{await browser.close();s.close();}
+});
