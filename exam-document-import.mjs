@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {inflateRawSync} from 'node:zlib';
 import {textFromDocument, detectSensitive} from './bep-plan-import.mjs';
 import {starterQuestion,VERSION,DEFAULT_ADAPTATIONS} from './core.mjs';
+import {tableSuggestion,equationSuggestion,visualSuggestion} from './docx-rich-suggest.mjs';
 
 const MAX_FILE=1024*1024;
 const ALLOWED=/\.(?:docx|pdf|txt)$/i;
@@ -43,7 +44,12 @@ function inspectWord(bytes){
  for(const match of xml.matchAll(rx)){
   const tag=match[0];const type=tag.startsWith('<w:tbl')?'table':tag.startsWith('<m:')?'equation':'visual';
   if(type==='equation'&&tag.startsWith('<m:oMath')&&xml.slice(0,match.index).lastIndexOf('<m:oMathPara')>xml.slice(0,match.index).lastIndexOf('</m:oMathPara'))continue;
-  if(items.length<41)items.push({id:`item-${String(items.length+1).padStart(3,'0')}`,type,order:items.length+1});
+  if(items.length<41){
+   const end=type==='table'?'</w:tbl>':tag.startsWith('<m:oMathPara')?'</m:oMathPara>':tag.startsWith('<m:oMath')?'</m:oMath>':/^<w:drawing/.test(tag)?'</w:drawing>':/^<w:pict/.test(tag)?'</w:pict>':'</w:object>';
+   const stop=xml.indexOf(end,match.index);const slice=xml.slice(match.index,stop<0?match.index+20000:Math.min(stop+end.length,match.index+60000));
+   let suggestion='';try{suggestion=type==='table'?tableSuggestion(slice):type==='equation'?equationSuggestion(slice):visualSuggestion(slice);}catch{suggestion='';}
+   items.push({id:`item-${String(items.length+1).padStart(3,'0')}`,type,order:items.length+1,suggestion});
+  }
  }
  // Media parts not represented by an ordinary drawing are still evidence that
  // automated text extraction cannot preserve all the source content.

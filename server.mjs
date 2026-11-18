@@ -35,6 +35,7 @@ const allowed={
  '/kurumsal-sinav':['institutional-exams.html','text/html; charset=utf-8'],
  '/toplu-sinav':['batch-exams.html','text/html; charset=utf-8'],
  '/uyarlama-kararlari':['accommodation-admin.html','text/html; charset=utf-8'],
+ '/adjustment-guide.mjs':['adjustment-guide.mjs','text/javascript; charset=utf-8'],
  '/accommodation-admin.mjs':['accommodation-admin.mjs','text/javascript; charset=utf-8'],
  '/accommodation-admin.css':['accommodation-admin.css','text/css; charset=utf-8'],
  '/sinav-koordinasyon':['coordination.html','text/html; charset=utf-8'],

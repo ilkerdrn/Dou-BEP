@@ -13,7 +13,14 @@ const typeLabel={table:'Tablo',equation:'Office denklem nesnesi',visual:'Görsel
 function showRich(items){const section=$('source-rich-review'),list=$('source-rich-items');list.replaceChildren();section.hidden=false;
  for(const item of items){const label=document.createElement('label');label.style.display='flex';label.style.gap='12px';label.style.alignItems='start';
   const input=document.createElement('input');input.type='checkbox';input.value=item.id;input.className='source-rich-ack';input.style.minWidth='20px';input.style.minHeight='20px';
-  const span=document.createElement('span');span.textContent=`${item.order}. ${typeLabel[item.type]||'Karmaşık öğe'} — kaynak belgeyi açıp öğenin metinsel karşılığını ve ölçme anlamını denetledim.`;label.append(input,span);list.append(label);}
+  const span=document.createElement('span');span.textContent=`${item.order}. ${typeLabel[item.type]||'Karmaşık öğe'} — kaynak belgeyi açıp öğenin metinsel karşılığını ve ölçme anlamını denetledim.`;label.append(input,span);list.append(label);
+  if(item.suggestion){const box=document.createElement('div');box.className='source-suggestion';box.style.margin='4px 0 14px 32px';
+   const note=document.createElement('p');note.className='muted';note.style.margin='0 0 4px';note.textContent='Öneri (otomatik çıkarım, doğrulanmadı; kaynakla karşılaştırıp düzeltin):';
+   const text=document.createElement('p');text.style.margin='0 0 6px';text.style.whiteSpace='pre-wrap';text.textContent=item.suggestion;
+   const add=document.createElement('button');add.type='button';add.className='ghost';add.textContent=`${item.order}. öğe önerisini metin kutusuna ekle`;
+   add.addEventListener('click',()=>{const ta=$('source-transcription');const at=ta.selectionStart??ta.value.length,end=ta.selectionEnd??at;ta.value=ta.value.slice(0,at)+item.suggestion+ta.value.slice(end);ta.focus();ta.selectionStart=ta.selectionEnd=at+item.suggestion.length;ta.dispatchEvent(new Event('input',{bubbles:true}));status(`${item.order}. öğe önerisi eklendi. Metni kaynakla karşılaştırıp düzenleyin.`);});
+   box.append(note,text,add);list.append(box);}
+ }
 }
 const CONFIRM_DEFAULT=(()=>{const d=$('source-confirm-text').textContent;return ()=>d;})();
 const CONFIRM_XLSX='Excel soru sayfasındaki soruları, seçenekleri, doğru cevapları, puanları, kazanımları ve görsel betimlemelerini kaynak dosyayla karşılaştırdım. Yalnız seçili soruları kaydetmek istiyorum. Cevap anahtarı ve görsel betimlemelerinin doğruluğunun benim sorumluluğumda olduğunu biliyorum. Yeni sınavın onaysız taslak kalacağını ve ayrıca kalite kontrolü ile kurumsal onay gerektirdiğini kabul ediyorum.';
