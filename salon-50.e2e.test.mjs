@@ -193,6 +193,11 @@ test('tarayıcı: üç farklı aday üç farklı profille açılır; çökme son
   await T.click('#plan-template');await T.click('#plan-issue');await T.waitForSelector('#plan-result:not([hidden])');
   assert.equal(await T.locator('#plan-rows tr').count(),3);assert.match(await T.textContent('#plan-status'),/3 aday için kod üretildi/);
   await T.click('#plan-print');assert.equal(await T.evaluate(()=>window.__printed),true);
+  // Yazdırma görünümünde kâğıtlar gerçekten görünür olmalı (önceden #slips, gizlenen <main> içinde kaldığı için sayfa boş çıkıyordu).
+  await T.emulateMedia({media:'print'});await T.evaluate(()=>document.body.classList.add('printing-slips'));
+  const pr=await T.evaluate(()=>{const s=document.querySelector('#slips .slip');const r=s.getBoundingClientRect();let vis=true;for(let n=s;n&&n!==document.documentElement;n=n.parentElement)if(getComputedStyle(n).display==='none')vis=false;return {vis,h:r.height,others:[...document.querySelectorAll('main > *:not(#slips)')].every(e=>getComputedStyle(e).display==='none')};});
+  assert.equal(pr.vis,true,'kâğıt yazdırmada görünür');assert.ok(pr.h>100);assert.equal(pr.others,true,'diğer içerik yazdırmada gizli');
+  await T.evaluate(()=>document.body.classList.remove('printing-slips'));await T.emulateMedia({media:'screen'});
   const slips=await T.locator('#slips .slip').count();assert.equal(slips,3);
   const slipText=await T.textContent('#slips');assert.match(slipText,/KOD-001/);assert.match(slipText,/Giriş kodu/);assert.doesNotMatch(slipText,/Ayşe|Yılmaz/);
   assert.match(slipText,/Salon görevlisi tarafından sağlanacak/);

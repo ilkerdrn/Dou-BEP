@@ -122,7 +122,7 @@ if(typeof document!=='undefined'&&$('plan-issue')){
   }catch(e){$('plan-status').textContent='Kodlar üretilemedi: '+e.message+' (hiçbir kod üretilmedi).';$('plan-status').className='notice err';}
   finally{btn.disabled=false;}
  });
- $('plan-print').addEventListener('click',()=>{buildSlips();document.body.classList.add('printing-slips');window.print();setTimeout(()=>document.body.classList.remove('printing-slips'),500);});
+ $('plan-print').addEventListener('click',()=>{buildSlips();document.body.classList.add('printing-slips');const done=()=>document.body.classList.remove('printing-slips');window.addEventListener('afterprint',done,{once:true});window.print();setTimeout(done,60000);});
  $('plan-csv-download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([csvText()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='salon-giris-kodlari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);});
  $('live-refresh').addEventListener('click',()=>refreshLive().then(()=>msg('Güncellendi.')).catch(e=>msg(e.message,true)));
  $('live-auto').addEventListener('change',setAuto);
