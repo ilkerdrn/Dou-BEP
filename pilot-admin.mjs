@@ -7,8 +7,9 @@ async function api(path,method='GET',body){const r=await fetch('/api'+path,{meth
 function action(label,handler,className='ghost'){const b=el('button',label);b.type='button';b.className=className;b.addEventListener('click',async()=>{b.disabled=true;try{await handler();}catch(error){msg(error.message,true);}finally{b.disabled=false;}});return b;}
 function stateLabel(s){return {issued:'Kullanılabilir',started:'Sınav açıldı',submitted:'Teslim edildi',revoked:'İptal',expired:'Süresi doldu'}[s]||s;}
 async function refresh(){const [exams,pilots]=await Promise.all([api('/exams'),api('/pilot')]);const current=$('exams').value;const menu=$('exams');menu.replaceChildren();const eligible=exams.items.filter(x=>x.status==='approved');for(const item of eligible){const op=el('option',item.title+' · Sürüm '+item.revision);op.value=item.id;menu.append(op);}if(eligible.some(x=>x.id===current))menu.value=current;$('create').disabled=!eligible.length;
+ const titles=new Map(exams.items.map(x=>[x.id,x.title]));
  const region=$('sessions');region.replaceChildren();if(!pilots.items.length)region.append(el('p','Henüz pilot oturumu oluşturulmadı.'));
- for(const item of pilots.items){const section=el('div');section.className='session-item';section.append(el('strong',stateLabel(item.status)+' · '+item.id.slice(0,8).toUpperCase()),el('small','Sınav: '+item.examId.slice(0,8)+' · Oluşturuldu: '+new Date(item.createdAt).toLocaleString('tr-TR')+' · Bitiş: '+new Date(item.expiresAt).toLocaleTimeString('tr-TR')));
+ for(const item of pilots.items){const section=el('div');section.className='session-item';section.append(el('strong',stateLabel(item.status)+' · '+item.id.slice(0,8).toUpperCase()),el('small','Sınav: '+(titles.get(item.examId)||item.examId.slice(0,8))+(item.candidateCode?' · Aday: '+item.candidateCode:'')+(item.seat?' · Koltuk: '+item.seat:'')+' · Oluşturuldu: '+new Date(item.createdAt).toLocaleString('tr-TR')+' · Bitiş: '+new Date(item.expiresAt).toLocaleTimeString('tr-TR')));
  const buttons=el('div');buttons.className='inline';buttons.append(action('İncele',()=>show(item.id)));if(['issued','started'].includes(item.status))buttons.append(action('İptal',async()=>{if(confirm('Bu tek kullanımlık oturum iptal edilsin mi?')){await api('/pilot/'+item.id+'/revoke','POST',{});await refresh();}}));buttons.append(action('Kaydı sil',async()=>{if(confirm('Bu oturum ve anonim yanıtlar geri alınamaz biçimde silinsin mi?')){await api('/pilot/'+item.id,'DELETE');$('details').hidden=true;await refresh();}},'danger'));section.append(buttons);region.append(section);
  }
 }
@@ -16,6 +17,7 @@ function renderReview(review){
  activeReview=review;const box=$('review-questions');box.replaceChildren();
  $('review-summary').textContent=`${review.reviewedQuestions}/${review.totalQuestions} soru değerlendirildi. Girilen puan: ${review.assessedPoints}/${review.assessedMaximum}. Bu değerler yalnızca puan girilmiş sorular içindir.`;
  $('review-csv').href='/api/pilot/'+review.sessionId+'/review.csv';
+ $('review-record').href='/sinav-kaydi?id='+encodeURIComponent(review.sessionId);
  const goals=$('objective-observations');goals.replaceChildren();
  for(const g of summarizeObjectives(review)){
   const entry=el('div');entry.className='objective-observation';
@@ -28,7 +30,11 @@ function renderReview(review){
  for(const q of review.questions){
   const card=el('fieldset');card.className='review-question';const title=el('legend','Soru '+q.number+' · '+q.maxPoints+' puan');card.append(title);
   card.append(el('p',q.prompt));
-  const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?q.response:Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
+  const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?(q.responseLabel?q.response+' — '+q.responseLabel:q.response):Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
+  answer.style.whiteSpace='pre-wrap';
+  for(const flag of q.flags||[]){const w=el('p','⚠ '+flag+'. Yanıtı paylaşmadan önce kontrol edin.');w.className='notice err';card.append(w);}
+  if(q.suggestedScore!==null&&q.suggestedScore!==undefined){const sg=el('p','Cevap anahtarına göre önerilen puan: '+q.suggestedScore+' / '+q.maxPoints+' (yalnızca öneri; kesin puanı siz girersiniz).');sg.className='muted';card.append(sg);}
+  if(q.type==='short'){const sg=el('p','Yazılı yanıt otomatik puanlanmaz; kendiniz değerlendirin.');sg.className='muted';card.append(sg);}
   if(q.objective){const objective=el('p','Hedef: '+q.objective);objective.className='muted';card.append(objective);}
   const grid=el('div');grid.className='review-row';
   const scoreLabel=el('label','Öğretmen puanı (0–'+q.maxPoints+')');const score=el('input');score.type='number';score.min='0';score.max=String(q.maxPoints);score.step='0.01';score.placeholder='Değerlendirilmedi';score.value=q.score===null?'':String(q.score);score.dataset.scoreId=q.id;scoreLabel.append(score);
@@ -56,7 +62,7 @@ $('review-form').addEventListener('submit',async e=>{e.preventDefault();if(!acti
  renderReview(result.review);msg('Manuel değerlendirme güvenli biçimde kaydedildi.');
  }catch(err){msg(err.message,true);}finally{btn.disabled=false;}
 });
-$('create').addEventListener('click',async()=>{const btn=$('create');btn.disabled=true;try{const result=await api('/pilot','POST',{examId:$('exams').value});lastCode=result.item.code;$('code').textContent=lastCode;$('new-code').hidden=false;msg('Tek kullanımlık kod oluşturuldu. Kod artık listeden tekrar görüntülenemez.');await refresh();}catch(e){msg(e.message,true);}finally{btn.disabled=false;}});
+$('create').addEventListener('click',async()=>{const btn=$('create');btn.disabled=true;try{const result=await api('/pilot','POST',{examId:$('exams').value,extraMinutes:Number($('extra-minutes').value||0),breakMinutes:Number($('break-minutes').value||0)});lastCode=result.item.code;$('code').textContent=lastCode;$('new-code').hidden=false;msg('Tek kullanımlık kod oluşturuldu. Kod artık listeden tekrar görüntülenemez.');await refresh();}catch(e){msg(e.message,true);}finally{btn.disabled=false;}});
 $('refresh').addEventListener('click',()=>refresh().catch(e=>msg(e.message,true)));
 $('copy').addEventListener('click',async()=>{try{if(!lastCode)return;await navigator.clipboard.writeText(lastCode);msg('Kod kopyalandı.');}catch{msg('Kopyalama izni yok; kodu elle seçebilirsiniz.',true);}});
 (async()=>{try{const s=await api('/session');if(!s.authenticated){$('login').hidden=false;return;}csrf=s.csrf;$('actor').textContent=s.member.email+' · '+s.member.tenantId+' · '+s.member.role;$('workspace').hidden=false;await refresh();}catch(e){msg(e.message,true);$('login').hidden=false;}})();

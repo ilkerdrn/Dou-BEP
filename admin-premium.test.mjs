@@ -12,14 +12,14 @@ const routes=[
  ['/toplu-sinav','batch-exams.html'],['/bep-import','bep-import.html'],
  ['/sinav-operasyon','operations.html'],['/erisilebilirlik-kabul','acceptance.html'],
  ['/erisilebilirlik-kontrol','accessibility-check.html'],['/pilot-yonetim','pilot-admin.html'],
- ['/sinav-dosya-aktar','exam-source-import.html'],
+ ['/sinav-dosya-aktar','exam-source-import.html'],['/salon-oturumu','lab.html'],
  ['/dou-reader-demo','dou-reader-demo.html'],['/dou-speech-listening','dou-speech-listening.html'],['/dou-speech-phoneme','dou-speech-phoneme.html'],['/dou-speech-pool','dou-speech-pool.html']
 ];
 function read(name){return readFileSync(join(root,name),'utf8');}
 function menu(html){return [...html.matchAll(/class="dou-nav-link portal-menu[^\"]*" href="([^"]+)"/g)].map(x=>x[1]);}
 const expected=menu(read('institution.html'));
-test('premium navigation uses same exact 12 modules on every admin and reader page',()=>{
- assert.equal(expected.length,12);
+test('premium navigation uses same exact 13 modules on every admin and reader page',()=>{
+ assert.equal(expected.length,13);
  for(const file of [...routes.map(r=>r[1]),'preview-v17.html']){
   const html=read(file);
   assert.deepEqual(menu(html),expected,file);
@@ -55,11 +55,12 @@ test('quick action consistently targets new exam and source files do not expose 
 });
 const dir=mkdtempSync(join(tmpdir(),'bep-premium-'));
 process.env.BEP_NO_LISTEN='1';process.env.BEP_DB_PATH=join(dir,'test.sqlite');process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(dir,{force:true,recursive:true});});
-function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString()}));});req.on('error',reject).end();});}
+function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',cookie:globalThis.__panelCookie}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString()}));});req.on('error',reject).end();});}
 test('all primary admin pages and all nav destinations load HTTP 200',async()=>{
  for(const [path] of routes){const r=await get(path);assert.equal(r.status,200,path);assert.match(r.mime,/text\/html/);}
  for(const path of expected){const r=await get(path);assert.equal(r.status,200,path);}

@@ -9,11 +9,12 @@ import {request} from 'node:http';
 const root=dirname(fileURLToPath(import.meta.url));
 const isolated=mkdtempSync(join(tmpdir(),'bep-editor-module-'));
 process.env.BEP_NO_LISTEN='1';process.env.BEP_DB_PATH=join(isolated,'isolated.sqlite');process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(isolated,{force:true,recursive:true});});
-function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString('utf8')}));});req.on('error',reject).end();});}
+function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',cookie:globalThis.__panelCookie}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,mime:res.headers['content-type'],text:Buffer.concat(chunks).toString('utf8')}));});req.on('error',reject).end();});}
 const source=readFileSync(join(root,'server.mjs'),'utf8');
 const published=new Set([...source.matchAll(/^ '([^']+)':\['([^']+)'/gm)].map(x=>x[1]));
 function normalize(spec){return '/'+spec.replace(/^\.\//,'').replace(/^\//,'');}

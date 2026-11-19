@@ -2,12 +2,18 @@
  * Does not access network, device microphone, persistent storage or personal data APIs.
  */
 import {synthesizeLocalFreeText,planLocalFreeText,FREE_TEXT_MAX_CHARACTERS} from './dou-speech-free-text.mjs';
+import {createNeuralSpeech,neuralSupported,neuralSpeechText} from './dou-speech-neural.mjs';
 const $=id=>document.getElementById(id);
 const input=$('free-text-input'),status=$('free-text-status');
 const play=$('free-text-play'),download=$('free-text-download'),stop=$('free-text-stop'),clear=$('free-text-clear'),preview=$('free-text-preview');
 const count=$('free-text-count'),pronunciation=$('free-text-pronunciation');
-const options=['free-text-rate','free-text-pitch','free-text-number-mode','free-text-delivery','free-text-context-mode','free-text-acoustic-model'];
-let audio=null,previewUrl=null,lastWav=null,busy=false,generation=0;
+const options=['free-text-engine','free-text-rate','free-text-pitch','free-text-number-mode','free-text-delivery','free-text-context-mode','free-text-acoustic-model'];
+let audio=null,previewUrl=null,lastWav=null,busy=false,generation=0,lastEngine='legacy';
+const engine=$('free-text-engine');
+const neuralVoice=neuralSupported(window)?createNeuralSpeech({win:window,onStatus:m=>{if(busy)describe(m);}}):null;
+if(!neuralVoice){engine.value='legacy';engine.querySelector('option[value=neural]').disabled=true;}
+const legacyOnly=['free-text-acoustic-model','free-text-pitch','free-text-delivery','free-text-number-mode','free-text-context-mode'];
+function syncEngine(){const neural=engine.value==='neural'&&!!neuralVoice;for(const id of legacyOnly){const e=$(id);if(e)e.disabled=neural;}}
 const describe=(message,isError=false)=>{status.textContent=message;status.dataset.state=isError?'error':'ready';};
 function releasePreview(){
  if(audio){audio.pause();audio.removeAttribute('src');audio.load();audio=null;}
@@ -27,7 +33,7 @@ function parameters(){return {
  contextMode:$('free-text-context-mode').value,acousticModel:$('free-text-acoustic-model').value
 };}
 input.addEventListener('input',()=>{invalidate();readyState();describe('Metin değişti. Sesi yeniden oluşturabilirsiniz.');});
-for(const id of options)$(id).addEventListener('change',()=>{
+for(const id of options)$(id).addEventListener('change',()=>{if(id==='free-text-engine')syncEngine();
  invalidate();readyState();describe('Ses ayarı değişti. Yeni ses için “WAV üret ve dinle”yi seçin.');
 });
 preview.addEventListener('click',()=>{
@@ -39,15 +45,32 @@ preview.addEventListener('click',()=>{
 });
 play.addEventListener('click',async()=>{
  if(busy)return;
- busy=true;const request=++generation;readyState();
+ busy=true;let request=++generation;syncEngine();readyState();
  describe('Örnek metin yalnız cihazınızda çözümleniyor ve robotik WAV hesaplanıyor.');
  try{
   // Render the status before CPU-bound local synthesis. If the user navigates
   // away or changes input before the frame, do not synthesize stale text.
   await new Promise(resolve=>requestAnimationFrame(resolve));
   if(request!==generation)return;
-  document.dispatchEvent(new Event('dou-speech-lab-stop'));
+  // The lab-stop event round-trips into this module's own stop handler (generation++). That must not cancel this request.
+  document.dispatchEvent(new Event('dou-speech-lab-stop'));request=generation;
   forget();
+  if(engine.value==='neural'&&neuralVoice){
+   describe('Sinir ağı sesi hazırlanıyor. İlk kullanımda model yüklenir, birkaç saniye sürebilir.');
+   const r=await neuralVoice.synthesize(input.value,{rate:Number($('free-text-rate').value)||1});
+   if(request!==generation)return;
+   lastWav=r.wav;lastEngine='neural';
+   pronunciation.textContent=`Okunacak metin (matematik kuralları uygulandı): ${neuralSpeechText(input.value)}`;
+   previewUrl=URL.createObjectURL(new Blob([lastWav],{type:'audio/wav'}));
+   audio=new Audio(previewUrl);const cur=audio;
+   cur.addEventListener('ended',()=>{if(audio===cur)describe('Sinir ağı sesi tamamlandı. Anlaşılabilirliği insan dinlemesiyle doğrulanmadı.');},{once:true});
+   cur.addEventListener('error',()=>{if(audio===cur)describe('Tarayıcı yerel WAV oynatamadı. Dosyayı indirebilirsiniz.',true);},{once:true});
+   download.disabled=false;
+   describe(`Sinir ağı sesi · ${r.seconds.toFixed(1)} sn. Okur v1.0 (CC BY 4.0). Yapay sestir, insan kaydı değildir.`);
+   try{await cur.play();}catch{if(audio===cur)describe('Ses otomatik başlatılamadı. WAV dosyasını indirebilir veya yeniden deneyebilirsiniz.',true);}
+   return;
+  }
+  lastEngine='legacy';
   const args=parameters();const plan=planLocalFreeText(input.value,args);
   const result=synthesizeLocalFreeText(input.value,args);
   if(request!==generation)return;
@@ -68,10 +91,10 @@ clear.addEventListener('click',()=>{input.value='';invalidate();readyState();des
 download.addEventListener('click',()=>{
  if(!lastWav)return;
  const objectUrl=URL.createObjectURL(new Blob([lastWav],{type:'audio/wav'}));
- const a=document.createElement('a');a.href=objectUrl;a.download='DOU-Speech-v2.71-Deneysel-Turkce.wav';
+ const a=document.createElement('a');a.href=objectUrl;a.download=lastEngine==='neural'?'DOU-Speech-sinir-agi-Turkce.wav':'DOU-Speech-v2.71-Deneysel-Turkce.wav';
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(objectUrl),2000);
 });
 document.addEventListener('dou-free-text-stop',stopPlayback);
 window.addEventListener('pagehide',invalidate);
-readyState();
+syncEngine();readyState();

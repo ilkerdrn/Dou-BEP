@@ -6,16 +6,17 @@ import {join} from 'node:path';
 import {request} from 'node:http';
 const dir=mkdtempSync(join(tmpdir(),'bep-batch-route-'));
 process.env.BEP_NO_LISTEN='1';process.env.BEP_DB_PATH=join(dir,'test.sqlite');process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(dir,{recursive:true,force:true});});
-function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:Buffer.concat(chunks).toString()}));});req.on('error',reject);req.end();});}
+function get(path,authenticated=true){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',...(authenticated?{cookie:globalThis.__panelCookie}:{})}},res=>{const chunks=[];res.on('data',b=>chunks.push(b));res.on('end',()=>resolve({status:res.statusCode,headers:res.headers,body:Buffer.concat(chunks).toString()}));});req.on('error',reject);req.end();});}
 test('v2.16 serves new route and assets without exposing database',async()=>{
  const page=await get('/toplu-sinav');assert.equal(page.status,200);assert.match(page.body,/Toplu sınav uyarlama/);
  assert.match(page.headers['content-security-policy'],/default-src 'none'/);
  for(const path of ['/batch-exams.mjs','/batch-accommodations.mjs','/xlsx-import.mjs','/batch-exams.css']){const r=await get(path);assert.equal(r.status,200,path);assert.match(r.headers['content-type'],/text\/(?:javascript|css)/);}
  assert.equal((await get('/data/institution.sqlite')).status,404);
- assert.equal((await get('/api/exams')).status,401);
+ assert.equal((await get('/api/exams',false)).status,401);
  const health=await get('/api/health');assert.equal(JSON.parse(health.body).version,'2.81.0');
 });
 test('No exam data is exposed in the page; no network roster upload or browser persistence',async()=>{

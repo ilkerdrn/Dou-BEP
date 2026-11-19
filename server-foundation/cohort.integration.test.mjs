@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -54,7 +55,7 @@ test('tenant isolation, observer permission and exam revision invalidation',()=>
  }finally{f.cleanup();}
 });
 test('HTTP endpoint checks cookie, excludes other tenant, redacts small cohort, and returns safe CSV',async()=>{
- const f=setup();const port=41979;
+ const f=setup();const port=await freePort();
  const handler=createApiHandler(f.store,{port});const server=http.createServer((req,res)=>handler(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
  try{

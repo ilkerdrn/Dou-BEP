@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -75,7 +76,7 @@ test('CSV export escapes formulas, omits answers, and is restricted',()=>{
  }finally{f.cleanup();}
 });
 test('HTTP review requires teacher cookie + CSRF, disallows cross tenant and exports CSV safely',async()=>{
- const f=setup();const port=41976,api=createApiHandler(f.s,{port});
+ const f=setup();const port=await freePort(),api=createApiHandler(f.s,{port});
  const srv=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(resolve=>srv.listen(port,'127.0.0.1',resolve));
  async function call(path,method='GET',body,headers={}){

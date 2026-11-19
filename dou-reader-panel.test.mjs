@@ -38,3 +38,15 @@ test('Reader voice event revocation cancels speech, and destroy removes event li
  spoken[0].onend();assert.equal(spoken.length,1);assert.match(stoppedMessage,/Yerel Türkçe ses bulunamadı/);
  reader.destroy();assert.equal(docHandlers.has('keydown'),false);assert.equal(voiceEvents.has('voiceschanged'),false);
 });
+test('v2.94: okuma düğmesi tıklama olayını yönerge metni sanmaz; otomatik okuma yönergesi metne eklenir',()=>{
+ const nodes=new Map();for(const id of ['reader-read','reader-stop','reader-pause','reader-resume','reader-prev','reader-next','reader-voice','reader-rate','reader-help','reader-shortcuts','reader-status','player'])nodes.set(id,fakeElement());
+ const doc={getElementById(id){return nodes.get(id);},createElement(){return fakeElement();},addEventListener(){},removeEventListener(){}};
+ const voice={name:'Yerel Türkçe',voiceURI:'local-tr',lang:'tr-TR',localService:true},spoken=[];
+ const synth={getVoices:()=>[voice],speak:u=>spoken.push(u.text),cancel(){},addEventListener(){},removeEventListener(){}};
+ class Utterance{constructor(t){this.text=t;}}
+ const reader=attachPilotReader({doc,win:{speechSynthesis:synth,SpeechSynthesisUtterance:Utterance},getQuestion:()=>({number:1,audioAllowed:true,prompt:'Merhaba dünya.'}),moveQuestion(){},announce(){}});
+ nodes.get('reader-read').click();// the real button path: handler receives no string
+ assert.equal(spoken.length,1);assert.match(spoken[0],/^Soru 1/);assert.doesNotMatch(spoken[0],/object|Event/i);
+ reader.read({type:'click'});assert.equal(spoken.length,2);assert.match(spoken.at(-1),/^Soru 1/);
+ reader.read('Sınav başladı.');assert.match(spoken.at(-1),/^Sınav başladı\. Soru 1/);
+});

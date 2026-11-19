@@ -7,6 +7,7 @@ import {enforceProtectedStorage} from './tools/protected-storage.mjs';
 import {enforcePrivateSqliteFiles} from './tools/storage-migration-preflight.mjs';
 import {verifyAuditEvidence,verifyRotatedAuditEvidence} from './tools/audit-evidence.mjs';
 import {createApiHandler} from './server-foundation/institutional-api.mjs';
+import {lanConfig,hostSet,lanBlocked,learnerAssets,learnerUrls} from './server-foundation/network-policy.mjs';
 const folder=dirname(fileURLToPath(import.meta.url));
 const port=Number(process.env.PORT)||4173;
 const dbPath=process.env.BEP_DB_PATH||join(folder,'data','institution.sqlite');
@@ -25,7 +26,8 @@ if(process.env.BEP_REQUIRE_AUDIT_ROTATION==='1'){
   newKeyFile:process.env.BEP_AUDIT_NEW_KEY_FILE,newEvidenceFile:process.env.BEP_AUDIT_NEW_EVIDENCE_FILE});
 }
 const store=openStore(dbPath);
-const api=createApiHandler(store,{port});
+const lan=lanConfig();const learner=lan.enabled?learnerAssets(folder):new Set();const validHosts=hostSet(port,lan);
+const api=createApiHandler(store,{port,lan});
 const allowed={
  '/catalog-workflow.mjs':['catalog-workflow.mjs','text/javascript; charset=utf-8'],
  '/exam-download-verify.mjs':['exam-download-verify.mjs','text/javascript; charset=utf-8'],
@@ -35,6 +37,7 @@ const allowed={
  '/kurumsal-sinav':['institutional-exams.html','text/html; charset=utf-8'],
  '/toplu-sinav':['batch-exams.html','text/html; charset=utf-8'],
  '/uyarlama-kararlari':['accommodation-admin.html','text/html; charset=utf-8'],
+ '/adjustment-guide.mjs':['adjustment-guide.mjs','text/javascript; charset=utf-8'],
  '/accommodation-admin.mjs':['accommodation-admin.mjs','text/javascript; charset=utf-8'],
  '/accommodation-admin.css':['accommodation-admin.css','text/css; charset=utf-8'],
  '/sinav-koordinasyon':['coordination.html','text/html; charset=utf-8'],
@@ -49,6 +52,7 @@ const allowed={
  '/batch-exams.mjs':['batch-exams.mjs','text/javascript; charset=utf-8'],
  '/batch-accommodations.mjs':['batch-accommodations.mjs','text/javascript; charset=utf-8'],
  '/xlsx-import.mjs':['xlsx-import.mjs','text/javascript; charset=utf-8'],
+ '/ORNEK-SORU-SABLONU.xlsx':['ORNEK-SORU-SABLONU.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
  '/ORNEK-ANONIM-DONEMLI-SINAV-LISTESI.xlsx':['ORNEK-ANONIM-DONEMLI-SINAV-LISTESI.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
  '/batch-exams.css':['batch-exams.css','text/css; charset=utf-8'],
  '/ses-inceleme':['review-audio.html','text/html; charset=utf-8'],
@@ -65,6 +69,13 @@ const allowed={
  '/dou-speech-listening-ui.mjs':['dou-speech-listening-ui.mjs','text/javascript; charset=utf-8'],
  '/dou-reader-demo.mjs':['dou-reader-demo.mjs','text/javascript; charset=utf-8'],
  '/pilot-yonetim':['pilot-admin.html','text/html; charset=utf-8'],
+ '/salon-oturumu':['lab.html','text/html; charset=utf-8'],
+ '/sinav-kaydi':['sinav-kaydi.html','text/html; charset=utf-8'],
+ '/sinav-kaydi.mjs':['sinav-kaydi.mjs','text/javascript; charset=utf-8'],
+ '/sinav-kaydi.css':['sinav-kaydi.css','text/css; charset=utf-8'],
+ '/hazirlik':['hazirlik.html','text/html; charset=utf-8'],
+ '/hazirlik.mjs':['hazirlik.mjs','text/javascript; charset=utf-8'],
+ '/lab.mjs':['lab.mjs','text/javascript; charset=utf-8'],
  '/sinav-dosya-aktar':['exam-source-import.html','text/html; charset=utf-8'],
  '/exam-source-import.mjs':['exam-source-import.mjs','text/javascript; charset=utf-8'],
  '/bep-import':['bep-import.html','text/html; charset=utf-8'],
@@ -133,6 +144,18 @@ const allowed={
  '/draft-recovery.mjs':['draft-recovery.mjs','text/javascript; charset=utf-8'],
  '/accessible-player.mjs':['accessible-player.mjs','text/javascript; charset=utf-8'],
  '/institution.html':['institution.html','text/html; charset=utf-8'],
+ '/okur/okur-worker.js':['okur/okur-worker.js','text/javascript; charset=utf-8'],
+ '/okur/models.json':['okur/models.json','application/json; charset=utf-8'],
+ '/okur/LICENSE-NOTICE.txt':['okur/LICENSE-NOTICE.txt','text/plain; charset=utf-8'],
+ '/okur/models/text.6a21984ac693.onnx':['okur/models/text.6a21984ac693.onnx','application/octet-stream'],
+ '/okur/models/sample.3c2a91ee5faa.onnx':['okur/models/sample.3c2a91ee5faa.onnx','application/octet-stream'],
+ '/okur/models/decoder.8f42fa31155e.onnx':['okur/models/decoder.8f42fa31155e.onnx','application/octet-stream'],
+ '/okur/models/frontend.1f03663afe58.wasm':['okur/models/frontend.1f03663afe58.wasm','application/wasm'],
+ '/okur/ort/1.30.0/ort-wasm-simd-threaded.mjs':['okur/ort/1.30.0/ort-wasm-simd-threaded.mjs','text/javascript; charset=utf-8'],
+ '/okur/ort/1.30.0/ort-wasm-simd-threaded.wasm':['okur/ort/1.30.0/ort-wasm-simd-threaded.wasm','application/wasm'],
+ '/dou-speech-neural.mjs':['dou-speech-neural.mjs','text/javascript; charset=utf-8'],
+ '/terminology.mjs':['terminology.mjs','text/javascript; charset=utf-8'],
+ '/dou-theme.css':['dou-theme.css','text/css; charset=utf-8'],
  '/admin-premium.css':['admin-premium.css','text/css; charset=utf-8'],
  '/admin-navigation.js':['admin-navigation.js','text/javascript; charset=utf-8'],
  '/exam-page-health.js':['exam-page-health.js','text/javascript; charset=utf-8'],
@@ -157,19 +180,32 @@ const allowed={
  '/roles.mjs':['roles.mjs','text/javascript; charset=utf-8'],
  '/app.mjs':['app.mjs','text/javascript; charset=utf-8']
 };
+// Single sign-in: management panels (HTML only) require a valid institutional session. Public: /, /kurum, /pilot, reader/speech labs.
+const guardedPages=new Set(['/kurumsal-sinav','/toplu-sinav','/uyarlama-kararlari','/sinav-koordinasyon','/sinav-operasyon','/erisilebilirlik-kabul','/pilot-yonetim','/salon-oturumu','/sinav-kaydi','/sinav-dosya-aktar','/bep-import','/erisilebilirlik-kontrol']);
+function hasPanelSession(req){
+ const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));
+ if(!found)return false;
+ try{const actor=store.actorFrom(found.slice('bep_session='.length));return !!actor&&actor.mfaSetupRequired!==true;}catch{return false;}
+}
+// WebAssembly compile (no JS eval) is allowed ONLY for pages and the worker that run the offline neural voice.
+const wasmPaths=new Set(['/pilot','/hazirlik','/dou-reader-demo','/okur/okur-worker.js']);
+const wasmCsp=csp=>csp.replace("script-src 'self'","script-src 'self' 'wasm-unsafe-eval'");
 const securityHeaders={'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'no-referrer',
- 'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
+ 'Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"};
 export function createServer(){return http.createServer(async(req,res)=>{
   res.setHeader('X-DOU-BEP-Local','1');
   let path;
   try{path=new URL(req.url,'http://localhost').pathname;}catch{res.writeHead(400).end('Bad request');return;}
+  if(lanBlocked({req,path,lan,learner})){res.writeHead(403,{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}).end('Salon ağından yalnızca öğrenci sınav ekranına erişilebilir. Yönetim sayfaları yalnızca sunucu bilgisayarından açılır.');return;}
   if(await api(req,res,path))return;
   if(req.method!=='GET'&&req.method!=='HEAD'){res.writeHead(405).end();return;}
-  if(![`localhost:${port}`,`127.0.0.1:${port}`,'localhost','127.0.0.1'].includes(req.headers.host)){
+  if(!validHosts.has(req.headers.host)){
    res.writeHead(403).end('Host rejected');return;
   }
+  if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
+  if(path==='/terminology.json'){const profile=process.env.BEP_TERMINOLOGY==='university'?'university':'school';res.writeHead(200,{'Content-Type':'application/json; charset=utf-8',...securityHeaders});res.end(req.method==='HEAD'?undefined:JSON.stringify({profile}));return;}
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
-  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders});res.end(req.method==='HEAD'?undefined:content);}
+  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders,...(path.startsWith('/okur/models/')||path.startsWith('/okur/ort/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{}),...(wasmPaths.has(path)?{'Content-Security-Policy':wasmCsp(securityHeaders['Content-Security-Policy'])}:{})});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}
  }).on('close',()=>{
   // Tests use BEP_NO_LISTEN=1 and an ephemeral SQLite database.
@@ -179,4 +215,4 @@ export function createServer(){return http.createServer(async(req,res)=>{
  });}
 const server=createServer();
 server.on('error',err=>{if(err.code==='EADDRINUSE'){console.error(`[HATA] 127.0.0.1:${port} portu zaten kullaniliyor. Acik DOU uygulamasini kontrol edin.`);process.exitCode=2;}else{console.error('[HATA] Yerel sunucu baslatilamadi:',err.message);process.exitCode=1;}store.db.close();});
-if(process.env.BEP_NO_LISTEN!=='1')server.listen(port,'127.0.0.1',()=>{console.log(`BEP Sınav Atölyesi: http://localhost:${port}`);console.log(`Kurumsal pilot paneli: http://localhost:${port}/kurum`);console.log('Yalnızca bu bilgisayarda erişilir. Ctrl+C ile kapatın.');});
+if(process.env.BEP_NO_LISTEN!=='1')server.listen(port,lan.enabled?lan.bind:'127.0.0.1',()=>{if(lan.enabled){console.log('=== SALON (LAN) MODU AÇIK ===');for(const u of learnerUrls(port,lan))console.log('Öğrenci adresi: '+u);console.log('UYARI: Trafik şifresizdir (HTTP). Yalnızca izole salon ağında kullanın. Yönetim sayfaları yalnızca bu bilgisayardan (http://localhost:'+port+') açılır.');}console.log(`BEP Sınav Atölyesi: http://localhost:${port}`);console.log(`Kurumsal pilot paneli: http://localhost:${port}/kurum`);console.log('Yalnızca bu bilgisayarda erişilir. Ctrl+C ile kapatın.');});

@@ -13,15 +13,25 @@ const typeLabel={table:'Tablo',equation:'Office denklem nesnesi',visual:'Görsel
 function showRich(items){const section=$('source-rich-review'),list=$('source-rich-items');list.replaceChildren();section.hidden=false;
  for(const item of items){const label=document.createElement('label');label.style.display='flex';label.style.gap='12px';label.style.alignItems='start';
   const input=document.createElement('input');input.type='checkbox';input.value=item.id;input.className='source-rich-ack';input.style.minWidth='20px';input.style.minHeight='20px';
-  const span=document.createElement('span');span.textContent=`${item.order}. ${typeLabel[item.type]||'Karmaşık öğe'} — kaynak belgeyi açıp öğenin metinsel karşılığını ve ölçme anlamını denetledim.`;label.append(input,span);list.append(label);}
+  const span=document.createElement('span');span.textContent=`${item.order}. ${typeLabel[item.type]||'Karmaşık öğe'} — kaynak belgeyi açıp öğenin metinsel karşılığını ve ölçme anlamını denetledim.`;label.append(input,span);list.append(label);
+  if(item.suggestion){const box=document.createElement('div');box.className='source-suggestion';box.style.margin='4px 0 14px 32px';
+   const note=document.createElement('p');note.className='muted';note.style.margin='0 0 4px';note.textContent='Öneri (otomatik çıkarım, doğrulanmadı; kaynakla karşılaştırıp düzeltin):';
+   const text=document.createElement('p');text.style.margin='0 0 6px';text.style.whiteSpace='pre-wrap';text.textContent=item.suggestion;
+   const add=document.createElement('button');add.type='button';add.className='ghost';add.textContent=`${item.order}. öğe önerisini metin kutusuna ekle`;
+   add.addEventListener('click',()=>{const ta=$('source-transcription');const at=ta.selectionStart??ta.value.length,end=ta.selectionEnd??at;ta.value=ta.value.slice(0,at)+item.suggestion+ta.value.slice(end);ta.focus();ta.selectionStart=ta.selectionEnd=at+item.suggestion.length;ta.dispatchEvent(new Event('input',{bubbles:true}));status(`${item.order}. öğe önerisi eklendi. Metni kaynakla karşılaştırıp düzenleyin.`);});
+   box.append(note,text,add);list.append(box);}
+ }
 }
-function renderResult(result,manual=false){lastPreview=result;lastMode=manual?'manual':'automatic';lastSignature=signature();$('source-result').hidden=false;$('source-confirm').checked=false;$('source-save').disabled=true;
+const CONFIRM_DEFAULT=(()=>{const d=$('source-confirm-text').textContent;return ()=>d;})();
+const CONFIRM_XLSX='Excel soru sayfasındaki soruları, seçenekleri, doğru cevapları, puanları, kazanımları ve görsel betimlemelerini kaynak dosyayla karşılaştırdım. Yalnız seçili soruları kaydetmek istiyorum. Cevap anahtarı ve görsel betimlemelerinin doğruluğunun benim sorumluluğumda olduğunu biliyorum. Yeni sınavın onaysız taslak kalacağını ve ayrıca kalite kontrolü ile kurumsal onay gerektirdiğini kabul ediyorum.';
+function renderResult(result,manual=false){
+ $('source-confirm-text').textContent=result.format==='xlsx'?CONFIRM_XLSX:CONFIRM_DEFAULT();lastPreview=result;lastMode=manual?'manual':'automatic';lastSignature=signature();$('source-result').hidden=false;$('source-confirm').checked=false;$('source-save').disabled=true;
  $('source-summary').textContent=`${result.questions.length} aday soru · ${manual?'ÖĞRETMENİN MANUEL METNİ':result.format.toUpperCase()} · SHA-256: ${result.sourceSha256.slice(0,16)}… · Kaynak dosya sunucuda saklanmadı.`;
  const errors=$('source-blocking');errors.replaceChildren();for(const msg of result.blocking){const p=document.createElement('p');p.className='source-error';p.textContent='Aktarım engeli: '+msg;errors.append(p);}
  const warns=$('source-warnings');warns.replaceChildren();for(const msg of result.warnings){const p=document.createElement('p');p.className='source-warning';p.textContent='Kontrol: '+msg;warns.append(p);}
  const area=$('source-questions');area.replaceChildren();for(const q of result.questions){const card=document.createElement('div');card.className='source-question';
   const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.value=String(q.number);check.checked=true;check.disabled=result.blocked;
-  const summary=document.createElement('span');summary.textContent=`Soru ${q.number} · ${q.type==='choice'?'Çoktan seçmeli':'Kısa yanıt'}\n${q.prompt}`;label.append(check,summary);card.append(label);
+  const extra=[q.answer?`Doğru yanıt: ${q.answer}`:'',Number.isInteger(q.points)?`${q.points} puan`:'',q.visualAltText?`Görsel betimlemesi: ${q.visualAltText}`:''].filter(Boolean).join(' · ');const summary=document.createElement('span');summary.textContent=`Soru ${q.number} · ${q.type==='choice'?'Çoktan seçmeli':'Kısa yanıt'}\n${q.prompt}${extra?'\n'+extra:''}`;label.append(check,summary);card.append(label);
   if(q.hasCode){const p=document.createElement('p');p.className='source-warning';p.textContent='Kod satırları ve girintiler korunmuştur; Word çıktısı ile kaynak kodu karşılaştırın.';card.append(p);}
   if(q.options?.length){const ol=document.createElement('ol');ol.type='A';for(const opt of q.options){const li=document.createElement('li');li.textContent=opt;ol.append(li);}card.append(ol);}area.append(card);}
  status(result.blocked?'Bu belgeden otomatik taslak oluşturulamaz. Gerekirse aşağıdaki manuel yolu kullanın.':'Soruları kaynak dosyayla karşılaştırıp açık onay verin.',result.blocked);

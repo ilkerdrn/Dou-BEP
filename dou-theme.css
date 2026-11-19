@@ -1,0 +1,202 @@
+/* DOU BEP v2.83 · ortak tasarım dili. Çevrimdışı: dış yazı tipi/görsel yok. Her sayfada EN SON yüklenir. */
+:root{
+ --dou-red:#C50E1F;--dou-red-dark:#9B0B19;--dou-night:#0F172A;--dou-ink:#101828;--dou-muted:#475467;
+ --dou-bg:#F4F5F9;--dou-card:#FFFFFF;--dou-line:#E4E7EC;--dou-line-strong:#98A2B3;
+ --dou-focus:#1B6ED2;--dou-ok:#0F6B3A;--dou-ok-bg:#E7F5EC;--dou-warn:#5C3B00;--dou-warn-bg:#FFF7DB;--dou-warn-line:#E0A800;
+ --dou-danger:#8A1720;--dou-danger-bg:#FDECEE;
+ --dou-radius:16px;--dou-radius-lg:24px;--dou-shadow:0 12px 32px rgba(16,24,40,.07);
+ --dou-font:"Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
+ --adm-accent:var(--dou-red);--adm-accent-dark:var(--dou-red-dark);--adm-bg:var(--dou-bg);--adm-ink:var(--dou-ink);--adm-line:var(--dou-line);--adm-shadow:var(--dou-shadow);
+}
+html body{font-family:var(--dou-font);background:var(--dou-bg)}
+/* Klavye odağı: her sayfada aynı, 4 px mavi halka. */
+html body a:focus-visible,html body button:focus-visible,html body input:focus-visible,html body select:focus-visible,html body textarea:focus-visible,html body summary:focus-visible,html body [tabindex]:focus-visible{outline:4px solid var(--dou-focus)!important;outline-offset:4px!important}
+/* Kartlar */
+html body .card{border:1px solid var(--dou-line);border-radius:var(--dou-radius-lg);box-shadow:var(--dou-shadow);background:var(--dou-card)}
+/* Yönetim menüsü: koyu lacivert, kırmızı vurgu. */
+html body .dou-nav{background:var(--dou-night)!important;border-right-color:#1E293B!important}
+html body .dou-brand-mark{background:var(--dou-red)!important}
+/* Durum bildirimleri: renk + yazı birlikte. */
+html body .notice.good{background:var(--dou-ok-bg);color:var(--dou-ok);border:2px solid var(--dou-ok);border-radius:var(--dou-radius);font-weight:700}
+html body .notice.err{background:var(--dou-danger-bg);color:var(--dou-danger);border:2px solid var(--dou-red);border-radius:var(--dou-radius);font-weight:700}
+/* ÖĞRENCİ SAYFALARI: büyük hedefler. */
+html body.dou-student header{background:var(--dou-night);color:#fff;border-bottom:0}
+html body.dou-student header .brand,html body.dou-student header div{color:#fff}
+html body.dou-student header .mark{background:var(--dou-red);color:#fff;border-radius:10px}
+html body.dou-student button,html body.dou-student select,html body.dou-student input:not([type=checkbox]):not([type=radio]){min-height:52px;border-radius:14px}
+html body.dou-student button:not(.ghost):not(.secondary){background:var(--dou-red);border:2px solid var(--dou-red);color:#fff;font-weight:600;box-shadow:0 6px 16px rgba(197,14,31,.25)}
+html body.dou-student button.ghost,html body.dou-student button.secondary{background:#fff;color:var(--dou-ink);border:2px solid var(--dou-line-strong);box-shadow:none}
+html body.dou-student button:disabled{opacity:.55;box-shadow:none}
+html body.dou-student .option{min-height:72px;padding:14px 20px;border:2px solid #D0D5DD;border-radius:20px;background:#fff;font-size:1.1em}
+html body.dou-student .option:has(input:checked){border:3px solid var(--dou-red);background:#FFF1F2;box-shadow:0 8px 20px rgba(197,14,31,.12)}
+html body.dou-student input[type=radio],html body.dou-student input[type=checkbox]{width:28px;height:28px}
+html body.dou-student #timer-box{display:flex;align-items:center;gap:14px;font-size:1.15em}
+html body.dou-student #timer{font-size:1.9em;font-variant-numeric:tabular-nums}
+html body.dou-student #time-alert{background:var(--dou-warn-bg);color:var(--dou-warn);border:2px solid var(--dou-warn-line);border-radius:var(--dou-radius);font-weight:700}
+html body.dou-student .big-targets button{min-height:76px}
+/* Yüksek kontrast: sistem ayarı da dikkate alınır. */
+@media (forced-colors:active){html body .card,html body .option{border:2px solid CanvasText}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Tüm sayfalarda aynı koyu başlık ve yan menü (erik/gül tonları yerine lacivert). */
+html body:not(.dou-admin-standalone):not(.institution-page)>header{background:var(--dou-night);color:#fff;border-bottom:4px solid var(--dou-red);box-shadow:none}
+html body:not(.dou-admin-standalone):not(.institution-page)>header small,html body:not(.dou-admin-standalone):not(.institution-page)>header .eyebrow{color:#FCA5A5}
+html body:not(.dou-admin-standalone):not(.institution-page)>header h1,html body:not(.dou-admin-standalone):not(.institution-page)>header p,html body:not(.dou-admin-standalone):not(.institution-page)>header div{color:#fff}
+html body:not(.institution-page) .sidebar,html body .portal-side{background:var(--dou-night)!important;border-right:1px solid #1E293B}
+html body .portal-hero{background-color:var(--dou-night)!important}
+/* Menü: altbilgi menü maddelerinin üstüne binmesin; küçük yazı okunur olsun. */
+html body .dou-nav>nav{flex:1 1 0;min-height:0;overflow-y:auto}
+html body .dou-nav-bottom p,html body .dou-nav-bottom .dou-nav-version{font-size:12px;color:#CBD5E1}
+html body .enterprise-banner{background:var(--dou-night)!important;border-left-color:var(--dou-red)!important}
+html body .banner-tag{color:#FCA5A5!important}
+/* Açık renkli yönetim başlığında marka yazısı koyu olmalı (beyaz üstüne beyaz olmasın). */
+html body.dou-admin-standalone>header,html body.dou-admin-standalone>header .brand,html body.dou-admin-standalone>header div{color:var(--dou-ink)}
+html body.dou-admin-standalone>header .brand .mark{color:#fff}
+/* Tek giriş: oturum açılmadan yalnızca giriş formu görünür, modül menüsü gizlidir. */
+html body.dou-logged-out .dou-nav,html body.dou-logged-out .portal-side{display:none!important}
+html body.dou-logged-out .portal-shell{grid-template-columns:minmax(0,1fr)!important}
+html body.dou-logged-out .portal-hero{display:none}
+/* Erişilebilirlik denetimi (axe-core, WCAG 2.2 AA): açık gri yardımcı metinler 4,5:1 altındaydı. Özgüllük bilerek yüksek tutuldu (eski !important kuralları). */
+html:root:root body .portal-main small,
+html:root:root body main small,
+html:root:root body .dashboard-shortcut small,
+html:root:root body .portal-kpis small,
+html:root:root body .portal-member-row small,
+html:root:root body .portal-template-body small,
+html:root:root body .dashboard-welcome p,
+html:root:root body #actor-meta,
+html:root:root body #exam-tenant,
+html:root:root body .portal-footer,
+html:root:root body header>div>span:not(.mark),
+html:root:root body #workflow-context,
+html:root:root body button[data-workflow-target]:not([aria-current])>span,
+html:root:root body .editor-export-panel>summary>span,
+html:root:root body button[data-library-status],
+html:root:root body .portal-help,
+html:root:root body .portal-help strong,
+html:root:root body [id^=pilot-note-limit],
+html:root:root body #pilot-resume-note,
+html:root:root body .pilot-toolbar-left p,
+html:root:root body #exam-material-status,
+html:root:root body #exam-preview-summary,
+html:root:root body .login-security-notice span,
+html:root:root body .topbar-title>span,
+html:root:root body .intro p,
+html:root:root body .counter,
+html:root:root body .template-empty,
+html:root:root body .library-search>span,
+html:root:root body .mini-disclaimer,
+html:root:root body .stat>span,
+html:root:root body .issue,
+html:root:root body .issue b{color:var(--dou-muted)!important}
+html:root:root body .portal-footer{background:transparent!important}
+/* WCAG 2.2 hedef boyutu: onay kutuları ve seçim düğmeleri en az 24 px. */
+html body input[type=checkbox],html body input[type=radio]{min-width:24px;min-height:24px;width:24px;height:24px}
+
+/* Öğrenci: soru haritası, ilerleme çubuğu, zaman halkası */
+html body.dou-student .qmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:10px}
+html body.dou-student .chip{min-height:56px;font-weight:700;background:#fff;color:var(--dou-ink);border:2px solid #D0D5DD;border-radius:14px;box-shadow:none}
+html body.dou-student .chip.chip-done{background:var(--dou-ok-bg);border-color:var(--dou-ok);color:var(--dou-ok)}
+html body.dou-student .chip.chip-current{border:3px solid var(--dou-red)}
+html body.dou-student progress{width:100%;height:14px;accent-color:var(--dou-red)}
+html body.dou-student .ring{flex:0 0 56px}
+html body.dou-student .ring-bg{fill:none;stroke:#D0D5DD;stroke-width:7}
+html body.dou-student .ring-fg{fill:none;stroke:var(--dou-red);stroke-width:7;stroke-linecap:round}
+
+/* Öğrenci sayfası: geniş ekranda soru sol, soru haritası sağda sabit; dar ekranda tek sütun. */
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+html body.dou-student .review-table{width:100%;border-collapse:collapse;margin:14px 0}
+html body.dou-student .review-table th,html body.dou-student .review-table td{padding:12px 14px;border-bottom:1px solid var(--dou-line);text-align:left}
+@media (min-width:980px){
+ html body.dou-student #player:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) 340px;column-gap:24px;align-items:start}
+ html body.dou-student #player>*{grid-column:1}
+ html body.dou-student #player>#question-map-card{grid-column:2;grid-row:1 / span 4;position:sticky;top:16px}
+}
+
+/* Yönetim sayfaları: dar sütun, taşan kod/tablo ve görünmeyen başlık bağlantıları (v2.88). */
+@media (min-width:1100px){html:root:root body .exam-grid{grid-template-columns:minmax(300px,340px) minmax(0,1fr)!important}}
+html:root:root body .portal-card-head{flex-wrap:wrap;gap:10px}
+html:root:root body .portal-card-head h3,html:root:root body .portal-card-head h2{min-width:0;overflow-wrap:break-word}
+html body code{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%}
+html body .batch-table{display:block;max-width:100%;overflow-x:auto}
+html body.dou-admin-standalone>header nav,html body.dou-admin-standalone>header nav a{color:var(--dou-red-dark)}
+html:root:root body .portal-template{flex-wrap:wrap;align-items:center;gap:10px}
+html:root:root body .portal-template-body{flex:1 1 150px;min-width:0;overflow-wrap:anywhere}
+html:root:root body .exam-list-actions{flex:1 0 100%;display:flex;gap:8px;flex-wrap:wrap}
+/* Yüksek kontrast: seçenek kartları koyu zemin + beyaz yazı kalmalı (tema açık zemini ezmesin). */
+html body.dou-student.high .option{background:#000;color:#fff;border-color:#fff;box-shadow:none}
+html body.dou-student.high .option:has(input:checked){background:#1c3b66;color:#fff;border:3px solid #ffd400;box-shadow:none}
+html body.dou-student.high .option .badge{background:#fff;color:#000}
+/* Yönetim sayfaları (kenar çubuklu): üst çubuk ana içerikle aynı sütunda hizalanır; bağlantılar düğme biçiminde. */
+html body.dou-admin-standalone>header{padding:12px clamp(18px,3vw,40px);justify-content:space-between;gap:12px 20px;min-height:72px;box-sizing:border-box}
+html body.dou-admin-standalone>header .brand{margin:0}
+html body.dou-admin-standalone>header nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+html body.dou-admin-standalone>header nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid #D0D5DD;border-radius:12px;background:#fff;text-decoration:none;font-weight:600;color:var(--dou-ink)}
+html body.dou-admin-standalone>header nav a:hover{border-color:var(--dou-red);color:var(--dou-red-dark)}
+html body.dou-admin-standalone>header nav{font-size:0}
+html body.dou-admin-standalone>header nav a{font-size:16px}
+html body.dou-admin-standalone .notice{padding:12px 18px;border-radius:14px}
+html body.dou-student .notice{padding:12px 18px;border-radius:14px}
+html body.dou-student label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;margin-right:14px}
+html body ol.checks{list-style:none;padding-left:0}
+html body ol.checks>li{margin:0 0 16px}
+
+/* ===== Öğrenci sınav ekranı: sade, hizalı, modern düzen (v2.100) ===== */
+html body.dou-student main{max-width:1240px}
+html body.dou-student #player:not([hidden]){grid-template-columns:minmax(0,1fr) 320px;column-gap:28px;row-gap:18px}
+html body.dou-student #player>.card{border-radius:24px;border:1px solid #E4E7EC;box-shadow:0 10px 28px rgba(16,24,40,.06);margin:0}
+/* Üst kart: sınav adı + ayar çubuğu + süre */
+html body.dou-student #player>.card:first-child{padding:26px 28px;display:flex;flex-direction:column;gap:14px}
+html body.dou-student #player>.card:first-child>*{margin:0}
+html body.dou-student #exam-title{font-size:1.9em;line-height:1.2;letter-spacing:-.01em}
+html body.dou-student #exam-info{color:#475467;font-size:.95em;line-height:1.5}
+html body.dou-student #profile-note{padding:10px 16px;border-radius:14px;font-size:.95em}
+html body.dou-student #player>.card:first-child>.inline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;background:#F4F5F9;border-radius:18px}
+html body.dou-student #player>.card:first-child>.inline label{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;margin:0;background:#fff;border:1px solid #D0D5DD;border-radius:12px;font-weight:600;font-size:.92em;cursor:pointer}
+html body.dou-student #player>.card:first-child>.inline label:has(select){padding-right:6px}
+html body.dou-student #player>.card:first-child>.inline select{min-height:36px;border:0;background:transparent;font-weight:700;padding:0 6px}
+html body.dou-student #player>.card:first-child>.inline input[type=checkbox]{width:22px!important;height:22px;margin:0}
+html body.dou-student #player>.card:first-child>.inline button{margin-left:auto;min-height:44px}
+html body.dou-student #timer-box:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:14px 18px;background:#0F172A;color:#fff;border-radius:18px}
+html body.dou-student #timer-box p{margin:0;color:#fff}
+html body.dou-student #timer-box #timer{font-size:2em;font-variant-numeric:tabular-nums;color:#fff}
+html body.dou-student #timer-box .ring-bg{stroke:#334155}
+html body.dou-student #timer-box .ring-fg{stroke:#FCA5A5}
+html body.dou-student #timer-box #save-status{color:#CBD5E1;font-size:.85em;margin-left:auto}
+html body.dou-student #timer-box #break-start{min-height:44px;background:#fff;color:#101828;border:0}
+html body.dou-student #timer-box #time-alert{flex-basis:100%;background:#FFF7DB;color:#5C3B00;border:2px solid #E0A800;border-radius:12px;padding:10px 14px;margin:0}
+html body.dou-student #player .hint{color:#667085;font-size:.85em;padding:10px 14px;background:transparent;border:0;border-top:1px dashed #D0D5DD;border-radius:0}
+/* Gezinti çubuğu */
+html body.dou-student #question-navigation{padding:16px 20px;border-left:1px solid #E4E7EC}
+html body.dou-student #question-navigation>.inline{margin-bottom:10px}
+html body.dou-student #question-navigation>.inline label{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+html body.dou-student #question-navigation nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+html body.dou-student #question-progress{flex:1;text-align:center;font-weight:700;color:#475467}
+html body.dou-student #question-navigation button{flex:0 0 auto;min-width:0}
+/* Soru kartı */
+html body.dou-student #student-questions .question{padding:32px}
+html body.dou-student #student-questions .question h2{display:inline-block;margin:0 0 12px;padding:6px 14px;background:#EEF1F6;border-radius:999px;font-size:.9em}
+html body.dou-student #student-questions .question>p:not(.written-cue){font-size:1.3em;line-height:1.5;font-weight:600;margin:6px 0 14px}
+html body.dou-student #student-questions fieldset{border:0;padding:0;margin:18px 0 0}
+html body.dou-student #student-questions legend{font-size:1em;font-weight:700;padding:0;margin-bottom:6px;color:#475467}
+html body.dou-student #student-questions textarea{border:2px solid #D0D5DD;border-radius:16px;padding:16px;font:inherit;line-height:1.6}
+html body.dou-student #student-questions textarea:focus{border-color:#1B6ED2}
+/* Teslim kartı */
+html body.dou-student #answer-form>.card{margin-top:18px;padding:22px 28px}
+html body.dou-student #answer-form>.card .inline{display:flex;gap:12px;flex-wrap:wrap}
+/* Okuyucu paneli: ikincil görünüm */
+html body.dou-student #dou-reader{margin-top:18px;background:#FAFAFC}
+@media(max-width:900px){html body.dou-student #player:not([hidden]){grid-template-columns:minmax(0,1fr)}html body.dou-student #player>#question-map-card{grid-column:1;grid-row:auto;position:static}}
+html body.dou-student #player>.card:first-child>.inline label{white-space:nowrap}
+/* Yüksek kontrast: yeni düzende de siyah zemin + beyaz yazı */
+html body.dou-student.high #player>.card:first-child>.inline{background:#000;border:2px solid #fff}
+html body.dou-student.high #player>.card:first-child>.inline label{background:#000;color:#fff;border:2px solid #fff}
+html body.dou-student.high #player>.card:first-child>.inline select{color:#fff;background:#000}
+html body.dou-student.high #exam-info,html body.dou-student.high #player .hint,html body.dou-student.high #question-progress,html body.dou-student.high .muted,html body.dou-student.high #student-questions legend{color:#fff}
+html body.dou-student.high #player .hint{border-top-color:#fff}
+html body.dou-student.high #timer-box{background:#000;border:2px solid #ffd400}
+html body.dou-student.high #student-questions .question h2{background:#000;color:#ffd400;border:2px solid #ffd400}
+html body.dou-student.high #student-questions textarea{background:#000;color:#fff;border-color:#fff}
+html body.dou-student.high #dou-reader{background:#000}
+html body.dou-student.high .eyebrow{color:#ffd400}
+html body.dou-student.high main a{color:#8CC8FF}

@@ -1,4 +1,5 @@
 import {ADJUSTMENTS} from './batch-accommodations.mjs';
+import {suggestAdjustments,GUIDE_AREAS,GUIDE_NOTE} from './adjustment-guide.mjs';
 const $=id=>document.getElementById(id);const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const state={actor:null,csrf:'',items:[],edit:null};
 function notice(t,bad=false){$('decision-message').textContent=t;$('decision-message').className=bad?'error':'';}
@@ -25,3 +26,22 @@ $('decision-rows').addEventListener('click',async event=>{const b=event.target.c
  }catch(e){notice(e.message,true);}});
 $('decision-cancel').addEventListener('click',reset);$('decision-search').addEventListener('input',render);$('decision-filter').addEventListener('change',render);$('decision-refresh').addEventListener('click',()=>refresh().catch(e=>notice(e.message,true)));
 boot();
+
+// Decision guide: shows suggestions only; checking boxes remains the coordinator's action and the decision still needs approval.
+{
+ const sel=$('guide-area'),out=$('guide-output'),apply=$('guide-apply');
+ $('guide-note').textContent=GUIDE_NOTE;
+ for(const a of GUIDE_AREAS){const o=document.createElement('option');o.value=a.id;o.textContent=a.label;sel.append(o);}
+ let current=null;
+ sel.addEventListener('change',()=>{out.replaceChildren();apply.disabled=true;current=null;if(!sel.value)return;
+  current=suggestAdjustments(sel.value);
+  if(!current.items.length){const p=document.createElement('p');p.textContent=current.note;out.append(p);return;}
+  const ul=document.createElement('ul');
+  for(const it of current.items){const li=document.createElement('li');li.textContent=`${it.label}: ${it.reason}${it.automatic?'':' (görevli gerektirir; sistem uygulamaz)'}`;ul.append(li);}
+  out.append(ul);
+  if(current.considerExtraTime){const p=document.createElement('p');p.textContent='Ek süre de değerlendirilebilir; süre ayrıca karar olarak girilir.';out.append(p);}
+  apply.disabled=!current.items.some(i=>i.automatic);});
+ apply.addEventListener('click',()=>{if(!current)return;let n=0;
+  for(const box of document.querySelectorAll('input[name=adjustment]')){const it=current.items.find(i=>i.code===box.value&&i.automatic);if(it&&!box.checked){box.checked=true;n++;}}
+  notice(`${n} öneri işaretlendi. Gerçek ihtiyaç ve görevli düzenlemelerini yetkili birim ayrıca belirler; kayıt onay gerektirir.`);});
+}

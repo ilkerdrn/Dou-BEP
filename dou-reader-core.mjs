@@ -18,8 +18,11 @@ export function readerText(question){
  for(const o of Array.isArray(question.options)?question.options:[])parts.push(`Seçenek ${o.id}: ${o.label}`);
  for(const o of Array.isArray(question.left)?question.left:[])parts.push(`Eşleştirme satırı ${o.id}: ${o.label}`);
  for(const o of Array.isArray(question.right)?question.right:[])parts.push(`Eşleştirme seçeneği ${o.id}: ${o.label}`);
+ if(question.type==='short')parts.push('Bu bir yazılı yanıt sorusudur. Yanıtınızı yazı alanına yazın');
+ if(question.type==='matching')parts.push('Her satır için ikinci listeden bir seçenek seçin');
  // No answer, teacherNote, rubric, course roster, token, code or user response paths.
- const text=parts.filter(v=>typeof v==='string'&&v.trim()).join('. ').replace(/[\u0000-\u001f\u007f]/g,' ');
+ // Parts that already end in punctuation must not produce ".." when joined (screen-friendly, natural pauses).
+ const text=parts.filter(v=>typeof v==='string'&&v.trim()).map(v=>v.trim().replace(/[.]+$/,'')).join('. ').replace(/[\u0000-\u001f\u007f]/g,' ');
  if(text.length>MAX_TEXT)throw Error('Soru seslendirme sınırını aşıyor; içerik kesilmeden işlem durduruldu.');
  if(!text.trim())throw Error('Seslendirilecek soru bulunamadı.');
  return text;

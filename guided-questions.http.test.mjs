@@ -9,11 +9,12 @@ const tmp=mkdtempSync(join(tmpdir(),'bep-guided-smoke-'));
 process.env.BEP_NO_LISTEN='1';
 process.env.BEP_DB_PATH=join(tmp,'test.sqlite');
 process.env.PORT='4173';
+{const {panelCookie}=await import('./test-panel-session.mjs');globalThis.__panelCookie=await panelCookie(process.env.BEP_DB_PATH);}
 const {createServer}=await import('./server.mjs');
 const server=createServer();
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 after(async()=>{await new Promise(resolve=>server.close(resolve));rmSync(tmp,{recursive:true,force:true});});
-function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173'}},res=>{
+function get(path){return new Promise((resolve,reject)=>{const req=request({hostname:'127.0.0.1',port:server.address().port,path,headers:{host:'127.0.0.1:4173',cookie:globalThis.__panelCookie}},res=>{
  const chunks=[];res.on('data',x=>chunks.push(x));res.on('end',()=>resolve({status:res.statusCode,type:res.headers['content-type'],body:Buffer.concat(chunks).toString()}));
 });req.on('error',reject);req.end();});}
 test('v2.10 guided frame ES module served, internal documentation remains private',async()=>{

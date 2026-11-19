@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -36,7 +37,7 @@ test('approval history is tenant-scoped, cannot bypass visibility, observer sees
  }finally{f.close();}
 });
 test('HTTP approval history requires same-tenant session and returns no question text',async()=>{
- const f=fixture(),port=41886,api=createApiHandler(f.s,{port});const server=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ const f=fixture(),port=await freePort(),api=createApiHandler(f.s,{port});const server=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
  try{
   const a=f.a('school-1'),x=f.s.createExam(a,{exam:sample()});f.s.approveExam(a,x.id,{revision:1,confirmed:true});

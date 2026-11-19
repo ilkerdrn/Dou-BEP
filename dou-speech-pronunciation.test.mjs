@@ -39,3 +39,14 @@ test('v2.44 set theory, calculus and Greek symbols get conservative Turkish name
  for(const expected of ['alfa','elemanıdır','kesişim','beta','elemanı değildir','integral','kısmi türev','birleşim','yönünde ok','çift yönlü ok','teta']) assert.ok(pronounced.includes(expected),expected);
  assert.equal(turkishSpeechText('https://x.org/a-b?i=1 ve 29/10/2026'),'https://x.org/a-b?i=1 ve 29/10/2026');
 });
+test('v2.95: kesir, derece, orta nokta, alt/üst simge, üs ve karşılaştırma yalnız belirsizlik yoksa okunur',()=>{
+ const t=turkishSpeechText;
+ assert.equal(t('½ + ¼ = ¾'),'bir bölü iki + bir bölü dört = üç bölü dört');
+ assert.equal(t('30° açı, 25°C, 70°F'),'30 derece açı, 25 santigrat derece, 70 fahrenhayt derece');
+ assert.equal(t('3 + 4 · 2'),'3 + 4 çarpı 2');assert.equal(t('H₂O ve x₁'),'H2O ve x1');
+ assert.equal(t('x^4 ve a^n ve 2^-1 ve y^2'),'x üssü 4 ve a üssü n ve 2 üssü eksi 1 ve y kare');assert.equal(t('10⁴'),'10 üssü 4');
+ assert.equal(t('5 > 3 ve 2 < 4'),'5 büyüktür 3 ve 2 küçüktür 4');assert.equal(t('10 - 4 = 6'),'10 eksi 4 = 6');
+ // Belirsiz olanlar değişmez
+ assert.equal(t('Ali-Veli, 29/10/2026, 3-4 gün, a -> b, <b>kalın</b>'),'Ali-Veli, 29/10/2026, 3-4 gün, a -> b, <b>kalın</b>');
+ assert.equal(t('Cümle sonu > işareti'),'Cümle sonu > işareti');
+});

@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync,readFileSync} from 'node:fs';
@@ -80,7 +81,7 @@ test('v2.8 duplicate respects quota without creating a partial record',()=>{
 });
 
 test('v2.8 HTTP copy requires session, CSRF and correct source revision',async()=>{
- const f=fixture(),port=41912,server=http.createServer((req,res)=>createApiHandler(f.store,{port})(req,res,new URL(req.url,'http://localhost').pathname));
+ const f=fixture(),port=await freePort(),server=http.createServer((req,res)=>createApiHandler(f.store,{port})(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
  try{
   const a=f.actor('okul-x'),x=f.store.createExam(a,{exam:sample()}),l=f.login('okul-x'),other=f.login('okul-y');
