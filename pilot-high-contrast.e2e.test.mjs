@@ -37,3 +37,22 @@ test('yüksek kontrast: seçenek kartı yazısı zeminle en az 7:1 kontrast veri
   assert.ok(ratios.length>=3);for(const x of ratios)assert.ok(x>=7,'kontrast '+x.toFixed(2));
  }finally{await browser.close();}
 });
+
+test('önceki oturumdan kalan ayarlar yeni adaya taşınmaz: profilde olmayan kontrast/yazı boyutu sıfırlanır',{skip:chromium?false:'playwright yok',timeout:60000},async()=>{
+ const r=await api('/api/login',{method:'POST',body:{tenantId:'anonim-h',email:'t@anonim-h.invalid',password:pass}});const v=await r.json();
+ const sess={cookie:r.headers.getSetCookie().map(c=>c.split(';')[0]).join('; '),csrf:v.csrfToken||v.csrf};
+ const d=createDemo();d.duration=30;d.adaptations.visualCues=false;d.profile='';const ch=d.questions.find(q=>q.type==='choice');
+ d.questions=[{...ch,prompt:'5 + 3 kaçtır?',options:['6','8','9'],answer:'8',teacherNote:''}];
+ const id=(await(await api('/api/exams',{method:'POST',body:{exam:d},sess})).json()).item.id;
+ await api(`/api/exams/${id}/approve`,{method:'POST',body:{revision:1,confirmed:true},sess});
+ const it=(await(await api('/api/pilot/batch',{method:'POST',body:{rows:[{candidateCode:'KOD-HC2',seat:'PC-02',examId:id,adjustments:['ONE_PER_PAGE','LARGE_TARGETS'],extraMinutes:0,breakMinutes:0}]},sess})).json()).items[0];
+ const browser=await chromium.launch();
+ try{
+  const p=await browser.newPage({viewport:{width:1200,height:900}});await p.goto(base+'/pilot');
+  await p.evaluate(()=>{const c=document.getElementById('contrast');c.checked=true;document.getElementById('size').value='28';});// eski oturumdan kalan durum
+  await p.fill('#code',it.code);await p.keyboard.press('Enter');await p.waitForSelector('label.option');
+  assert.equal(await p.isChecked('#contrast'),false);assert.equal(await p.inputValue('#size'),'20');
+  assert.equal(await p.evaluate(()=>document.body.classList.contains('high')),false);
+  assert.equal(await p.isChecked('#big-targets'),true);assert.equal(await p.isChecked('#one-question'),true);
+ }finally{await browser.close();}
+});

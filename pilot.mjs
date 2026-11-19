@@ -127,6 +127,10 @@ const PROFILE_LABELS={autoRead:'Otomatik sesli okuma',fontSize:'Çok büyük yaz
 function fire(id){$(id).dispatchEvent(new Event('change',{bubbles:true}));}
 function applyProfile(r){
  const p=r.profile||{};const applied=[];
+ // Önceki oturumdan (veya tarayıcının form geri yüklemesinden) kalan ayarlar yeni adaya taşınmasın: önce hepsini sıfırla.
+ $('size').value='20';fire('size');
+ for(const id of ['contrast','simple-mode','big-targets']){$(id).checked=false;fire(id);}
+ $('one-question').checked=true;$('one-question').disabled=false;$('auto-read').checked=false;autoRead=false;
  if(p.fontSize){$('size').value=String(p.fontSize);fire('size');applied.push(PROFILE_LABELS.fontSize);}
  if(p.highContrast){$('contrast').checked=true;fire('contrast');applied.push(PROFILE_LABELS.highContrast);}
  if(p.simpleScreen){$('simple-mode').checked=true;fire('simple-mode');applied.push(PROFILE_LABELS.simpleScreen);}
