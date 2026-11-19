@@ -127,3 +127,12 @@ html:root:root body .exam-list-actions{flex:1 0 100%;display:flex;gap:8px;flex-w
 html body.dou-student.high .option{background:#000;color:#fff;border-color:#fff;box-shadow:none}
 html body.dou-student.high .option:has(input:checked){background:#1c3b66;color:#fff;border:3px solid #ffd400;box-shadow:none}
 html body.dou-student.high .option .badge{background:#fff;color:#000}
+/* Yönetim sayfaları (kenar çubuklu): üst çubuk ana içerikle aynı sütunda hizalanır; bağlantılar düğme biçiminde. */
+html body.dou-admin-standalone>header{padding:12px clamp(18px,3vw,40px);justify-content:space-between;gap:12px 20px;min-height:72px;box-sizing:border-box}
+html body.dou-admin-standalone>header .brand{margin:0}
+html body.dou-admin-standalone>header nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+html body.dou-admin-standalone>header nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid #D0D5DD;border-radius:12px;background:#fff;text-decoration:none;font-weight:600;color:var(--dou-ink)}
+html body.dou-admin-standalone>header nav a:hover{border-color:var(--dou-red);color:var(--dou-red-dark)}
+html body.dou-admin-standalone>header nav{font-size:0}
+html body.dou-admin-standalone>header nav a{font-size:16px}
+html body.dou-admin-standalone .notice{padding:12px 18px;border-radius:14px}
