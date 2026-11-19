@@ -79,3 +79,6 @@ Testler: 852/852.
 
 ## v2.99 — Sunum hazırlığı
 `DEMO-HAZIRLA.bat` / `tools/demo-hazirla.mjs`: sentetik kurum, 4 ders sınavı (çoktan seçmeli, doğru/yanlış, eşleştirme ve klasik yazılı sorular karışık) ve 8 engel profilli aday kodu. Düzeltmeler: yüksek kontrastta şık okunurluğu, oturumlar arası ayar taşıması, giriş kâğıtlarının yazdırılması, yönetim üst çubuğu hizası, kod kopyalama, hazırlık sayfası çift numaralandırma, bildirim kutusu iç boşluğu. Pilot soru tipleri: çoktan seçmeli, doğru/yanlış, eşleştirme, yazılı (klasik, 4000 karakter). Boşluk doldurma ayrı tip değildir; yazılı soru olarak hazırlanır.
+
+## v2.100 — Sınav kaydı (evrak) ve çıktı
+`/sinav-kaydi` (kurum girişi gerekir): teslim edilen her sınav için soru metni, şıklar, öğrencinin yanıtı, doğru yanıt, önerilen/öğretmen puanı, süre-mola-devam bilgisi, uyarlamalar, imza alanları ve SHA-256 kayıt özetiyle yazdırılabilir kayıt üretir (Yazdır → PDF). `?id=` tek oturum, parametresiz hepsi. Bağlantılar: pilot yönetimi (oturum ve toplu), salon sayfası. API: `GET /api/pilot/{id}/record`. Veri saklama süresi dolmadan çıktı alınmalıdır.

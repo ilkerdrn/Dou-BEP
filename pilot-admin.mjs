@@ -17,6 +17,7 @@ function renderReview(review){
  activeReview=review;const box=$('review-questions');box.replaceChildren();
  $('review-summary').textContent=`${review.reviewedQuestions}/${review.totalQuestions} soru değerlendirildi. Girilen puan: ${review.assessedPoints}/${review.assessedMaximum}. Bu değerler yalnızca puan girilmiş sorular içindir.`;
  $('review-csv').href='/api/pilot/'+review.sessionId+'/review.csv';
+ $('review-record').href='/sinav-kaydi?id='+encodeURIComponent(review.sessionId);
  const goals=$('objective-observations');goals.replaceChildren();
  for(const g of summarizeObjectives(review)){
   const entry=el('div');entry.className='objective-observation';

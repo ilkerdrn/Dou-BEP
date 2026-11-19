@@ -70,6 +70,9 @@ const allowed={
  '/dou-reader-demo.mjs':['dou-reader-demo.mjs','text/javascript; charset=utf-8'],
  '/pilot-yonetim':['pilot-admin.html','text/html; charset=utf-8'],
  '/salon-oturumu':['lab.html','text/html; charset=utf-8'],
+ '/sinav-kaydi':['sinav-kaydi.html','text/html; charset=utf-8'],
+ '/sinav-kaydi.mjs':['sinav-kaydi.mjs','text/javascript; charset=utf-8'],
+ '/sinav-kaydi.css':['sinav-kaydi.css','text/css; charset=utf-8'],
  '/hazirlik':['hazirlik.html','text/html; charset=utf-8'],
  '/hazirlik.mjs':['hazirlik.mjs','text/javascript; charset=utf-8'],
  '/lab.mjs':['lab.mjs','text/javascript; charset=utf-8'],
@@ -178,7 +181,7 @@ const allowed={
  '/app.mjs':['app.mjs','text/javascript; charset=utf-8']
 };
 // Single sign-in: management panels (HTML only) require a valid institutional session. Public: /, /kurum, /pilot, reader/speech labs.
-const guardedPages=new Set(['/kurumsal-sinav','/toplu-sinav','/uyarlama-kararlari','/sinav-koordinasyon','/sinav-operasyon','/erisilebilirlik-kabul','/pilot-yonetim','/salon-oturumu','/sinav-dosya-aktar','/bep-import','/erisilebilirlik-kontrol']);
+const guardedPages=new Set(['/kurumsal-sinav','/toplu-sinav','/uyarlama-kararlari','/sinav-koordinasyon','/sinav-operasyon','/erisilebilirlik-kabul','/pilot-yonetim','/salon-oturumu','/sinav-kaydi','/sinav-dosya-aktar','/bep-import','/erisilebilirlik-kontrol']);
 function hasPanelSession(req){
  const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));
  if(!found)return false;

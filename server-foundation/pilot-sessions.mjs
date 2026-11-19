@@ -369,6 +369,35 @@ export function pilotSessions(db,{StoreError,log}){
   const rows=info.questions.map(q=>[id.slice(0,8),q.number,q.objective,q.score??'',q.maxPoints,q.note]);
   return '\ufeff'+[header,...rows].map(row=>row.map(csv).join(';')).join('\r\n')+'\r\n';
  }
+
+ /** Saklanacak sınav kaydı (evrak): sorular, öğrencinin yanıtları, doğru yanıt, öğretmen puanı. Yalnızca yetkili öğretmen/kurum görür; öğrenciye hiç gitmez. */
+ function recordGet(actor,id){
+  const ctx=reviewContext(actor,id);const review=reviewState(ctx);const r=ctx.row;
+  const given=r.answers?JSON.parse(r.answers):{};
+  const adjustments=JSON.parse(r.profile||'[]');
+  const questions=ctx.payload.questions.map((q,i)=>{
+   const sq=ctx.source.questions[i],rv=review.questions[i];
+   const out={number:q.number,type:q.type,prompt:q.prompt,objective:rv.objective,maxPoints:rv.maxPoints,suggestedScore:rv.suggestedScore,score:rv.score,note:rv.note};
+   const resp=given[q.id]??null;
+   if(q.type==='choice'||q.type==='truefalse'){
+    out.options=q.options;out.response=typeof resp==='string'?resp:null;
+    out.responseLabel=q.options.find(o=>o.id===out.response)?.label??null;
+    out.correctLabel=String(sq.answer||'')||null;out.correctId=q.options.find(o=>o.label===sq.answer)?.id??null;
+   }else if(q.type==='matching'){
+    const m=resp&&typeof resp==='object'?resp:{};
+    out.pairs=q.left.map((l,k)=>({left:l.label,response:q.right.find(x=>x.id===m[l.id])?.label??null,correct:sq.pairs[k]?.right??null}));
+   }else{out.response=typeof resp==='string'?resp:null;out.modelAnswer=String(sq.answer||'')||null;}
+   return out;});
+  const obj=questions.filter(q=>q.type!=='short');
+  return {ref:r.id.slice(0,8).toUpperCase(),sessionId:r.id,candidateCode:r.candidate_code||'',seat:r.seat||'',
+   examTitle:ctx.payload.title,subject:ctx.payload.subject,grade:ctx.payload.grade,instruction:ctx.payload.instruction,revision:r.revision,
+   startedAt:r.started_at||null,submittedAt:r.submitted_at||null,durationMinutes:ctx.payload.durationMinutes,extraMinutes:r.extra_minutes||0,
+   spentMinutes:r.submitted_at&&r.started_at?Math.max(0,Math.round((r.submitted_at-r.started_at-(r.break_used_ms||0))/60000)):null,
+   breakCount:r.break_count||0,resumeCount:r.resume_count||0,
+   adjustments:adjustments.map(x=>({code:x,label:ADJUSTMENTS[x]?.label||x})),
+   totals:{objectiveSuggested:obj.reduce((a,q)=>a+(q.suggestedScore??0),0),objectiveMax:obj.reduce((a,q)=>a+q.maxPoints,0),assessedPoints:review.assessedPoints,assessedMaximum:review.assessedMaximum,reviewedQuestions:review.reviewedQuestions,totalQuestions:review.totalQuestions,complete:review.complete,maxTotal:questions.reduce((a,q)=>a+q.maxPoints,0)},
+   retentionHours:RETENTION_HOURS,questions};
+ }
  /** Lab-wide result table (anonymous codes only). Objective points are SUGGESTIONS from the answer key; teacher scores are separate. */
  function resultsCsv(actor){permit(actor);cleanup();
   const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 500`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
@@ -405,6 +434,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotIssueBatch:issueBatch,pilotLive:live,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotRecord:recordGet,pilotIssueBatch:issueBatch,pilotLive:live,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
