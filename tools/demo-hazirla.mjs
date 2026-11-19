@@ -21,18 +21,18 @@ if(!lg.ok){console.error('Giriş başarısız:',lg.status,await lg.text());proce
 const v=await lg.json();const sess={cookie:lg.headers.getSetCookie().map(c=>c.split(';')[0]).join('; '),csrf:v.csrfToken||v.csrf};
 const COURSES=[
  {title:'MAT101 Matematik I Ara Sınav',subject:'Matematik',duration:30,qs:[
-  ['choice','5 + 3 işleminin sonucu kaçtır?',['6','8','9'],'8'],['choice','12 ÷ 4 işleminin sonucu kaçtır?',['2','3','4'],'3'],['truefalse','7 × 6 = 42',null,'Doğru'],['short','Asal sayı ne demektir? Kendi cümlelerinizle açıklayınız.',null,'']]},
+  ['choice','5 + 3 işleminin sonucu kaçtır?',['6','8','9'],'8'],['choice','12 ÷ 4 işleminin sonucu kaçtır?',['2','3','4'],'3'],['truefalse','7 × 6 = 42',null,'Doğru'],['matching','İşlemleri sonuçlarıyla eşleştirin.',null,'',[{left:'6 × 7',right:'42'},{left:'81 ÷ 9',right:'9'},{left:'15 + 28',right:'43'}]],['short','Asal sayı ne demektir? Kendi cümlelerinizle açıklayınız ve iki örnek veriniz. (Klasik yazılı soru)',null,'']]},
  {title:'BLP103 Bilgisayar Temelleri Vize',subject:'Bilgisayar Programcılığı',duration:20,qs:[
   ['choice','Aşağıdakilerden hangisi bir giriş birimidir?',['Klavye','Monitör','Hoparlör'],'Klavye'],['truefalse','RAM kalıcı depolama birimidir.',null,'Yanlış'],['choice','1 bayt kaç bittir?',['4','8','16'],'8']]},
  {title:'ISL205 İşletme Yönetimi Vize',subject:'İşletme',duration:45,qs:[
-  ['choice','Planlama hangi yönetim işlevidir?',['İlk işlev','Son işlev','Denetim işlevi'],'İlk işlev'],['truefalse','SWOT analizi güçlü ve zayıf yönleri içerir.',null,'Doğru'],['short','Yönetimin dört temel işlevini sayarak kısaca açıklayınız.',null,'']]},
+  ['choice','Planlama hangi yönetim işlevidir?',['İlk işlev','Son işlev','Denetim işlevi'],'İlk işlev'],['truefalse','SWOT analizi güçlü ve zayıf yönleri içerir.',null,'Doğru'],['short','Yönetimin dört temel işlevini sayarak her birini birer cümleyle açıklayınız. (Klasik yazılı soru)',null,''],['short','Bir işletmede planlama yapılmazsa hangi sorunlarla karşılaşılabilir? Örneklerle tartışınız. (Klasik yazılı soru, paragraf düzeyinde yanıt)',null,'']]},
  {title:'HUK110 Hukukun Temelleri Ara Sınav',subject:'Hukuk',duration:60,qs:[
-  ['truefalse','Hukuk kuralları yaptırıma bağlıdır.',null,'Doğru'],['choice','Kanunlar hangi organ tarafından yapılır?',['Yasama','Yürütme','Yargı'],'Yasama'],['short','Hak ehliyeti ile fiil ehliyeti arasındaki farkı açıklayınız.',null,'']]}
+  ['truefalse','Hukuk kuralları yaptırıma bağlıdır.',null,'Doğru'],['choice','Kanunlar hangi organ tarafından yapılır?',['Yasama','Yürütme','Yargı'],'Yasama'],['matching','Kavramları tanımlarıyla eşleştirin.',null,'',[{left:'Hak ehliyeti',right:'Hak sahibi olabilme'},{left:'Fiil ehliyeti',right:'Kendi fiilleriyle hak ve borç doğurabilme'},{left:'Yasama',right:'Kanun koyma yetkisi'}]],['short','Hak ehliyeti ile fiil ehliyeti arasındaki farkı örnekle açıklayınız. (Klasik yazılı soru)',null,'']]}
 ];
 function mkExam(c){
  const d=createDemo();d.title=c.title;d.subject=c.subject;d.duration=c.duration;d.adaptations.visualCues=false;d.profile='';
- const t={choice:d.questions.find(q=>q.type==='choice'),truefalse:d.questions.find(q=>q.type==='truefalse'),short:d.questions.find(q=>q.type==='short')};
- d.questions=c.qs.map(([type,prompt,options,answer],i)=>({...t[type],id:'q'+(i+1),type,prompt,options:options||[],pairs:[],answer,points:type==='short'?30:10,teacherNote:''}));
+ const t={choice:d.questions.find(q=>q.type==='choice'),truefalse:d.questions.find(q=>q.type==='truefalse'),short:d.questions.find(q=>q.type==='short'),matching:d.questions.find(q=>q.type==='matching')};
+ d.questions=c.qs.map(([type,prompt,options,answer,pairs],i)=>({...t[type],id:'q'+(i+1),type,prompt,options:options||[],pairs:pairs||[],answer,points:type==='short'?30:10,teacherNote:''}));
  return d;}
 const ids=[];
 for(const c of COURSES){

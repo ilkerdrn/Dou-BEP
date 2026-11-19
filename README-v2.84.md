@@ -76,3 +76,6 @@ Testler: 852/852.
 
 ## v2.98 — DOU Reader laboratuvarı: sinir ağı sesi
 `/dou-reader-demo` altındaki "serbest metin" laboratuvarına **Ses motoru** seçimi eklendi. Varsayılan artık sinir ağı sesi (Okur v1.0, CC BY 4.0; tarayıcı destekliyorsa). Eski kural tabanlı ses "robotik, deneysel" etiketiyle seçenek olarak durur; sinir ağı seçiliyken fonem/perde/ritim ayarları devre dışıdır. Gerçek tarayıcı testi iki motoru da doğrular. Sesin doğallığına insan kulağı karar verir.
+
+## v2.99 — Sunum hazırlığı
+`DEMO-HAZIRLA.bat` / `tools/demo-hazirla.mjs`: sentetik kurum, 4 ders sınavı (çoktan seçmeli, doğru/yanlış, eşleştirme ve klasik yazılı sorular karışık) ve 8 engel profilli aday kodu. Düzeltmeler: yüksek kontrastta şık okunurluğu, oturumlar arası ayar taşıması, giriş kâğıtlarının yazdırılması, yönetim üst çubuğu hizası, kod kopyalama, hazırlık sayfası çift numaralandırma, bildirim kutusu iç boşluğu. Pilot soru tipleri: çoktan seçmeli, doğru/yanlış, eşleştirme, yazılı (klasik, 4000 karakter). Boşluk doldurma ayrı tip değildir; yazılı soru olarak hazırlanır.

@@ -136,3 +136,7 @@ html body.dou-admin-standalone>header nav a:hover{border-color:var(--dou-red);co
 html body.dou-admin-standalone>header nav{font-size:0}
 html body.dou-admin-standalone>header nav a{font-size:16px}
 html body.dou-admin-standalone .notice{padding:12px 18px;border-radius:14px}
+html body.dou-student .notice{padding:12px 18px;border-radius:14px}
+html body.dou-student label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;margin-right:14px}
+html body ol.checks{list-style:none;padding-left:0}
+html body ol.checks>li{margin:0 0 16px}
