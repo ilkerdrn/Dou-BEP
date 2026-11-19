@@ -91,20 +91,44 @@ function csvText(){
  return '﻿'+rows.map(r=>r.map(q).join(';')).join('\r\n')+'\r\n';
 }
 const STATUS={issued:['Henüz girmedi','pill-warn'],started:['Sınavda','pill-ok'],submitted:['Teslim etti','pill-ok'],revoked:['İptal','pill-bad'],expired:['Süresi doldu','pill-bad']};
+const ago=s=>s===null||s===undefined?'—':s<60?s+' sn önce':Math.floor(s/60)+' dk önce';
+function attention(r){return r.status==='started'&&((r.remainingSeconds!==null&&r.remainingSeconds<300)||(!r.onBreak&&r.idleSeconds!==null&&r.idleSeconds>300));}
+function activity(r){
+ if(r.status==='issued')return 'Henüz girmedi';
+ if(r.status==='submitted')return 'Teslim etti';
+ if(r.status==='expired')return 'Süresi doldu';
+ if(r.status==='revoked')return 'İptal edildi';
+ if(r.onBreak)return 'Molada';
+ if(r.idleSeconds!==null&&r.idleSeconds>300)return 'Uzun süredir yanıt hareketi yok';
+ if(r.idleSeconds!==null&&r.idleSeconds>60)return 'Düşünüyor / yazıyor';
+ return 'Yanıtlıyor';
+}
+function bar(value,max,label){const p=el('progress');p.max=Math.max(1,max);p.value=Math.min(max,Math.max(0,value));p.setAttribute('aria-label',label);return p;}
+function card(label,value,cls){const d=el('div');d.className='live-card '+(cls||'');d.append(el('strong',String(value)),el('span',label));return d;}
 async function refreshLive(){
  const live=await api('/pilot/live');const body=$('live-rows');body.replaceChildren();
- const count={issued:0,started:0,submitted:0,other:0};
+ const only=$('live-attention').checked;
+ const count={issued:0,started:0,submitted:0,other:0,breaks:0,low:0,idle:0};
  for(const r of live.items){
   if(r.status==='issued'||r.status==='started'||r.status==='submitted')count[r.status]++;else count.other++;
-  const tr=el('tr');const [label,cls]=STATUS[r.status]||[r.status,''];
-  const st=el('td');const sp=el('span',label+(r.onBreak?' · molada':''));sp.className=cls;st.append(sp);
-  const notes=[];if(r.resumeCount)notes.push('↻ '+r.resumeCount+' kez devam ettirildi');if(r.lastSaveAt&&r.status==='started')notes.push('son kayıt '+new Date(r.lastSaveAt).toLocaleTimeString('tr-TR'));
-  if(r.adjustments.length)notes.push(r.adjustments.join(', '));if(r.staff.length)notes.push('GÖREVLİ: '+r.staff.join(', '));
-  const warn=r.status==='started'&&r.remainingSeconds!==null&&r.remainingSeconds<300?' ⚠':'';
-  tr.append(el('td',r.seat||'—'),el('td',r.candidateCode||r.ref),el('td',r.examTitle),st,el('td',r.status==='started'?mins(r.remainingSeconds)+warn:'—'),el('td',notes.join(' · ')||'—'));body.append(tr);
+  if(r.status==='started'){if(r.onBreak)count.breaks++;if(r.remainingSeconds!==null&&r.remainingSeconds<300)count.low++;if(!r.onBreak&&r.idleSeconds!==null&&r.idleSeconds>300)count.idle++;}
+  if(only&&!attention(r))continue;
+  const tr=el('tr');if(attention(r))tr.className='attn';
+  const [label,cls]=STATUS[r.status]||[r.status,''];
+  const st=el('td');const sp=el('span',activity(r));sp.className=r.onBreak?'pill-warn':cls;st.append(sp);if(r.status==='started'){const sub=el('div','Sınavda'+(r.resumeCount?' · '+r.resumeCount+' kez devam':''));sub.className='sub';st.append(sub);}
+  const time=el('td');
+  if(r.status==='started'){const t=el('strong',mins(r.remainingSeconds)+' dk'+(r.remainingSeconds<300?' ⚠':''));t.className='time'+(r.remainingSeconds<300?' low':'');time.append(t,el('br'),bar(r.plannedSeconds-r.remainingSeconds,r.plannedSeconds,'Süre ilerlemesi'),(()=>{const s=el('div','Verilen: '+Math.round(r.plannedSeconds/60)+' dk'+(r.extraMinutes?' (+'+r.extraMinutes+' ek)':''));s.className='sub';return s;})());}
+  else time.append(document.createTextNode('—'));
+  const prog=el('td');
+  if(r.totalQuestions){prog.append(el('strong',r.answered+' / '+r.totalQuestions),el('br'),bar(r.answered,r.totalQuestions,'Cevaplanan soru'));}else prog.append(document.createTextNode('—'));
+  const last=el('td',r.status==='started'?ago(r.idleSeconds):r.status==='submitted'&&r.submittedAt?new Date(r.submittedAt).toLocaleTimeString('tr-TR'):'—');
+  const notes=[];const own=r.adjustments.filter(x=>ADJUSTMENTS[x]?.kind!=='staff').map(x=>ADJUSTMENTS[x]?.label||x);if(own.length)notes.push(own.join(', '));if(r.staff.length)notes.push('GÖREVLİ: '+r.staff.join(', '));
+  tr.append(el('td',r.seat||'—'),el('td',r.candidateCode||r.ref),el('td',r.examTitle),st,time,prog,last,el('td',notes.join(' · ')||'—'));body.append(tr);
  }
+ if(!body.children.length){const tr=el('tr');const td=el('td',only?'Şu an dikkat gerektiren aday yok.':'Henüz oturum yok.');td.colSpan=8;tr.append(td);body.append(tr);}
+ const cards=$('live-cards');cards.replaceChildren(card('Henüz girmedi',count.issued,'warn'),card('Sınavda',count.started,'ok'),card('Molada',count.breaks),card('Az süre (<5 dk)',count.low,count.low?'bad':''),card('Hareketsiz (>5 dk)',count.idle,count.idle?'bad':''),card('Teslim etti',count.submitted,'ok'));
  $('retention-note').textContent=`Veri saklama: teslim edilen yanıtlar ve puanlar sınav bitiminden ${live.retentionHours} saat sonra otomatik silinir. Sonuç tablosunu ve değerlendirmeleri bu süre dolmadan alın.`;
- $('live-summary').textContent=`${live.items.length} oturum · ${count.issued} henüz girmedi · ${count.started} sınavda · ${count.submitted} teslim${count.other?' · '+count.other+' iptal/süresi dolmuş':''} (güncelleme ${new Date(live.at).toLocaleTimeString('tr-TR')})`;
+ $('live-summary').textContent=`${live.items.length} oturum · ${count.issued} henüz girmedi · ${count.started} sınavda · ${count.submitted} teslim${count.other?' · '+count.other+' iptal/süresi dolmuş':''} (güncelleme ${new Date(live.at).toLocaleTimeString('tr-TR')}). "Son hareket", adayın son otomatik kaydedilen yanıt değişikliğidir; yanıt değiştirmeden düşünen aday da hareketsiz görünebilir.`;
 }
 function setAuto(){clearInterval(liveTimer);if($('live-auto').checked)liveTimer=setInterval(()=>refreshLive().catch(()=>{}),10000);}
 async function init(){
@@ -134,6 +158,7 @@ if(typeof document!=='undefined'&&$('plan-issue')){
  $('plan-csv-download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([csvText()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='salon-giris-kodlari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);});
  $('live-refresh').addEventListener('click',()=>refreshLive().then(()=>msg('Güncellendi.')).catch(e=>msg(e.message,true)));
  $('live-auto').addEventListener('change',setAuto);
+ $('live-attention').addEventListener('change',()=>refreshLive().catch(()=>{}));
  $('results-download').addEventListener('click',async()=>{try{const r=await fetch('/api/pilot/results.csv',{credentials:'same-origin'});if(!r.ok)throw Error('Sonuç tablosu alınamadı.');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='salon-sonuclari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);msg('Sonuç tablosu indirildi. Nesnel puanlar cevap anahtarından ÖNERİdir; yazılı yanıtları siz puanlayın.');}catch(e){msg(e.message,true);}});
  init();
 }

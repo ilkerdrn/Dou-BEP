@@ -150,11 +150,13 @@ export function pilotSessions(db,{StoreError,log}){
   }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
  }
  function live(actor){permit(actor);cleanup();
-  const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 300`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
+  const rows=db.prepare(`SELECT p.*,json_extract(e.body,'$.title') AS exam_title,json_array_length(json_extract(e.body,'$.questions')) AS q_count,json_extract(e.body,'$.duration') AS exam_minutes FROM pilot_sessions p LEFT JOIN exams e ON e.id=p.exam_id AND e.tenant_id=p.tenant_id WHERE p.tenant_id=?${elevated(actor)?'':' AND p.owner_id=?'} ORDER BY p.seat,p.candidate_code,p.created_at LIMIT 300`).all(...(elevated(actor)?[actor.tenantId]:[actor.tenantId,actor.id]));
   const t=now();
   return {at:t,retentionHours:RETENTION_HOURS,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
    remainingSeconds:r.status==='started'?Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-t)/1000)):null,onBreak:!!r.break_started_at,breakCount:r.break_count||0,resumeCount:r.resume_count||0,lastSaveAt:r.draft_at||null,
-   startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
+   startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,
+   totalQuestions:r.q_count||0,answered:(()=>{try{const a=JSON.parse((r.status==='submitted'?r.answers:r.draft_answers)||'{}');return Object.values(a).filter(v=>v!==''&&v!==null&&!(typeof v==='object'&&!Object.keys(v).length)).length;}catch{return 0;}})(),
+   plannedSeconds:((r.exam_minutes||0)+(r.extra_minutes||0))*60,idleSeconds:r.status==='started'?Math.max(0,Math.floor((t-(r.draft_at||r.started_at||t))/1000)):null,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
  }
  function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
  function view(actor,id){return meta(rowFor(actor,id),true);}

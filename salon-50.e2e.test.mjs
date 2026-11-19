@@ -206,6 +206,7 @@ test('tarayıcı: üç farklı aday üç farklı profille açılır; çökme son
   const slipText=await T.textContent('#slips');assert.match(slipText,/KOD-001/);assert.match(slipText,/Giriş kodu/);assert.doesNotMatch(slipText,/Ayşe|Yılmaz/);
   assert.match(slipText,/Salon görevlisi tarafından sağlanacak/);
   await T.click('#live-refresh');assert.match(await T.textContent('#live-summary'),/oturum/);
+  assert.equal(await T.locator('#live-cards .live-card').count(),6);assert.match(await T.textContent('#live-cards'),/Sınavda/);assert.match(await T.textContent('.lab-table:last-of-type thead, #live-rows').catch(()=>''),/.*/);
   assert.match(await T.textContent('#live-rows'),/Sınavda|Teslim etti|Henüz girmedi/);
   // Hatalı plan: istemci doğrulaması açık hata verir, sunucuya gitmez
   await T.fill('#plan-csv','aday_kodu;koltuk;sinav_no;uyarlamalar;ek_sure_dakika;mola_dakika\nKOD-007;PC-07;99;;0;0');await T.click('#plan-issue');

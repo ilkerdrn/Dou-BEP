@@ -82,3 +82,6 @@ Testler: 852/852.
 
 ## v2.100 — Sınav kaydı (evrak) ve çıktı
 `/sinav-kaydi` (kurum girişi gerekir): teslim edilen her sınav için soru metni, şıklar, öğrencinin yanıtı, doğru yanıt, önerilen/öğretmen puanı, süre-mola-devam bilgisi, uyarlamalar, imza alanları ve SHA-256 kayıt özetiyle yazdırılabilir kayıt üretir (Yazdır → PDF). `?id=` tek oturum, parametresiz hepsi. Bağlantılar: pilot yönetimi (oturum ve toplu), salon sayfası. API: `GET /api/pilot/{id}/record`. Veri saklama süresi dolmadan çıktı alınmalıdır.
+
+## v2.101 — Canlı salon izleme
+`/salon-oturumu` → "Salon durumu": özet kartları (henüz girmedi, sınavda, molada, az süre <5 dk, hareketsiz >5 dk, teslim), aday başına "ne yapıyor" (yanıtlıyor, düşünüyor, molada, hareketsiz, teslim etti), kalan süre ve süre çubuğu, cevaplanan/toplam soru, son hareket (son otomatik kayıt), Türkçe uyarlama adları. "Yalnız dikkat gerekenler" süzgeci. Her 10 sn yenilenir. Not: "son hareket" yanıt değişikliğine dayanır; ekran/kamera izleme yoktur.
