@@ -123,3 +123,7 @@ html body.dou-admin-standalone>header nav,html body.dou-admin-standalone>header 
 html:root:root body .portal-template{flex-wrap:wrap;align-items:center;gap:10px}
 html:root:root body .portal-template-body{flex:1 1 150px;min-width:0;overflow-wrap:anywhere}
 html:root:root body .exam-list-actions{flex:1 0 100%;display:flex;gap:8px;flex-wrap:wrap}
+/* Yüksek kontrast: seçenek kartları koyu zemin + beyaz yazı kalmalı (tema açık zemini ezmesin). */
+html body.dou-student.high .option{background:#000;color:#fff;border-color:#fff;box-shadow:none}
+html body.dou-student.high .option:has(input:checked){background:#1c3b66;color:#fff;border:3px solid #ffd400;box-shadow:none}
+html body.dou-student.high .option .badge{background:#fff;color:#000}
