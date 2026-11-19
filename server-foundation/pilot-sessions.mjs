@@ -312,6 +312,7 @@ export function pilotSessions(db,{StoreError,log}){
   const questions=ctx.payload.questions.map(q=>({
    id:q.id,number:q.number,prompt:q.prompt,type:q.type,objective:ctx.objectives.get(q.id)||'',
    maxPoints:ctx.points.get(q.id)??0,response:responses[q.id]??null,
+   responseLabel:q.options&&typeof responses[q.id]==='string'?(q.options.find(o=>o.id===responses[q.id])?.label??null):null,
    score:values[q.id]?.score??null,note:values[q.id]?.note||'',
    suggestedScore:suggestScore(q,ctx.source.questions[ctx.payload.questions.indexOf(q)],responses[q.id]??null,ctx.points.get(q.id)??0),
    flags:q.type==='short'&&typeof responses[q.id]==='string'&&detectSensitive(responses[q.id]).length?['Olası kişisel veri: '+detectSensitive(responses[q.id]).join(', ')]:[]

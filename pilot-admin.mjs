@@ -29,7 +29,7 @@ function renderReview(review){
  for(const q of review.questions){
   const card=el('fieldset');card.className='review-question';const title=el('legend','Soru '+q.number+' · '+q.maxPoints+' puan');card.append(title);
   card.append(el('p',q.prompt));
-  const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?q.response:Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
+  const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?(q.responseLabel?q.response+' — '+q.responseLabel:q.response):Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
   answer.style.whiteSpace='pre-wrap';
   for(const flag of q.flags||[]){const w=el('p','⚠ '+flag+'. Yanıtı paylaşmadan önce kontrol edin.');w.className='notice err';card.append(w);}
   if(q.suggestedScore!==null&&q.suggestedScore!==undefined){const sg=el('p','Cevap anahtarına göre önerilen puan: '+q.suggestedScore+' / '+q.maxPoints+' (yalnızca öneri; kesin puanı siz girersiniz).');sg.className='muted';card.append(sg);}

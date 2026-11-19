@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -43,7 +44,7 @@ test('tenant isolation, owner scopes, role restrictions and audit',()=>{
 test('password change destroys all sessions, old password invalid',()=>{const f=fixture();try{const s=f.store,l=f.store.signIn({tenantId:'okul-a',email:'admin@a.test',password});const actor=s.requireActor(l.token);s.changePassword(actor,password,otherPass);assert.equal(s.actorFrom(l.token),null);assert.throws(()=>s.signIn({tenantId:'okul-a',email:'admin@a.test',password}),{code:'bad_credentials'});assert.ok(s.signIn({tenantId:'okul-a',email:'admin@a.test',password:otherPass}));}finally{f.dispose();}});
 test('reject invalid or sensitive profile-bearing templates',()=>{const f=fixture();try{const s=f.store,actor=s.requireActor(s.signIn({tenantId:'okul-a',email:'admin@a.test',password}).token);assert.throws(()=>s.saveTemplate(actor,{kind:'rubric',template:{format:'oops'},shared:false}));assert.throws(()=>s.saveTemplate(actor,{kind:'exam',template:{format:'bep-exam-template',schemaVersion:1,id:'safe-id',name:'Sınav',exam:{profile:'private'}}}));}finally{f.dispose();}});
 test('API blocks CSRF and origin, applies cookie sessions and tenant filtering',async()=>{
- const f=fixture();const port=41919;
+ const f=fixture();const port=await freePort();
  const api=createApiHandler(f.store,{port});const server=http.createServer(async(req,res)=>{await api(req,res,new URL(req.url,'http://localhost').pathname);});
  await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
  async function request(path,method='GET',body,headers={}){const r=await fetch(`http://127.0.0.1:${port}/api${path}`,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json(),cookie:r.headers.get('set-cookie')};}

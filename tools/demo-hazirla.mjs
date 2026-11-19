@@ -32,7 +32,7 @@ const COURSES=[
 function mkExam(c){
  const d=createDemo();d.title=c.title;d.subject=c.subject;d.duration=c.duration;d.adaptations.visualCues=false;d.profile='';
  const t={choice:d.questions.find(q=>q.type==='choice'),truefalse:d.questions.find(q=>q.type==='truefalse'),short:d.questions.find(q=>q.type==='short'),matching:d.questions.find(q=>q.type==='matching')};
- d.questions=c.qs.map(([type,prompt,options,answer,pairs],i)=>({...t[type],id:'q'+(i+1),type,prompt,options:options||[],pairs:pairs||[],answer,points:type==='short'?30:10,teacherNote:''}));
+ d.questions=c.qs.map(([type,prompt,options,answer,pairs],i)=>({...t[type],id:'q'+(i+1),type,prompt,objective:c.subject+' kazanımı',options:options||[],pairs:pairs||[],answer,points:type==='short'?30:10,teacherNote:''}));
  return d;}
 const ids=[];
 for(const c of COURSES){
