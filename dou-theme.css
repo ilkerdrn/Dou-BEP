@@ -140,3 +140,63 @@ html body.dou-student .notice{padding:12px 18px;border-radius:14px}
 html body.dou-student label:has(>input[type=checkbox]){display:inline-flex;align-items:center;gap:8px;margin-right:14px}
 html body ol.checks{list-style:none;padding-left:0}
 html body ol.checks>li{margin:0 0 16px}
+
+/* ===== Öğrenci sınav ekranı: sade, hizalı, modern düzen (v2.100) ===== */
+html body.dou-student main{max-width:1240px}
+html body.dou-student #player:not([hidden]){grid-template-columns:minmax(0,1fr) 320px;column-gap:28px;row-gap:18px}
+html body.dou-student #player>.card{border-radius:24px;border:1px solid #E4E7EC;box-shadow:0 10px 28px rgba(16,24,40,.06);margin:0}
+/* Üst kart: sınav adı + ayar çubuğu + süre */
+html body.dou-student #player>.card:first-child{padding:26px 28px;display:flex;flex-direction:column;gap:14px}
+html body.dou-student #player>.card:first-child>*{margin:0}
+html body.dou-student #exam-title{font-size:1.9em;line-height:1.2;letter-spacing:-.01em}
+html body.dou-student #exam-info{color:#475467;font-size:.95em;line-height:1.5}
+html body.dou-student #profile-note{padding:10px 16px;border-radius:14px;font-size:.95em}
+html body.dou-student #player>.card:first-child>.inline{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px;background:#F4F5F9;border-radius:18px}
+html body.dou-student #player>.card:first-child>.inline label{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;margin:0;background:#fff;border:1px solid #D0D5DD;border-radius:12px;font-weight:600;font-size:.92em;cursor:pointer}
+html body.dou-student #player>.card:first-child>.inline label:has(select){padding-right:6px}
+html body.dou-student #player>.card:first-child>.inline select{min-height:36px;border:0;background:transparent;font-weight:700;padding:0 6px}
+html body.dou-student #player>.card:first-child>.inline input[type=checkbox]{width:22px!important;height:22px;margin:0}
+html body.dou-student #player>.card:first-child>.inline button{margin-left:auto;min-height:44px}
+html body.dou-student #timer-box:not([hidden]){display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;padding:14px 18px;background:#0F172A;color:#fff;border-radius:18px}
+html body.dou-student #timer-box p{margin:0;color:#fff}
+html body.dou-student #timer-box #timer{font-size:2em;font-variant-numeric:tabular-nums;color:#fff}
+html body.dou-student #timer-box .ring-bg{stroke:#334155}
+html body.dou-student #timer-box .ring-fg{stroke:#FCA5A5}
+html body.dou-student #timer-box #save-status{color:#CBD5E1;font-size:.85em;margin-left:auto}
+html body.dou-student #timer-box #break-start{min-height:44px;background:#fff;color:#101828;border:0}
+html body.dou-student #timer-box #time-alert{flex-basis:100%;background:#FFF7DB;color:#5C3B00;border:2px solid #E0A800;border-radius:12px;padding:10px 14px;margin:0}
+html body.dou-student #player .hint{color:#667085;font-size:.85em;padding:10px 14px;background:transparent;border:0;border-top:1px dashed #D0D5DD;border-radius:0}
+/* Gezinti çubuğu */
+html body.dou-student #question-navigation{padding:16px 20px;border-left:1px solid #E4E7EC}
+html body.dou-student #question-navigation>.inline{margin-bottom:10px}
+html body.dou-student #question-navigation>.inline label{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+html body.dou-student #question-navigation nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+html body.dou-student #question-progress{flex:1;text-align:center;font-weight:700;color:#475467}
+html body.dou-student #question-navigation button{flex:0 0 auto;min-width:0}
+/* Soru kartı */
+html body.dou-student #student-questions .question{padding:32px}
+html body.dou-student #student-questions .question h2{display:inline-block;margin:0 0 12px;padding:6px 14px;background:#EEF1F6;border-radius:999px;font-size:.9em}
+html body.dou-student #student-questions .question>p:not(.written-cue){font-size:1.3em;line-height:1.5;font-weight:600;margin:6px 0 14px}
+html body.dou-student #student-questions fieldset{border:0;padding:0;margin:18px 0 0}
+html body.dou-student #student-questions legend{font-size:1em;font-weight:700;padding:0;margin-bottom:6px;color:#475467}
+html body.dou-student #student-questions textarea{border:2px solid #D0D5DD;border-radius:16px;padding:16px;font:inherit;line-height:1.6}
+html body.dou-student #student-questions textarea:focus{border-color:#1B6ED2}
+/* Teslim kartı */
+html body.dou-student #answer-form>.card{margin-top:18px;padding:22px 28px}
+html body.dou-student #answer-form>.card .inline{display:flex;gap:12px;flex-wrap:wrap}
+/* Okuyucu paneli: ikincil görünüm */
+html body.dou-student #dou-reader{margin-top:18px;background:#FAFAFC}
+@media(max-width:900px){html body.dou-student #player:not([hidden]){grid-template-columns:minmax(0,1fr)}html body.dou-student #player>#question-map-card{grid-column:1;grid-row:auto;position:static}}
+html body.dou-student #player>.card:first-child>.inline label{white-space:nowrap}
+/* Yüksek kontrast: yeni düzende de siyah zemin + beyaz yazı */
+html body.dou-student.high #player>.card:first-child>.inline{background:#000;border:2px solid #fff}
+html body.dou-student.high #player>.card:first-child>.inline label{background:#000;color:#fff;border:2px solid #fff}
+html body.dou-student.high #player>.card:first-child>.inline select{color:#fff;background:#000}
+html body.dou-student.high #exam-info,html body.dou-student.high #player .hint,html body.dou-student.high #question-progress,html body.dou-student.high .muted,html body.dou-student.high #student-questions legend{color:#fff}
+html body.dou-student.high #player .hint{border-top-color:#fff}
+html body.dou-student.high #timer-box{background:#000;border:2px solid #ffd400}
+html body.dou-student.high #student-questions .question h2{background:#000;color:#ffd400;border:2px solid #ffd400}
+html body.dou-student.high #student-questions textarea{background:#000;color:#fff;border-color:#fff}
+html body.dou-student.high #dou-reader{background:#000}
+html body.dou-student.high .eyebrow{color:#ffd400}
+html body.dou-student.high main a{color:#8CC8FF}
