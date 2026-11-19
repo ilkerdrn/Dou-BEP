@@ -73,3 +73,6 @@ Teslim edilen yanıtlar ve öğretmen puanları sınav bitiminden **24 saat sonr
 1. **Sınav editörü otomatik kaydı hiç çalışmıyordu:** `autosave-manager.mjs` varsayılan saati `{set:setTimeout}` olarak tutuyordu; nesne üzerinden çağrılınca tarayıcıda "Illegal invocation" oluyordu. Düzeltildi; `editor-autosave.e2e.test.mjs` taslağın sunucuda oluştuğunu doğrular.
 2. **Sunucu CSP'si `blob:` ses dosyalarını engelliyordu** (DOU Reader laboratuvarı, fonem deneyleri, ses inceleme): `media-src 'self' blob:` eklendi, dış medya yine engelli. `csp-media.e2e.test.mjs` dört sayfada doğrular.
 Testler: 852/852.
+
+## v2.98 — DOU Reader laboratuvarı: sinir ağı sesi
+`/dou-reader-demo` altındaki "serbest metin" laboratuvarına **Ses motoru** seçimi eklendi. Varsayılan artık sinir ağı sesi (Okur v1.0, CC BY 4.0; tarayıcı destekliyorsa). Eski kural tabanlı ses "robotik, deneysel" etiketiyle seçenek olarak durur; sinir ağı seçiliyken fonem/perde/ritim ayarları devre dışıdır. Gerçek tarayıcı testi iki motoru da doğrular. Sesin doğallığına insan kulağı karar verir.

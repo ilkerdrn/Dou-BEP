@@ -19,6 +19,7 @@ test('ses laboratuvarı WAV üretir, durdur düğmesi çalışır ve indirme aç
   const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/dou-reader-demo`,{waitUntil:'load'});
   assert.equal(await page.locator('#free-text-play').isDisabled(),false);
+  await page.selectOption('#free-text-engine','legacy');
   await page.click('#free-text-play');
   await page.waitForFunction(()=>/sözcük|üretilemedi|oynatamadı|başlatılamadı/.test(document.getElementById('free-text-status').textContent),null,{timeout:15000});
   const status=await page.textContent('#free-text-status');
@@ -28,6 +29,22 @@ test('ses laboratuvarı WAV üretir, durdur düğmesi çalışır ve indirme aç
   assert.equal(await page.locator('#free-text-download').isDisabled(),false);
   await page.click('#free-text-stop');
   assert.match(await page.textContent('#free-text-status'),/durduruldu/);
+  assert.deepEqual(errors,[]);
+ }finally{await browser.close();}
+});
+
+test('ses laboratuvarı varsayılan olarak sinir ağı sesini kullanır ve WAV indirmeyi açar',{skip:chromium?false:'playwright yok'},async()=>{
+ const browser=await chromium.launch({args:['--autoplay-policy=no-user-gesture-required']});
+ try{
+  const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(`http://127.0.0.1:${server.address().port}/dou-reader-demo`,{waitUntil:'load'});
+  assert.equal(await page.inputValue('#free-text-engine'),'neural');
+  assert.equal(await page.locator('#free-text-pitch').isDisabled(),true);
+  await page.click('#free-text-play');
+  await page.waitForFunction(()=>/Sinir ağı sesi · |üretilemedi|başlatılamadı/.test(document.getElementById('free-text-status').textContent),null,{timeout:120000});
+  const status=await page.textContent('#free-text-status');
+  assert.match(status,/Sinir ağı sesi/,status);
+  assert.equal(await page.locator('#free-text-download').isDisabled(),false);
   assert.deepEqual(errors,[]);
  }finally{await browser.close();}
 });
