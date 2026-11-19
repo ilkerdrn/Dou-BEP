@@ -192,6 +192,10 @@ test('tarayıcı: üç farklı aday üç farklı profille açılır; çökme son
   await T.evaluate(()=>{window.print=()=>{window.__printed=true;};});
   await T.click('#plan-template');await T.click('#plan-issue');await T.waitForSelector('#plan-result:not([hidden])');
   assert.equal(await T.locator('#plan-rows tr').count(),3);assert.match(await T.textContent('#plan-status'),/3 aday için kod üretildi/);
+  await T.evaluate(()=>{window.__clip='';Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async s=>{window.__clip=s;}}});});
+  await T.locator('#plan-rows button:has-text("Kopyala")').first().click();
+  assert.match(await T.evaluate(()=>window.__clip),/^[0-9A-F]{5}(-[0-9A-F]{5}){3}$/);assert.match(await T.textContent('#message'),/panoya kopyalandı/);
+  await T.click('#plan-copy-all');const all=await T.evaluate(()=>window.__clip);assert.equal(all.split('\n').length,3);assert.match(all,/^PC-01\tKOD-001\t/);
   await T.click('#plan-print');assert.equal(await T.evaluate(()=>window.__printed),true);
   // Yazdırma görünümünde kâğıtlar gerçekten görünür olmalı (önceden #slips, gizlenen <main> içinde kaldığı için sayfa boş çıkıyordu).
   await T.emulateMedia({media:'print'});await T.evaluate(()=>document.body.classList.add('printing-slips'));

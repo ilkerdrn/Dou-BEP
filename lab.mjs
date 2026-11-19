@@ -52,13 +52,20 @@ function renderIssued(items){
  for(const it of items){const tr=el('tr');
   const staff=(it.adjustments||[]).filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label).join(', ')||'—';
   const code=el('td');const c=el('span',it.code);c.className='code-big';code.append(c);
-  const say=el('button','Kodu sesli oku');say.type='button';say.className='ghost';say.setAttribute('aria-label',(it.candidateCode||'Aday')+' için giriş kodunu sesli oku');say.addEventListener('click',()=>speakCode(it.code));code.append(el('br'),say);
+  const say=el('button','Kodu sesli oku');say.type='button';say.className='ghost';say.setAttribute('aria-label',(it.candidateCode||'Aday')+' için giriş kodunu sesli oku');say.addEventListener('click',()=>speakCode(it.code));
+  const cp=el('button','Kopyala');cp.type='button';cp.className='ghost';cp.setAttribute('aria-label',(it.candidateCode||'Aday')+' için giriş kodunu kopyala');cp.style.marginLeft='8px';cp.addEventListener('click',()=>copyText(it.code,(it.candidateCode||'Aday')+' kodu'));
+  code.append(el('br'),say,cp);
   tr.append(el('td',it.seat||'—'),el('td',it.candidateCode||'—'),el('td',it.examTitle),el('td',`${it.durationMinutes}${it.extraMinutes?' + '+it.extraMinutes:''} dk${it.breakMinutes?' · mola '+it.breakMinutes+' dk':''}`),code,el('td',staff));
   body.append(tr);}
  $('plan-result').hidden=false;
 }
 /** Görme engelli aday kâğıdı okuyamaz: görevli kodu yerel Türkçe sesle dinleyebilir (uzak/bulut ses kullanılmaz). */
 export function codeSpeech(code){return String(code||'').toUpperCase().split('').map(ch=>ch==='-'?'tire':ch).join(', ');}
+async function copyText(text,label){
+ try{await navigator.clipboard.writeText(text);msg(label+' panoya kopyalandı.');return;}catch{}
+ try{const t=document.createElement('textarea');t.value=text;t.setAttribute('readonly','');t.style.position='fixed';t.style.opacity='0';document.body.append(t);t.select();const ok=document.execCommand('copy');t.remove();if(ok){msg(label+' panoya kopyalandı.');return;}}catch{}
+ msg('Kopyalanamadı. Kodu elle seçip kopyalayın.',true);
+}
 function speakCode(code){
  const synth=window.speechSynthesis;const voice=synth?.getVoices?.().find(v=>v.localService===true&&/^tr(?:[-_]|$)/i.test(String(v.lang||'')));
  if(!synth||!voice||typeof window.SpeechSynthesisUtterance!=='function'){msg('Bu bilgisayarda yerel Türkçe ses yok. Kodu aday için görevli yüksek sesle okuyup girmelidir.',true);return;}
@@ -122,6 +129,7 @@ if(typeof document!=='undefined'&&$('plan-issue')){
   }catch(e){$('plan-status').textContent='Kodlar üretilemedi: '+e.message+' (hiçbir kod üretilmedi).';$('plan-status').className='notice err';}
   finally{btn.disabled=false;}
  });
+ $('plan-copy-all').addEventListener('click',()=>copyText(issued.map(it=>[it.seat||'',it.candidateCode||'',it.code].join('\t')).join('\n'),'Tüm kodlar (koltuk, aday kodu, giriş kodu)'));
  $('plan-print').addEventListener('click',()=>{buildSlips();document.body.classList.add('printing-slips');const done=()=>document.body.classList.remove('printing-slips');window.addEventListener('afterprint',done,{once:true});window.print();setTimeout(done,60000);});
  $('plan-csv-download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([csvText()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='salon-giris-kodlari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);});
  $('live-refresh').addEventListener('click',()=>refreshLive().then(()=>msg('Güncellendi.')).catch(e=>msg(e.message,true)));
