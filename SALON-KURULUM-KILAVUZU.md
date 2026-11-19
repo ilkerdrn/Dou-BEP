@@ -61,3 +61,6 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 4. Bütün sınav yalnızca klavyeyle yapılabilir; yanıtlar her 10 saniyede kaydedilir.
 **Sınırlar (bilinen):** Grafik, şekil ve tablo seslendirilemez; öğretmenin yazdığı betimleme ve metin karşılığı okunur (yoksa sınav erişilebilir sürüm olarak yayımlanamaz). Matematik okuması temel işlemler, kesir ve yüzde için denenmiştir; karmaşık ifadeler öğretmen tarafından sözcüklerle yazılmalıdır. Sinir ağı sesi robotik/yapay olabilir, insan okuyucunun yerini tutmaz. **Bütün bunlar otomatik testlerle doğrulandı; gerçek bir görme engelli öğrenci ve NVDA/JAWS ile deneme yapılmadı.**
 **Salon hazırlığı:** Yerel Türkçe sesi olmayan bilgisayarlarda sinir ağı sesi gerekir. Sınavdan önce o bilgisayarlarda `/dou-reader-demo` sayfasında bir kez "Soruyu oku" deyin: model tarayıcı önbelleğine iner, sınav anında beklenmez.
+
+## Sunum demosu
+`BASLAT-SALON.bat` ile sunucuyu başlatın, ardından `DEMO-HAZIRLA.bat` (veya `node tools/demo-hazirla.mjs`) çalıştırın. Sentetik bir kurum, 4 onaylı ders sınavı ve 8 farklı engel profilli aday kodu (görme, az görme, motor, işitme, konuşma/yazma, disleksi, standart, karma) üretilir; kodlar ve giriş bilgileri `DEMO-KODLAR.txt` dosyasına yazılır. Kodlar tek kullanımlık ve süreli olduğundan sunumdan hemen önce çalıştırın; yeniden çalıştırınca yeni kodlar üretilir.
