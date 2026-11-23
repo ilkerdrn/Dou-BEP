@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
@@ -51,7 +52,7 @@ test('PDF focus profile retains one question per page without changing academic 
 test('approved PDF API demands session, CSRF, same tenant, and does not serve unapproved drafts',async t=>{
  if(!font)return t.skip('Yerel TrueType bulunamadı');
  const dir=mkdtempSync(join(tmpdir(),'bep-pdf-http-')),store=openStore(join(dir,'store.sqlite'));
- const port=42017,server=http.createServer((req,res)=>createApiHandler(store,{port})(req,res,new URL(req.url,'http://localhost').pathname));
+ const port=await freePort(),server=http.createServer((req,res)=>createApiHandler(store,{port})(req,res,new URL(req.url,'http://localhost').pathname));
  try{
   for(const tenant of ['uni-alpha','uni-beta'])store.createTenantAdmin({tenantId:tenant,tenantName:tenant,email:`admin@${tenant}.test`,password});
   const login=store.signIn({tenantId:'uni-alpha',email:'admin@uni-alpha.test',password});

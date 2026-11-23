@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -73,7 +74,7 @@ test('v2.3 published codes are tenant unique and mismatched goal cannot publish 
 }finally{f.close();}});
 
 test('v2.3 HTTP routes enforce session, CSRF and reviewer publication',async()=>{
- const f=setup();const port=41983,handler=createApiHandler(f.s,{port}),server=http.createServer((req,res)=>handler(req,res,new URL(req.url,'http://localhost').pathname));
+ const f=setup();const port=await freePort(),handler=createApiHandler(f.s,{port}),server=http.createServer((req,res)=>handler(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(r=>server.listen(port,'127.0.0.1',r));
  const request=async(path,method='GET',body,session={})=>{
   const r=await fetch(`http://127.0.0.1:${port}/api${path}`,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(session.cookie?{Cookie:session.cookie}:{}),...(session.csrf?{'X-CSRF-Token':session.csrf}:{})},body:body?JSON.stringify(body):undefined});

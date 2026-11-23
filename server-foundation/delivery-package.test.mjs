@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -15,6 +16,7 @@ const sample=()=>{const exam=createDemo();exam.profile='';exam.questions=exam.qu
 const fixture=()=>{const dir=mkdtempSync(join(tmpdir(),'bep-delivery-'));const s=openStore(join(dir,'db.sqlite'));for(const id of ['uni-one','uni-two'])s.createTenantAdmin({tenantId:id,tenantName:`Kurum ${id}`,email:`admin@${id}.test`,password:pass});return {dir,s,actor(id){return s.requireActor(s.signIn({tenantId:id,email:`admin@${id}.test`,password:pass}).token);},close(){s.db.close();rmSync(dir,{recursive:true,force:true});}};};
 function unzipStored(zip){const bytes=Buffer.from(zip);const out=new Map();let at=0;while(at+30<bytes.length&&bytes.readUInt32LE(at)===0x04034b50){const nameLength=bytes.readUInt16LE(at+26),extraLength=bytes.readUInt16LE(at+28),size=bytes.readUInt32LE(at+18);const name=bytes.subarray(at+30,at+30+nameLength).toString('utf8');const data=bytes.subarray(at+30+nameLength+extraLength,at+30+nameLength+extraLength+size);out.set(name,data);at+=30+nameLength+extraLength+size;}return out;}
 
+const TEST_PORT=await freePort();
 test('delivery bundles hash-approved exam, preserve academic content and include no key',()=>{const f=fixture();try{
  const a=f.actor('uni-one'),x=f.s.createExam(a,{exam:sample()});
  assert.throws(()=>f.s.deliveryProduce(a,x.id,'large'),{code:'not_approved'});
@@ -68,9 +70,9 @@ test('readiness refuses source hash mismatch, missing approval and audio access 
 });
 
 test('delivery HTTP enforces cookie CSRF tenant ownership and serves zip with hash',async()=>{
- const f=fixture();const server=http.createServer((req,res)=>createApiHandler(f.s,{port:41884})(req,res,new URL(req.url,'http://localhost').pathname));
- await new Promise(resolve=>server.listen(41884,'127.0.0.1',resolve));
- const call=async (path,method='GET',body,cookie='',csrf='')=>{const r=await fetch(`http://127.0.0.1:41884/api${path}`,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});return {r,buffer:Buffer.from(await r.arrayBuffer())};};
+ const f=fixture();const server=http.createServer((req,res)=>createApiHandler(f.s,{port:TEST_PORT})(req,res,new URL(req.url,'http://localhost').pathname));
+ await new Promise(resolve=>server.listen(TEST_PORT,'127.0.0.1',resolve));
+ const call=async (path,method='GET',body,cookie='',csrf='')=>{const r=await fetch(`http://127.0.0.1:${TEST_PORT}/api${path}`,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});return {r,buffer:Buffer.from(await r.arrayBuffer())};};
  try{
  const x=f.s.createExam(f.actor('uni-one'),{exam:sample()});f.s.approveExam(f.actor('uni-one'),x.id,{revision:1,confirmed:true});
  const login=await call('/login','POST',{tenantId:'uni-one',email:'admin@uni-one.test',password:pass});

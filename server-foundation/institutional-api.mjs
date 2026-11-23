@@ -5,6 +5,9 @@ import {institutionalOperationsReadiness} from './operation-readiness.mjs';
 import {VERSION} from '../core.mjs';
 import {previewBep} from '../bep-plan-import.mjs';
 import {previewSourceExam,previewManualSourceExam,examDraftFromSource} from '../exam-document-import.mjs';
+import {previewQuestionSheet,isQuestionSheetName} from '../question-sheet-import.mjs';
+import {hostSet,originSet,learnerUrls} from './network-policy.mjs';
+const previewAnySource=async data=>isQuestionSheetName(data?.filename)?previewQuestionSheet(data):previewSourceExam(data);
 import {roleCan} from '../roles.mjs';
 import {createExamMp3,audioDependencies} from '../offline-audio.mjs';
 import {fullAudioAllowed} from '../question-access.mjs';
@@ -15,15 +18,22 @@ async function readJson(req,maxSize=300000){
  for await(const chunk of req){size+=chunk.length;if(size>maxSize)throw new StoreError('too_large','İstek sınırını aşıyor.',413);chunks.push(chunk);}
  try{const raw=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('type');return raw;}catch{throw new StoreError('bad_json','Geçerli bir JSON nesnesi gerekli.');}
 }
+async function readBuffer(req,maxSize){
+ const chunks=[];let size=0;
+ for await(const chunk of req){size+=chunk.length;if(size>maxSize)throw new StoreError('too_large','Ses kaydı sınırını aşıyor.',413);chunks.push(chunk);}
+ return Buffer.concat(chunks);
+}
+function audioResponse(res,{mime,audio}){res.writeHead(200,{'Content-Type':mime,'Content-Length':audio.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'});res.end(audio);}
 function getCookie(req){const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));return found?found.slice('bep_session='.length):'';}
-export function createApiHandler(store,{port=4173}={}){
+export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ips:[]}}={}){
+ const validHost=hostSet(port,lan),validOrigins=originSet(port,lan);
  return async function api(req,res,path){
   if(!path.startsWith('/api/'))return false;
-  const validHost=new Set([`127.0.0.1:${port}`,`localhost:${port}`,'127.0.0.1','localhost']);
   if(!validHost.has(req.headers.host)){response(res,403,{error:'host_rejected'});return true;}
-  const validOrigins=new Set([`http://127.0.0.1:${port}`,`http://localhost:${port}`]);
   if(req.headers.origin&&!validOrigins.has(req.headers.origin)){response(res,403,{error:'origin_rejected'});return true;}
   try{
+   if(path==='/api/ping'&&req.method==='GET'){response(res,200,{ok:true,at:Date.now()});return true;}
+   if(path==='/api/lan-info'&&req.method==='GET'){response(res,200,{enabled:lan.enabled,urls:learnerUrls(port,lan)});return true;}
    if(path==='/api/health'&&req.method==='GET'){response(res,200,{ok:true,scope:'local-only',version:VERSION});return true;}
    // Student endpoints never use teacher cookies; the redeemed capability is memory-only.
    if(path==='/api/pilot/redeem'&&req.method==='POST'){
@@ -34,7 +44,30 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/pilot/submit'&&req.method==='POST'){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
-    const body=await readJson(req);response(res,200,store.pilotSubmit(match[1],body.answers));return true;
+    const body=await readJson(req,900000);response(res,200,store.pilotSubmit(match[1],body.answers));return true;
+   }
+   if(path==='/api/pilot/state'&&req.method==='GET'){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    response(res,200,store.pilotLiveState(match[1],new URL(req.url,'http://localhost').searchParams.get('after')));return true;
+   }
+   const voiceOwn=path.match(/^\/api\/pilot\/voice\/(q\d{1,3})$/);
+   if(voiceOwn){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    if(req.method==='PUT'){const buf=await readBuffer(req,3*1024*1024+1024);response(res,200,store.pilotVoicePut(match[1],voiceOwn[1],req.headers['content-type'],buf,req.headers['x-voice-seconds']));return true;}
+    if(req.method==='GET'){audioResponse(res,store.pilotVoiceOwn(match[1],voiceOwn[1]));return true;}
+    if(req.method==='DELETE'){response(res,200,store.pilotVoiceDelete(match[1],voiceOwn[1]));return true;}
+   }
+   if(path==='/api/pilot/draft'&&req.method==='POST'){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    const body=await readJson(req,900000);response(res,200,store.pilotSaveDraft(match[1],body.answers));return true;
+   }
+   if((path==='/api/pilot/break/start'||path==='/api/pilot/break/end')&&req.method==='POST'){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    await readJson(req,200);response(res,200,path.endsWith('start')?store.pilotBreakStart(match[1]):store.pilotBreakEnd(match[1]));return true;
    }
    if(path==='/api/audio-capability'&&req.method==='GET'){const audioActor=store.requireActor(getCookie(req));if(audioActor.mfaSetupRequired)throw new StoreError('mfa_setup_required','Önce MFA kurulumu gerekli.',403);response(res,200,{mp3:audioDependencies().available,required:['espeak','ffmpeg'],cloud:false});return true;}
    if(path==='/api/login'&&req.method==='POST'){
@@ -87,17 +120,27 @@ export function createApiHandler(store,{port=4173}={}){
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   if(path==='/api/pilot/message'&&req.method==='POST'){const body=await readJson(req,2000);response(res,200,store.pilotMessage(actor,body));return true;}
+   const voiceTeacher=path.match(/^\/api\/pilot\/([a-f0-9-]{36})\/voice\/(q\d{1,3})$/);
+   if(voiceTeacher&&req.method==='GET'){audioResponse(res,store.pilotVoiceForTeacher(actor,voiceTeacher[1],voiceTeacher[2]));return true;}
+   if(path==='/api/pilot/results.csv'&&req.method==='GET'){const csv=store.pilotResultsCsv(actor);res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="salon-sonuclari.csv"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(csv);return true;}
+   if(path==='/api/pilot/live'&&req.method==='GET'){response(res,200,store.pilotLive(actor));return true;}
+   if(path==='/api/pilot/batch'&&req.method==='POST'){
+    const body=await readJson(req,300000);response(res,201,store.pilotIssueBatch(actor,body.rows));return true;
+   }
    if(path==='/api/pilot'&&req.method==='GET'){response(res,200,{items:store.pilotList(actor)});return true;}
    if(path==='/api/pilot'&&req.method==='POST'){
-    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId)});return true;
+    const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId,{extraMinutes:body.extraMinutes===undefined?0:body.extraMinutes,breakMinutes:body.breakMinutes===undefined?0:body.breakMinutes,candidateCode:body.candidateCode,seat:body.seat,adjustments:body.adjustments===undefined?[]:body.adjustments})});return true;
    }
-   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv))?$/);
+   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv|record|extend))?$/);
    if(pilotId){
     if(!pilotId[2]&&req.method==='GET'){response(res,200,{item:store.pilotView(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review'&&req.method==='GET'){response(res,200,{review:store.pilotReviewGet(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review'&&req.method==='PUT'){
      const body=await readJson(req);response(res,200,{review:store.pilotReviewSave(actor,pilotId[1],body)});return true;
     }
+    if(pilotId[2]==='extend'&&req.method==='POST'){const body=await readJson(req,500);response(res,200,store.pilotExtend(actor,pilotId[1],body.minutes));return true;}
+    if(pilotId[2]==='record'&&req.method==='GET'){response(res,200,{record:store.pilotRecord(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review.csv'&&req.method==='GET'){
      const csv=store.pilotReviewCsv(actor,pilotId[1]);
      res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="bep-anonim-degerlendirme.csv"',
@@ -118,7 +161,7 @@ export function createApiHandler(store,{port=4173}={}){
    if(path==='/api/exam-source/preview'&&req.method==='POST'){
     if(!roleCan(actor.role,'exam.edit'))throw new StoreError('forbidden','Sınav düzenleme yetkisi gerekli.',403);
     const data=await readJson(req,1500000);
-    try{response(res,200,previewSourceExam(data));}
+    try{response(res,200,await previewAnySource(data));}
     catch(error){throw new StoreError('exam_source_preview',error.message||'Belge okunamadı.',422);}
     return true;
    }
@@ -149,7 +192,7 @@ export function createApiHandler(store,{port=4173}={}){
     if(data.confirmed!==true)throw new StoreError('confirmation_required','Öğretmenin belgeyi karşılaştırıp taslak onayı vermesi gereklidir.',422);
     let preview,exam;
     try{
-     preview=previewSourceExam(data);
+     preview=await previewAnySource(data);
      if(preview.sourceSha256!==data.sourceSha256)throw Error('Belge önizlemeden sonra değişmiş.');
      exam=examDraftFromSource(preview,data);
     }catch(error){throw new StoreError('exam_source_invalid',error.message||'Taslak aktarılamadı.',422);}

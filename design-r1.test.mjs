@@ -5,8 +5,8 @@ import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=dirname(fileURLToPath(import.meta.url));
 const read=name=>readFileSync(join(root,name),'utf8');
-const pages=['institution.html','institutional-exams.html','coordination.html','accommodation-admin.html','batch-exams.html','bep-import.html','operations.html','acceptance.html','accessibility-check.html','pilot-admin.html','exam-source-import.html','dou-reader-demo.html','dou-speech-listening.html','dou-speech-phoneme.html','dou-speech-pool.html','preview-v17.html','dou-speech-intelligibility.html'];
-test('all 17 admin/editor/reader pages carry accessible search and original module links',()=>{
+const pages=['institution.html','institutional-exams.html','coordination.html','accommodation-admin.html','batch-exams.html','bep-import.html','operations.html','acceptance.html','accessibility-check.html','pilot-admin.html','lab.html','exam-source-import.html','dou-reader-demo.html','dou-speech-listening.html','dou-speech-phoneme.html','dou-speech-pool.html','preview-v17.html','dou-speech-intelligibility.html'];
+test('all 18 admin/editor/reader pages carry accessible search and original module links',()=>{
  const baseline=read('institution.html').match(/href="\/(?:[^" ]+)"[^>]*class="dou-nav-link/g)||[];
  for(const page of pages){
   const html=read(page);
@@ -16,9 +16,9 @@ test('all 17 admin/editor/reader pages carry accessible search and original modu
   assert.match(html,/src="\/admin-navigation\.js"/);
   assert.equal((html.match(/class="dou-nav-find"/g)||[]).length,1,page);
   assert.match(html,/ARAŞTIRMA PROTOTİPİ · v2\.81/);
-  assert.equal((html.match(/class="dou-nav-link portal-menu/g)||[]).length,12,page);
+  assert.equal((html.match(/class="dou-nav-link portal-menu/g)||[]).length,13,page);
  }
- assert.ok(baseline.length===0||baseline.length===12);
+ assert.ok(baseline.length===0||baseline.length===13);
 });
 test('search is local, keyboard-accessible, no network or personal browser storage',()=>{
  const code=read('admin-navigation.js');

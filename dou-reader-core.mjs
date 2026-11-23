@@ -9,21 +9,46 @@ export function isTurkishLocalVoice(voice){
 export function localTurkishVoices(voices){
  return Array.from(voices||[]).filter(isTurkishLocalVoice).sort((a,b)=>String(a.name).localeCompare(String(b.name),'tr'));
 }
+/** Yerel (çevrimdışı) ses envanteri: dil kodu 'tr' veya 'en'. */
+export function isLocalVoiceOf(voice,lang='tr'){
+ return Boolean(voice&&voice.localService===true&&new RegExp('^'+(lang==='en'?'en':'tr')+'(?:[-_]|$)','i').test(String(voice.lang||''))&&String(voice.voiceURI||voice.name||'').length>0);
+}
+export function localVoicesOf(voices,lang='tr'){
+ return Array.from(voices||[]).filter(v=>isLocalVoiceOf(v,lang)).sort((a,b)=>String(a.name).localeCompare(String(b.name),'tr'));
+}
+/** Tarayıcı sesin cinsiyetini bildirmez; bilinen Windows/macOS/Android ses adlarına dayalı en iyi tahmin (kesin değildir). */
+const FEMALE=/\b(emel|zira|hazel|susan|eva|aria|jenny|samantha|karen|moira|fiona|victoria|tessa|veena|serena|libby|sonia|catherine|heera|linda|yelda|ayşe|filiz|female|kadın)\b/i;
+const MALE=/\b(tolga|david|mark|george|richard|james|guy|ryan|daniel|alex|fred|ravi|male|erkek|cem)\b/i;
+export function voiceGender(voice){const n=String(voice?.name||'');if(FEMALE.test(n))return 'female';if(MALE.test(n))return 'male';return 'unknown';}
+export function preferVoice(list,pref){
+ if(!list.length)return null;
+ if(pref==='female'||pref==='male'){const m=list.find(v=>voiceGender(v)===pref);if(m)return m;}
+ return list[0];
+}
 export function readerRate(input){const value=Number(input);return Number.isFinite(value)?Math.min(1.5,Math.max(.65,value)):1;}
-export function readerText(question){
+/** Okunan bölümler (eşzamanlı vurgu için): her bölüm bir anahtarla ekrandaki öğeye eşlenir. readerText bunların birleşimidir. */
+const LABELS={tr:{q:'Soru',opt:'Seçenek',cue:'Ek yönerge',vis:'Görsel açıklaması',left:'Eşleştirme satırı',right:'Eşleştirme seçeneği',short:'Bu bir yazılı yanıt sorusudur. Yanıtınızı yazı alanına yazın',match:'Her satır için ikinci listeden bir seçenek seçin'},
+ en:{q:'Question',opt:'Option',cue:'Additional instruction',vis:'Image description',left:'Matching row',right:'Matching choice',short:'This is a written answer question. Type your answer in the text box',match:'For each row, choose one option from the second list'}};
+export function readerParts(question){
  if(!question||typeof question!=='object')throw Error('Geçersiz sınav sorusu.');
  if(question.audioAllowed===false)throw Error('Bu soruda uygulama içi seslendirme kapalıdır.');
- const parts=[`Soru ${String(question.number||'').slice(0,10)}`,question.prompt,question.writtenCue?`Ek yönerge: ${question.writtenCue}`:'',
- question.visualDescription?`Görsel açıklaması: ${question.visualDescription}`:''];
- for(const o of Array.isArray(question.options)?question.options:[])parts.push(`Seçenek ${o.id}: ${o.label}`);
- for(const o of Array.isArray(question.left)?question.left:[])parts.push(`Eşleştirme satırı ${o.id}: ${o.label}`);
- for(const o of Array.isArray(question.right)?question.right:[])parts.push(`Eşleştirme seçeneği ${o.id}: ${o.label}`);
+ const L=LABELS[question.lang==='en'?'en':'tr'];
+ const raw=[['number',`${L.q} ${String(question.number||'').slice(0,10)}`],['prompt',question.prompt],['cue',question.writtenCue?`${L.cue}: ${question.writtenCue}`:''],
+ ['visual',question.visualDescription?`${L.vis}: ${question.visualDescription}`:'']];
+ for(const o of Array.isArray(question.options)?question.options:[])raw.push(['option-'+o.id,`${L.opt} ${o.id}: ${o.label}`]);
+ for(const o of Array.isArray(question.left)?question.left:[])raw.push(['left-'+o.id,`${L.left} ${o.id}: ${o.label}`]);
+ for(const o of Array.isArray(question.right)?question.right:[])raw.push(['answer',`${L.right} ${o.id}: ${o.label}`]);
+ if(question.type==='short')raw.push(['answer',L.short]);
+ if(question.type==='matching')raw.push(['answer',L.match]);
  // No answer, teacherNote, rubric, course roster, token, code or user response paths.
- const text=parts.filter(v=>typeof v==='string'&&v.trim()).join('. ').replace(/[\u0000-\u001f\u007f]/g,' ');
- if(text.length>MAX_TEXT)throw Error('Soru seslendirme sınırını aşıyor; içerik kesilmeden işlem durduruldu.');
- if(!text.trim())throw Error('Seslendirilecek soru bulunamadı.');
- return text;
+ // Parts that already end in punctuation must not produce ".." when joined (screen-friendly, natural pauses).
+ const parts=raw.filter(([,v])=>typeof v==='string'&&v.trim()).map(([key,v])=>({key,text:v.trim().replace(/[.]+$/,'').replace(/[\u0000-\u001f\u007f]/g,' ')}));
+ const total=parts.map(x=>x.text).join('. ');
+ if(total.length>MAX_TEXT)throw Error('Soru seslendirme sınırını aşıyor; içerik kesilmeden işlem durduruldu.');
+ if(!total.trim())throw Error('Seslendirilecek soru bulunamadı.');
+ return parts;
 }
+export function readerText(question){return readerParts(question).map(x=>x.text).join('. ');}
 export function readerChunks(text,maxLength=600){
  if(typeof text!=='string'||!text.trim())return [];
  const max=Math.min(1200,Math.max(80,Number(maxLength)||600));

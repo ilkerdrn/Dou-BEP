@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -15,10 +16,13 @@ test('single-use code, no answer keys, one-time submission, teacher view and del
  const item=f.s.pilotIssue(f.a,f.rec.id);assert.match(item.code,/^[0-9A-F]{5}(?:-[0-9A-F]{5}){3}$/);assert.equal(f.s.pilotList(f.a)[0].code,undefined);
  const raw=f.s.db.prepare('SELECT code_hash,claim_hash FROM pilot_sessions WHERE id=?').get(item.id);assert.notEqual(raw.code_hash,item.code);assert.equal(raw.claim_hash,null);
  const claimed=f.s.pilotRedeem(item.code);assert.equal(claimed.exam.questions.length,4);assert.equal(JSON.stringify(claimed.exam).includes('teacherNote'),false);assert.equal(JSON.stringify(claimed.exam).includes('answer'),false);
- assert.throws(()=>f.s.pilotRedeem(item.code),{code:'invalid_code'});
+ // v2.92: a started, unsubmitted session may be resumed with its own code; the previous token then stops working.
+ const resumed=f.s.pilotRedeem(item.code);assert.equal(resumed.resumed,true);assert.notEqual(resumed.token,claimed.token);
+ assert.throws(()=>f.s.pilotSubmit(claimed.token,{q1:'A'}),{code:'invalid_session'});
  const answer={q1:'B',q2:'A',q3:'A',q4:{'1':'A'}};
- const receipt=f.s.pilotSubmit(claimed.token,answer);assert.equal(receipt.ok,true);assert.equal(receipt.receipt.length,8);
- assert.throws(()=>f.s.pilotSubmit(claimed.token,answer),{code:'invalid_session'});
+ const receipt=f.s.pilotSubmit(resumed.token,answer);assert.equal(receipt.ok,true);assert.equal(receipt.receipt.length,8);
+ assert.throws(()=>f.s.pilotSubmit(resumed.token,answer),{code:'invalid_session'});
+ assert.throws(()=>f.s.pilotRedeem(item.code),{code:'invalid_code'});// submitted: the code is dead
  const view=f.s.pilotView(f.a,item.id);assert.equal(view.status,'submitted');assert.deepEqual(view.answers,answer);
  assert.equal(f.s.pilotList(f.a)[0].answers,undefined);
  assert.ok(f.s.audit(f.a).some(x=>x.event==='pilot.issued'));
@@ -33,8 +37,8 @@ test('reject malformed, invented, free-text and extraneous answers',()=>{const f
  assert.equal(f.s.pilotSubmit(ticket.token,{q1:'A'}).ok,true);
 }finally{f.close();}});
 
-test('reject unapproved exam, unsupported short answers, stale revisions',()=>{const f=fixture();try{
- const raw=createDemo();raw.profile='';raw.questions=raw.questions.map(q=>({...q,teacherNote:''}));const x=f.s.createExam(f.a,{exam:raw});f.s.approveExam(f.a,x.id,{revision:1,confirmed:true});assert.throws(()=>f.s.pilotIssue(f.a,x.id),{code:'unsupported_questions'});
+test('reject unapproved exam, oversized exams, stale revisions',()=>{const f=fixture();try{
+ const raw=createDemo();raw.profile='';raw.questions=raw.questions.map(q=>({...q,teacherNote:''}));raw.questions=Array.from({length:61},(_,i)=>({...raw.questions.find(q=>q.type==='choice'),id:'q-'+i,prompt:'Soru '+i+'?',options:['a','b','c'],answer:'a'}));const x=f.s.createExam(f.a,{exam:raw});f.s.approveExam(f.a,x.id,{revision:1,confirmed:true});assert.throws(()=>f.s.pilotIssue(f.a,x.id),{code:'unsupported_questions'});
  const created=f.s.pilotIssue(f.a,f.rec.id);const a=exam();a.title='Başka sürüm';f.s.updateExam(f.a,f.rec.id,{revision:1,exam:a});assert.throws(()=>f.s.pilotRedeem(created.code),{code:'exam_changed'});
  assert.throws(()=>f.s.pilotIssue(f.a,f.rec.id),{code:'not_approved'});
  f.s.approveExam(f.a,f.rec.id,{revision:2,confirmed:true});const other=f.s.pilotIssue(f.a,f.rec.id);const ticket=f.s.pilotRedeem(other.code);
@@ -59,7 +63,7 @@ test('expiry and retention purge: no new claims and temporary data removed',()=>
 }finally{f.close();}});
 
 test('HTTP: authenticated teacher-only routes and public one-use capability; no teacher cookie to learner',async()=>{
- const f=fixture(),port=41951,api=createApiHandler(f.s,{port});const server=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
+ const f=fixture(),port=await freePort(),api=createApiHandler(f.s,{port});const server=http.createServer((req,res)=>api(req,res,new URL(req.url,'http://localhost').pathname));
  await new Promise(resolve=>server.listen(port,'127.0.0.1',resolve));
  async function request(path,method='GET',body,headers={}){const r=await fetch(`http://127.0.0.1:${port}/api${path}`,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...headers},body:body?JSON.stringify(body):undefined});return {status:r.status,data:await r.json()};}
  try{
@@ -71,10 +75,12 @@ test('HTTP: authenticated teacher-only routes and public one-use capability; no 
   const foreign=await request('/pilot/'+id,'GET',null,{Cookie:'bep_session='+f.lb.token});assert.equal(foreign.status,404);
   assert.equal((await request('/pilot/redeem','POST',{code},{Origin:'https://bad.invalid'})).status,403);
   const begin=await request('/pilot/redeem','POST',{code});assert.equal(begin.status,200);
-  assert.equal((await request('/pilot/redeem','POST',{code})).status,401);
+  const again=await request('/pilot/redeem','POST',{code});assert.equal(again.status,200);assert.equal(again.data.resumed,true);// resume rotates the token
   assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}})).status,401);
-  const receipt=await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token});assert.equal(receipt.status,200);
-  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token})).status,401);
+  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+begin.data.token})).status,401,'old token is dead after resume');
+  const receipt=await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+again.data.token});assert.equal(receipt.status,200);
+  assert.equal((await request('/pilot/submit','POST',{answers:{q1:'A'}},{Authorization:'Bearer '+again.data.token})).status,401);
+  assert.equal((await request('/pilot/redeem','POST',{code})).status,401,'submitted code cannot be reused');
   const view=await request('/pilot/'+id,'GET',null,{Cookie:'bep_session='+f.la.token});assert.equal(view.status,200);assert.equal(view.data.item.answers.q1,'A');
  }finally{await new Promise(resolve=>server.close(resolve));f.close();}
 });
@@ -127,4 +133,10 @@ test('v2.35: tampered approved exam cannot be issued, redeemed, submitted or rev
   f.s.db.prepare('UPDATE exams SET body=? WHERE id=?').run(bad,f.rec.id);
   assert.throws(()=>f.s.pilotReviewGet(f.a,first.id),{code:'approval_integrity'});
  }finally{f.close();}
+});
+test('v2.96: veri saklama süresi ayarlanabilir (varsayılan 24 saat), geçersiz değerler yok sayılır',async()=>{
+ const {execFileSync}=await import('node:child_process');
+ const run=env=>execFileSync(process.execPath,['--input-type=module','-e',"import('./server-foundation/pilot-sessions.mjs').then(m=>console.log(m.RETENTION_HOURS))"],{env:{...process.env,...env},cwd:new URL('..',import.meta.url).pathname,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim();
+ assert.equal(run({BEP_PILOT_RETENTION_HOURS:''}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'168'}),'168');
+ assert.equal(run({BEP_PILOT_RETENTION_HOURS:'0'}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'99999'}),'24');assert.equal(run({BEP_PILOT_RETENTION_HOURS:'abc'}),'24');
 });

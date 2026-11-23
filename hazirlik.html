@@ -1,0 +1,16 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#c50e1f"><title>DOU BEP | Bilgisayar Hazırlık Kontrolü</title><link rel="stylesheet" href="/pilot.css"><link rel="stylesheet" href="/pilot-refresh.css"><link rel="stylesheet" href="/dou-theme.css"></head>
+<body class="dou-student"><a class="skip" href="#main">İçeriğe geç</a><header><div class="brand"><span class="mark" aria-hidden="true">DOU</span>BEP SINAV ATÖLYESİ <span class="pill">Hazırlık</span></div><div>Salon hazırlık kontrolü</div></header>
+<main id="main"><section class="hero card"><div class="eyebrow">SINAVDAN ÖNCE</div><h1>Bu bilgisayar sınava hazır mı?</h1>
+<p>Bu sayfa yalnızca bu bilgisayarın sınav için uygunluğunu kontrol eder; ad, kod veya yanıt istemez. Her adımı sırayla deneyin. Sorun çıkarsa salon görevlisine bildirin.</p></section>
+<section class="card" aria-labelledby="checks-title"><h2 id="checks-title">Kontroller</h2>
+<ol id="checks" class="checks">
+<li id="c-server"><strong>1. Sunucu bağlantısı</strong> <button type="button" id="b-server">Bağlantıyı dene</button><p id="s-server" role="status" aria-live="polite">Denenmedi.</p></li>
+<li id="c-browser"><strong>2. Tarayıcı özellikleri</strong> <button type="button" id="b-browser">Kontrol et</button><p id="s-browser" role="status" aria-live="polite">Denenmedi.</p></li>
+<li id="c-voice"><strong>3. Yerel Türkçe ses</strong> <button type="button" id="b-voice">Sesleri ara</button><p id="s-voice" role="status" aria-live="polite">Denenmedi.</p></li>
+<li id="c-neural"><strong>4. Çevrimdışı ses modeli (yerel ses yoksa gerekir)</strong> <button type="button" id="b-neural">Modeli şimdi hazırla</button><p id="s-neural" role="status" aria-live="polite">Denenmedi. İlk kullanımda yaklaşık 38 MB iner ve bu bilgisayarın önbelleğinde kalır.</p></li>
+<li id="c-sound"><strong>5. Ses denemesi</strong> <button type="button" id="b-sound">Sesi dene</button> <button type="button" id="b-heard" class="ghost" disabled>Evet, duydum</button> <button type="button" id="b-notheard" class="ghost" disabled>Hayır, duymadım</button><p id="s-sound" role="status" aria-live="polite">Denenmedi. Kulaklığınız varsa takın.</p></li>
+<li id="c-keys"><strong>6. Kısayol tuşları</strong><p id="s-keys" role="status" aria-live="polite" tabindex="0">Alt, Shift ve T tuşlarına aynı anda basın. Ekran okuyucunuz bu tuşları yakalıyorsa burada sorun görünür.</p></li>
+<li id="c-screen"><strong>7. Ekran</strong> <button type="button" id="b-screen">Kontrol et</button><p id="s-screen" role="status" aria-live="polite">Denenmedi.</p></li>
+</ol></section>
+<section class="card" aria-labelledby="sum-title"><h2 id="sum-title">Genel durum</h2><p id="summary" role="status" aria-live="polite">Henüz kontrol yapılmadı.</p><button type="button" id="run-all">Hepsini sırayla dene</button></section>
+</main><script type="module" src="/hazirlik.mjs"></script></body></html>

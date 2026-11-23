@@ -1,3 +1,4 @@
+import {freePort} from './server-foundation/test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -10,6 +11,7 @@ import {createDemo,generateDocx,normalizeExam} from './core.mjs';
 import {openStore} from './server-foundation/institutional-store.mjs';
 import {createApiHandler} from './server-foundation/institutional-api.mjs';
 const mock='Kısa Dönemli Amaçlar\n1. 20 içinde toplama işlemi yapar.\n2. İki basamaklı sayıları karşılaştırır.';
+const TEST_PORT=await freePort();
 test('numbered BEP goals detected without diagnosis inference',()=>{const x=candidateGoals(mock);assert.equal(x.length,2);assert.equal(x[0].text,'20 içinde toplama işlemi yapar.');assert.equal(x[1].level,'short');});
 test('long term headings and duplicate goals normalized',()=>{const x=candidateGoals('Uzun Dönemli Amaç: Görsel örüntüleri takip eder.\n1. Görsel örüntüleri takip eder.\nKısa Dönemli Amaçlar\n- Birden beşe kadar sayar.');assert.equal(x.length,2);assert.equal(x[0].level,'long');assert.equal(x[1].level,'short');});
 test('sensitive labels and identifiers stop extraction',()=>{assert.ok(detectSensitive('Öğrenci Adı Soyadı: A B').length);assert.ok(detectSensitive('T.C. Kimlik 12345678901').length);assert.ok(detectSensitive('test@example.com').length);assert.equal(previewBep({text:'Öğrenci Adı Soyadı: Gizli\n'+mock}).blocked,true);});
@@ -33,8 +35,8 @@ test('BEP import API requires teacher auth, CSRF and teacher role; never stores 
  const pass='UzunGuvenli2026_Sifre!';store.createTenantAdmin({tenantId:'pilot-a',tenantName:'Pilot A',email:'admin@pilot.test',password:pass});
  const actor=store.requireActor(store.signIn({tenantId:'pilot-a',email:'admin@pilot.test',password:pass}).token);
  store.addMember(actor,{email:'observer@pilot.test',role:'observer',password:pass});
- const server=http.createServer((req,res)=>createApiHandler(store,{port:42198})(req,res,new URL(req.url,'http://localhost').pathname));await new Promise(resolve=>server.listen(42198,'127.0.0.1',resolve));
- const req=async(body,cookie='',csrf='')=>{const r=await fetch('http://127.0.0.1:42198/api/bep/preview',{method:'POST',headers:{Host:'localhost:42198','Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:JSON.stringify(body)});return {status:r.status,body:await r.json()};};
+ const server=http.createServer((req,res)=>createApiHandler(store,{port:TEST_PORT})(req,res,new URL(req.url,'http://localhost').pathname));await new Promise(resolve=>server.listen(TEST_PORT,'127.0.0.1',resolve));
+ const req=async(body,cookie='',csrf='')=>{const r=await fetch(`http://127.0.0.1:${TEST_PORT}/api/bep/preview`,{method:'POST',headers:{Host:'localhost:42198','Content-Type':'application/json',...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:JSON.stringify(body)});return {status:r.status,body:await r.json()};};
  try{
   assert.equal((await req({text:mock})).status,401);
   const login=store.signIn({tenantId:'pilot-a',email:'admin@pilot.test',password:pass});const c='bep_session='+login.token;

@@ -16,3 +16,14 @@ body:not(.high) .option{border-color:#e9e2e8;border-radius:12px}
 body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d69}
 /* Never override high contrast view: it is an intentional accessibility mode. */
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+.voice-box{margin:18px 0 0;padding:16px 18px;border:2px dashed #98A2B3;border-radius:16px;background:#F8FAFC}
+.voice-box h3{margin:0 0 6px;font-size:1.05em}
+.voice-box .v-consent-label{display:flex;gap:10px;align-items:center;margin:10px 0;font-weight:600}
+.voice-box .v-consent-label input{width:24px;height:24px}
+.voice-box .inline{display:flex;gap:10px;flex-wrap:wrap}
+.voice-box .v-status{margin:10px 0 0;font-weight:600}.voice-box .v-status.err{color:#8A1720}
+body.high .voice-box{background:#000;border-color:#fff}body.high .voice-box .v-status.err{color:#ffd400}
+.voice-box button{font-size:1em;min-height:52px;padding:0 20px}
+.teacher-message{padding:14px 18px;border-radius:14px;background:#E8F1FF;color:#0B3A7A;border:2px solid #1B6ED2;font-weight:600;margin:0}
+.teacher-message button{margin-left:10px;min-height:44px}
+body.high .teacher-message{background:#000;color:#fff;border-color:#ffd400}

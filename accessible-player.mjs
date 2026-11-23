@@ -15,19 +15,23 @@ export function auditAudioAccess(raw){
  return issues;
 }
 
-export function createStudentPayload(raw){
+// Adaya özel, tekrarlanabilir şık karıştırma: aynı oturum tohumu her zaman aynı sırayı üretir; kimlikler (A,B,C) yeni sıraya göre verilir, puanlama etiket metniyle yapılır.
+function seeded(seed){let h=2166136261;for(const c of String(seed)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffled(list,seed){const a=[...list],rnd=seeded(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+export function createStudentPayload(raw,{extraMinutes=0,shuffleSeed=''}={}){
  const exam=normalizeExam(raw);
  const issues=auditAudioAccess(exam);if(issues.length)throw new Error(issues.map(i=>i.text).join(' '));
  return {
   format:'bep-accessible-exam',version:1,language:'tr-TR',
   title:exam.title,subject:exam.subject,grade:exam.grade,instruction:exam.instruction,
+  durationMinutes:exam.duration,extraMinutes:Math.min(120,Math.max(0,Math.floor(Number(extraMinutes))||0)),
   appearance:{fontSize:exam.adaptations.fontSize,highContrast:exam.adaptations.highContrast,lineSpacing:exam.adaptations.lineSpacing},
   questions:exam.questions.map((q,i)=>{
    const access=questionAccess(q);
-   const base={number:i+1,id:`q${i+1}`,type:q.type,prompt:formatPrompt(q,exam),points:q.points,
+   const base={number:i+1,id:`q${i+1}`,type:q.type,lang:q.lang==='en'?'en':'tr',prompt:formatPrompt(q,exam),points:q.points,
      writtenCue:access.writtenCue,largeTargets:access.largeTargets,audioAllowed:access.audioAllowed,
      visualDescription:exam.adaptations.visualCues?String(q.visualAltText||'').trim():''};
-   if(q.type==='choice')base.options=q.options.map((label,index)=>({id:String.fromCharCode(65+index),label}));
+   if(q.type==='choice')base.options=(exam.adaptations.shuffleOptions&&shuffleSeed?shuffled(q.options,shuffleSeed+'|'+i):q.options).map((label,index)=>({id:String.fromCharCode(65+index),label}));
    if(q.type==='truefalse')base.options=[{id:'A',label:'Doğru'},{id:'B',label:'Yanlış'}];
    if(q.type==='matching'){
     // Two distinct lists. Never send original left/right pairs or solution mappings.
@@ -129,7 +133,7 @@ function downloadRecording(){
  $('record-feedback').textContent='Ses dosyası bu cihaza indirildi. Öğretmene otomatik gönderilmedi.';
 }
 
-let index=0,utterance=null,phase='idle';
+let index=0,utterance=null,phase='idle',started=false,submitted=false,deadline=0,timerId=null,lastAlert=-1;
 const synth=window.speechSynthesis;
 const speakerSupported=typeof window.SpeechSynthesisUtterance==='function'&&!!synth;
 $('title').textContent=data.title;
@@ -138,6 +142,37 @@ $('instructions').textContent=data.instruction||'Her soruyu dikkatle dinleyiniz.
 $('font').value=String(data.appearance.fontSize||20);
 $('contrast').checked=!!data.appearance.highContrast;
 function sayStatus(message){$('status').textContent=message;}
+function isAnswered(q){const a=responses[q.id];if(typeof a==='string')return a.trim().length>0;if(a&&typeof a==='object')return Object.values(a).some(Boolean);return false;}
+function refreshProgress(){const q=data.questions[index];$('progress').textContent='Soru '+(index+1)+' / '+data.questions.length+' · '+(isAnswered(q)?'Cevaplandı':'Henüz cevaplanmadı');}
+function summary(){const done=data.questions.filter(isAnswered).length;return done+' soru cevaplandı, '+(data.questions.length-done)+' soru boş.';}
+function fmt(sec){const m=Math.floor(sec/60),s=sec%60;return m+' dakika '+String(s).padStart(2,'0')+' saniye';}
+function remainingSec(){return Math.max(0,Math.ceil((deadline-Date.now())/1000));}
+function timeText(){return 'Kalan süre: '+fmt(remainingSec())+'.';}
+function visualAlert(msg){const el=$('time-alert');el.hidden=false;el.textContent=msg;}
+function tick(){
+ const left=remainingSec();$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+ const marks=[600,300,60];for(const m of marks){if(left<=m&&lastAlert>m){visualAlert('Uyarı: '+Math.round(m/60)+' dakika kaldı.');sayStatus('Uyarı: '+Math.round(m/60)+' dakika kaldı.');}}
+ lastAlert=left;
+ if(left<=0){clearInterval(timerId);timerId=null;visualAlert('Süre doldu. Yanıtlar kilitlendi; lütfen sınavı teslim edin.');sayStatus('Süre doldu. Yanıtlar kilitlendi; sınavı teslim edebilirsiniz.');lockAnswers();openReview(true);}
+}
+function lockAnswers(){stop();stopRecording(false);for(const c of $('answer').querySelectorAll('input,select,textarea'))c.disabled=true;}
+function startExam(){
+ if(started)return;started=true;const total=(data.durationMinutes+data.extraMinutes)*60;deadline=Date.now()+total*1000;lastAlert=total+1;
+ $('start-card').hidden=true;$('exam-ui').hidden=false;timerId=setInterval(tick,1000);tick();render();
+}
+function openReview(forced){
+ if(submitted)return;stop();const list=$('review-list');list.replaceChildren();
+ for(const [i,q] of data.questions.entries()){const li=element('li');const b=element('button',{type:'button',class:'secondary'},'Soru '+q.number+': '+(isAnswered(q)?'cevaplandı':'BOŞ'));b.addEventListener('click',()=>{if(remainingSec()<=0)return;index=i;$('review').hidden=true;$('question-area').hidden=false;render();});if(remainingSec()<=0)b.disabled=true;li.append(b);list.append(li);}
+ $('review-summary').textContent=summary()+(forced?' Süre doldu.':'');
+ $('question-area').hidden=true;$('review').hidden=false;$('review-summary').focus();sayStatus('Gözden geçirme ekranı. '+summary());
+}
+function submitExam(){
+ submitted=true;clearInterval(timerId);timerId=null;stopRecording(false);stop();
+ $('review').hidden=true;$('question-area').hidden=true;$('done').hidden=false;$('timer-box').hidden=true;
+ $('done-title').focus();sayStatus('Sınav teslim edildi. '+summary()+' İsterseniz yanıtlarınızı TXT olarak indirebilirsiniz.');
+}
+function askConfirm(){$('confirm-box').hidden=false;$('confirm-cancel').focus();sayStatus('Teslimi onaylıyor musunuz? '+summary());}
+function digitSelect(n){const q=data.questions[index];if(!q.options||submitted||remainingSec()<=0)return;const o=q.options[n-1];if(!o)return;const r=$('answer').querySelector('input[value="'+o.id+'"]');if(r){r.checked=true;responses[q.id]=o.id;refreshProgress();sayStatus('Seçenek '+o.id+' seçildi.');}}
 function element(tag,attrs={},txt){const e=document.createElement(tag);for(const [key,value] of Object.entries(attrs)){if(key==='class')e.className=value;else e.setAttribute(key,value);}if(txt!==undefined)e.textContent=txt;return e;}
 function readText(q){const p=['Soru '+q.number+'.',...(q.writtenCue?['Ek yönerge: '+q.writtenCue]:[]),q.prompt];if(q.visualDescription)p.push('Görsel açıklaması: '+q.visualDescription);if(q.options)p.push(...q.options.map(x=>'Seçenek '+x.id+'. '+x.label+'.'));if(q.left)p.push('Birinci liste.',...q.left.map(x=>x.id+'. '+x.label+'.'),'İkinci liste.',...q.right.map(x=>x.id+'. '+x.label+'.'));return p.join(' ');}
 function stop(){utterance=null;if(speakerSupported)synth.cancel();phase='idle';$('pause').disabled=true;$('pause').textContent='Duraklat';}
@@ -153,14 +188,14 @@ function speakText(text,description){if(!speakerSupported){sayStatus('Bu tarayı
  utterance=u;phase='playing';$('pause').disabled=false;$('pause').textContent='Duraklat';synth.speak(u);sayStatus(description+' okunuyor.');
 }
 function speak(){const q=data.questions[index];if(q.audioAllowed===false){sayStatus('Bu soru için uygulama içi sesli okuma öğretmen tarafından kapatılmıştır. Metni ekran okuyucu yine okuyabilir.');return;}speakText(readText(q),'Soru '+q.number);}
-function optionControl(q,o){const lbl=element('label',{class:'answer-choice'});const input=element('input',{type:'radio',name:'response-'+q.id,value:o.id});input.checked=responses[q.id]===o.id;input.addEventListener('change',()=>{responses[q.id]=o.id;sayStatus('Seçim kaydedildi, yalnızca bu tarayıcı sekmesinde geçerli.');});lbl.append(input,element('span',{},o.id+' — '+o.label));return lbl;}
-function render(){stop();const q=data.questions[index];$('progress').textContent='Soru '+(index+1)+' / '+data.questions.length;
+function optionControl(q,o){const lbl=element('label',{class:'answer-choice'});const input=element('input',{type:'radio',name:'response-'+q.id,value:o.id});input.checked=responses[q.id]===o.id;input.addEventListener('change',()=>{responses[q.id]=o.id;refreshProgress();sayStatus('Seçim kaydedildi, yalnızca bu tarayıcı sekmesinde geçerli.');});lbl.append(input,element('span',{},o.id+' — '+o.label));return lbl;}
+function render(){if(submitted)return;stop();const q=data.questions[index];$('progress').textContent='Soru '+(index+1)+' / '+data.questions.length+' · '+(isAnswered(q)?'Cevaplandı':'Henüz cevaplanmadı');
  $('back').disabled=index===0;$('next').disabled=index===data.questions.length-1;
  $('prompt').textContent=q.prompt;$('question-area').classList.toggle('large-target',q.largeTargets===true);$('listen').disabled=q.audioAllowed===false;$('audio-rule').textContent=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır. Ekran okuyucu ayrı çalışabilir.':'';$('written-cue').hidden=!q.writtenCue;$('written-cue').textContent=q.writtenCue?'Ek yazılı yönerge: '+q.writtenCue:'';$('visual').hidden=!q.visualDescription;$('visual').textContent=q.visualDescription?'Görsel betimlemesi: '+q.visualDescription:'';
  const a=$('answer');a.replaceChildren();
  if(q.options){const fs=element('fieldset');fs.append(element('legend',{},'Yanıtınızı seçin'));q.options.forEach(o=>fs.append(optionControl(q,o)));a.append(fs);}
- else if(q.type==='short'){const lbl=element('label',{},'Yanıtınız (bu oturumda geçicidir)');const ta=element('textarea',{rows:'4',autocomplete:'off',spellcheck:'false'});ta.value=responses[q.id]||'';ta.addEventListener('input',()=>{responses[q.id]=ta.value;});lbl.append(ta);a.append(lbl);}
- else if(q.type==='matching'){const fs=element('fieldset');fs.append(element('legend',{},'Her satır için ikinci listeden bir seçenek seçin'));for(const l of q.left){const lbl=element('label',{class:'match-row'},l.id+'. '+l.label);const s=element('select');s.append(element('option',{value:''},'Bir yanıt seçin'));for(const r of q.right)s.append(element('option',{value:r.id},r.id+'. '+r.label));s.value=responses[q.id]?.[l.id]||'';s.addEventListener('change',()=>{responses[q.id]??={};responses[q.id][l.id]=s.value;});lbl.append(s);fs.append(lbl);}a.append(fs);}
+ else if(q.type==='short'){const lbl=element('label',{},'Yanıtınız (bu oturumda geçicidir)');const ta=element('textarea',{rows:'4',autocomplete:'off',spellcheck:'false'});ta.value=responses[q.id]||'';ta.addEventListener('input',()=>{responses[q.id]=ta.value;refreshProgress();});lbl.append(ta);a.append(lbl);}
+ else if(q.type==='matching'){const fs=element('fieldset');fs.append(element('legend',{},'Her satır için ikinci listeden bir seçenek seçin'));for(const l of q.left){const lbl=element('label',{class:'match-row'},l.id+'. '+l.label);const s=element('select');s.append(element('option',{value:''},'Bir yanıt seçin'));for(const r of q.right)s.append(element('option',{value:r.id},r.id+'. '+r.label));s.value=responses[q.id]?.[l.id]||'';s.addEventListener('change',()=>{responses[q.id]??={};responses[q.id][l.id]=s.value;refreshProgress();});lbl.append(s);fs.append(lbl);}a.append(fs);}
  renderRecording();$('prompt').focus();sayStatus('Soru '+(index+1)+' açıldı. Soruyu dinlemek için Sesli oku düğmesini seçin.');
 }
 $('listen').addEventListener('click',speak);
@@ -181,8 +216,8 @@ $('record-delete').addEventListener('click',()=>{
  if(confirm('Bu sorunun geçici ses kaydını silmek istiyor musunuz?')){revokeRecording(data.questions[index].id);renderRecording();}
 });
 // Keyboard controls must never override typing, screen-reader browsing, or native form controls.
-window.addEventListener('keydown',e=>{if(!(e.altKey&&e.shiftKey)||e.ctrlKey||e.metaKey)return;const t=e.target?.tagName;if(['INPUT','TEXTAREA','SELECT'].includes(t)||e.target?.isContentEditable)return;
- const key=e.key.toLowerCase();if(key==='r'){e.preventDefault();speak();}if(key==='s'){e.preventDefault();stop();}if(key==='n'&&!$('next').disabled){e.preventDefault();index++;render();}if(key==='p'&&!$('back').disabled){e.preventDefault();index--;render();}});
+window.addEventListener('keydown',e=>{if(!(e.altKey&&e.shiftKey)||e.ctrlKey||e.metaKey)return;const t=e.target?.tagName;if(['TEXTAREA','SELECT'].includes(t)||e.target?.isContentEditable)return;
+ const key=e.key.toLowerCase();if(!started||submitted)return;if(key==='t'){e.preventDefault();sayStatus(timeText());return;}if(key==='d'){e.preventDefault();sayStatus('Soru '+(index+1)+': '+(isAnswered(data.questions[index])?'cevaplandı':'cevaplanmadı')+'. '+summary());return;}if(/^[1-9]$/.test(e.key)){e.preventDefault();digitSelect(Number(e.key));return;}if(key==='r'){e.preventDefault();speak();}if(key==='s'){e.preventDefault();stop();}if(key==='n'&&!$('next').disabled){e.preventDefault();index++;render();}if(key==='p'&&!$('back').disabled){e.preventDefault();index--;render();}});
 function answerLines(){
  const lines=['ANONİM YANITLAR - OTOMATİK PUANLAMA YOK',data.title,''];
  for(const q of data.questions){
@@ -203,23 +238,34 @@ $('clear-answers').addEventListener('click',()=>{
  if(!confirm('Bu sekmedeki tüm yazılı yanıtları ve ses kayıtlarını temizlemek istiyor musunuz? İndirmiş olduğunuz dosyalar silinmez.'))return;
  stopRecording(false);for(const key of [...recordings.keys()])revokeRecording(key);for(const key of Object.keys(responses))delete responses[key];render();sayStatus('Bu sekmedeki yanıtlar temizlendi.');
 });
+$('start-btn').addEventListener('click',startExam);
+$('finish').addEventListener('click',()=>openReview(false));
+$('review-back').addEventListener('click',()=>{if(remainingSec()<=0)return;$('review').hidden=true;$('question-area').hidden=false;render();});
+$('submit').addEventListener('click',askConfirm);
+$('confirm-cancel').addEventListener('click',()=>{$('confirm-box').hidden=true;$('submit').focus();sayStatus('Teslim iptal edildi.');});
+$('confirm-ok').addEventListener('click',submitExam);
+$('simple-mode').addEventListener('change',()=>document.body.classList.toggle('simple-mode',$('simple-mode').checked));
+$('big-targets').addEventListener('change',()=>document.body.classList.toggle('big-targets',$('big-targets').checked));
+$('duration-text').textContent='Süre: '+data.durationMinutes+' dakika'+(data.extraMinutes?' + kurum onaylı '+data.extraMinutes+' dakika ek süre':'')+'. Süre, Sınavı başlat düğmesine basınca başlar.';
 $('no-speech').hidden=speakerSupported;
 $('mic-unsupported').hidden=micSupported;
 setRecordingControls();
 $('offline').textContent='Bağımsız HTML · Yanıtlar sekmede geçicidir. İsterseniz yalnızca kendi cihazınıza anonim .txt dosyası indirebilirsiniz. Otomatik gönderim yapılmaz.'+(data.enableVoiceResponse?' Öğretmenin izin verdiği mikrofon seçeneği yalnızca açık kullanıcı tercihiyle etkinleşir.':' Bu sınavda mikrofonla yanıt seçeneği kapalıdır.');
 document.documentElement.style.setProperty('--text-size',$('font').value+'px');
 document.body.classList.toggle('high-contrast',$('contrast').checked);
-render();
 })();`;
-const playerCss=`:root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;--text-size:22px;color:#18202a;background:#f7f7f8}*{box-sizing:border-box}body{margin:0;line-height:1.65;font-size:var(--text-size)}header{background:#fff;border-bottom:5px solid #c50e1f;padding:20px max(18px,calc((100vw - 920px)/2))}header small{letter-spacing:.09em;color:#8a1720;font-weight:800;font-size:14px}h1{margin:6px 0;font-size:1.4em}h2{margin:0 0 18px;font-size:1.3em}main{max-width:940px;margin:auto;padding:24px 16px 90px}.card{background:white;border:1px solid #d8dde3;border-radius:16px;padding:24px;margin-top:18px;box-shadow:0 3px 18px #1b24300d}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end}button,select,textarea,input{font:inherit}button{background:#c50e1f;border:2px solid #c50e1f;border-radius:11px;color:white;padding:12px 16px;cursor:pointer;min-height:52px}button.secondary{background:white;color:#18202a;border-color:#586576}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:4px solid #1b6ed2;outline-offset:4px}label{display:block}.toolbar label{font-size:.73em}.toolbar select{min-height:52px;padding:8px}.toolbar input{height:26px;width:26px;vertical-align:middle}.status{font-size:.85em;min-height:2em;color:#324052}.narration-warning{padding:12px;border-left:4px solid #af7300;background:#fff9ea}.question-index{color:#a11123;font-weight:700}#prompt{font-size:1.15em;scroll-margin:35px}.voice-panel{border-top:2px solid #d8dde3;margin-top:25px;padding-top:18px}.voice-panel p{font-size:.83em}.voice-panel audio{max-width:100%;width:100%;margin:14px 0}.voice-panel .consent{display:flex;align-items:flex-start;gap:12px}.voice-panel input[type=checkbox]{width:26px;height:26px;flex:0 0 26px;margin-top:5px}.voice-panel .toolbar button{font-size:.82em}.high-contrast .voice-panel{border-color:white}.written-cue{padding:13px 16px;background:#f4f5f7;border-left:4px solid #c50e1f;white-space:pre-wrap}.large-target .answer-choice{min-height:74px;padding:22px}.large-target .match-row select{min-height:70px}.high-contrast .written-cue{background:#000;color:white;border-color:white}fieldset{border:0;padding:0;margin:25px 0}legend{font-weight:700;margin-bottom:12px}.answer-choice{display:flex;gap:14px;border:2px solid #b1bdc6;border-radius:12px;padding:17px;margin:10px 0;align-items:center;cursor:pointer}.answer-choice:has(input:checked){border-color:#b50020;background:#fff2f3}input[type=radio]{width:28px;height:28px;flex:0 0 auto}textarea{display:block;width:100%;min-height:160px;margin-top:12px;padding:14px;border:2px solid #697482;border-radius:9px}.match-row{border-bottom:1px solid #ccc;padding:14px 0}.match-row select{display:block;width:100%;padding:12px;margin-top:9px}.navigation{display:flex;justify-content:space-between;gap:14px;margin-top:24px}.high-contrast{background:#000;color:white}.high-contrast .card,.high-contrast header{background:#000;color:#fff;border-color:#fff;box-shadow:none}.high-contrast button{background:#000;color:#fff;border-color:#fff}.high-contrast button.secondary{background:#fff;color:#000}.high-contrast .status,.high-contrast .question-index,.high-contrast header small{color:#fff}.high-contrast .answer-choice,.high-contrast .match-row{border-color:#fff}.high-contrast .answer-choice:has(input:checked){background:#133960}.high-contrast select,.high-contrast textarea{background:#000;color:white;border:2px solid white} @media(max-width:570px){.card{padding:17px}button{flex:1}.navigation button{min-width:0}body{line-height:1.5}}@media print{.toolbar,.navigation,#offline,#status,#no-speech{display:none}body{background:white}.card{box-shadow:none}}`;
-export function generateAccessibleExamHtml(raw,{allowVoiceResponse=false}={}){
- const data=createStudentPayload(raw);
+const playerCss=`:root{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;--text-size:22px;color:#18202a;background:#f7f7f8}*{box-sizing:border-box}body{margin:0;line-height:1.65;font-size:var(--text-size)}header{background:#fff;border-bottom:5px solid #c50e1f;padding:20px max(18px,calc((100vw - 920px)/2))}header small{letter-spacing:.09em;color:#8a1720;font-weight:800;font-size:14px}h1{margin:6px 0;font-size:1.4em}h2{margin:0 0 18px;font-size:1.3em}main{max-width:940px;margin:auto;padding:24px 16px 90px}.card{background:white;border:1px solid #d8dde3;border-radius:16px;padding:24px;margin-top:18px;box-shadow:0 3px 18px #1b24300d}.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:end}button,select,textarea,input{font:inherit}button{background:#c50e1f;border:2px solid #c50e1f;border-radius:11px;color:white;padding:12px 16px;cursor:pointer;min-height:52px}button.secondary{background:white;color:#18202a;border-color:#586576}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{outline:4px solid #1b6ed2;outline-offset:4px}label{display:block}.toolbar label{font-size:.73em}.toolbar select{min-height:52px;padding:8px}.toolbar input{height:26px;width:26px;vertical-align:middle}.status{font-size:.85em;min-height:2em;color:#324052}.narration-warning{padding:12px;border-left:4px solid #af7300;background:#fff9ea}.question-index{color:#a11123;font-weight:700}#prompt{font-size:1.15em;scroll-margin:35px}.voice-panel{border-top:2px solid #d8dde3;margin-top:25px;padding-top:18px}.voice-panel p{font-size:.83em}.voice-panel audio{max-width:100%;width:100%;margin:14px 0}.voice-panel .consent{display:flex;align-items:flex-start;gap:12px}.voice-panel input[type=checkbox]{width:26px;height:26px;flex:0 0 26px;margin-top:5px}.voice-panel .toolbar button{font-size:.82em}.high-contrast .voice-panel{border-color:white}.written-cue{padding:13px 16px;background:#f4f5f7;border-left:4px solid #c50e1f;white-space:pre-wrap}.large-target .answer-choice{min-height:74px;padding:22px}.large-target .match-row select{min-height:70px}.high-contrast .written-cue{background:#000;color:white;border-color:white}fieldset{border:0;padding:0;margin:25px 0}legend{font-weight:700;margin-bottom:12px}.answer-choice{display:flex;gap:14px;border:2px solid #b1bdc6;border-radius:12px;padding:17px;margin:10px 0;align-items:center;cursor:pointer}.answer-choice:has(input:checked){border-color:#b50020;background:#fff2f3}input[type=radio]{width:28px;height:28px;flex:0 0 auto}textarea{display:block;width:100%;min-height:160px;margin-top:12px;padding:14px;border:2px solid #697482;border-radius:9px}.match-row{border-bottom:1px solid #ccc;padding:14px 0}.match-row select{display:block;width:100%;padding:12px;margin-top:9px}.navigation{display:flex;justify-content:space-between;gap:14px;margin-top:24px}.high-contrast{background:#000;color:white}.high-contrast .card,.high-contrast header{background:#000;color:#fff;border-color:#fff;box-shadow:none}.high-contrast button{background:#000;color:#fff;border-color:#fff}.high-contrast button.secondary{background:#fff;color:#000}.high-contrast .status,.high-contrast .question-index,.high-contrast header small{color:#fff}.high-contrast .answer-choice,.high-contrast .match-row{border-color:#fff}.high-contrast .answer-choice:has(input:checked){background:#133960}.high-contrast select,.high-contrast textarea{background:#000;color:white;border:2px solid white} @media(max-width:570px){.card{padding:17px}button{flex:1}.navigation button{min-width:0}body{line-height:1.5}}#timer-box{font-weight:700}.alert-visual{padding:14px;border:3px solid #af7300;background:#fff3cd;color:#000;font-weight:700}.simple-mode .voice-panel,.simple-mode #offline,.simple-mode #settings-bar>p:last-child,.simple-mode #read-intro{display:none}.big-targets button,.big-targets select,.big-targets .answer-choice{min-height:76px;padding:20px}.big-targets input[type=radio]{width:36px;height:36px}#review-list{list-style:none;padding:0}#review-list li{margin:8px 0}#review-list button{width:100%;text-align:left}.confirm{border:3px solid #c50e1f;padding:16px;border-radius:12px;margin-top:16px}@media print{.toolbar,.navigation,#offline,#status,#no-speech{display:none}body{background:white}.card{box-shadow:none}}`;
+export function generateAccessibleExamHtml(raw,{allowVoiceResponse=false,extraMinutes=0}={}){
+ const data=createStudentPayload(raw,{extraMinutes});
  data.enableVoiceResponse=allowVoiceResponse===true;
  const json=JSON.stringify(data).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'"><title>${escapeHtml(data.title)} — Erişilebilir sesli sınav</title><style>${playerCss}</style></head><body>
  <header><small>DOU TEMASI · ERİŞİLEBİLİR SINAV</small><h1 id="title">Sesli sınav</h1><div id="course"></div></header><main>
  <section class="card"><h2>Başlamadan önce</h2><p id="instructions"></p><button type="button" class="secondary" id="read-intro">▶ Yönergeyi dinle</button><p id="offline"></p><p id="no-speech" class="narration-warning" hidden>Bu tarayıcı seslendirme sunmuyor. Soruları ekran okuyucuyla veya yazılı olarak takip edebilirsiniz.</p></section>
- <section class="card" aria-label="Okuma ve görünüm ayarları"><div class="toolbar"><button id="listen" type="button">▶ Sesli oku</button><button id="pause" type="button" class="secondary" disabled>Duraklat</button><button id="stop" type="button" class="secondary">■ Durdur</button><label>Okuma hızı <select id="speed"><option value="0.75">Yavaş</option><option value="1" selected>Normal</option><option value="1.25">Hızlı</option></select></label><label>Yazı boyutu <select id="font"><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="28">28</option><option value="32">32</option></select></label><label><input id="contrast" type="checkbox"> Yüksek kontrast</label></div><p class="status" id="status" role="status" aria-live="polite"></p><p style="font-size:.75em">Klavye: Tab / Shift+Tab ile dolaşın; Enter veya boşlukla düğmelere basın. İsteğe bağlı kısayollar: Alt+Shift+R oku, Alt+Shift+S durdur, Alt+Shift+N sonraki, Alt+Shift+P önceki.</p></section>
+ <section class="card" id="start-card"><p id="duration-text"></p><button type="button" id="start-btn">Sınavı başlat</button></section>
+ <div id="exam-ui" hidden>
+ <section class="card" id="timer-box" aria-label="Süre"><span>Kalan süre: <b id="timer">--</b></span><p id="time-alert" class="alert-visual" role="alert" hidden></p></section>
+ <section class="card" id="settings-bar" aria-label="Okuma ve görünüm ayarları"><div class="toolbar"><button id="listen" type="button">▶ Sesli oku</button><button id="pause" type="button" class="secondary" disabled>Duraklat</button><button id="stop" type="button" class="secondary">■ Durdur</button><label>Okuma hızı <select id="speed"><option value="0.75">Yavaş</option><option value="1" selected>Normal</option><option value="1.25">Hızlı</option></select></label><label>Yazı boyutu <select id="font"><option value="18">18</option><option value="20">20</option><option value="22">22</option><option value="24">24</option><option value="28">28</option><option value="32">32</option></select></label><label><input id="contrast" type="checkbox"> Yüksek kontrast</label><label><input id="simple-mode" type="checkbox"> Basit ekran</label><label><input id="big-targets" type="checkbox"> Büyük tıklama alanları</label></div><p class="status" id="status" role="status" aria-live="polite"></p><p style="font-size:.75em">Klavye: Tab / Shift+Tab ile dolaşın; Enter veya boşlukla düğmelere basın. İsteğe bağlı kısayollar: Alt+Shift+R oku, Alt+Shift+S durdur, Alt+Shift+N sonraki, Alt+Shift+P önceki, Alt+Shift+T kalan süre, Alt+Shift+D soru durumu, Alt+Shift+1…9 seçenek seç.</p></section>
  <section class="card" id="question-area" aria-labelledby="prompt"><p id="progress" class="question-index"></p><p id="audio-rule" role="status"></p><p id="written-cue" class="written-cue" hidden></p><h2 tabindex="-1" id="prompt"></h2><p id="visual" hidden></p><div id="answer"></div>
  <section class="voice-panel" ${data.enableVoiceResponse?'':'hidden'} aria-label="İsteğe bağlı sesli yanıt"><h3>İsteğe bağlı sesli yanıt</h3>
  <p>Ses kaydı yalnızca bu cihazın belleğinde tutulur. Mikrofon siz başlatmadıkça açılmaz. Kayıt en fazla 60 saniye ve 8 MB'dır; indirilirse dosya şifreli değildir. Bu pilotta gerçek çocuk sesi kaydetmeyin.</p>
@@ -227,7 +273,9 @@ export function generateAccessibleExamHtml(raw,{allowVoiceResponse=false}={}){
  <p class="narration-warning" id="mic-unsupported" hidden>Mikrofon kaydı bu tarayıcıda veya bağlantı türünde kullanılamıyor. Yazılı yanıt kullanabilirsiniz.</p>
  <div class="toolbar"><button id="record-start" type="button" disabled>● Yanıtımı sesle kaydet</button><button type="button" class="secondary" id="record-stop" disabled>■ Kaydı bitir</button><button type="button" class="secondary" id="record-download" disabled>Ses kaydını indir</button><button type="button" class="secondary" id="record-delete" disabled>Ses kaydını sil</button></div>
  <p id="record-feedback" role="status" aria-live="polite"></p><audio id="record-audio" controls preload="none" hidden aria-label="Kendi yanıtımı dinle"></audio>
- </section><div class="navigation"><button type="button" class="secondary" id="back">← Önceki soru</button><button type="button" id="next">Sonraki soru →</button></div></section>
+ </section><div class="navigation"><button type="button" class="secondary" id="back">← Önceki soru</button><button type="button" id="next">Sonraki soru →</button></div><div class="navigation"><button type="button" id="finish">Sınavı bitir ve gözden geçir</button></div></section>
+ <section class="card" id="review" hidden aria-labelledby="review-title"><h2 id="review-title">Gözden geçirme</h2><p id="review-summary" tabindex="-1"></p><ul id="review-list"></ul><div class="navigation"><button type="button" class="secondary" id="review-back">← Sınava dön</button><button type="button" id="submit">Teslim et</button></div><div id="confirm-box" class="confirm" role="alertdialog" aria-labelledby="confirm-q" hidden><p id="confirm-q"><b>Teslimden sonra yanıtları değiştiremezsiniz. Teslim etmek istiyor musunuz?</b></p><div class="toolbar"><button type="button" class="secondary" id="confirm-cancel">Hayır, sınava dön</button><button type="button" id="confirm-ok">Evet, teslim et</button></div></div></section>
+ <section class="card" id="done" hidden><h2 id="done-title" tabindex="-1">Sınav teslim edildi</h2><p>Yanıtlarınız kaydedildi. Aşağıdan isteğe bağlı olarak TXT indirebilirsiniz.</p></section>
  <section class="card" aria-label="Yanıt dosyası ve gizlilik"><h2>Yanıtlarınızı kontrol edin</h2><p>Yazılı yanıtlar ve indirilmemiş ses kayıtları yalnızca bu sekmede geçici tutulur. İsteğe bağlı olarak şifresiz bir metin dosyasını bu cihaza indirebilirsiniz. Bu dosya kişisel bilgiler içerebilir; gerçek öğrenci verileriyle kullanmayın. Öğretmene otomatik gönderilmez.</p><div class="toolbar"><button type="button" id="save-answers">Yanıtları TXT olarak indir</button><button type="button" class="secondary" id="clear-answers">Yanıtları temizle</button></div></section>
- </main><script type="application/json" id="exam-data">${json}</script><script>${playerScript}</script></body></html>`;
+ </div></main><script type="application/json" id="exam-data">${json}</script><script>${playerScript}</script></body></html>`;
 }

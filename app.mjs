@@ -171,7 +171,8 @@ const toggles=[
  ['onePerPage','Her sayfada bir soru','Basılı sınavda dikkat dağıtıcı unsurları azaltmak için.'],
  ['largerAnswerArea','Geniş cevap alanı','Kısa yanıt soruları için daha büyük yazma alanı.'],
  ['visualCues','Açıklayıcı görsel/somut destek notu','Öğretmenin hazırladığı destek açıklamasını gösterir.'],
- ['uppercaseHeadings','Büyük harfli başlıklar','Yalnızca sınav başlıklarını büyük harfe çevirir.']
+ ['uppercaseHeadings','Büyük harfli başlıklar','Yalnızca sınav başlıklarını büyük harfe çevirir.'],
+ ['shuffleOptions','Şıkları her aday için karıştır','Çoktan seçmeli şıkların sırası her adayın ekranında farklıdır (yan yana kopyayı azaltır). "Hepsi", "A ve B" gibi şıklar kullanmayın.']
 ];
 function renderAdaptations(){const a=state.exam.adaptations;return `<div class="card"><div class="card-heading"><h2>Erişilebilir sınav uyarlamaları</h2><small>02 / 06</small></div><div class="card-body">
  <div class="section-kicker">Hızlı görünüm profilleri <span class="counter">Öğretmen seçimiyle uygulanır</span></div>
@@ -204,6 +205,7 @@ function questionCard(q,i){const open=state.editing===i;return `<div class="ques
  ${qfield(i,'simplifiedPrompt','Alternatif sade soru metni',q.simplifiedPrompt,{type:'textarea',full:true,rows:2,small:'Yalnızca sade yönerge uyarlaması seçilirse kullanılır; kazanımın anlamını değiştirmemelidir.'})}
  ${qfield(i,'objective','İlgili BEP kazanımı',q.objective,{full:true})}
  ${qfield(i,'points','Puan',q.points,{type:'number'})}
+ <div class="field"><label for="q-lang-${i}">Soru dili</label><select id="q-lang-${i}" data-q-index="${i}" data-q-field="lang"><option value="tr" ${q.lang!=='en'?'selected':''}>Türkçe</option><option value="en" ${q.lang==='en'?'selected':''}>İngilizce (İngilizce sesle okunur)</option></select><small>Yabancı dil dersleri için: soru, şıklar ve ekran okuyucu İngilizce olarak işaretlenir.</small></div>
  ${qfield(i,'visualNote','Görsel / somut destek açıklaması',q.visualNote,{full:true,small:'Destek etkinse açıklama öğrenci nüshasına eklenir.'})}
  <div class="field"><label for="visual-style-${i}">Görsel şekil</label><select id="visual-style-${i}" data-q-index="${i}" data-q-field="visualStyle">${[['dot','Daire'],['square','Kare'],['triangle','Üçgen'],['star','Yıldız']].map(([v,l])=>`<option value="${v}" ${q.visualStyle===v?'selected':''}>${l}</option>`).join('')}</select></div>
  ${qfield(i,'visualAltText','Görsel için alternatif metin',q.visualAltText,{full:false,small:'Ekran okuyucu ile kullanılacak açıklama.'})}

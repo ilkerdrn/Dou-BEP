@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import {inflateRawSync} from 'node:zlib';
 import {textFromDocument, detectSensitive} from './bep-plan-import.mjs';
 import {starterQuestion,VERSION,DEFAULT_ADAPTATIONS} from './core.mjs';
+import {tableSuggestion,equationSuggestion,visualSuggestion} from './docx-rich-suggest.mjs';
 
 const MAX_FILE=1024*1024;
 const ALLOWED=/\.(?:docx|pdf|txt)$/i;
@@ -43,7 +44,12 @@ function inspectWord(bytes){
  for(const match of xml.matchAll(rx)){
   const tag=match[0];const type=tag.startsWith('<w:tbl')?'table':tag.startsWith('<m:')?'equation':'visual';
   if(type==='equation'&&tag.startsWith('<m:oMath')&&xml.slice(0,match.index).lastIndexOf('<m:oMathPara')>xml.slice(0,match.index).lastIndexOf('</m:oMathPara'))continue;
-  if(items.length<41)items.push({id:`item-${String(items.length+1).padStart(3,'0')}`,type,order:items.length+1});
+  if(items.length<41){
+   const end=type==='table'?'</w:tbl>':tag.startsWith('<m:oMathPara')?'</m:oMathPara>':tag.startsWith('<m:oMath')?'</m:oMath>':/^<w:drawing/.test(tag)?'</w:drawing>':/^<w:pict/.test(tag)?'</w:pict>':'</w:object>';
+   const stop=xml.indexOf(end,match.index);const slice=xml.slice(match.index,stop<0?match.index+20000:Math.min(stop+end.length,match.index+60000));
+   let suggestion='';try{suggestion=type==='table'?tableSuggestion(slice):type==='equation'?equationSuggestion(slice):visualSuggestion(slice);}catch{suggestion='';}
+   items.push({id:`item-${String(items.length+1).padStart(3,'0')}`,type,order:items.length+1,suggestion});
+  }
  }
  // Media parts not represented by an ordinary drawing are still evidence that
  // automated text extraction cannot preserve all the source content.
@@ -147,7 +153,7 @@ export function examDraftFromSource(preview,{title,subject,duration=30,selectedN
  const questions=preview.questions.filter(q=>selected.has(q.number));
  if(questions.length!==selectedNumbers.length)throw Error('Geçersiz veya tekrarlanan soru numarası.');
  const exam={version:VERSION,title:title.trim(),subject:subject.trim(),grade:'Önlisans / Lisans',duration:Number(duration),profile:'',objective:'',instruction:'Soruları dikkatle okuyunuz.',reviewPolicy:'guided',adaptations:{...DEFAULT_ADAPTATIONS,institutionalHeader:true},bepGoals:[],goalAttestations:[],supportPlan:{version:1,domain:'general',selected:[]},questions:questions.map(q=>({
-  ...starterQuestion(q.type),prompt:q.prompt,options:q.type==='choice'?q.options:[],answer:'',points:10,teacherNote:'',provenance:{kind:'source-import',source:'anonim '+preview.format.toUpperCase()+' dosyası',sourceSha256:preview.sourceSha256,transcriptionSha256:preview.transcriptionSha256||'',reviewed:false}
+  ...starterQuestion(q.type),prompt:q.prompt,options:q.type==='choice'?q.options:[],answer:String(q.answer??'').slice(0,2000),points:Number.isInteger(q.points)&&q.points>=0&&q.points<=1000?q.points:10,visualAltText:String(q.visualAltText??'').slice(0,200),objective:String(q.objective??'').slice(0,500),teacherNote:'',provenance:{kind:'source-import',source:'anonim '+preview.format.toUpperCase()+' dosyası',sourceSha256:preview.sourceSha256,transcriptionSha256:preview.transcriptionSha256||'',reviewed:false}
  }))};
  return exam;
 }
