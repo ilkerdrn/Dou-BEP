@@ -24,3 +24,6 @@ body:not(.high) .option:has(input:checked){background:#fff1f4;border-color:#c24d
 .voice-box .v-status{margin:10px 0 0;font-weight:600}.voice-box .v-status.err{color:#8A1720}
 body.high .voice-box{background:#000;border-color:#fff}body.high .voice-box .v-status.err{color:#ffd400}
 .voice-box button{font-size:1em;min-height:52px;padding:0 20px}
+.teacher-message{padding:14px 18px;border-radius:14px;background:#E8F1FF;color:#0B3A7A;border:2px solid #1B6ED2;font-weight:600;margin:0}
+.teacher-message button{margin-left:10px;min-height:44px}
+body.high .teacher-message{background:#000;color:#fff;border-color:#ffd400}

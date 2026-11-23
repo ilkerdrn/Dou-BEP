@@ -123,9 +123,15 @@ async function refreshLive(){
   if(r.totalQuestions){prog.append(el('strong',r.answered+' / '+r.totalQuestions),el('br'),bar(r.answered,r.totalQuestions,'Cevaplanan soru'));}else prog.append(document.createTextNode('—'));
   const last=el('td',r.status==='started'?ago(r.idleSeconds):r.status==='submitted'&&r.submittedAt?new Date(r.submittedAt).toLocaleTimeString('tr-TR'):'—');
   const notes=[];const own=r.adjustments.filter(x=>ADJUSTMENTS[x]?.kind!=='staff').map(x=>ADJUSTMENTS[x]?.label||x);if(own.length)notes.push(own.join(', '));if(r.staff.length)notes.push('GÖREVLİ: '+r.staff.join(', '));
-  tr.append(el('td',r.seat||'—'),el('td',r.candidateCode||r.ref),el('td',r.examTitle),st,time,prog,last,el('td',notes.join(' · ')||'—'));body.append(tr);
+  const act=el('td');
+  if(r.status==='started'){
+   for(const m of [5,10]){const b=el('button','+'+m+' dk');b.type='button';b.className='ghost';b.setAttribute('aria-label',(r.candidateCode||r.ref)+' adayına '+m+' dakika ek süre ver');b.addEventListener('click',async()=>{b.disabled=true;try{await api('/pilot/'+r.id+'/extend','POST',{minutes:m});msg((r.candidateCode||r.ref)+' adayına '+m+' dakika ek süre verildi.');await refreshLive();}catch(e){msg(e.message,true);}finally{b.disabled=false;}});act.append(b,document.createTextNode(' '));}
+   const mb=el('button','Mesaj');mb.type='button';mb.className='ghost';mb.setAttribute('aria-label',(r.candidateCode||r.ref)+' adayına mesaj gönder');mb.addEventListener('click',async()=>{const t=window.prompt((r.candidateCode||r.ref)+' adayına kısa mesaj (en çok 300 karakter):','');if(!t||!t.trim())return;try{await api('/pilot/message','POST',{text:t,sessionId:r.id});msg('Mesaj gönderildi.');}catch(e){msg(e.message,true);}});act.append(mb);
+   if(r.liveExtraMinutes)act.append(el('div','Sınavda verilen ek: '+r.liveExtraMinutes+' dk','sub'));
+  }else act.append(document.createTextNode('—'));
+  tr.append(el('td',r.seat||'—'),el('td',r.candidateCode||r.ref),el('td',r.examTitle),st,time,prog,last,el('td',notes.join(' · ')||'—'),act);body.append(tr);
  }
- if(!body.children.length){const tr=el('tr');const td=el('td',only?'Şu an dikkat gerektiren aday yok.':'Henüz oturum yok.');td.colSpan=8;tr.append(td);body.append(tr);}
+ if(!body.children.length){const tr=el('tr');const td=el('td',only?'Şu an dikkat gerektiren aday yok.':'Henüz oturum yok.');td.colSpan=9;tr.append(td);body.append(tr);}
  const cards=$('live-cards');cards.replaceChildren(card('Henüz girmedi',count.issued,'warn'),card('Sınavda',count.started,'ok'),card('Molada',count.breaks),card('Az süre (<5 dk)',count.low,count.low?'bad':''),card('Hareketsiz (>5 dk)',count.idle,count.idle?'bad':''),card('Teslim etti',count.submitted,'ok'));
  $('retention-note').textContent=`Veri saklama: teslim edilen yanıtlar ve puanlar sınav bitiminden ${live.retentionHours} saat sonra otomatik silinir. Sonuç tablosunu ve değerlendirmeleri bu süre dolmadan alın.`;
  $('live-summary').textContent=`${live.items.length} oturum · ${count.issued} henüz girmedi · ${count.started} sınavda · ${count.submitted} teslim${count.other?' · '+count.other+' iptal/süresi dolmuş':''} (güncelleme ${new Date(live.at).toLocaleTimeString('tr-TR')}). "Son hareket", adayın son otomatik kaydedilen yanıt değişikliğidir; yanıt değiştirmeden düşünen aday da hareketsiz görünebilir.`;
@@ -158,6 +164,8 @@ if(typeof document!=='undefined'&&$('plan-issue')){
  $('plan-csv-download').addEventListener('click',()=>{const url=URL.createObjectURL(new Blob([csvText()],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=url;a.download='salon-giris-kodlari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);});
  $('live-refresh').addEventListener('click',()=>refreshLive().then(()=>msg('Güncellendi.')).catch(e=>msg(e.message,true)));
  $('live-auto').addEventListener('change',setAuto);
+ $('broadcast-send').addEventListener('click',async()=>{const t=$('broadcast-text').value.trim();if(!t){msg('Önce duyuru metnini yazın.',true);return;}try{await api('/pilot/message','POST',{text:t});$('broadcast-text').value='';msg('Duyuru sınavdaki tüm adaylara gönderildi.');}catch(e){msg(e.message,true);}});
+ $('extend-all').addEventListener('click',async()=>{const m=Number($('extend-all-min').value)||5;if(!window.confirm('Sınavda olan TÜM adaylara '+m+' dakika ek süre verilsin mi?'))return;try{const live=await api('/pilot/live');let n=0;for(const r of live.items.filter(x=>x.status==='started')){try{await api('/pilot/'+r.id+'/extend','POST',{minutes:m});n++;}catch{}}msg(n+' adaya '+m+' dakika ek süre verildi.');await refreshLive();}catch(e){msg(e.message,true);}});
  $('live-attention').addEventListener('change',()=>refreshLive().catch(()=>{}));
  $('results-download').addEventListener('click',async()=>{try{const r=await fetch('/api/pilot/results.csv',{credentials:'same-origin'});if(!r.ok)throw Error('Sonuç tablosu alınamadı.');const url=URL.createObjectURL(await r.blob());const a=document.createElement('a');a.href=url;a.download='salon-sonuclari.csv';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);msg('Sonuç tablosu indirildi. Nesnel puanlar cevap anahtarından ÖNERİdir; yazılı yanıtları siz puanlayın.');}catch(e){msg(e.message,true);}});
  init();

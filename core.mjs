@@ -9,7 +9,7 @@ import {activePrompt,presentationMode} from './presentation-variants.mjs';
 import {normalizeQuestionAccess,questionAccess} from './question-access.mjs';
 export const VERSION = '2.81.0';
 export const TYPES = { choice: 'Çoktan seçmeli', short: 'Kısa yanıt', truefalse: 'Doğru / Yanlış', matching: 'Eşleştirme' };
-export const DEFAULT_ADAPTATIONS = Object.freeze({ fontSize: 18, lineSpacing: 1.65, highContrast: false, simpleInstructions: false, onePerPage: false, largerAnswerArea: true, visualCues: false, uppercaseHeadings: false, institutionalHeader: false });
+export const DEFAULT_ADAPTATIONS = Object.freeze({ fontSize: 18, lineSpacing: 1.65, highContrast: false, simpleInstructions: false, onePerPage: false, largerAnswerArea: true, visualCues: false, uppercaseHeadings: false, institutionalHeader: false, shuffleOptions: false });
 
 /** Teacher-selected layout presets: never infer supports from diagnosis. */
 export const DISPLAY_PRESETS = Object.freeze({
@@ -69,6 +69,7 @@ export function validateExam(exam) {
    if(opts.length<2||opts.some(o=>!String(o).trim())) issues.push({level:'error',text:`${prefix}: En az iki dolu seçenek gerekli.`});
    if(new Set(opts.map(s=>String(s).trim().toLocaleLowerCase('tr'))).size !== opts.length) issues.push({level:'error',text:`${prefix}: Aynı yanıt seçeneği birden fazla kullanılamaz.`});
    if(!opts.includes(q.answer)) issues.push({level:'error',text:`${prefix}: Geçerli bir doğru yanıt seçin.`});
+   if(exam.adaptations?.shuffleOptions===true&&opts.some(o=>/(hepsi|hiçbiri|yukarıdakilerin|\b[A-E]\s*(ve|ile|veya)\s*[A-E]\b|\b[A-E]\s*şıkkı)/i.test(String(o)))) issues.push({level:'error',text:`${prefix}: Şıklar karıştırılırken "Hepsi", "A ve B" gibi diğer şıklara gönderme yapan seçenekler anlamını yitirir; bunları yeniden yazın veya karıştırmayı kapatın.`});
   }
   if(q.type==='truefalse'&&!['Doğru','Yanlış'].includes(q.answer)) issues.push({level:'error',text:`${prefix}: Doğru/Yanlış yanıtını seçin.`});
   if(q.type==='short'&&!String(q.answer||'').trim()) issues.push({level:'warning',text:`${prefix}: Örnek yanıt eksik.`});

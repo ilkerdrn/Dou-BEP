@@ -171,7 +171,8 @@ const toggles=[
  ['onePerPage','Her sayfada bir soru','Basılı sınavda dikkat dağıtıcı unsurları azaltmak için.'],
  ['largerAnswerArea','Geniş cevap alanı','Kısa yanıt soruları için daha büyük yazma alanı.'],
  ['visualCues','Açıklayıcı görsel/somut destek notu','Öğretmenin hazırladığı destek açıklamasını gösterir.'],
- ['uppercaseHeadings','Büyük harfli başlıklar','Yalnızca sınav başlıklarını büyük harfe çevirir.']
+ ['uppercaseHeadings','Büyük harfli başlıklar','Yalnızca sınav başlıklarını büyük harfe çevirir.'],
+ ['shuffleOptions','Şıkları her aday için karıştır','Çoktan seçmeli şıkların sırası her adayın ekranında farklıdır (yan yana kopyayı azaltır). "Hepsi", "A ve B" gibi şıklar kullanmayın.']
 ];
 function renderAdaptations(){const a=state.exam.adaptations;return `<div class="card"><div class="card-heading"><h2>Erişilebilir sınav uyarlamaları</h2><small>02 / 06</small></div><div class="card-body">
  <div class="section-kicker">Hızlı görünüm profilleri <span class="counter">Öğretmen seçimiyle uygulanır</span></div>

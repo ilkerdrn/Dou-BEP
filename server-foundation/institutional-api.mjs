@@ -46,6 +46,11 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
     const body=await readJson(req,900000);response(res,200,store.pilotSubmit(match[1],body.answers));return true;
    }
+   if(path==='/api/pilot/state'&&req.method==='GET'){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    response(res,200,store.pilotLiveState(match[1],new URL(req.url,'http://localhost').searchParams.get('after')));return true;
+   }
    const voiceOwn=path.match(/^\/api\/pilot\/voice\/(q\d{1,3})$/);
    if(voiceOwn){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
@@ -115,6 +120,7 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   if(path==='/api/pilot/message'&&req.method==='POST'){const body=await readJson(req,2000);response(res,200,store.pilotMessage(actor,body));return true;}
    const voiceTeacher=path.match(/^\/api\/pilot\/([a-f0-9-]{36})\/voice\/(q\d{1,3})$/);
    if(voiceTeacher&&req.method==='GET'){audioResponse(res,store.pilotVoiceForTeacher(actor,voiceTeacher[1],voiceTeacher[2]));return true;}
    if(path==='/api/pilot/results.csv'&&req.method==='GET'){const csv=store.pilotResultsCsv(actor);res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="salon-sonuclari.csv"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(csv);return true;}
@@ -126,13 +132,14 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
    if(path==='/api/pilot'&&req.method==='POST'){
     const body=await readJson(req);response(res,201,{item:store.pilotIssue(actor,body.examId,{extraMinutes:body.extraMinutes===undefined?0:body.extraMinutes,breakMinutes:body.breakMinutes===undefined?0:body.breakMinutes,candidateCode:body.candidateCode,seat:body.seat,adjustments:body.adjustments===undefined?[]:body.adjustments})});return true;
    }
-   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv|record))?$/);
+   const pilotId=path.match(/^\/api\/pilot\/([a-f0-9-]{36})(?:\/(revoke|review|review.csv|record|extend))?$/);
    if(pilotId){
     if(!pilotId[2]&&req.method==='GET'){response(res,200,{item:store.pilotView(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review'&&req.method==='GET'){response(res,200,{review:store.pilotReviewGet(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review'&&req.method==='PUT'){
      const body=await readJson(req);response(res,200,{review:store.pilotReviewSave(actor,pilotId[1],body)});return true;
     }
+    if(pilotId[2]==='extend'&&req.method==='POST'){const body=await readJson(req,500);response(res,200,store.pilotExtend(actor,pilotId[1],body.minutes));return true;}
     if(pilotId[2]==='record'&&req.method==='GET'){response(res,200,{record:store.pilotRecord(actor,pilotId[1])});return true;}
     if(pilotId[2]==='review.csv'&&req.method==='GET'){
      const csv=store.pilotReviewCsv(actor,pilotId[1]);

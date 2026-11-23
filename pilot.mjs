@@ -6,7 +6,20 @@ function announce(s,error=false){$('message').textContent=s;$('message').classNa
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
 let douReader=null,deadline=0,timerId=null,lastLeft=Infinity,locked=false;
-let voice=null;
+let voice=null,lastMsg=0,statePoll=null;
+async function pollState(){
+ if(!claim||locked)return;
+ try{
+  const r=await fetch('/api/pilot/state?after='+lastMsg,{credentials:'omit',headers:{Authorization:'Bearer '+claim}});if(!r.ok)return;const st=await r.json();
+  if(!claim||locked)return;
+  if(!st.onBreak&&!onBreak&&Number.isFinite(st.remainingSeconds)){
+   const local=remaining();
+   if(st.remainingSeconds>local+10){const added=Math.round((st.remainingSeconds-local)/60);deadline=Date.now()+st.remainingSeconds*1000;lastLeft=st.remainingSeconds+1;totalSeconds=Math.max(totalSeconds,st.remainingSeconds);tick();showAlert('Gözetmen sürenizi uzattı: yaklaşık '+added+' dakika eklendi. Kalan süre '+fmt(st.remainingSeconds)+'.');}
+  }
+  for(const m of st.messages||[]){lastMsg=Math.max(lastMsg,m.id);$('teacher-message-text').textContent=m.text;$('teacher-message').hidden=false;announce('Gözetmen mesajı: '+m.text);}
+ }catch{}
+}
+function startStatePoll(){clearInterval(statePoll);statePoll=setInterval(pollState,6000);}
 const voiceHas=q=>!!voice&&voice.has(q.id);
 const TEXT_MAX=4000,TEXT_TOTAL_MAX=60000;
 const answered=q=>{const f=new FormData($('answer-form'));if(q.type==='short')return String(f.get(q.id)||'').trim().length>0||voiceHas(q);if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
@@ -112,7 +125,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  activeQuestionIndex=0;buildMap();updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;voice=createVoice({doc:document,win:window,getToken:()=>claim,announce,onChange:()=>updateQuestionNavigation(),beforeRecord:()=>{clearTimeout(readTimer);douReader?.stop();}});voice.configure({enabled:!!(r.profile&&r.profile.voiceAnswer),meta:r.voice});$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(autoRead){douReader?.preload();scheduleAutoRead(r.resumed?'Oturum kaldığınız yerden devam ediyor':INTRO);}if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;voice=createVoice({doc:document,win:window,getToken:()=>claim,announce,onChange:()=>updateQuestionNavigation(),beforeRecord:()=>{clearTimeout(readTimer);douReader?.stop();}});voice.configure({enabled:!!(r.profile&&r.profile.voiceAnswer),meta:r.voice});$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);lastMsg=0;startStatePoll();if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(autoRead){douReader?.preload();scheduleAutoRead(r.resumed?'Oturum kaldığınız yerden devam ediyor':INTRO);}if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function openReview(){if(!exam||locked||onBreak)return;
  const body=$('review-rows');body.replaceChildren();
@@ -168,7 +181,7 @@ function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(autosave,20
 function startAutosave(){clearInterval(autosaveTimer);autosaveTimer=setInterval(autosave,10000);}
 function collectAnswers(){const form=new FormData($('answer-form'));const answers={};for(const q of exam.questions){if(q.type==='short'){const v=String(form.get(q.id)||'').trim();if(v)answers[q.id]=v;}else if(q.options){const v=form.get(q.id);if(v)answers[q.id]=v;}else if(q.type==='matching'){const m={};for(const l of q.left){const v=form.get(q.id+'_'+l.id);if(v)m[l.id]=v;}if(Object.keys(m).length)answers[q.id]=m;}}return answers;}
 async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
- try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(autosaveTimer);clearTimeout(saveTimer);clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/submit',{answers},claim);claim=null;exam=null;clearInterval(autosaveTimer);clearTimeout(saveTimer);clearInterval(statePoll);clearInterval(timerId);$('timer-box').hidden=true;douReader?.stop();$('player').hidden=true;$('review-view').hidden=true;$('done').hidden=false;$('receipt').textContent='Teslim referansı: '+r.receipt;announce('Yanıtlar bir kez kaydedildi.');$('receipt').parentElement.querySelector('h2')?.setAttribute('tabindex','-1');$('done').querySelector('h2').focus();}
  catch(e){announce(e.message,true);btn.disabled=false;}}
 // Time is up: answers are collected BEFORE inputs are locked (disabled controls are not part of FormData) and sent once.
 let pendingAnswers=null;
@@ -187,6 +200,7 @@ $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(ex
 $('size').addEventListener('change',()=>document.documentElement.style.setProperty('--student-size',$('size').value+'px'));
 $('contrast').addEventListener('change',()=>document.body.classList.toggle('high',$('contrast').checked));
 document.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&e.code==='KeyK'&&voice?.enabled&&!$('player').hidden){e.preventDefault();voice.toggleCurrent();}});
+$('teacher-message-ok').addEventListener('click',()=>{$('teacher-message').hidden=true;});
 $('stop-voice').addEventListener('click',()=>{douReader?.stop();announce('Seslendirme durduruldu.');});
 window.addEventListener('pagehide',()=>{claim=null;douReader?.stop();});
 

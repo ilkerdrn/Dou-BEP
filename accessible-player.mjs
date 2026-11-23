@@ -15,7 +15,10 @@ export function auditAudioAccess(raw){
  return issues;
 }
 
-export function createStudentPayload(raw,{extraMinutes=0}={}){
+// Adaya özel, tekrarlanabilir şık karıştırma: aynı oturum tohumu her zaman aynı sırayı üretir; kimlikler (A,B,C) yeni sıraya göre verilir, puanlama etiket metniyle yapılır.
+function seeded(seed){let h=2166136261;for(const c of String(seed)){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function shuffled(list,seed){const a=[...list],rnd=seeded(seed);for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+export function createStudentPayload(raw,{extraMinutes=0,shuffleSeed=''}={}){
  const exam=normalizeExam(raw);
  const issues=auditAudioAccess(exam);if(issues.length)throw new Error(issues.map(i=>i.text).join(' '));
  return {
@@ -28,7 +31,7 @@ export function createStudentPayload(raw,{extraMinutes=0}={}){
    const base={number:i+1,id:`q${i+1}`,type:q.type,prompt:formatPrompt(q,exam),points:q.points,
      writtenCue:access.writtenCue,largeTargets:access.largeTargets,audioAllowed:access.audioAllowed,
      visualDescription:exam.adaptations.visualCues?String(q.visualAltText||'').trim():''};
-   if(q.type==='choice')base.options=q.options.map((label,index)=>({id:String.fromCharCode(65+index),label}));
+   if(q.type==='choice')base.options=(exam.adaptations.shuffleOptions&&shuffleSeed?shuffled(q.options,shuffleSeed+'|'+i):q.options).map((label,index)=>({id:String.fromCharCode(65+index),label}));
    if(q.type==='truefalse')base.options=[{id:'A',label:'Doğru'},{id:'B',label:'Yanlış'}];
    if(q.type==='matching'){
     // Two distinct lists. Never send original left/right pairs or solution mappings.

@@ -11,7 +11,7 @@ export function recordNode(rec,digest){
  const meta=el('dl','','meta');
  const row=(k,v)=>{const d=el('div');d.append(el('dt',k),el('dd',v||'—'));meta.append(d);};
  row('Aday kodu (anonim)',rec.candidateCode);row('Koltuk',rec.seat);row('Başlangıç',when(rec.startedAt));row('Teslim',when(rec.submittedAt));
- row('Verilen süre',rec.durationMinutes+' dk'+(rec.extraMinutes?' + '+rec.extraMinutes+' dk onaylı ek süre':''));row('Harcanan süre (mola hariç)',rec.spentMinutes===null?'—':rec.spentMinutes+' dk');
+ row('Verilen süre',rec.durationMinutes+' dk'+(rec.extraMinutes?' + '+rec.extraMinutes+' dk ek süre':'')+(rec.liveExtraMinutes?' (bunun '+rec.liveExtraMinutes+' dk\'sı sınav sırasında gözetmen tarafından verildi)':''));row('Harcanan süre (mola hariç)',rec.spentMinutes===null?'—':rec.spentMinutes+' dk');
  row('Mola / devam sayısı',rec.breakCount+' / '+rec.resumeCount);row('Onaylı uyarlamalar',rec.adjustments.map(x=>x.label).join(', ')||'Yok');
  a.append(meta);
  const t=rec.totals;const sc=el('p','','score');

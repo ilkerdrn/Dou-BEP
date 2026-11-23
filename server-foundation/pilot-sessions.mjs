@@ -61,6 +61,11 @@ export function pilotSessions(db,{StoreError,log}){
  // v2.85: teacher-approved rest-break allowance. The exam clock is paused while on break (break time is not exam time).
  for(const [col,ddl] of [['break_minutes','INTEGER NOT NULL DEFAULT 0'],['break_used_ms','INTEGER NOT NULL DEFAULT 0'],['break_started_at','INTEGER'],['break_count','INTEGER NOT NULL DEFAULT 0'],['candidate_code','TEXT'],['seat','TEXT'],['profile','TEXT'],['draft_answers','TEXT'],['draft_at','INTEGER'],['resume_count','INTEGER NOT NULL DEFAULT 0']])
   if(!db.prepare('PRAGMA table_info(pilot_sessions)').all().some(c=>c.name===col))db.exec(`ALTER TABLE pilot_sessions ADD COLUMN ${col} ${ddl}`);
+ // Canlı müdahale: sınav sırasında öğretmen ek süre verir ve adaylara kısa mesaj gönderir.
+ if(!db.prepare('PRAGMA table_info(pilot_sessions)').all().some(c=>c.name==='live_extra_minutes'))db.exec('ALTER TABLE pilot_sessions ADD COLUMN live_extra_minutes INTEGER NOT NULL DEFAULT 0');
+ db.exec(`CREATE TABLE IF NOT EXISTS pilot_messages(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,tenant_id TEXT NOT NULL,owner_id TEXT NOT NULL,session_id TEXT,scope TEXT NOT NULL,text TEXT NOT NULL,created_at INTEGER NOT NULL
+ );CREATE INDEX IF NOT EXISTS idx_pilot_messages ON pilot_messages(tenant_id,id);`);
  db.exec(`CREATE TABLE IF NOT EXISTS pilot_voice(
   session_id TEXT NOT NULL REFERENCES pilot_sessions(id) ON DELETE CASCADE,qid TEXT NOT NULL,tenant_id TEXT NOT NULL,
   mime TEXT NOT NULL,audio BLOB NOT NULL,bytes INTEGER NOT NULL,seconds REAL NOT NULL,created_at INTEGER NOT NULL,PRIMARY KEY(session_id,qid)
@@ -164,7 +169,7 @@ export function pilotSessions(db,{StoreError,log}){
   const t=now();
   return {at:t,retentionHours:RETENTION_HOURS,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
    remainingSeconds:r.status==='started'?Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-t)/1000)):null,onBreak:!!r.break_started_at,breakCount:r.break_count||0,resumeCount:r.resume_count||0,lastSaveAt:r.draft_at||null,
-   startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,
+   startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,liveExtraMinutes:r.live_extra_minutes||0,breakMinutes:r.break_minutes||0,
    totalQuestions:r.q_count||0,answered:(()=>{try{const a=JSON.parse((r.status==='submitted'?r.answers:r.draft_answers)||'{}');const keys=new Set(Object.entries(a).filter(([,v])=>v!==''&&v!==null&&!(typeof v==='object'&&!Object.keys(v).length)).map(([k])=>k));for(const k of Object.keys(voiceMeta(r.id)))keys.add(k);return keys.size;}catch{return 0;}})(),
    plannedSeconds:((r.exam_minutes||0)+(r.extra_minutes||0))*60,idleSeconds:r.status==='started'?Math.max(0,Math.floor((t-(r.draft_at||r.started_at||t))/1000)):null,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
  }
@@ -189,7 +194,7 @@ export function pilotSessions(db,{StoreError,log}){
    const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
    if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti. Öğretmenden yeni kod alın.',409);
    approvedExam(exam);
-   let payload;try{payload=createStudentPayload(JSON.parse(exam.body),{extraMinutes:row.extra_minutes||0});}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
+   let payload;try{payload=createStudentPayload(JSON.parse(exam.body),{extraMinutes:row.extra_minutes||0,shuffleSeed:row.id});}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
    const token=randomBytes(32).toString('base64url');
    const adjustments=JSON.parse(row.profile||'[]');
    const extras={candidateCode:row.candidate_code||'',seat:row.seat||'',voice:voiceMeta(row.id),profile:uiProfile(adjustments),staffNotes:adjustments.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};
@@ -267,6 +272,36 @@ export function pilotSessions(db,{StoreError,log}){
  }
  /** Server-side autosave of in-progress answers so a browser crash/reload loses at most a few seconds. Visible only to the owner session; deleted on submit. */
 
+
+ // ---- Canlı müdahale -------------------------------------------------------------------------------------------
+ const LIVE_EXTRA_MAX=120;
+ function extend(actor,id,minutes){
+  const row=rowFor(actor,id);
+  const m=Number(minutes);if(!Number.isInteger(m)||m<1||m>60)error('bad_minutes','Ek süre 1–60 dakika arasında tam sayı olmalıdır.',422);
+  if(row.status!=='started'||row.expires_at<=now())error('not_running','Yalnızca sınavda olan ve süresi dolmamış aday için ek süre verilebilir.',409);
+  if((row.live_extra_minutes||0)+m>LIVE_EXTRA_MAX)error('limit','Sınav sırasında verilen toplam ek süre '+LIVE_EXTRA_MAX+' dakikayı aşamaz.',422);
+  db.prepare('UPDATE pilot_sessions SET expires_at=expires_at+?,extra_minutes=extra_minutes+?,live_extra_minutes=live_extra_minutes+? WHERE id=? AND tenant_id=?').run(m*60000,m,m,row.id,actor.tenantId);
+  log(actor,'pilot.live_extended',id);
+  const fresh=db.prepare('SELECT * FROM pilot_sessions WHERE id=?').get(row.id);
+  return {ok:true,addedMinutes:m,liveExtraMinutes:fresh.live_extra_minutes,remainingSeconds:remainingFor(fresh)};
+ }
+ function sendMessage(actor,{text,sessionId}={}){
+  permit(actor);
+  const t=String(text??'').replace(/[\u0000-\u001f\u007f]/g,' ').trim();
+  if(!t||[...t].length>300)error('bad_message','Mesaj 1–300 karakter olmalıdır.',422);
+  let scope=elevated(actor)?'tenant':'owner',sid=null;
+  if(sessionId){const row=rowFor(actor,sessionId);sid=row.id;scope='session';}
+  const r=db.prepare('INSERT INTO pilot_messages(tenant_id,owner_id,session_id,scope,text,created_at) VALUES(?,?,?,?,?,?)').run(actor.tenantId,actor.id,sid,scope,t,now());
+  log(actor,'pilot.message',sid||scope);
+  return {ok:true,id:Number(r.lastInsertRowid),scope};
+ }
+ function liveState(token,after){
+  const row=claimed(token);
+  const a=Number.isInteger(Number(after))&&Number(after)>=0?Number(after):0;
+  const msgs=db.prepare(`SELECT id,text,created_at FROM pilot_messages WHERE tenant_id=? AND id>? AND created_at>=? AND (session_id=? OR (session_id IS NULL AND (scope='tenant' OR (scope='owner' AND owner_id=?)))) ORDER BY id LIMIT 20`).all(row.tenant_id,a,row.started_at||0,row.id,row.owner_id);
+  return {remainingSeconds:remainingFor(row),onBreak:!!row.break_started_at,extraLiveMinutes:row.live_extra_minutes||0,messages:msgs.map(x=>({id:x.id,text:x.text,at:x.created_at}))};
+ }
+
  // ---- Sesli yanıt (kayıt öğretmene dinletilir; metne çevrilmez, puanlanmaz) -------------------------------------
  function voiceMeta(sessionId){const out={};for(const r of db.prepare('SELECT qid,seconds,bytes FROM pilot_voice WHERE session_id=?').all(sessionId))out[r.qid]={seconds:r.seconds,bytes:r.bytes};return out;}
  function voiceGuard(row,qid){
@@ -275,7 +310,7 @@ export function pilotSessions(db,{StoreError,log}){
   if(!/^q\d{1,3}$/.test(qid||''))error('bad_question','Geçersiz soru.',400);
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti.',409);
-  const q=createStudentPayload(JSON.parse(exam.body)).questions.find(x=>x.id===qid);
+  const q=createStudentPayload(JSON.parse(exam.body),{shuffleSeed:row.id}).questions.find(x=>x.id===qid);
   if(!q||q.type!=='short')error('bad_question','Sesli yanıt yalnızca yazılı yanıt sorularında kullanılır.',400);
  }
  function voicePut(token,qid,mime,buf,seconds){const row=claimed(token);
@@ -300,7 +335,7 @@ export function pilotSessions(db,{StoreError,log}){
   if(row.expires_at<=now())error('invalid_session','Sınav süresi dolmuş.',401);
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti.',409);
-  const payload=createStudentPayload(JSON.parse(exam.body));const checked=validate(payload,answers);
+  const payload=createStudentPayload(JSON.parse(exam.body),{shuffleSeed:row.id});const checked=validate(payload,answers);
   const json=JSON.stringify(checked);if(json.length>TEXT_ANSWERS_TOTAL_MAX)error('too_large','Yanıt çok büyük.',413);
   const at=now();db.prepare('UPDATE pilot_sessions SET draft_answers=?,draft_at=? WHERE id=? AND status=\'started\' AND claim_hash=?').run(json,at,row.id,sha(token));
   return {ok:true,savedAt:at};
@@ -312,7 +347,7 @@ export function pilotSessions(db,{StoreError,log}){
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti; yanıt gönderilemedi.',409);
   approvedExam(exam);
-  const payload=createStudentPayload(JSON.parse(exam.body));const checked=validate(payload,answers);
+  const payload=createStudentPayload(JSON.parse(exam.body),{shuffleSeed:row.id});const checked=validate(payload,answers);
   if(JSON.stringify(checked).length>TEXT_ANSWERS_TOTAL_MAX)error('too_large','Yanıt çok büyük.',413);
   const result=db.prepare("UPDATE pilot_sessions SET status='submitted',answers=?,submitted_at=?,claim_hash=NULL,draft_answers=NULL WHERE id=? AND status='started' AND claim_hash=? AND expires_at>?").run(JSON.stringify(checked),now(),row.id,sha(token),now());
   if(!result.changes)error('invalid_session','Oturum daha önce teslim edilmiş.',409);
@@ -326,7 +361,7 @@ export function pilotSessions(db,{StoreError,log}){
   if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti; önceki değerlendirme yeniden kullanılmamalı.',409);
   approvedExam(exam);
   const source=JSON.parse(exam.body);
-  const payload=createStudentPayload(source);
+  const payload=createStudentPayload(source,{shuffleSeed:row.id});
   const points=new Map(payload.questions.map((q,i)=>[q.id,source.questions[i].points]));
   const objectives=new Map(payload.questions.map((q,i)=>[q.id,source.questions[i].objective||source.objective||'']));
   const entry=db.prepare('SELECT * FROM pilot_reviews WHERE session_id=? AND tenant_id=?').get(id,actor.tenantId);
@@ -434,7 +469,7 @@ export function pilotSessions(db,{StoreError,log}){
   const obj=questions.filter(q=>q.type!=='short');
   return {ref:r.id.slice(0,8).toUpperCase(),sessionId:r.id,candidateCode:r.candidate_code||'',seat:r.seat||'',
    examTitle:ctx.payload.title,subject:ctx.payload.subject,grade:ctx.payload.grade,instruction:ctx.payload.instruction,revision:r.revision,
-   startedAt:r.started_at||null,submittedAt:r.submitted_at||null,durationMinutes:ctx.payload.durationMinutes,extraMinutes:r.extra_minutes||0,
+   startedAt:r.started_at||null,submittedAt:r.submitted_at||null,durationMinutes:ctx.payload.durationMinutes,extraMinutes:r.extra_minutes||0,liveExtraMinutes:r.live_extra_minutes||0,
    spentMinutes:r.submitted_at&&r.started_at?Math.max(0,Math.round((r.submitted_at-r.started_at-(r.break_used_ms||0))/60000)):null,
    breakCount:r.break_count||0,resumeCount:r.resume_count||0,
    adjustments:adjustments.map(x=>({code:x,label:ADJUSTMENTS[x]?.label||x})),
@@ -477,6 +512,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotRecord:recordGet,pilotVoicePut:voicePut,pilotVoiceOwn:voiceOwn,pilotVoiceDelete:voiceDeleteOwn,pilotVoiceForTeacher:voiceForTeacher,pilotIssueBatch:issueBatch,pilotLive:live,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotRecord:recordGet,pilotExtend:extend,pilotMessage:sendMessage,pilotLiveState:liveState,pilotVoicePut:voicePut,pilotVoiceOwn:voiceOwn,pilotVoiceDelete:voiceDeleteOwn,pilotVoiceForTeacher:voiceForTeacher,pilotIssueBatch:issueBatch,pilotLive:live,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }
