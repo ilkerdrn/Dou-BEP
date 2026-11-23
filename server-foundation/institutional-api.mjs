@@ -18,6 +18,12 @@ async function readJson(req,maxSize=300000){
  for await(const chunk of req){size+=chunk.length;if(size>maxSize)throw new StoreError('too_large','İstek sınırını aşıyor.',413);chunks.push(chunk);}
  try{const raw=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new Error('type');return raw;}catch{throw new StoreError('bad_json','Geçerli bir JSON nesnesi gerekli.');}
 }
+async function readBuffer(req,maxSize){
+ const chunks=[];let size=0;
+ for await(const chunk of req){size+=chunk.length;if(size>maxSize)throw new StoreError('too_large','Ses kaydı sınırını aşıyor.',413);chunks.push(chunk);}
+ return Buffer.concat(chunks);
+}
+function audioResponse(res,{mime,audio}){res.writeHead(200,{'Content-Type':mime,'Content-Length':audio.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Cross-Origin-Resource-Policy':'same-origin','Referrer-Policy':'no-referrer'});res.end(audio);}
 function getCookie(req){const found=(req.headers.cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith('bep_session='));return found?found.slice('bep_session='.length):'';}
 export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ips:[]}}={}){
  const validHost=hostSet(port,lan),validOrigins=originSet(port,lan);
@@ -39,6 +45,14 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
     if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
     const body=await readJson(req,900000);response(res,200,store.pilotSubmit(match[1],body.answers));return true;
+   }
+   const voiceOwn=path.match(/^\/api\/pilot\/voice\/(q\d{1,3})$/);
+   if(voiceOwn){
+    const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
+    if(!match)throw new StoreError('invalid_session','Geçerli tek kullanımlık oturum gerekli.',401);
+    if(req.method==='PUT'){const buf=await readBuffer(req,3*1024*1024+1024);response(res,200,store.pilotVoicePut(match[1],voiceOwn[1],req.headers['content-type'],buf,req.headers['x-voice-seconds']));return true;}
+    if(req.method==='GET'){audioResponse(res,store.pilotVoiceOwn(match[1],voiceOwn[1]));return true;}
+    if(req.method==='DELETE'){response(res,200,store.pilotVoiceDelete(match[1],voiceOwn[1]));return true;}
    }
    if(path==='/api/pilot/draft'&&req.method==='POST'){
     const match=/^Bearer ([A-Za-z0-9_-]{30,100})$/.exec(req.headers.authorization||'');
@@ -101,6 +115,8 @@ export function createApiHandler(store,{port=4173,lan={enabled:false,hosts:[],ip
    if(sessionRevoke&&req.method==='DELETE'){
     response(res,200,store.revokeOwnSession(actor,token,sessionRevoke[1]));return true;
    }
+   const voiceTeacher=path.match(/^\/api\/pilot\/([a-f0-9-]{36})\/voice\/(q\d{1,3})$/);
+   if(voiceTeacher&&req.method==='GET'){audioResponse(res,store.pilotVoiceForTeacher(actor,voiceTeacher[1],voiceTeacher[2]));return true;}
    if(path==='/api/pilot/results.csv'&&req.method==='GET'){const csv=store.pilotResultsCsv(actor);res.writeHead(200,{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':'attachment; filename="salon-sonuclari.csv"','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(csv);return true;}
    if(path==='/api/pilot/live'&&req.method==='GET'){response(res,200,store.pilotLive(actor));return true;}
    if(path==='/api/pilot/batch'&&req.method==='POST'){

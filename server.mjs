@@ -73,6 +73,7 @@ const allowed={
  '/sinav-kaydi':['sinav-kaydi.html','text/html; charset=utf-8'],
  '/sinav-kaydi.mjs':['sinav-kaydi.mjs','text/javascript; charset=utf-8'],
  '/sinav-kaydi.css':['sinav-kaydi.css','text/css; charset=utf-8'],
+ '/pilot-voice.mjs':['pilot-voice.mjs','text/javascript; charset=utf-8'],
  '/hazirlik':['hazirlik.html','text/html; charset=utf-8'],
  '/hazirlik.mjs':['hazirlik.mjs','text/javascript; charset=utf-8'],
  '/lab.mjs':['lab.mjs','text/javascript; charset=utf-8'],
@@ -205,7 +206,7 @@ export function createServer(){return http.createServer(async(req,res)=>{
   if(guardedPages.has(path)&&!hasPanelSession(req)){res.writeHead(302,{Location:'/kurum?next='+encodeURIComponent(path),'Cache-Control':'no-store'}).end();return;}
   if(path==='/terminology.json'){const profile=process.env.BEP_TERMINOLOGY==='university'?'university':'school';res.writeHead(200,{'Content-Type':'application/json; charset=utf-8',...securityHeaders});res.end(req.method==='HEAD'?undefined:JSON.stringify({profile}));return;}
   const item=allowed[path];if(!item){res.writeHead(404,{'Content-Type':'text/plain; charset=utf-8'}).end('Bulunamadı');return;}
-  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders,...(path.startsWith('/okur/models/')||path.startsWith('/okur/ort/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{}),...(wasmPaths.has(path)?{'Content-Security-Policy':wasmCsp(securityHeaders['Content-Security-Policy'])}:{})});res.end(req.method==='HEAD'?undefined:content);}
+  try{const content=await readFile(join(folder,item[0]));res.writeHead(200,{'Content-Type':item[1],...securityHeaders,'Permissions-Policy':path==='/pilot'?'microphone=(self), camera=(), geolocation=()':'microphone=(), camera=(), geolocation=()',...(path.startsWith('/okur/models/')||path.startsWith('/okur/ort/')?{'Cache-Control':'public, max-age=31536000, immutable'}:{}),...(wasmPaths.has(path)?{'Content-Security-Policy':wasmCsp(securityHeaders['Content-Security-Policy'])}:{})});res.end(req.method==='HEAD'?undefined:content);}
   catch{res.writeHead(500).end('Dosya okunamadı');}
  }).on('close',()=>{
   // Tests use BEP_NO_LISTEN=1 and an ephemeral SQLite database.

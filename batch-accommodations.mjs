@@ -11,6 +11,7 @@ export const ADJUSTMENTS=Object.freeze({
  LARGE_TARGETS:{label:'Büyük tıklama alanları (dijital sınav)',kind:'layout'},
  SIMPLE_SCREEN:{label:'Basit ekran (dijital sınav)',kind:'layout'},
  AUTO_READ:{label:'Soruları otomatik sesli okuma (dijital sınav)',kind:'digital'},
+ VOICE_ANSWER:{label:'Sesli yanıt: mikrofonla kayıt, öğretmen dinler (KVKK onayı gerekir)',kind:'digital'},
  ACCESSIBLE_HTML:{label:'Ekran okuyucu / çevrimdışı sesli HTML',kind:'digital'},
  READER:{label:'Okuyucu görevli',kind:'staff'},
  SCRIBE:{label:'Yazıcı/işaretleyici görevli',kind:'staff'},

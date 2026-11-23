@@ -25,6 +25,7 @@ export function recordNode(rec,digest){
   else if(q.pairs){const tb=el('table','','match');const thr=el('tr');for(const x of ['Sol','Öğrencinin eşleştirmesi','Doğru eşleştirme'])thr.append(el('th',x));tb.append(thr);
    for(const p of q.pairs){const tr=el('tr');tr.append(el('td',p.left),el('td',p.response??'(boş)'),el('td',p.correct??'—'));tb.append(tr);}s.append(tb);}
   else{s.append(el('p','Öğrencinin yazılı yanıtı:'),el('div',q.response||'(boş bırakıldı)','ans'));if(q.modelAnswer)s.append(el('p','Örnek / beklenen yanıt: '+q.modelAnswer));}
+  if(q.voice)s.append(el('p',`Sesli yanıt var (${q.voice.seconds} sn). Ses dosyası bu çıktıya eklenmez; sistemde saklama süresi sonuna kadar öğretmen ekranından dinlenebilir.`,'ans'));
   const g=el('div','','grade');g.append(el('span','Önerilen puan: '+(q.suggestedScore??'—')),el('span','Öğretmen puanı: '+(q.score??'değerlendirilmedi')+' / '+q.maxPoints));if(q.note)g.append(el('span','Gözlem notu: '+q.note));s.append(g);a.append(s);}
  const sg=el('div','','sign');for(const x of ['Değerlendiren (ad, imza)','Tarih','Kurum onayı / mühür'])sg.append(el('div',x));a.append(sg);
  a.append(el('p',`Bu kayıt anonim aday koduyla düzenlenmiştir; öğrenci kimliği sistemde tutulmaz, eşleştirme salon görevlisinin kendi kayıtlarındadır. Sistem bu kayıt dışında yanıtları ${rec.retentionHours} saat sonra siler; evrak olarak saklanacaksa bu çıktıyı alın. Kayıt özeti (SHA-256): ${digest||'hesaplanamadı'}`,'foot'));

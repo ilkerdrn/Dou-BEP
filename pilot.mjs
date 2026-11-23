@@ -1,17 +1,20 @@
 import {attachPilotReader} from './dou-reader-panel.mjs';
+import {createVoice} from './pilot-voice.mjs';
 /** One-time anonymous pilot. Token lives only in JS memory. No identity, audio, or browser storage. */
 const $=id=>document.getElementById(id);let claim=null,exam=null,activeQuestionIndex=0;
 function announce(s,error=false){$('message').textContent=s;$('message').className='notice '+(error?'err':'good');}
 const el=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
 async function post(url,body,authorization){const r=await fetch(url,{method:'POST',credentials:'omit',headers:{'Content-Type':'application/json',...(authorization?{Authorization:'Bearer '+authorization}:{})},body:JSON.stringify(body)});const result=await r.json();if(!r.ok)throw Error(result.message||'İstek işlenemedi.');return result;}
 let douReader=null,deadline=0,timerId=null,lastLeft=Infinity,locked=false;
+let voice=null;
+const voiceHas=q=>!!voice&&voice.has(q.id);
 const TEXT_MAX=4000,TEXT_TOTAL_MAX=60000;
-const answered=q=>{const f=new FormData($('answer-form'));if(q.type==='short')return String(f.get(q.id)||'').trim().length>0;if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
+const answered=q=>{const f=new FormData($('answer-form'));if(q.type==='short')return String(f.get(q.id)||'').trim().length>0||voiceHas(q);if(q.options)return !!f.get(q.id);if(q.type==='matching')return q.left.some(l=>f.get(q.id+'_'+l.id));return false;};
 const summary=()=>{const n=exam.questions.filter(answered).length;return n+' soru cevaplandı, '+(exam.questions.length-n)+' soru boş'+(flagged.size?', '+flagged.size+' soru işaretli':'')+'.';};
 const remaining=()=>Math.max(0,Math.ceil((deadline-Date.now())/1000));
 const fmt=sec=>Math.floor(sec/60)+' dakika '+String(sec%60).padStart(2,'0')+' saniye';
 function showAlert(m){$('time-alert').hidden=false;$('time-alert').textContent=m;announce(m);}
-function lockAll(){locked=true;$('break-start').disabled=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
+function lockAll(){locked=true;voice?.lock();$('break-start').disabled=true;for(const c of $('answer-form').querySelectorAll('input,select,textarea'))c.disabled=true;douReader?.stop();}
 function tick(){const left=remaining();updateRing(left);$('review-timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');$('timer').textContent=Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
  for(const m of [600,300,60])if(left<=m&&lastLeft>m)showAlert('Uyarı: '+Math.round(m/60)+' dakika kaldı.');
  lastLeft=left;
@@ -100,6 +103,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
     if(others+ta.value.length>TEXT_TOTAL_MAX){ta.value=ta.value.slice(0,Math.max(0,TEXT_TOTAL_MAX-others));announce('Toplam yazılı yanıt sınırına ulaşıldı.',true);}
     info.textContent=ta.value.length+' / '+TEXT_MAX+' karakter';updateQuestionNavigation();});
    field.append(label,ta,info,note);
+   if(voice?.enabled)field.append(voice.build(q));
   }
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
   if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);label.dataset.read='left-'+left.id;const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
@@ -108,7 +112,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
  activeQuestionIndex=0;buildMap();updateQuestionNavigation();
 }
 $('redeem-form').addEventListener('submit',async event=>{event.preventDefault();const btn=$('redeem-form').querySelector('button');btn.disabled=true;
- try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(autoRead){douReader?.preload();scheduleAutoRead(r.resumed?'Oturum kaldığınız yerden devam ediyor':INTRO);}if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
+ try{const r=await post('/api/pilot/redeem',{code:$('code').value});claim=r.token;exam=r.exam;voice=createVoice({doc:document,win:window,getToken:()=>claim,announce,onChange:()=>updateQuestionNavigation(),beforeRecord:()=>{clearTimeout(readTimer);douReader?.stop();}});voice.configure({enabled:!!(r.profile&&r.profile.voiceAnswer),meta:r.voice});$('exam-title').textContent=exam.title;$('exam-info').textContent=`${exam.subject} · ${exam.grade} · ${exam.questions.length} soru · Süre ${exam.durationMinutes} dakika`+(exam.extraMinutes?` + kurum onaylı ${exam.extraMinutes} dakika ek süre`:'')+'. Oturum kodu 45 dakika içinde kullanılmalıdır.';render();$('entry').hidden=true;document.querySelector('.hero').hidden=true;$('player').hidden=false;startTimer(r.remainingSeconds);breakLeft=r.breakSeconds||0;refreshBreakButton();applyProfile(r);if(r.resumed){const n=restoreDraft(r.draft);announce('Oturum kaldığınız yerden devam ettirildi. '+(n?'Son otomatik kaydedilen yanıtlarınız geri yüklendi.':'Kayıtlı yanıt bulunamadı.')+' Kalan süre '+fmt(r.remainingSeconds)+'.');if(r.draftAt)showSaved(r.draftAt);}else{announce('Anonim oturum açıldı.');}lastSavedJson=JSON.stringify(collectAnswers());startAutosave();if(autoRead){douReader?.preload();scheduleAutoRead(r.resumed?'Oturum kaldığınız yerden devam ediyor':INTRO);}if(!r.resumed)announce('Anonim oturum açıldı.');douReader?.refreshVoices();$('player').querySelector('h2').setAttribute('tabindex','-1');$('player').querySelector('h2').focus();}
  catch(e){announce(e.message,true);}finally{btn.disabled=false;}});
 function openReview(){if(!exam||locked||onBreak)return;
  const body=$('review-rows');body.replaceChildren();
@@ -118,11 +122,11 @@ function openReview(){if(!exam||locked||onBreak)return;
   go.addEventListener('click',()=>{activeQuestionIndex=i;$('one-question').checked=true;closeReview();updateQuestionNavigation(true);});td.append(go);tr.append(td);body.append(tr);});
  $('review-summary').textContent=summary();$('player').hidden=true;$('review-view').hidden=false;$('review-title').focus();announce('Gözden geçirme ekranı. '+summary());}
 function closeReview(){$('review-view').hidden=true;$('player').hidden=false;}
-function confirmAndSend(){if(!claim)return;if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
+async function confirmAndSend(){if(!claim)return;if(voice?.recording){await voice.stop();}if(locked){sendAnswers(pendingAnswers||{});return;}if(!confirm(summary()+' Anonim yanıtları tek seferlik teslim etmek istiyor musunuz?'))return;sendAnswers(collectAnswers());}
 // --- v2.92: per-session accommodation profile, server autosave and resume -------------------------------------------
 let autoRead=false,readTimer=null;
 const INTRO='Sınav başladı. Sorular otomatik okunur. Yeniden okumak için Alt Shift R, durdurmak için Alt Shift S, sonraki soru için Alt Shift N, kalan süreyi duymak için Alt Shift T.';
-function scheduleAutoRead(prefix=''){if(!autoRead||locked||onBreak||!douReader)return;clearTimeout(readTimer);readTimer=setTimeout(()=>{if(autoRead&&!locked&&!onBreak)douReader.read(prefix);},250);}
+function scheduleAutoRead(prefix=''){if(!autoRead||locked||onBreak||!douReader||voice?.recording)return;clearTimeout(readTimer);readTimer=setTimeout(()=>{if(autoRead&&!locked&&!onBreak)douReader.read(prefix);},250);}
 const PROFILE_LABELS={autoRead:'Otomatik sesli okuma',fontSize:'Çok büyük yazı',highContrast:'Yüksek kontrast',simpleScreen:'Basit ekran',largeTargets:'Büyük tıklama alanları',onePerPage:'Her sayfada tek soru'};
 function fire(id){$(id).dispatchEvent(new Event('change',{bubbles:true}));}
 function applyProfile(r){
@@ -168,7 +172,7 @@ async function sendAnswers(answers){const btn=$('send');btn.disabled=true;
  catch(e){announce(e.message,true);btn.disabled=false;}}
 // Time is up: answers are collected BEFORE inputs are locked (disabled controls are not part of FormData) and sent once.
 let pendingAnswers=null;
-function submitAnswers(){if(!claim||!exam)return;pendingAnswers=collectAnswers();lockAll();sendAnswers(pendingAnswers);}
+function submitAnswers(){if(!claim||!exam)return;pendingAnswers=collectAnswers();lockAll();Promise.resolve(voice?.stop()).catch(()=>{}).then(()=>sendAnswers(pendingAnswers));}
 $('answer-form').addEventListener('submit',event=>{event.preventDefault();confirmAndSend();});
 $('review-open').addEventListener('click',openReview);
 $('review-back').addEventListener('click',()=>{closeReview();updateQuestionNavigation(true);});
@@ -182,6 +186,7 @@ $('previous-question').addEventListener('click',()=>{activeQuestionIndex=Math.ma
 $('next-question').addEventListener('click',()=>{activeQuestionIndex=Math.min(exam.questions.length-1,activeQuestionIndex+1);updateQuestionNavigation(true);});
 $('size').addEventListener('change',()=>document.documentElement.style.setProperty('--student-size',$('size').value+'px'));
 $('contrast').addEventListener('change',()=>document.body.classList.toggle('high',$('contrast').checked));
+document.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&!e.ctrlKey&&!e.metaKey&&e.code==='KeyK'&&voice?.enabled&&!$('player').hidden){e.preventDefault();voice.toggleCurrent();}});
 $('stop-voice').addEventListener('click',()=>{douReader?.stop();announce('Seslendirme durduruldu.');});
 window.addEventListener('pagehide',()=>{claim=null;douReader?.stop();});
 

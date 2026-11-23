@@ -7,6 +7,8 @@ set BEP_LAN_MODE=1
 set BEP_PILOT_REDEEM_GLOBAL_LIMIT=200
 set BEP_PILOT_MAX_OPEN_SESSIONS=100
 set BEP_PILOT_CODE_VALID_MINUTES=120
+rem Sesli yanit (VOICE_ANSWER kodu verilen adaylar): ses kaydi KVKK kapsaminda kisisel veri olabilir; kurum onayi olmadan 1 yapmayin.
+if not defined BEP_VOICE_ANSWERS set BEP_VOICE_ANSWERS=1
 rem Veri saklama suresi (saat): sinav bitiminden sonra yanit ve puanlar silinir. Kurum/KVKK karari; varsayilan 24, en cok 2160.
 if not defined BEP_PILOT_RETENTION_HOURS set BEP_PILOT_RETENTION_HOURS=168
 if not defined BEP_TERMINOLOGY set BEP_TERMINOLOGY=university

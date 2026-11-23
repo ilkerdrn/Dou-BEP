@@ -19,10 +19,15 @@ const MAX_RESUMES=5;
 const CANDIDATE=/^(?:KOD|ORNEK|TEST|DEMO|ANON)-[A-Z0-9-]{1,20}$/;
 const SEAT=/^[A-Za-z0-9-]{1,12}$/;
 // Learner-screen presets derived from approved adjustment codes. Staff-kind codes are only shown to the invigilator.
+/** Sesli yanıt kurumun açık kararıdır: BEP_VOICE_ANSWERS=1 olmadan hiçbir sesli yanıt kabul edilmez. */
+export const voiceOn=()=>process.env.BEP_VOICE_ANSWERS==='1';
+export const VOICE_MAX_BYTES=3*1024*1024,VOICE_MAX_SECONDS=180,VOICE_SESSION_MAX_BYTES=24*1024*1024;
+const VOICE_MIMES=['audio/webm','audio/ogg','audio/mp4'];
+function voiceMagic(buf){const b=buf;if(b.length<12)return null;if(b[0]===0x1A&&b[1]===0x45&&b[2]===0xDF&&b[3]===0xA3)return 'audio/webm';if(b.toString('latin1',0,4)==='OggS')return 'audio/ogg';if(b.toString('latin1',4,8)==='ftyp')return 'audio/mp4';return null;}
 export function uiProfile(adjustments=[]){
  const a=new Set(adjustments);
  return {fontSize:a.has('LARGE_PRINT')?28:0,lineSpacing:a.has('LARGE_PRINT')?2:0,highContrast:a.has('HIGH_CONTRAST'),simpleScreen:a.has('SIMPLE_SCREEN')||a.has('ACCESSIBLE_HTML'),
-  largeTargets:a.has('LARGE_TARGETS')||a.has('WIDE_RESPONSE'),onePerPage:a.has('ONE_PER_PAGE'),wideResponse:a.has('WIDE_RESPONSE'),autoRead:a.has('AUTO_READ')};
+  largeTargets:a.has('LARGE_TARGETS')||a.has('WIDE_RESPONSE'),onePerPage:a.has('ONE_PER_PAGE'),wideResponse:a.has('WIDE_RESPONSE'),autoRead:a.has('AUTO_READ'),voiceAnswer:a.has('VOICE_ANSWER')&&voiceOn()};
 }
 const SUBMIT_GRACE_MS=120*1000;
 // Operational limits are configurable per installation (defaults suit a single local machine; not load-certified).
@@ -56,6 +61,10 @@ export function pilotSessions(db,{StoreError,log}){
  // v2.85: teacher-approved rest-break allowance. The exam clock is paused while on break (break time is not exam time).
  for(const [col,ddl] of [['break_minutes','INTEGER NOT NULL DEFAULT 0'],['break_used_ms','INTEGER NOT NULL DEFAULT 0'],['break_started_at','INTEGER'],['break_count','INTEGER NOT NULL DEFAULT 0'],['candidate_code','TEXT'],['seat','TEXT'],['profile','TEXT'],['draft_answers','TEXT'],['draft_at','INTEGER'],['resume_count','INTEGER NOT NULL DEFAULT 0']])
   if(!db.prepare('PRAGMA table_info(pilot_sessions)').all().some(c=>c.name===col))db.exec(`ALTER TABLE pilot_sessions ADD COLUMN ${col} ${ddl}`);
+ db.exec(`CREATE TABLE IF NOT EXISTS pilot_voice(
+  session_id TEXT NOT NULL REFERENCES pilot_sessions(id) ON DELETE CASCADE,qid TEXT NOT NULL,tenant_id TEXT NOT NULL,
+  mime TEXT NOT NULL,audio BLOB NOT NULL,bytes INTEGER NOT NULL,seconds REAL NOT NULL,created_at INTEGER NOT NULL,PRIMARY KEY(session_id,qid)
+ );`);
  db.exec(`CREATE TABLE IF NOT EXISTS pilot_reviews(
   session_id TEXT PRIMARY KEY REFERENCES pilot_sessions(id) ON DELETE CASCADE,
   tenant_id TEXT NOT NULL REFERENCES tenants(id),
@@ -113,6 +122,7 @@ export function pilotSessions(db,{StoreError,log}){
   const cand=String(candidateCode||'').trim().toUpperCase(),seatLabel=String(seat||'').trim();
   if(cand&&!CANDIDATE.test(cand))error('bad_candidate','Aday kodu KOD-, ORNEK-, TEST-, DEMO- veya ANON- ile başlayan yapay bir kod olmalıdır (gerçek ad veya numara yazmayın).',422);
   if(seatLabel&&!SEAT.test(seatLabel))error('bad_seat','Koltuk etiketi en çok 12 harf, rakam veya tire olabilir.',422);
+  if(Array.isArray(adjustments)&&adjustments.includes('VOICE_ANSWER')&&!voiceOn())error('voice_disabled','Sesli yanıt bu kurulumda kapalı. Kurum onayıyla sunucuyu BEP_VOICE_ANSWERS=1 ile başlatın.',422);
   if(!Array.isArray(adjustments)||adjustments.length>12||new Set(adjustments).size!==adjustments.length||adjustments.some(x=>typeof x!=='string'||!Object.hasOwn(ADJUSTMENTS,x)))error('bad_adjustments','Geçersiz veya yinelenen düzenleme kodu.',422);
   if(!Number.isInteger(breakMinutes)||breakMinutes<0||breakMinutes>60)error('bad_break_time','Mola hakkı 0–60 dakika arasında tam sayı olmalıdır.',422);
   if(!Number.isInteger(extraMinutes)||extraMinutes<0||extraMinutes>120)error('bad_extra_time','Ek süre 0–120 dakika arasında tam sayı olmalıdır.',422);if(!IDENTIFIER.test(examId||''))error('bad_id','Sınav kimliği geçersiz.');
@@ -155,7 +165,7 @@ export function pilotSessions(db,{StoreError,log}){
   return {at:t,retentionHours:RETENTION_HOURS,items:rows.map(r=>{const adj=JSON.parse(r.profile||'[]');return {id:r.id,ref:r.id.slice(0,8).toUpperCase(),candidateCode:r.candidate_code||'',seat:r.seat||'',examTitle:r.exam_title||'',status:state(r),
    remainingSeconds:r.status==='started'?Math.max(0,Math.floor((r.expires_at-SUBMIT_GRACE_MS-t)/1000)):null,onBreak:!!r.break_started_at,breakCount:r.break_count||0,resumeCount:r.resume_count||0,lastSaveAt:r.draft_at||null,
    startedAt:r.started_at,submittedAt:r.submitted_at,extraMinutes:r.extra_minutes||0,breakMinutes:r.break_minutes||0,
-   totalQuestions:r.q_count||0,answered:(()=>{try{const a=JSON.parse((r.status==='submitted'?r.answers:r.draft_answers)||'{}');return Object.values(a).filter(v=>v!==''&&v!==null&&!(typeof v==='object'&&!Object.keys(v).length)).length;}catch{return 0;}})(),
+   totalQuestions:r.q_count||0,answered:(()=>{try{const a=JSON.parse((r.status==='submitted'?r.answers:r.draft_answers)||'{}');const keys=new Set(Object.entries(a).filter(([,v])=>v!==''&&v!==null&&!(typeof v==='object'&&!Object.keys(v).length)).map(([k])=>k));for(const k of Object.keys(voiceMeta(r.id)))keys.add(k);return keys.size;}catch{return 0;}})(),
    plannedSeconds:((r.exam_minutes||0)+(r.extra_minutes||0))*60,idleSeconds:r.status==='started'?Math.max(0,Math.floor((t-(r.draft_at||r.started_at||t))/1000)):null,adjustments:adj,staff:adj.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};})};
  }
  function list(actor){permit(actor);cleanup();const rows=elevated(actor)?db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId):db.prepare('SELECT * FROM pilot_sessions WHERE tenant_id=? AND owner_id=? ORDER BY created_at DESC LIMIT 100').all(actor.tenantId,actor.id);return rows.map(r=>meta(r));}
@@ -182,7 +192,7 @@ export function pilotSessions(db,{StoreError,log}){
    let payload;try{payload=createStudentPayload(JSON.parse(exam.body),{extraMinutes:row.extra_minutes||0});}catch{error('accessibility_errors','Sınavın erişilebilirlik kontrolü başarısız.',422);}
    const token=randomBytes(32).toString('base64url');
    const adjustments=JSON.parse(row.profile||'[]');
-   const extras={candidateCode:row.candidate_code||'',seat:row.seat||'',profile:uiProfile(adjustments),staffNotes:adjustments.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};
+   const extras={candidateCode:row.candidate_code||'',seat:row.seat||'',voice:voiceMeta(row.id),profile:uiProfile(adjustments),staffNotes:adjustments.filter(x=>ADJUSTMENTS[x]?.kind==='staff').map(x=>ADJUSTMENTS[x].label)};
    if(row.status==='started'){
     row=settleBreak(row);// resuming ends a running break
     const claimed=db.prepare("UPDATE pilot_sessions SET claim_hash=?,resume_count=resume_count+1 WHERE id=? AND status='started' AND expires_at>?").run(sha(token),row.id,now());
@@ -256,6 +266,36 @@ export function pilotSessions(db,{StoreError,log}){
   return {ok:true,remainingSeconds:remainingFor(after),breakRemainingSeconds:Math.floor((allow-after.break_used_ms)/1000)};
  }
  /** Server-side autosave of in-progress answers so a browser crash/reload loses at most a few seconds. Visible only to the owner session; deleted on submit. */
+
+ // ---- Sesli yanıt (kayıt öğretmene dinletilir; metne çevrilmez, puanlanmaz) -------------------------------------
+ function voiceMeta(sessionId){const out={};for(const r of db.prepare('SELECT qid,seconds,bytes FROM pilot_voice WHERE session_id=?').all(sessionId))out[r.qid]={seconds:r.seconds,bytes:r.bytes};return out;}
+ function voiceGuard(row,qid){
+  if(!voiceOn())error('voice_disabled','Sesli yanıt bu kurulumda kapalı.',403);
+  if(!JSON.parse(row.profile||'[]').includes('VOICE_ANSWER'))error('voice_not_allowed','Bu oturum için sesli yanıt onaylanmamış.',403);
+  if(!/^q\d{1,3}$/.test(qid||''))error('bad_question','Geçersiz soru.',400);
+  const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
+  if(!exam||exam.status!=='approved'||exam.revision!==row.revision)error('exam_changed','Sınav sürümü değişti.',409);
+  const q=createStudentPayload(JSON.parse(exam.body)).questions.find(x=>x.id===qid);
+  if(!q||q.type!=='short')error('bad_question','Sesli yanıt yalnızca yazılı yanıt sorularında kullanılır.',400);
+ }
+ function voicePut(token,qid,mime,buf,seconds){const row=claimed(token);
+  if(row.expires_at<=now())error('invalid_session','Sınav süresi dolmuş.',401);voiceGuard(row,qid);
+  const base=String(mime||'').split(';')[0].trim().toLowerCase();
+  if(!VOICE_MIMES.includes(base))error('bad_audio','Desteklenmeyen ses biçimi.',415);
+  if(!Buffer.isBuffer(buf)||!buf.length)error('bad_audio','Ses kaydı boş.',400);
+  if(buf.length>VOICE_MAX_BYTES)error('too_large','Ses kaydı çok büyük (en fazla 3 MB / 3 dakika).',413);
+  if(voiceMagic(buf)!==base)error('bad_audio','Ses dosyası bildirilen biçimle uyuşmuyor.',415);
+  const used=db.prepare('SELECT COALESCE(SUM(bytes),0) AS n FROM pilot_voice WHERE session_id=? AND qid<>?').get(row.id,qid).n;
+  if(used+buf.length>VOICE_SESSION_MAX_BYTES)error('too_large','Bu oturum için toplam ses sınırı doldu.',413);
+  const sec=Math.min(VOICE_MAX_SECONDS,Math.max(0,Number(seconds)||0));
+  db.prepare('INSERT OR REPLACE INTO pilot_voice(session_id,qid,tenant_id,mime,audio,bytes,seconds,created_at) VALUES(?,?,?,?,?,?,?,?)').run(row.id,qid,row.tenant_id,base,buf,buf.length,sec,now());
+  return {ok:true,seconds:sec,bytes:buf.length};
+ }
+ function voiceOwn(token,qid){const row=claimed(token);voiceGuard(row,qid);const r=db.prepare('SELECT mime,audio FROM pilot_voice WHERE session_id=? AND qid=?').get(row.id,qid);if(!r)error('not_found','Bu soru için ses kaydı yok.',404);return {mime:r.mime,audio:Buffer.from(r.audio)};}
+ function voiceDeleteOwn(token,qid){const row=claimed(token);voiceGuard(row,qid);db.prepare('DELETE FROM pilot_voice WHERE session_id=? AND qid=?').run(row.id,qid);return {ok:true};}
+ function voiceForTeacher(actor,id,qid){const row=rowFor(actor,id);if(!/^q\d{1,3}$/.test(qid||''))error('bad_question','Geçersiz soru.');
+  const r=db.prepare('SELECT mime,audio FROM pilot_voice WHERE session_id=? AND qid=? AND tenant_id=?').get(row.id,qid,actor.tenantId);if(!r)error('not_found','Ses kaydı yok.',404);
+  log(actor,'pilot.voice.listened',id);return {mime:r.mime,audio:Buffer.from(r.audio)};}
  function saveDraft(token,answers){const row=claimed(token);
   if(row.expires_at<=now())error('invalid_session','Sınav süresi dolmuş.',401);
   const exam=db.prepare('SELECT * FROM exams WHERE id=? AND tenant_id=?').get(row.exam_id,row.tenant_id);
@@ -311,11 +351,12 @@ export function pilotSessions(db,{StoreError,log}){
  }
  function reviewState(ctx){
   const values=ctx.entry?JSON.parse(ctx.entry.entries):{},responses=ctx.row.answers?JSON.parse(ctx.row.answers):{};
+  const voices=voiceMeta(ctx.row.id);
   const questions=ctx.payload.questions.map(q=>({
    id:q.id,number:q.number,prompt:q.prompt,type:q.type,objective:ctx.objectives.get(q.id)||'',
    maxPoints:ctx.points.get(q.id)??0,response:responses[q.id]??null,
    responseLabel:q.options&&typeof responses[q.id]==='string'?(q.options.find(o=>o.id===responses[q.id])?.label??null):null,
-   score:values[q.id]?.score??null,note:values[q.id]?.note||'',
+   voice:voices[q.id]||null,score:values[q.id]?.score??null,note:values[q.id]?.note||'',
    suggestedScore:suggestScore(q,ctx.source.questions[ctx.payload.questions.indexOf(q)],responses[q.id]??null,ctx.points.get(q.id)??0),
    flags:q.type==='short'&&typeof responses[q.id]==='string'&&detectSensitive(responses[q.id]).length?['Olası kişisel veri: '+detectSensitive(responses[q.id]).join(', ')]:[]
   }));
@@ -379,7 +420,7 @@ export function pilotSessions(db,{StoreError,log}){
   const adjustments=JSON.parse(r.profile||'[]');
   const questions=ctx.payload.questions.map((q,i)=>{
    const sq=ctx.source.questions[i],rv=review.questions[i];
-   const out={number:q.number,type:q.type,prompt:q.prompt,objective:rv.objective,maxPoints:rv.maxPoints,suggestedScore:rv.suggestedScore,score:rv.score,note:rv.note};
+   const out={number:q.number,qid:q.id,voice:rv.voice,type:q.type,prompt:q.prompt,objective:rv.objective,maxPoints:rv.maxPoints,suggestedScore:rv.suggestedScore,score:rv.score,note:rv.note};
    const resp=given[q.id]??null;
    if(q.type==='choice'||q.type==='truefalse'){
     out.options=q.options;out.response=typeof resp==='string'?resp:null;
@@ -436,6 +477,6 @@ export function pilotSessions(db,{StoreError,log}){
   if(!summary.available)error('not_enough_reviews','En az üç ayrı anonim değerlendirme olmadan toplu CSV oluşturulamaz.',409);
   return anonymousCohortCsv(summary);
  }
- return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotRecord:recordGet,pilotIssueBatch:issueBatch,pilotLive:live,
+ return {pilotIssue:issue,pilotList:list,pilotView:view,pilotRevoke:revoke,pilotDelete:remove,pilotRedeem:redeem,pilotSubmit:submit,pilotBreakStart:breakStart,pilotBreakEnd:breakEnd,pilotSaveDraft:saveDraft,pilotResultsCsv:resultsCsv,pilotRecord:recordGet,pilotVoicePut:voicePut,pilotVoiceOwn:voiceOwn,pilotVoiceDelete:voiceDeleteOwn,pilotVoiceForTeacher:voiceForTeacher,pilotIssueBatch:issueBatch,pilotLive:live,
   pilotReviewGet:reviewGet,pilotReviewSave:reviewSave,pilotReviewCsv:reviewCsv,pilotObjectiveCohort,pilotObjectiveCsv};
 }

@@ -64,3 +64,6 @@ KOD-003;PC-03;3;ACCESSIBLE_HTML|SIGN_SUPPORT;0;0
 
 ## Sunum demosu
 `BASLAT-SALON.bat` ile sunucuyu başlatın, ardından `DEMO-HAZIRLA.bat` (veya `node tools/demo-hazirla.mjs`) çalıştırın. Sentetik bir kurum, 4 onaylı ders sınavı ve 8 farklı engel profilli aday kodu (görme, az görme, motor, işitme, konuşma/yazma, disleksi, standart, karma) üretilir; kodlar ve giriş bilgileri `DEMO-KODLAR.txt` dosyasına yazılır. Kodlar tek kullanımlık ve süreli olduğundan sunumdan hemen önce çalıştırın; yeniden çalıştırınca yeni kodlar üretilir.
+
+## Sesli yanıt (isteğe bağlı, KVKK kararı gerektirir)
+`VOICE_ANSWER` kodu verilen aday, yazılı yanıt sorularında mikrofonla yanıt verir; öğretmen kaydı Pilot yönetimi → İncele ekranında dinler. Ses metne çevrilmez. `BASLAT-SALON.bat` anahtarı (`BEP_VOICE_ANSWERS=1`) açar; kurum onayı yoksa 0 yapın veya satırı silin. **Mikrofon https veya localhost ister:** öğrenci bilgisayarları salon sunucusuna düz HTTP ile bağlanıyorsa mikrofon çalışmaz; bu durumda yazılı yanıt veya yazıcı desteği (`SCRIBE`) kullanın ya da BT birimine HTTPS kurdurun. Her aday için aydınlatma/rıza ve saklama süresi kurum tarafından belirlenmelidir.

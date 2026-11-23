@@ -41,7 +41,7 @@ for(const c of COURSES){
  const ap=await call(`/api/exams/${id}/approve`,{method:'POST',body:{revision:1,confirmed:true},sess});if(!ap.ok){console.error('Onay başarısız:',await ap.text());process.exit(1);}
  ids.push(id);}
 const PROFILES=[
- ['Görme engelli — ekran okuyucu + sesli okuma','MAT101',0,['AUTO_READ','SIMPLE_SCREEN','ONE_PER_PAGE'],15,10],
+ ['Görme engelli — sesli okuma + sesli yanıt (mikrofon)','MAT101',0,['AUTO_READ','SIMPLE_SCREEN','ONE_PER_PAGE','VOICE_ANSWER'],15,10],
  ['Az gören — büyük yazı, yüksek kontrast','BLP103',1,['LARGE_PRINT','HIGH_CONTRAST'],10,5],
  ['Motor engelli — tek soru, büyük hedef','ISL205',2,['ONE_PER_PAGE','LARGE_TARGETS'],30,15],
  ['İşitme engelli — işaret dili desteği','HUK110',3,['SIMPLE_SCREEN','SIGN_SUPPORT'],0,0],
@@ -50,7 +50,12 @@ const PROFILES=[
  ['Standart öğrenci (karşılaştırma)','BLP103',1,[],0,0],
  ['Az gören + motor — kontrast, büyük hedef','HUK110',3,['HIGH_CONTRAST','LARGE_PRINT','LARGE_TARGETS'],25,10]];
 const rows=PROFILES.map(([,,ei,adj,ex,br],i)=>({candidateCode:'DEMO-'+String(i+1).padStart(2,'0'),seat:'PC-'+String(i+1).padStart(2,'0'),examId:ids[ei],adjustments:adj,extraMinutes:ex,breakMinutes:br}));
-const b=await call('/api/pilot/batch',{method:'POST',body:{rows},sess});if(!b.ok){console.error('Kod üretilemedi:',await b.text());process.exit(1);}
+let b=await call('/api/pilot/batch',{method:'POST',body:{rows},sess});
+if(!b.ok){const txt=await b.clone().text();
+ if(/voice_disabled|Sesli yanıt bu kurulumda kapalı/.test(txt)){console.log('Not: sesli yanıt kapalı (BEP_VOICE_ANSWERS=1 yok); PC-01 sesli yanıtsız üretiliyor.');
+  for(const r of rows)r.adjustments=r.adjustments.filter(x=>x!=='VOICE_ANSWER');PROFILES[0][0]='Görme engelli — sesli okuma';
+  b=await call('/api/pilot/batch',{method:'POST',body:{rows},sess});}
+ if(!b.ok){console.error('Kod üretilemedi:',await b.text());process.exit(1);}}
 const items=(await b.json()).items;
 const lines=['DOU BEP — SUNUM DEMO KODLARI (sentetik; tek kullanımlık)','',`Kurum paneli: ${base}/kurum   Kurum kodu: ${TENANT}   E-posta: ${EMAIL}   Parola: ${PASS}`,`Öğrenci sayfası: ${base}/pilot   Salon paneli: ${base}/salon-oturumu`,''];
 items.forEach((it,i)=>lines.push(`${it.seat}  ${it.code}   ${PROFILES[i][0]}  [${it.examTitle}, ${it.durationMinutes}+${it.extraMinutes} dk]`));

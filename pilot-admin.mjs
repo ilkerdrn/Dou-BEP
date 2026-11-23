@@ -30,8 +30,13 @@ function renderReview(review){
  for(const q of review.questions){
   const card=el('fieldset');card.className='review-question';const title=el('legend','Soru '+q.number+' · '+q.maxPoints+' puan');card.append(title);
   card.append(el('p',q.prompt));
-  const answer=el('p','Anonim yanıt: '+(q.response===null?'Yanıt yok':typeof q.response==='string'?(q.responseLabel?q.response+' — '+q.responseLabel:q.response):Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
+  const answer=el('p','Anonim yanıt: '+(q.response===null?(q.voice?'Yazılı yanıt yok (sesli yanıt var)':'Yanıt yok'):typeof q.response==='string'?(q.responseLabel?q.response+' — '+q.responseLabel:q.response):Object.entries(q.response).map(([k,v])=>k+' → '+v).join(' · ')));answer.className='answer-content';card.append(answer);
   answer.style.whiteSpace='pre-wrap';
+  if(q.voice){
+   const vb=el('div');vb.className='voice-review';vb.append(el('strong','Sesli yanıt ('+q.voice.seconds+' sn)'));
+   const au=el('audio');au.controls=true;au.preload='none';au.src='/api/pilot/'+encodeURIComponent(review.sessionId)+'/voice/'+encodeURIComponent(q.id);au.setAttribute('aria-label','Soru '+q.number+' için öğrencinin sesli yanıtı');vb.append(document.createElement('br'),au);
+   vb.append(el('p','Ses kaydı metne çevrilmez ve otomatik puanlanmaz; dinleyip puanı siz girin. Kayıt kişisel veri olabilir: saklama süresi sonunda silinir, paylaşmayın.'));card.append(vb);
+  }
   for(const flag of q.flags||[]){const w=el('p','⚠ '+flag+'. Yanıtı paylaşmadan önce kontrol edin.');w.className='notice err';card.append(w);}
   if(q.suggestedScore!==null&&q.suggestedScore!==undefined){const sg=el('p','Cevap anahtarına göre önerilen puan: '+q.suggestedScore+' / '+q.maxPoints+' (yalnızca öneri; kesin puanı siz girersiniz).');sg.className='muted';card.append(sg);}
   if(q.type==='short'){const sg=el('p','Yazılı yanıt otomatik puanlanmaz; kendiniz değerlendirin.');sg.className='muted';card.append(sg);}
