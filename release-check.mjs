@@ -318,7 +318,7 @@ check('v2.54 pending server approval locks interactive editor',teacherEditor.inc
 check('v2.54 recovery import refuses changes while approval is in progress',teacherEditor.includes("if(state.busy)return notice('Onay devam ederken seçilen kurtarma dosyası uygulanmadı.'"));
 check('v2.54 approval coordinator is published locally',server.includes("'/exam-approval-transition.mjs':['exam-approval-transition.mjs'"));
 // v2.55 reader callbacks and inventory are fail-closed; no cloud fallback.
-check('v2.55 reader rechecks local voice inventory before every chunk',speech.includes('refresh();if(current!==generation)return')&&speech.includes('requestedVoiceId')&&speech.includes('const currentVoice=available.find'));
+check('v2.55 reader rechecks local voice inventory before every chunk',speech.includes('refresh();if(current!==generation)return')&&speech.includes('requestedVoiceId')&&speech.includes('const currentVoice=pool().find'));
 check('v2.55 revoked voice cancels speech immediately',speech.includes('reading&&activeVoiceId')&&speech.includes('cancelActive('));
 check('v2.55 stale/repeated utterance callbacks cannot skip chunks',speech.includes('let settled=false')&&speech.includes('if(settled||current!==generation)return'));
 check('v2.55 reader unhooks voice inventory listener on destroy',readerPanel.includes("removeEventListener('voiceschanged',refreshVoices)"));

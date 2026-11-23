@@ -15,6 +15,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   const list=engine.refresh(),select=$('reader-voice');if(!select)return;
   select.replaceChildren();
   for(const item of list){const o=doc.createElement('option');o.value=item.id;o.textContent=item.label;select.append(o);}
+  const en=engine.refreshEn?.()||[],selEn=$('reader-voice-en'),labEn=$('reader-voice-en-label');
+  if(selEn){selEn.replaceChildren();for(const item of en){const o=doc.createElement('option');o.value=item.id;o.textContent=item.label;selEn.append(o);}selEn.value=engine.selectedVoiceEn||'';if(labEn)labEn.hidden=!en.length;}
   if(neuralOk){const o=doc.createElement('option');o.value=NEURAL_VOICE_ID;o.textContent=NEURAL_VOICE_LABEL;select.append(o);}
   const localHas=list.length>0,has=localHas||neuralOk;
   if(!localHas&&neuralOk)useNeural=true;
@@ -41,7 +43,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   try{
    const parts=readerParts(question);if(prefix)parts.unshift({key:'none',text:prefix.replace(/[.]+$/,'')});
    const text=parts.map(x=>x.text).join('. ');
-   active().speak(text,{rate:$('reader-rate').value,parts,onSegment:i=>highlight(i<0?'':parts[i]?.key,question)});}
+   const lang=question.lang==='en'?'en':'tr';
+   (lang==='en'?engine:active()).speak(text,{rate:$('reader-rate').value,parts,lang,onSegment:i=>highlight(i<0?'':parts[i]?.key,question)});}
   catch(e){active().stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
  function navigate(direction){engine.stop();neural?.stop();moveQuestion(direction);}
@@ -51,6 +54,8 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
  $('reader-resume').addEventListener('click',()=>active().resume());
  $('reader-prev').addEventListener('click',()=>navigate(-1));
  $('reader-next').addEventListener('click',()=>navigate(1));
+ $('reader-voice-en')?.addEventListener('change',()=>{engine.stop();neural?.stop();engine.setVoiceEn($('reader-voice-en').value);});
+ $('reader-gender')?.addEventListener('change',()=>{engine.stop();neural?.stop();engine.setGender($('reader-gender').value);refreshVoices();});
  $('reader-voice').addEventListener('change',()=>{engine.stop();neural?.stop();if($('reader-voice').value===NEURAL_VOICE_ID){useNeural=true;}else{useNeural=false;engine.setVoice($('reader-voice').value);}});
  $('reader-help').addEventListener('click',()=>{const expanded=$('reader-shortcuts').hidden;$('reader-shortcuts').hidden=!expanded;$('reader-help').setAttribute('aria-expanded',String(expanded));});
  const keydown=event=>{

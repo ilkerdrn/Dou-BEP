@@ -28,7 +28,7 @@ export function createStudentPayload(raw,{extraMinutes=0,shuffleSeed=''}={}){
   appearance:{fontSize:exam.adaptations.fontSize,highContrast:exam.adaptations.highContrast,lineSpacing:exam.adaptations.lineSpacing},
   questions:exam.questions.map((q,i)=>{
    const access=questionAccess(q);
-   const base={number:i+1,id:`q${i+1}`,type:q.type,prompt:formatPrompt(q,exam),points:q.points,
+   const base={number:i+1,id:`q${i+1}`,type:q.type,lang:q.lang==='en'?'en':'tr',prompt:formatPrompt(q,exam),points:q.points,
      writtenCue:access.writtenCue,largeTargets:access.largeTargets,audioAllowed:access.audioAllowed,
      visualDescription:exam.adaptations.visualCues?String(q.visualAltText||'').trim():''};
    if(q.type==='choice')base.options=(exam.adaptations.shuffleOptions&&shuffleSeed?shuffled(q.options,shuffleSeed+'|'+i):q.options).map((label,index)=>({id:String.fromCharCode(65+index),label}));

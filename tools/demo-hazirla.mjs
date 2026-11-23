@@ -28,11 +28,13 @@ const COURSES=[
   ['choice','Planlama hangi yönetim işlevidir?',['İlk işlev','Son işlev','Denetim işlevi'],'İlk işlev'],['truefalse','SWOT analizi güçlü ve zayıf yönleri içerir.',null,'Doğru'],['short','Yönetimin dört temel işlevini sayarak her birini birer cümleyle açıklayınız. (Klasik yazılı soru)',null,''],['short','Bir işletmede planlama yapılmazsa hangi sorunlarla karşılaşılabilir? Örneklerle tartışınız. (Klasik yazılı soru, paragraf düzeyinde yanıt)',null,'']]},
  {title:'HUK110 Hukukun Temelleri Ara Sınav',subject:'Hukuk',duration:60,qs:[
   ['truefalse','Hukuk kuralları yaptırıma bağlıdır.',null,'Doğru'],['choice','Kanunlar hangi organ tarafından yapılır?',['Yasama','Yürütme','Yargı'],'Yasama'],['matching','Kavramları tanımlarıyla eşleştirin.',null,'',[{left:'Hak ehliyeti',right:'Hak sahibi olabilme'},{left:'Fiil ehliyeti',right:'Kendi fiilleriyle hak ve borç doğurabilme'},{left:'Yasama',right:'Kanun koyma yetkisi'}]],['short','Hak ehliyeti ile fiil ehliyeti arasındaki farkı örnekle açıklayınız. (Klasik yazılı soru)',null,'']]}
+ ,{title:'ENG101 English I Midterm',subject:'İngilizce',duration:25,lang:'en',qs:[
+  ['choice','Which word is a noun?',['Quickly','Teacher','Beautiful'],'Teacher'],['truefalse','The word "run" is a verb.',null,'Doğru'],['short','Describe your daily routine in three sentences. (Classic written question)',null,'']]}
 ];
 function mkExam(c){
  const d=createDemo();d.title=c.title;d.subject=c.subject;d.duration=c.duration;d.adaptations.visualCues=false;d.profile='';
  const t={choice:d.questions.find(q=>q.type==='choice'),truefalse:d.questions.find(q=>q.type==='truefalse'),short:d.questions.find(q=>q.type==='short'),matching:d.questions.find(q=>q.type==='matching')};
- d.questions=c.qs.map(([type,prompt,options,answer,pairs],i)=>({...t[type],id:'q'+(i+1),type,prompt,objective:c.subject+' kazanımı',options:options||[],pairs:pairs||[],answer,points:type==='short'?30:10,teacherNote:''}));
+ d.questions=c.qs.map(([type,prompt,options,answer,pairs],i)=>({...t[type],id:'q'+(i+1),type,lang:c.lang||'tr',prompt,objective:c.subject+' kazanımı',options:options||[],pairs:pairs||[],answer,points:type==='short'?30:10,teacherNote:''}));
  return d;}
 const ids=[];
 for(const c of COURSES){
@@ -47,7 +49,7 @@ const PROFILES=[
  ['İşitme engelli — işaret dili desteği','HUK110',3,['SIMPLE_SCREEN','SIGN_SUPPORT'],0,0],
  ['Konuşma/yazma güçlüğü — yazıcı','MAT101',0,['SIMPLE_SCREEN','SCRIBE'],20,0],
  ['Disleksi — büyük yazı, tek soru','ISL205',2,['LARGE_PRINT','ONE_PER_PAGE','AUTO_READ'],15,5],
- ['Standart öğrenci (karşılaştırma)','BLP103',1,[],0,0],
+ ['Standart öğrenci — İngilizce sınavı (İngilizce sesle okunur)','ENG101',4,[],0,0],
  ['Az gören + motor — kontrast, büyük hedef','HUK110',3,['HIGH_CONTRAST','LARGE_PRINT','LARGE_TARGETS'],25,10]];
 const rows=PROFILES.map(([,,ei,adj,ex,br],i)=>({candidateCode:'DEMO-'+String(i+1).padStart(2,'0'),seat:'PC-'+String(i+1).padStart(2,'0'),examId:ids[ei],adjustments:adj,extraMinutes:ex,breakMinutes:br}));
 let b=await call('/api/pilot/batch',{method:'POST',body:{rows},sess});
