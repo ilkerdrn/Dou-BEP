@@ -4,10 +4,12 @@ import {localTurkishVoices,readerChunks,readerRate} from './dou-reader-core.mjs'
  * localService is an inventory signal supplied by the browser, not proof of network isolation.
  */
 export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
- let generation=0,selected='',available=[],activeVoiceId='',reading=false;
+ let generation=0,selected='',available=[],activeVoiceId='',reading=false,segTimers=[],segCb=null,segNow=-2;
+ const clearSeg=()=>{for(const t of segTimers)clearTimeout(t);segTimers=[];};
+ const emitSeg=i=>{if(i===segNow)return;segNow=i;try{segCb?.(i);}catch{}};
  const voiceId=v=>v.voiceURI||v.name;
  function cancelActive(status){
-  generation++;reading=false;activeVoiceId='';
+  generation++;reading=false;activeVoiceId='';clearSeg();if(segNow!==-1&&segNow!==-2)emitSeg(-1);
   try{synth?.cancel?.();}catch{}
   if(status)onStatus(status);
  }
@@ -22,31 +24,47 @@ export function createLocalSpeech({synth,Utterance,onStatus=()=>{}}){
   return available.map(v=>({id:voiceId(v),label:`${v.name} (${v.lang})`}));
  }
  function stop(){cancelActive('Seslendirme durduruldu.');}
- function speak(text,{rate=1}={}){
-  stop();
+ function speak(text,{rate=1,parts=null,onSegment=null}={}){
+  stop();segCb=typeof onSegment==='function'?onSegment:null;segNow=-2;
   if(!synth||typeof Utterance!=='function'){
    onStatus('Tarayıcı seslendirme API’si yok. Ekran okuyucu ve yazılı sınav kullanılabilir.');return false;
   }
   refresh();const voice=available.find(v=>voiceId(v)===selected);
   if(!voice){onStatus('Cihazda kurulu Türkçe çevrimdışı ses bulunamadı. Seslendirme başlatılmadı.');return false;}
   let chunks;
-  try{chunks=readerChunks(turkishSpeechText(text));}catch{
+  let full,starts=[];
+  try{
+   if(Array.isArray(parts)&&parts.length){const pieces=parts.map(x=>turkishSpeechText(x.text));let o=0;for(const piece of pieces){starts.push(o);o+=piece.length+2;}full=pieces.join('. ');}
+   else full=turkishSpeechText(text);
+   chunks=readerChunks(full);}catch{
    onStatus('Metin matematik seslendirme sınırını aşıyor. Yazılı içerik kullanılabilir.');return false;
   }
   if(!chunks.length){onStatus('Okunacak içerik yok.');return false;}
+  const offsets=[];{let pos=0;for(const c of chunks){const at=full.indexOf(c,pos);offsets.push(at<0?pos:at);pos=(at<0?pos:at)+c.length;}}
+  const segAt=abs=>{let k=0;for(let i=0;i<starts.length;i++)if(starts[i]<=abs)k=i;return k;};
   const current=++generation;let index=0;
   const requestedVoiceId=voiceId(voice);
   reading=true;activeVoiceId=requestedVoiceId;
   const next=()=>{
    if(current!==generation)return;
-   if(index>=chunks.length){reading=false;activeVoiceId='';onStatus('Okuma tamamlandı.');return;}
+   if(index>=chunks.length){reading=false;activeVoiceId='';clearSeg();emitSeg(-1);onStatus('Okuma tamamlandı.');return;}
    // Recheck before *each* chunk: a previously selected local voice may have
    // been removed/replaced between async utterance callbacks.
    refresh();if(current!==generation)return;
    const currentVoice=available.find(v=>voiceId(v)===requestedVoiceId);
    if(!currentVoice){cancelActive('Yerel Türkçe ses bulunamadı; okuma durduruldu.');return;}
-   const u=new Utterance(chunks[index++]);u.lang=currentVoice.lang;u.voice=currentVoice;u.rate=readerRate(rate);
-   let settled=false;
+   const chunkNo=index,base=offsets[chunkNo]||0,chunkText=chunks[index++];
+   const u=new Utterance(chunkText);u.lang=currentVoice.lang;u.voice=currentVoice;u.rate=readerRate(rate);
+   let settled=false,boundarySeen=false;
+   if(starts.length&&segCb){
+    u.onstart=()=>{if(current!==generation)return;emitSeg(segAt(base));
+     // Bazı sesler sözcük sınırı olayı üretmez: o durumda bölüm geçişleri karakter payına göre tahmin edilir.
+     segTimers.push(setTimeout(()=>{if(boundarySeen||current!==generation)return;
+      const perChar=1000/(14*readerRate(rate));
+      for(let k=0;k<starts.length;k++){const s0=starts[k]-base;if(s0<=0||s0>=chunkText.length)continue;segTimers.push(setTimeout(()=>{if(current===generation)emitSeg(k);},Math.max(0,s0*perChar-1200)));}
+     },1200));};
+    u.onboundary=e=>{if(current!==generation)return;boundarySeen=true;emitSeg(segAt(base+(Number(e.charIndex)||0)));};
+   }
    u.onend=()=>{
     if(settled||current!==generation)return;
     settled=true;next();

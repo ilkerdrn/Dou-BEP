@@ -1,4 +1,4 @@
-import {readerText,readerShortcut} from './dou-reader-core.mjs';
+import {readerText,readerParts,readerShortcut} from './dou-reader-core.mjs';
 import {createLocalSpeech} from './dou-speech.mjs';
 import {createNeuralSpeech,neuralSupported,NEURAL_VOICE_ID,NEURAL_VOICE_LABEL} from './dou-speech-neural.mjs';
 /** Attach to anonymous exam only. No API calls, cookies, storage or microphone. */
@@ -26,10 +26,22 @@ export function attachPilotReader({doc,win,getQuestion,moveQuestion,announce}){
   if(!localHas&&neuralOk)$('reader-status').textContent='Cihazda Türkçe ses yok; DOU Speech sinir ağı sesi kullanılacak (ilk okumada yaklaşık 38 MB model yüklenir).';
   if(!has)$('reader-status').textContent='Yerel Türkçe ses bulunamadı. Yazılı sorular ve klavyeyle gezinme kullanılabilir.';
  }
+ /** Okunan bölümü ekranda vurgular (yalnız görsel; ekran okuyucu etkilenmez). */
+ function highlight(key,question){
+  for(const e of doc.querySelectorAll('.reading-now'))e.classList.remove('reading-now');
+  const sync=$('reader-sync');if(!key||key==='none'||(sync&&!sync.checked))return;
+  const section=doc.querySelector('#student-questions section[data-q="'+String(question?.number)+'"]');if(!section)return;
+  const targets=[...section.querySelectorAll('[data-read]')].filter(e=>e.dataset.read===key);
+  for(const e of targets)e.classList.add('reading-now');
+  try{targets[0]?.scrollIntoView({block:'nearest',inline:'nearest'});}catch{}
+ }
  function syncQuestion(){const q=getQuestion();$('reader-read').disabled=(!engine.refresh().length&&!neuralOk)||!q||q.audioAllowed===false;}
  function read(prefix){prefix=typeof prefix==='string'?prefix:'';// click handlers pass an Event: never treat it as text
   const question=getQuestion();if(!question){announce('Önce sınav oturumunu açın.',true);return;}
-  try{active().speak((prefix?prefix.replace(/[.]+$/,'')+'. ':'')+readerText(question),{rate:$('reader-rate').value});}
+  try{
+   const parts=readerParts(question);if(prefix)parts.unshift({key:'none',text:prefix.replace(/[.]+$/,'')});
+   const text=parts.map(x=>x.text).join('. ');
+   active().speak(text,{rate:$('reader-rate').value,parts,onSegment:i=>highlight(i<0?'':parts[i]?.key,question)});}
   catch(e){active().stop();$('reader-status').textContent=e.message;announce(e.message,true);}
  }
  function navigate(direction){engine.stop();neural?.stop();moveQuestion(direction);}

@@ -57,7 +57,7 @@ function moveReaderQuestion(direction){
  updateQuestionNavigation(true);
 }
 
-function option(q,o,group){const label=el('label');label.className='option';const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
+function option(q,o,group){const label=el('label');label.className='option';label.dataset.read='option-'+o.id;const radio=el('input');radio.type='radio';radio.name=group;radio.value=o.id;label.append(radio,el('span',o.id+' — '+o.label));return label;}
 let totalSeconds=0;const flagged=new Set();
 function toggleFlag(){if(!exam||locked)return;const q=exam.questions[activeQuestionIndex];if(flagged.has(q.id))flagged.delete(q.id);else flagged.add(q.id);updateQuestionNavigation();announce(flagged.has(q.id)?'Soru '+q.number+' işaretlendi. Sonra dönebilirsiniz.':'Soru '+q.number+' işareti kaldırıldı.');}
 function buildMap(){const box=$('question-map');box.replaceChildren();
@@ -87,9 +87,9 @@ function updateQuestionNavigation(focus=false){
  if(focus&&single){douReader?.stop();cards[activeQuestionIndex]?.querySelector('h2')?.focus();scheduleAutoRead();}
 }
 function render(){const area=$('student-questions');area.replaceChildren();
- for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';box.append(cue);}box.append(el('p',q.prompt));if(q.visualDescription)box.append(el('p','Görsel betimleme: '+q.visualDescription));
+ for(const q of exam.questions){const box=el('section');box.className='card question'+(q.largeTargets?' large-target':'');box.dataset.q=String(q.number);const h=el('h2',`Soru ${q.number}`);h.tabIndex=-1;h.dataset.read='number';box.append(h);if(q.writtenCue){const cue=el('p','Ek yönerge: '+q.writtenCue);cue.className='written-cue';cue.dataset.read='cue';box.append(cue);}const pr=el('p',q.prompt);pr.dataset.read='prompt';box.append(pr);if(q.visualDescription){const vd=el('p','Görsel betimleme: '+q.visualDescription);vd.dataset.read='visual';box.append(vd);}
   const read=el('button','Soruyu sesli oku');read.type='button';read.className='ghost';read.disabled=q.audioAllowed===false;read.title=q.audioAllowed===false?'Bu soru için uygulama içi sesli okuma kapalıdır.':'';read.addEventListener('click',()=>speak(q));box.append(read);
-  const field=el('fieldset');const legend=el('legend','Yanıt');field.append(legend);
+  const field=el('fieldset');field.dataset.read='answer';const legend=el('legend','Yanıt');field.append(legend);
   if(q.type==='short'){
    const id='text-'+q.id;const label=el('label','Yazılı yanıtınız');label.htmlFor=id;
    const ta=el('textarea');ta.id=id;ta.name=q.id;ta.rows=9;ta.maxLength=TEXT_MAX;ta.autocomplete='off';ta.spellcheck=false;ta.style.width='100%';
@@ -102,7 +102,7 @@ function render(){const area=$('student-questions');area.replaceChildren();
    field.append(label,ta,info,note);
   }
   if(q.options){for(const o of q.options)field.append(option(q,o,q.id));}
-  if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
+  if(q.type==='matching')for(const left of q.left){const label=el('label',left.id+'. '+left.label);label.dataset.read='left-'+left.id;const select=el('select');select.name=q.id+'_'+left.id;const placeholder=el('option','Seçiniz');placeholder.value='';select.append(placeholder);for(const right of q.right){const opt=el('option',right.id+'. '+right.label);opt.value=right.id;select.append(opt);}label.append(select);field.append(label);}
   box.append(field);area.append(box);
  }
  activeQuestionIndex=0;buildMap();updateQuestionNavigation();

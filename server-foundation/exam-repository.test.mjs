@@ -1,3 +1,4 @@
+import {freePort} from './test-port.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync,rmSync} from 'node:fs';
@@ -10,6 +11,7 @@ import {createDemo} from '../core.mjs';
 const pass='Ornek-Cok-Guv3nli-2026!';
 const sample=()=>{const e=createDemo();e.profile='';e.questions=e.questions.map(q=>({...q,teacherNote:''}));return e;};
 function fixture(){const dir=mkdtempSync(join(tmpdir(),'bep-exam-v1-'));const s=openStore(join(dir,'db.sqlite'));for(const id of ['okul-a','okul-b'])s.createTenantAdmin({tenantId:id,tenantName:`Kurum ${id}`,email:`admin@${id}.test`,password:pass});const actor=(tenant,email,password=pass)=>s.requireActor(s.signIn({tenantId:tenant,email,password}).token);return {dir,s,actor,close(){s.db.close();rmSync(dir,{recursive:true,force:true});}};}
+const TEST_PORT=await freePort();
 test('draft creation, persisted reload, server approval and invalidation on edit',()=>{const f=fixture();try{
  const a=f.actor('okul-a','admin@okul-a.test');const x=f.s.createExam(a,{exam:sample()});assert.equal(x.revision,1);assert.equal(x.status,'draft');assert.throws(()=>f.s.exportExam(a,x.id),{code:'not_approved'});
  assert.equal(f.s.getExam(a,x.id).exam.questions.length,5);
@@ -32,8 +34,8 @@ test('tenant separation, ownership and role enforcement',()=>{const f=fixture();
  assert.equal(f.s.approveExam(review,x.id,{revision:1,confirmed:true}).status,'approved');assert.equal(f.s.listExams(viewer).length,1);assert.throws(()=>f.s.exportExam(viewer,x.id),{code:'forbidden'});assert.equal(f.s.exportExam(u,x.id).meta.status,'approved');
  assert.throws(()=>f.s.createExam(viewer,{exam:sample()}),{code:'forbidden'});
 }finally{f.close();}});
-test('API protects approval and export with cookie and CSRF',async()=>{const f=fixture();const server=http.createServer(async(req,res)=>{await createApiHandler(f.s,{port:41871})(req,res,new URL(req.url,'http://localhost').pathname);});await new Promise(resolve=>server.listen(41871,'127.0.0.1',resolve));
- const req=async(path,method='GET',body,cookie='',csrf='')=>{const r=await fetch('http://127.0.0.1:41871/api'+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});return {status:r.status,body:await r.json(),cookie:r.headers.get('set-cookie')};};
+test('API protects approval and export with cookie and CSRF',async()=>{const f=fixture();const server=http.createServer(async(req,res)=>{await createApiHandler(f.s,{port:TEST_PORT})(req,res,new URL(req.url,'http://localhost').pathname);});await new Promise(resolve=>server.listen(TEST_PORT,'127.0.0.1',resolve));
+ const req=async(path,method='GET',body,cookie='',csrf='')=>{const r=await fetch(`http://127.0.0.1:${TEST_PORT}/api`+path,{method,headers:{...(body?{'Content-Type':'application/json'}:{}),...(cookie?{Cookie:cookie}:{}),...(csrf?{'X-CSRF-Token':csrf}:{})},body:body?JSON.stringify(body):undefined});return {status:r.status,body:await r.json(),cookie:r.headers.get('set-cookie')};};
  try{const login=await req('/login','POST',{tenantId:'okul-a',email:'admin@okul-a.test',password:pass});assert.equal(login.status,200);const cookie=login.cookie.split(';')[0],csrf=login.body.csrf;
  assert.equal((await req('/exams','GET')).status,401);assert.equal((await req('/exams','POST',{exam:sample()},cookie)).status,403);
  const created=await req('/exams','POST',{exam:sample()},cookie,csrf);assert.equal(created.status,201);const id=created.body.item.id;

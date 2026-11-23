@@ -34,7 +34,9 @@ export function floatToWav(samples,sampleRate=NEURAL_SAMPLE_RATE){
  return new Uint8Array(bytes);
 }
 export function createNeuralSpeech({win,onStatus=()=>{},workerUrl='/okur/okur-worker.js'}){
- let worker=null,ready=null,generation=0,ctx=null,sources=[],nextTime=0,id=0,listeners=new Map();
+ let worker=null,ready=null,generation=0,ctx=null,sources=[],nextTime=0,id=0,listeners=new Map(),segPoll=null,segCb=null,segNow=-2;
+ const emitSeg=i=>{if(i===segNow)return;segNow=i;try{segCb?.(i);}catch{}};
+ const clearPoll=()=>{if(segPoll){clearInterval(segPoll);segPoll=null;}};
  const loadStatus=loaded=>onStatus(`Ses modeli yükleniyor (yaklaşık 38 MB, yalnızca bir kez): %${Math.min(100,Math.round(loaded))}`);
  function ensure(){
   if(ready)return ready;
@@ -55,6 +57,7 @@ export function createNeuralSpeech({win,onStatus=()=>{},workerUrl='/okur/okur-wo
  }
  function stopSources(){for(const s of sources){try{s.onended=null;s.stop();}catch{}}sources=[];}
  function stop(message='Seslendirme durduruldu.'){
+  clearPoll();if(segNow!==-1&&segNow!==-2)emitSeg(-1);
   generation++;try{worker?.postMessage({type:'cancel'});}catch{}
   stopSources();try{ctx?.resume?.();}catch{}
   if(message)onStatus(message);
@@ -77,9 +80,13 @@ export function createNeuralSpeech({win,onStatus=()=>{},workerUrl='/okur/okur-wo
   if([...clean].length>NEURAL_MAX_CHARACTERS)throw new Error('Metin sinir ağı sesi için çok uzun. Yazılı içerik kullanılabilir.');
   return clean;
  }
- async function speak(text,{rate=1}={}){
-  let clean;try{clean=check(text);}catch(e){onStatus(e.message);return false;}
-  stop('');
+ async function speak(text,{rate=1,parts=null,onSegment=null}={}){
+  let clean,pieces=null;
+  try{
+   if(Array.isArray(parts)&&parts.length){pieces=parts.map(x=>check(x.text));clean=pieces.join('. ');check(clean);}
+   else clean=check(text);
+  }catch(e){onStatus(e.message);return false;}
+  stop('');segCb=typeof onSegment==='function'?onSegment:null;segNow=-2;
   if(!neuralSupported(win)){onStatus('Bu tarayıcı çevrimdışı sinir ağı sesini desteklemiyor.');return false;}
   const my=generation;
   try{
@@ -88,14 +95,29 @@ export function createNeuralSpeech({win,onStatus=()=>{},workerUrl='/okur/okur-wo
    const AC=win.AudioContext||win.webkitAudioContext;ctx??=new AC();await ctx.resume?.();
    nextTime=ctx.currentTime+0.05;onStatus('Okunuyor (DOU Speech sinir ağı).');
    let last=null;
-   await run(clean,{rate,onChunk:(audio,seconds)=>{
+   const play=(audio,seconds,mark)=>{
     if(my!==generation)return;
+    if(nextTime<ctx.currentTime)nextTime=ctx.currentTime+0.02;
     const buffer=ctx.createBuffer(1,audio.length,NEURAL_SAMPLE_RATE);buffer.copyToChannel(audio,0);
     const source=ctx.createBufferSource();source.buffer=buffer;source.connect(ctx.destination);
+    if(mark)mark(nextTime);
     source.start(nextTime);nextTime+=seconds;sources.push(source);last=source;
-   }});
+   };
+   if(pieces&&segCb){
+    // Bölüm bölüm üretilir; her bölümün başlangıç zamanı ses saatine göre kaydedilir ve vurgu bununla eşlenir.
+    const starts=[];
+    segPoll=setInterval(()=>{if(my!==generation||!ctx){clearPoll();return;}const t=ctx.currentTime;let idx=-1;for(let i=0;i<starts.length;i++)if(starts[i]!==undefined&&starts[i]<=t)idx=i;if(idx>=0)emitSeg(idx);},60);
+    for(let i=0;i<pieces.length;i++){
+     if(my!==generation)return false;
+     let first=true;
+     await run(pieces[i],{rate,onChunk:(audio,seconds)=>{play(audio,seconds,t=>{if(first){starts[i]=t;first=false;}});}});
+    }
+   }else{
+    await run(clean,{rate,onChunk:(audio,seconds)=>play(audio,seconds)});
+   }
    if(my!==generation)return false;
-   if(last)last.onended=()=>{if(my===generation)onStatus('Okuma tamamlandı.');};else onStatus('Okuma tamamlandı.');
+   const finish=()=>{if(my===generation){clearPoll();emitSeg(-1);onStatus('Okuma tamamlandı.');}};
+   if(last)last.onended=finish;else finish();
    return true;
   }catch(e){
    if(my===generation)onStatus('Sinir ağı sesi çalışmadı: '+(e?.message||'bilinmeyen hata')+' Yazılı soru ve ekran okuyucu kullanılabilir.');

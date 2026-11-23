@@ -200,3 +200,20 @@ html body.dou-student.high #student-questions textarea{background:#000;color:#ff
 html body.dou-student.high #dou-reader{background:#000}
 html body.dou-student.high .eyebrow{color:#ffd400}
 html body.dou-student.high main a{color:#8CC8FF}
+
+/* Soru kartı uyumu: rozet + sesli okuma aynı satırda, şıklar soru metniyle aynı ritimde */
+html body.dou-student #student-questions .question{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:center}
+html body.dou-student #student-questions .question>*{grid-column:1 / -1}
+html body.dou-student #student-questions .question>h2{grid-column:1;grid-row:1;justify-self:start}
+html body.dou-student #student-questions .question>button{grid-column:2;grid-row:1;justify-self:end;font-size:1em;min-height:48px;padding:0 20px}
+html body.dou-student #student-questions .question>p:not(.written-cue){margin:14px 0 6px}
+html body.dou-student #student-questions label.option{font-size:1.1em;font-weight:500;min-height:64px;padding:12px 20px;margin:10px 0;gap:16px}
+html body.dou-student #student-questions label.option input[type=radio]{width:26px;height:26px;margin:0;accent-color:#C50E1F;flex:0 0 auto}
+html body.dou-student #student-questions label.option:hover{border-color:#98A2B3}
+html body.dou-student #student-questions label.option:has(input:checked){font-weight:700}
+html body.dou-student #student-questions legend{font-size:.95em;letter-spacing:.02em}
+/* Okuma eşzamanı: o an okunan bölüm vurgulanır */
+.reading-now{background:#FFF3BF!important;outline:3px solid #1B6ED2;outline-offset:2px;border-radius:10px;box-shadow:0 0 0 6px #FFF3BF}
+html body.dou-student.high .reading-now{background:#ffd400!important;color:#000!important;outline-color:#fff;box-shadow:none}
+html body.dou-student.high .reading-now *{color:#000!important}
+@media (prefers-reduced-motion:no-preference){.reading-now{transition:background .15s}}

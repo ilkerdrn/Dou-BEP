@@ -85,3 +85,6 @@ Testler: 852/852.
 
 ## v2.101 — Canlı salon izleme
 `/salon-oturumu` → "Salon durumu": özet kartları (henüz girmedi, sınavda, molada, az süre <5 dk, hareketsiz >5 dk, teslim), aday başına "ne yapıyor" (yanıtlıyor, düşünüyor, molada, hareketsiz, teslim etti), kalan süre ve süre çubuğu, cevaplanan/toplam soru, son hareket (son otomatik kayıt), Türkçe uyarlama adları. "Yalnız dikkat gerekenler" süzgeci. Her 10 sn yenilenir. Not: "son hareket" yanıt değişikliğine dayanır; ekran/kamera izleme yoktur.
+
+## v2.102 — Okuma eşzamanı (vurgu) ve soru kartı uyumu
+Okuyucu artık okunan bölümü ekranda vurgular: soru numarası, soru metni, yönerge, görsel betimleme, her şık ve eşleştirme satırı sırayla işaretlenir; okuma bitince ya da durdurulunca vurgu kalkar. Yerel (Windows) seslerde sözcük sınırı olaylarıyla, sinir ağı sesinde ses saatiyle eşlenir; sınır olayı üretmeyen seslerde karakter payına göre tahmin edilir (yaklaşık). "Okunan bölümü vurgula" kutusuyla kapatılabilir. Soru kartında rozet ile "Soruyu sesli oku" aynı satırda, şık yazı boyutu soru metniyle uyumlu. Test portları sabit yerine boş porttan alınır.

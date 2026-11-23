@@ -215,7 +215,7 @@ check('v2.42 native reader is not an HTTP route and only runs via explicit Windo
 // v2.43: standalone local Turkish maths and bounded role navigation; not a trained TTS model.
 const pronouncer=readFileSync(join(root,'dou-speech-pronunciation.mjs'),'utf8');
 check('v2.43 Turkish maths pronunciation is pure local text processing',pronouncer.includes('export function turkishSpeechText')&&pronouncer.includes('küçük veya eşit')&&pronouncer.includes('karekök')&&!pronouncer.includes('fetch(')&&!pronouncer.includes('XMLHttpRequest'));
-check('v2.43 browser speech explicitly normalizes only after narration access policy',speech.includes('turkishSpeechText(text)')&&readerPanel.includes('readerText(question)'));
+check('v2.43 browser speech explicitly normalizes only after narration access policy',speech.includes('turkishSpeechText(')&&readerPanel.includes('readerParts(question)'));
 check('v2.43 math module explicitly available locally and no native source served',server.includes("'/dou-speech-pronunciation.mjs'")&&!server.includes("'/tools/dou-reader-windows-host.cs'"));
 check('v2.43 Windows reader has process-scoped role navigation for links and buttons',windowsReaderHost.includes('ControlType.Hyperlink')&&windowsReaderHost.includes('ControlType.Button')&&windowsReaderHost.includes('MAX_TRAVERSAL')&&windowsReaderHost.includes('!Allowed(focusedNow)'));
 check('v2.43 Windows speed and local maths preprocessing never use cloud API',windowsReaderHost.includes('Minimum = -3, Maximum = 3')&&windowsReaderHost.includes('TurkishMathPronunciation.Prepare(text)')&&!windowsReaderHost.includes('System.Net'));
